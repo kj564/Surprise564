@@ -9,6 +9,7 @@ import { HeroSection } from '@/components/birthday/hero-section'
 import { SiapaAkuSection } from '@/components/birthday/siapa-aku-section'
 import { CakeSection } from '@/components/birthday/cake-section'
 import { TimelineSection } from '@/components/birthday/timeline-section'
+import { OriginalMaterialSection } from '@/components/birthday/original-material-section'
 import { TraitsSection } from '@/components/birthday/traits-section'
 import { LoveLetter } from '@/components/birthday/love-letter'
 import { Footer } from '@/components/birthday/footer'
@@ -127,6 +128,7 @@ export default function Home() {
               provide simple interactive value-add (5 lilin + 1 click = permohonan). */}
           <CakeSection onCelebrate={handleCelebrate} />
           <TimelineSection />
+          <OriginalMaterialSection />
           <TraitsSection />
           <LoveLetter />
           <Footer />
