@@ -35,6 +35,13 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Publish the original iSpring samples without editing their source files.
+      # Relative assets inside HTML/Ucapan and HTML/Materi continue to resolve as-is.
+      - name: Include original HTML samples in the static site
+        run: |
+          mkdir -p public/HTML
+          cp -a HTML/. public/HTML/
+
       - name: Build static site
         run: bun run build
 
