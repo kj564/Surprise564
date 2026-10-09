@@ -19,13 +19,13 @@ export function CoverScreen({ onOpen }: { onOpen: () => void }) {
 
   return (
     <motion.section
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center"
+      className="premium-cover fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden px-6 py-10 text-center"
       initial={{ opacity: 1 }}
       animate={{ opacity: opening ? 0 : 1, scale: opening ? 1.05 : 1 }}
       transition={{ duration: 0.8, ease: 'easeInOut' }}
       style={{
         background:
-          'radial-gradient(ellipse at top, #fdf2f8 0%, #fce7f3 40%, #fbcfe8 100%)',
+          'radial-gradient(ellipse at 50% 12%, rgba(255,255,255,0.98) 0%, rgba(255,241,247,0.96) 28%, rgba(252,207,232,0.96) 66%, rgba(244,180,211,0.98) 100%)',
       }}
     >
       {/* Hiasan hati melayang di background */}
@@ -55,7 +55,7 @@ export function CoverScreen({ onOpen }: { onOpen: () => void }) {
       ))}
 
       <motion.p
-        className="mb-3 text-sm uppercase tracking-[0.3em] text-rose-500/80 font-comic"
+        className="mb-4 rounded-full border border-white/80 bg-white/55 px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.34em] text-rose-500 shadow-sm backdrop-blur-md sm:text-xs font-comic"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -64,11 +64,11 @@ export function CoverScreen({ onOpen }: { onOpen: () => void }) {
       </motion.p>
 
       <motion.h1
-        className="mb-8 text-3xl font-bold text-rose-700 sm:text-4xl md:text-5xl font-canda"
+        className="mb-8 max-w-3xl text-4xl font-bold leading-tight tracking-tight text-rose-800 sm:text-5xl md:text-6xl font-canda"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.1 }}
-        style={{ textShadow: '0 2px 12px rgba(244,114,182,0.25)' }}
+        style={{ textShadow: '0 8px 30px rgba(190,24,93,0.12)' }}
       >
         Hai, {birthdayContent.partnerName}…
       </motion.h1>
@@ -165,7 +165,7 @@ export function CoverScreen({ onOpen }: { onOpen: () => void }) {
       <AnimatePresence>
         {!opening && (
           <motion.p
-            className="mt-8 text-sm text-rose-500/90 font-comic"
+            className="mt-8 rounded-full border border-white/70 bg-white/55 px-5 py-2.5 text-sm text-rose-600 shadow-sm backdrop-blur-md font-comic"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -177,7 +177,7 @@ export function CoverScreen({ onOpen }: { onOpen: () => void }) {
       </AnimatePresence>
 
       <motion.p
-        className="absolute bottom-6 text-xs text-rose-500/70 font-comic"
+        className="absolute bottom-5 px-4 text-[10px] uppercase tracking-[0.2em] text-rose-500/75 sm:text-xs font-comic"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
