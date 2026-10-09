@@ -508,3 +508,89 @@ p { line-height: var(--line-height-body); }
     scroll-behavior: auto !important;
   }
 }
+
+
+/* ============================================================
+   Premium visual refresh — October 2026
+   Keeps original photographs, scrapbook artwork, and letter intact.
+   ============================================================ */
+:root {
+  color-scheme: light;
+  --premium-rose: #be185d;
+  --premium-ink: #4c1630;
+  --premium-blush: #fff1f6;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: #fff7fa;
+  color: var(--premium-ink);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  color: #fff;
+  background: #be185d;
+}
+
+:where(a, button, [role="button"], input, textarea, select):focus-visible {
+  outline: 3px solid rgba(190, 24, 93, 0.72);
+  outline-offset: 4px;
+}
+
+.premium-cover::before,
+.premium-hero::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+}
+
+.premium-cover::before {
+  background:
+    radial-gradient(ellipse at 12% 82%, rgba(255,255,255,.72), transparent 32%),
+    radial-gradient(ellipse at 88% 22%, rgba(255,255,255,.62), transparent 28%);
+}
+
+.premium-cover > :not(span) {
+  position: relative;
+  z-index: 1;
+}
+
+.premium-hero::after {
+  background: radial-gradient(ellipse at 50% 45%, rgba(255,255,255,.22), transparent 58%);
+}
+
+.premium-nav a,
+.premium-nav button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  height: auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  a, button {
+    transition-timing-function: cubic-bezier(.2,.8,.2,1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
