@@ -1,0 +1,7 @@
+
+# Duplicate data subfolders (same files as root-level in html/ and ucapan-embed/)
+public/surprise/html/data/
+public/surprise/ucapan-embed/data/
+
+# UI/UX books (personal study materials, not part of web)
+uiux-books/
