@@ -5,12 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 const NAV_LINKS = [
   { id: 'hero', label: 'Home' },
-  { id: 'about', label: 'About' },
+  { id: 'about', label: 'Tentang' },
   { id: 'cake', label: 'Cake' },
-  { id: 'story', label: 'Story' },
-  { id: 'eyes', label: 'Eyes' },
-  { id: 'wish', label: 'Wish' },
-  { id: 'card', label: 'Card' },
+  { id: 'story', label: 'Kenangan' },
+  { id: 'eyes', label: 'Hal Favorit' },
+  { id: 'wish', label: 'Surat' },
+  { id: 'card', label: 'Penutup' },
 ]
 
 /** Sticky navbar with smooth scroll — enhancement from Perfect 2.
@@ -56,21 +56,21 @@ export function NavBar({ forceVisible = false }: { forceVisible?: boolean }) {
     <AnimatePresence>
       {visible && (
         <motion.nav
-          className="fixed top-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-md shadow-md border-b-2 border-rose-200"
+          className="premium-nav fixed left-0 right-0 top-0 z-40 border-b border-white/70 bg-white/75 shadow-[0_8px_30px_rgba(136,19,55,0.08)] backdrop-blur-2xl"
           initial={{ y: -80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -80, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 20 }}
         >
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2 sm:px-6">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <a
               href="#hero"
               onClick={(e) => handleClick(e, 'hero')}
-              className="font-bold text-rose-700 font-canda text-sm sm:text-base flex items-center gap-3"
+              className="flex items-center gap-3 text-sm font-bold text-rose-800 sm:text-base font-canda"
             >
               <span>♥ For Nia</span>
               {/* Goal-Gradient Effect (Laws of UX): show current/total progress */}
-              <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[10px] font-sans font-semibold text-rose-600">
+              <span className="rounded-full border border-rose-100 bg-rose-50 px-2.5 py-1 text-[10px] font-sans font-semibold text-rose-700">
                 {NAV_LINKS.findIndex(l => l.id === active) + 1}/{NAV_LINKS.length}
               </span>
             </a>
@@ -84,8 +84,8 @@ export function NavBar({ forceVisible = false }: { forceVisible?: boolean }) {
                   onClick={(e) => handleClick(e, link.id)}
                   className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                     active === link.id
-                      ? 'bg-rose-600 text-white shadow-sm'
-                      : 'text-rose-700 hover:bg-rose-100'
+                      ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-[0_5px_14px_rgba(190,24,93,0.22)]'
+                      : 'text-rose-800 hover:bg-rose-50'
                   }`}
                 >
                   {link.label}
@@ -95,7 +95,7 @@ export function NavBar({ forceVisible = false }: { forceVisible?: boolean }) {
 
             {/* Mobile toggle */}
             <button
-              className="md:hidden rounded-full p-2 text-rose-700 hover:bg-rose-100"
+              className="rounded-full border border-rose-100 bg-white/80 p-2.5 text-rose-800 shadow-sm transition hover:bg-rose-50 md:hidden"
               onClick={() => setMobileOpen(o => !o)}
               aria-label={mobileOpen ? 'Tutup menu' : 'Buka menu'}
             >
@@ -107,13 +107,13 @@ export function NavBar({ forceVisible = false }: { forceVisible?: boolean }) {
           <AnimatePresence>
             {mobileOpen && (
               <motion.div
-                className="md:hidden border-t border-rose-200 bg-white"
+                className="overflow-hidden border-t border-rose-100/80 bg-white/95 backdrop-blur-xl md:hidden"
                 initial={{ height: 0 }}
                 animate={{ height: 'auto' }}
                 exit={{ height: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <div className="flex flex-col gap-1 p-3">
+                <div className="mx-auto flex max-w-6xl flex-col gap-1 p-3">
                   {NAV_LINKS.map((link) => (
                     <a
                       key={link.id}
