@@ -24,6 +24,15 @@ const TRAITS: { value: Trait; label: string }[] = [{value:'survive',label:'Survi
 const SUBTRAITS: { value: SubTrait; label: string }[] = [{value:'offense',label:'Offense'},{value:'defense',label:'Defense'}]
 const CATEGORIES: { value: Category; label: string }[] = [{value:'speedster',label:'Speedster'},{value:'elemental',label:'Elemental'}]
 
+// Cellestial is the umbrella class system: 4 Traits × 2 Sub-traits × 2 Sub-categories = 16 archetypes.
+const CELESTIAL_CLASSES = TRAITS.flatMap((trait) => SUBTRAITS.flatMap((subTrait) => CATEGORIES.map((category) => ({
+  value: `${trait.value}-${subTrait.value}-${category.value}`,
+  label: `Cellestial · ${trait.label} / ${subTrait.label} / ${category.label}`,
+  trait: trait.value,
+  subTrait: subTrait.value,
+  category: category.value,
+}))))
+
 const distanceBetween = (a: Fighter, b: Fighter) => Math.hypot(b.x - a.x, b.y - a.y)
 
 export default function ToolsWarsGame() {
@@ -285,22 +294,14 @@ export default function ToolsWarsGame() {
               <label className="mb-1 block text-xs font-bold text-slate-300">Nama bola</label><input maxLength={14} value={leftName} onChange={e=>setLeftName(e.target.value.toUpperCase())} placeholder="NOVA" className="mb-3 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-cyan-300/60"/>
               <div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Warna inti</label><input aria-label="Warna bola 1" type="color" value={leftColor} onChange={e=>setLeftColor(e.target.value)} className="h-9 w-14 cursor-pointer rounded bg-transparent"/></div>
               <div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Ukuran <span className="font-mono text-cyan-200">{leftRadius}px</span></label><input aria-label="Ukuran bola 1" type="range" min={21} max={36} value={leftRadius} onChange={e=>setLeftRadius(Number(e.target.value))} className="w-28 accent-cyan-300"/></div>
-              <div className="grid gap-2 sm:grid-cols-3">
-                <label className="text-xs text-slate-300">Trait<select value={leftTrait} onChange={e=>{setLeftTrait(e.target.value as Trait);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="survive">Survive</option><option value="orbital">Orbital</option><option value="range">Range</option><option value="melee">Melee</option></select></label>
-                <label className="text-xs text-slate-300">Sub-trait<select value={leftSubTrait} onChange={e=>{setLeftSubTrait(e.target.value as SubTrait);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="offense">Offense</option><option value="defense">Defense</option></select></label>
-                <label className="text-xs text-slate-300">Sub-category<select value={leftCategory} onChange={e=>{setLeftCategory(e.target.value as Category);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="speedster">Speedster</option><option value="elemental">Elemental</option></select></label>
-              </div>
+              <label className="block text-xs text-slate-300">Cellestial Class <select value={`${leftTrait}-${leftSubTrait}-${leftCategory}`} onChange={e=>{const selected=CELESTIAL_CLASSES.find(item=>item.value===e.target.value);if(!selected)return;setLeftTrait(selected.trait);setLeftSubTrait(selected.subTrait);setLeftCategory(selected.category);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-fuchsia-300/20 bg-[#17182b] px-2 py-2 text-xs">{CELESTIAL_CLASSES.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}</select><span className="mt-1 block text-[10px] text-slate-500">16 kombinasi Trait × Sub-trait × Sub-category</span></label>
             </div>
             <div className="rounded-xl border border-pink-200/15 bg-black/20 p-4">
               <div className="mb-3 flex items-center gap-3"><div className="h-12 w-12 rounded-full border-2 border-white/60 shadow-lg" style={{background:rightColor,boxShadow:`0 0 22px ${rightColor}`}}/><div><p className="text-xs font-black tracking-widest text-pink-200">BALL 02</p><p className="text-[11px] text-slate-400">Petarung kanan</p></div></div>
               <label className="mb-1 block text-xs font-bold text-slate-300">Nama bola</label><input maxLength={14} value={rightName} onChange={e=>setRightName(e.target.value.toUpperCase())} placeholder="RAVEN" className="mb-3 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-pink-300/60"/>
               <div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Warna inti</label><input aria-label="Warna bola 2" type="color" value={rightColor} onChange={e=>setRightColor(e.target.value)} className="h-9 w-14 cursor-pointer rounded bg-transparent"/></div>
               <div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Ukuran <span className="font-mono text-pink-200">{rightRadius}px</span></label><input aria-label="Ukuran bola 2" type="range" min={21} max={36} value={rightRadius} onChange={e=>setRightRadius(Number(e.target.value))} className="w-28 accent-pink-300"/></div>
-              <div className="grid gap-2 sm:grid-cols-3">
-                <label className="text-xs text-slate-300">Trait<select value={rightTrait} onChange={e=>{setRightTrait(e.target.value as Trait);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="survive">Survive</option><option value="orbital">Orbital</option><option value="range">Range</option><option value="melee">Melee</option></select></label>
-                <label className="text-xs text-slate-300">Sub-trait<select value={rightSubTrait} onChange={e=>{setRightSubTrait(e.target.value as SubTrait);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="offense">Offense</option><option value="defense">Defense</option></select></label>
-                <label className="text-xs text-slate-300">Sub-category<select value={rightCategory} onChange={e=>{setRightCategory(e.target.value as Category);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="speedster">Speedster</option><option value="elemental">Elemental</option></select></label>
-              </div>
+              <label className="block text-xs text-slate-300">Cellestial Class <select value={`${rightTrait}-${rightSubTrait}-${rightCategory}`} onChange={e=>{const selected=CELESTIAL_CLASSES.find(item=>item.value===e.target.value);if(!selected)return;setRightTrait(selected.trait);setRightSubTrait(selected.subTrait);setRightCategory(selected.category);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-fuchsia-300/20 bg-[#17182b] px-2 py-2 text-xs">{CELESTIAL_CLASSES.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}</select><span className="mt-1 block text-[10px] text-slate-500">16 kombinasi Trait × Sub-trait × Sub-category</span></label>
             </div>
           </div>
         </section>
