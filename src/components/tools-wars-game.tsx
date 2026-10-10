@@ -156,7 +156,7 @@ export default function ToolsWarsGame() {
         const keys = keysRef.current
         const step = (f: Fighter, other: Fighter) => {
           const leftSide = f.controls === 'left'
-          const goLeft = keys.has(leftSide ? 'a' : 'arrowleft') || keys.has(leftSide ? 'a' : 'arrowleft')
+          const goLeft = keys.has(leftSide ? 'a' : 'arrowleft')
           const goRight = keys.has(leftSide ? 'd' : 'arrowright')
           const jump = keys.has(leftSide ? 'w' : 'arrowup')
           const hit = keys.has(leftSide ? 'f' : '/')
