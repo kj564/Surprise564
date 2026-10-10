@@ -5,7 +5,7 @@ import { Swords, RotateCcw, Trophy, Gamepad2, Sparkles } from 'lucide-react'
 
 type Weapon = 'shield' | 'daggers' | 'scythe' | 'wand'
 type Fighter = {
-  x: number; y: number; vx: number; vy: number; hp: number; maxHp: number
+  x: number; y: number; vx: number; vy: number; hp: number; maxHp: number; radius: number
   cooldown: number; flash: number; facing: number; weapon: Weapon; color: string
   name: string; controls: 'left' | 'right'
 }
@@ -23,6 +23,12 @@ export default function ToolsWarsGame() {
   const keysRef = useRef<Set<string>>(new Set())
   const [leftWeapon, setLeftWeapon] = useState<Weapon>('shield')
   const [rightWeapon, setRightWeapon] = useState<Weapon>('daggers')
+  const [leftColor, setLeftColor] = useState('#36d7ff')
+  const [rightColor, setRightColor] = useState('#ff4f91')
+  const [leftName, setLeftName] = useState('NOVA')
+  const [rightName, setRightName] = useState('RAVEN')
+  const [leftRadius, setLeftRadius] = useState(27)
+  const [rightRadius, setRightRadius] = useState(27)
   const [playing, setPlaying] = useState(false)
   const [roundKey, setRoundKey] = useState(0)
   const [winner, setWinner] = useState<string | null>(null)
@@ -46,8 +52,8 @@ export default function ToolsWarsGame() {
     let raf = 0
     let last = 0
     let frame = 0
-    let left: Fighter = { x: 0, y: 0, vx: 3.1, vy: -2, hp: 100, maxHp: 100, cooldown: 0, flash: 0, facing: 1, weapon: leftWeapon, color: '#5dd6ff', name: 'PLAYER 1', controls: 'left' }
-    let right: Fighter = { x: 0, y: 0, vx: -3.1, vy: -1, hp: 100, maxHp: 100, cooldown: 0, flash: 0, facing: -1, weapon: rightWeapon, color: '#ff5b8a', name: 'PLAYER 2', controls: 'right' }
+    let left: Fighter = { x: 0, y: 0, vx: 3.1, vy: -2, hp: 100, maxHp: 100, radius: leftRadius, cooldown: 0, flash: 0, facing: 1, weapon: leftWeapon, color: leftColor, name: leftName || 'PLAYER 1', controls: 'left' }
+    let right: Fighter = { x: 0, y: 0, vx: -3.1, vy: -1, hp: 100, maxHp: 100, radius: rightRadius, cooldown: 0, flash: 0, facing: -1, weapon: rightWeapon, color: rightColor, name: rightName || 'PLAYER 2', controls: 'right' }
     let shots: Shot[] = []
     let ended = false
     const resize = () => {
@@ -101,13 +107,13 @@ export default function ToolsWarsGame() {
       const bob = Math.sin(t / 140 + (f.controls === 'left' ? 0 : 2)) * 2
       ctx.save()
       ctx.shadowColor = f.color; ctx.shadowBlur = f.flash > 0 ? 28 : 16
-      const grad = ctx.createRadialGradient(f.x - 10, f.y - 12 + bob, 2, f.x, f.y + bob, 31)
+      const grad = ctx.createRadialGradient(f.x - f.radius * .36, f.y - f.radius * .44 + bob, 2, f.x, f.y + bob, f.radius + 4)
       grad.addColorStop(0, '#ffffff'); grad.addColorStop(.18, f.color); grad.addColorStop(1, f.controls === 'left' ? '#087da8' : '#a3124d')
       ctx.fillStyle = grad
-      ctx.beginPath(); ctx.arc(f.x, f.y + bob, 27, 0, Math.PI * 2); ctx.fill()
+      ctx.beginPath(); ctx.arc(f.x, f.y + bob, f.radius, 0, Math.PI * 2); ctx.fill()
       ctx.shadowBlur = 0; ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 2; ctx.stroke()
-      ctx.fillStyle = '#101326'; ctx.beginPath(); ctx.arc(f.x + f.facing * 7, f.y - 5 + bob, 4, 0, Math.PI * 2); ctx.fill()
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(f.x + f.facing * 8, f.y - 6 + bob, 1.5, 0, Math.PI * 2); ctx.fill()
+      ctx.fillStyle = '#101326'; ctx.beginPath(); ctx.arc(f.x + f.facing * f.radius * .26, f.y - 5 + bob, Math.max(3, f.radius * .15), 0, Math.PI * 2); ctx.fill()
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(f.x + f.facing * f.radius * .3, f.y - 6 + bob, Math.max(1.2, f.radius * .055), 0, Math.PI * 2); ctx.fill()
       ctx.restore()
       drawWeapon(f, t)
     }
@@ -147,8 +153,8 @@ export default function ToolsWarsGame() {
         ctx.fillStyle = '#ffffff35'; ctx.fillRect(x,y,2,2)
       }
       ctx.fillStyle = '#fff'; ctx.font = '700 10px ui-monospace, monospace'; ctx.textAlign = 'center'
-      ctx.fillStyle = '#5dd6ff'; ctx.fillText('P1 • ' + WEAPONS[left.weapon].label.toUpperCase(), w*.25, 24)
-      ctx.fillStyle = '#ff7da7'; ctx.fillText('P2 • ' + WEAPONS[right.weapon].label.toUpperCase(), w*.75, 24)
+      ctx.fillStyle = '#5dd6ff'; ctx.fillText(left.name + ' • ' + WEAPONS[left.weapon].label.toUpperCase(), w*.25, 24)
+      ctx.fillStyle = '#ff7da7'; ctx.fillText(right.name + ' • ' + WEAPONS[right.weapon].label.toUpperCase(), w*.75, 24)
       const floor = h - 24
       ctx.strokeStyle = '#ffffff44'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0,floor); ctx.lineTo(w,floor); ctx.stroke()
       ctx.fillStyle = '#ffffff0d'; ctx.fillRect(0,floor,w,24)
@@ -166,17 +172,17 @@ export default function ToolsWarsGame() {
           if (hit) attack(f, other)
           f.vx *= Math.pow(.986,dt); f.vy += .36*dt
           f.x += f.vx*dt; f.y += f.vy*dt
-          if (f.x < 32) { f.x=32; f.vx=Math.abs(f.vx)*.78 }
-          if (f.x > w-32) { f.x=w-32; f.vx=-Math.abs(f.vx)*.78 }
-          if (f.y > floor-27) { f.y=floor-27; f.vy=-Math.abs(f.vy)*.83; if(Math.abs(f.vy)<1.5) f.vy=0 }
+          if (f.x < f.radius) { f.x=f.radius; f.vx=Math.abs(f.vx)*.78 }
+          if (f.x > w-f.radius) { f.x=w-f.radius; f.vx=-Math.abs(f.vx)*.78 }
+          if (f.y > floor-f.radius) { f.y=floor-f.radius; f.vy=-Math.abs(f.vy)*.83; if(Math.abs(f.vy)<1.5) f.vy=0 }
           if (f.y < 55) { f.y=55; f.vy=Math.abs(f.vy)*.7 }
           f.facing = other.x >= f.x ? 1 : -1
           f.cooldown = Math.max(0,f.cooldown-dt); f.flash = Math.max(0,f.flash-dt)
         }
         step(left,right); step(right,left)
         const dx=right.x-left.x, dy=right.y-left.y, dist=Math.hypot(dx,dy)
-        if (dist < 55 && dist > 0) {
-          const push=(55-dist)*.055
+        if (dist < left.radius + right.radius + 1 && dist > 0) {
+          const push=(left.radius + right.radius + 1-dist)*.055
           left.vx -= dx/dist*push; right.vx += dx/dist*push
           left.vy -= dy/dist*push*.3; right.vy += dy/dist*push*.3
         }
@@ -218,7 +224,7 @@ export default function ToolsWarsGame() {
       cancelAnimationFrame(raf); window.removeEventListener('resize',resize)
       window.removeEventListener('keydown',keyDown); window.removeEventListener('keyup',keyUp)
     }
-  }, [leftWeapon,rightWeapon,playing,roundKey,winner])
+  }, [leftWeapon,rightWeapon,leftColor,rightColor,leftName,rightName,leftRadius,rightRadius,playing,roundKey,winner])
 
   const hold = (key: string, active: boolean) => {
     if (active) keysRef.current.add(key)
@@ -240,6 +246,8 @@ export default function ToolsWarsGame() {
           </div>
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"/> LOCAL MULTIPLAYER <span className="hidden sm:inline">• 2 PLAYERS</span></div>
         </header>
+
+        <section className="mb-5 rounded-2xl border border-fuchsia-300/20 bg-white/[.04] p-4 sm:p-5"><div className="mb-4 flex items-center gap-2"><Sparkles size={18} className="text-fuchsia-200"/><div><h2 className="text-sm font-black tracking-[.2em]">CUSTOM BALL MAKER</h2><p className="mt-1 text-xs text-slate-400">Bikin identitas bola sendiri: nama, warna, ukuran, dan senjatanya.</p></div></div><div className="grid gap-4 md:grid-cols-2"><div className="rounded-xl border border-cyan-200/15 bg-black/20 p-4"><div className="mb-3 flex items-center gap-3"><div className="grid h-12 w-12 place-items-center rounded-full border-2 border-white/60 shadow-lg" style={{background:leftColor,boxShadow:`0 0 22px ${leftColor}`}}/><div><p className="text-xs font-black tracking-widest text-cyan-200">BALL 01</p><p className="text-[11px] text-slate-400">Custom fighter kiri</p></div></div><label className="mb-1 block text-xs font-bold text-slate-300">Nama bola</label><input maxLength={14} value={leftName} onChange={e=>setLeftName(e.target.value.toUpperCase())} placeholder="NOVA" className="mb-3 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-cyan-300/60"/><div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Warna inti</label><input aria-label="Warna bola 1" type="color" value={leftColor} onChange={e=>setLeftColor(e.target.value)} className="h-9 w-14 cursor-pointer rounded border-0 bg-transparent"/></div><div className="flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Ukuran bola <span className="font-mono text-cyan-200">{leftRadius}px</span></label><input aria-label="Ukuran bola 1" type="range" min={21} max={36} value={leftRadius} onChange={e=>setLeftRadius(Number(e.target.value))} className="w-28 accent-cyan-300"/></div></div><div className="rounded-xl border border-pink-200/15 bg-black/20 p-4"><div className="mb-3 flex items-center gap-3"><div className="grid h-12 w-12 place-items-center rounded-full border-2 border-white/60 shadow-lg" style={{background:rightColor,boxShadow:`0 0 22px ${rightColor}`}}/><div><p className="text-xs font-black tracking-widest text-pink-200">BALL 02</p><p className="text-[11px] text-slate-400">Custom fighter kanan</p></div></div><label className="mb-1 block text-xs font-bold text-slate-300">Nama bola</label><input maxLength={14} value={rightName} onChange={e=>setRightName(e.target.value.toUpperCase())} placeholder="RAVEN" className="mb-3 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-pink-300/60"/><div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Warna inti</label><input aria-label="Warna bola 2" type="color" value={rightColor} onChange={e=>setRightColor(e.target.value)} className="h-9 w-14 cursor-pointer rounded border-0 bg-transparent"/></div><div className="flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Ukuran bola <span className="font-mono text-pink-200">{rightRadius}px</span></label><input aria-label="Ukuran bola 2" type="range" min={21} max={36} value={rightRadius} onChange={e=>setRightRadius(Number(e.target.value))} className="w-28 accent-pink-300"/></div></div></div></section>
 
         <section className="mb-5 grid gap-3 md:grid-cols-2">
           {[{side:'left' as const,title:'PLAYER 1',weapon:leftWeapon,color:'#5dd6ff',hp:leftHp},{side:'right' as const,title:'PLAYER 2',weapon:rightWeapon,color:'#ff5b8a',hp:rightHp}].map((p) => (
