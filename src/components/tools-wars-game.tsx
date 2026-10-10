@@ -9,7 +9,7 @@ type SubTrait = 'offense' | 'defense'
 type Category = 'speedster' | 'elemental'
 type Fighter = {
   x: number; y: number; vx: number; vy: number; hp: number; maxHp: number; radius: number
-  cooldown: number; flash: number; facing: number; weapon: Weapon; color: string
+  cooldown: number; flash: number; burn: number; facing: number; weapon: Weapon; color: string
   name: string; side: 'left' | 'right'; trait: Trait; subTrait: SubTrait; category: Category
 }
 type Shot = { x: number; y: number; vx: number; vy: number; life: number; owner: 'left' | 'right'; color: string; radius: number }
@@ -64,8 +64,8 @@ export default function ToolsWarsGame() {
     let raf = 0
     let last = 0
     let frame = 0
-    let left: Fighter = { x: 0, y: 0, vx: 3.1, vy: 2.2, hp: 100, maxHp: 100, radius: leftRadius, cooldown: 0, flash: 0, facing: 1, weapon: leftWeapon, color: leftColor, name: leftName || 'NOVA', side: 'left', trait: leftTrait, subTrait: leftSubTrait, category: leftCategory }
-    let right: Fighter = { x: 0, y: 0, vx: -3.1, vy: -2.1, hp: 100, maxHp: 100, radius: rightRadius, cooldown: 0, flash: 0, facing: -1, weapon: rightWeapon, color: rightColor, name: rightName || 'RAVEN', side: 'right', trait: rightTrait, subTrait: rightSubTrait, category: rightCategory }
+    let left: Fighter = { x: 0, y: 0, vx: leftCategory === 'speedster' ? 4.5 : 3.1, vy: leftCategory === 'speedster' ? 2.8 : 2.2, hp: 100, maxHp: 100, radius: leftRadius, cooldown: 0, flash: 0, burn: 0, facing: 1, weapon: leftWeapon, color: leftColor, name: leftName || 'NOVA', side: 'left', trait: leftTrait, subTrait: leftSubTrait, category: leftCategory }
+    let right: Fighter = { x: 0, y: 0, vx: rightCategory === 'speedster' ? -4.5 : -3.1, vy: rightCategory === 'speedster' ? -2.8 : -2.1, hp: 100, maxHp: 100, radius: rightRadius, cooldown: 0, flash: 0, burn: 0, facing: -1, weapon: rightWeapon, color: rightColor, name: rightName || 'RAVEN', side: 'right', trait: rightTrait, subTrait: rightSubTrait, category: rightCategory }
     let shots: Shot[] = []
     let ended = false
     const resize = () => {
@@ -137,6 +137,7 @@ export default function ToolsWarsGame() {
         const defense = other.trait === 'survive' ? .68 : other.subTrait === 'defense' ? .78 : 1
         const dmg = baseDamage * block * defense
         other.hp = Math.max(0, other.hp - dmg)
+        if (f.category === 'elemental') other.burn = Math.max(other.burn, 120)
         other.flash = 9
         other.vx += f.facing * (f.weapon === 'shield' ? 8 : f.weapon === 'scythe' ? 7 : 5)
         other.vy -= f.weapon === 'shield' ? 3 : 4
@@ -183,6 +184,7 @@ export default function ToolsWarsGame() {
               const raw = spec.damage * (f.subTrait === 'offense' ? 1.2 : 1) * (f.category === 'elemental' ? 1.08 : 1)
               const reduction = other.trait === 'survive' ? .68 : other.subTrait === 'defense' ? .78 : 1
               other.hp = Math.max(0, other.hp - raw * reduction)
+              if (f.category === 'elemental') other.burn = Math.max(other.burn, 120)
               other.flash = 10
               other.vx += Math.cos(angle) * 5
               other.vy += Math.sin(angle) * 5
@@ -206,6 +208,7 @@ export default function ToolsWarsGame() {
           if (f.y > floor - f.radius) { f.y = floor - f.radius; f.vy = -Math.abs(f.vy) }
 
           if (f.trait === 'survive') f.hp = Math.min(f.maxHp, f.hp + 0.012 * dt)
+          if (f.burn > 0) { f.hp = Math.max(0, f.hp - 0.055 * dt); f.burn = Math.max(0, f.burn - dt) }
           f.cooldown = Math.max(0, f.cooldown - dt)
           f.flash = Math.max(0, f.flash - dt)
         }
@@ -227,6 +230,7 @@ export default function ToolsWarsGame() {
             const defense=target.trait==='survive'?.68:target.subTrait==='defense'?.78:1
             const elementalBoost=s.owner==='left'?left.category==='elemental':right.category==='elemental'
             target.hp=Math.max(0,target.hp-WEAPONS.wand.damage*(blocked?.55:1)*defense*(elementalBoost?1.08:1))
+            if (elementalBoost) target.burn=Math.max(target.burn,120)
             target.flash=10; target.vx+=(s.owner==='left'?1:-1)*4; target.vy-=2
             s.life=0
           }
