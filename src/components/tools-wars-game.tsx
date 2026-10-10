@@ -194,7 +194,6 @@ export default function ToolsWarsGame() {
       if (targetId === 'ptah' && kind === 'projectile') { target.vx += Math.cos(angle) * 1.5; target.vy += Math.sin(angle) * 1.5 }
       if (attackerId === 'sobek' && attacker.hitCount % 3 === 0) { target.vx += Math.cos(angle) * 2.5; target.vy += Math.sin(angle) * 2.5 }
       if (attackerId === 'ra' && kind === 'projectile') {
-        const splashRadius = 46
         if (Math.hypot(target.x - attacker.x, target.y - attacker.y) < 300) target.flash = 12
         // The solar impact adds a modest burst, capped to avoid one-shot explosions.
         target.hp = Math.max(0, target.hp - Math.min(3, damage * 0.18))
