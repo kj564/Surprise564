@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Swords, RotateCcw, Trophy, Gamepad2, Sparkles } from 'lucide-react'
 
 type Weapon = 'shield' | 'daggers' | 'scythe' | 'wand'
@@ -250,7 +250,7 @@ export default function ToolsWarsGame() {
 
         <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#121426] shadow-2xl shadow-black/40">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-5"><div className="flex items-center gap-2 text-sm font-extrabold"><Gamepad2 size={17} className="text-cyan-200"/> THE ARENA <span className="text-xs font-normal text-slate-500">/ ROUND {roundKey || 1}</span></div><div className="flex gap-2"><span className="rounded-full bg-cyan-300/10 px-3 py-1 text-[10px] font-bold tracking-widest text-cyan-200">BOUNCE PHYSICS</span><span className="rounded-full bg-fuchsia-300/10 px-3 py-1 text-[10px] font-bold tracking-widest text-fuchsia-200">WEAPON COMBAT</span></div></div>
-          <canvas ref={canvasRef} className="block h-[340px] w-full sm:h-[430px] md:h-[490px]" aria-label="Arena game Tools Wars. Player one uses A D W F. Player two uses arrow keys and slash."/>
+          <canvas ref={canvasRef} className="block h-[340px] w-full sm:h-[430px] md:h-[490px]" aria-label="Arena otomatis Tools Wars. Kedua petarung dikendalikan AI."/>
           <div className="border-t border-white/10 bg-black/20 px-4 py-3 text-center text-xs text-slate-400">AUTO SIMULATION · Bola bergerak, memilih jarak, melompat, dan menyerang sendiri. Kamu cukup memilih build dan menonton pertarungan.</div>
         </section>
 
