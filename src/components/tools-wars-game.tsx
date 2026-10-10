@@ -4,10 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Swords, RotateCcw, Trophy, Gamepad2, Sparkles } from 'lucide-react'
 
 type Weapon = 'shield' | 'daggers' | 'scythe' | 'wand'
+type Trait = 'survive' | 'orbital' | 'range' | 'melee'
+type SubTrait = 'offense' | 'defense'
+type Category = 'speedster' | 'elemental'
 type Fighter = {
   x: number; y: number; vx: number; vy: number; hp: number; maxHp: number; radius: number
   cooldown: number; flash: number; facing: number; weapon: Weapon; color: string
-  name: string; side: 'left' | 'right'
+  name: string; side: 'left' | 'right'; trait: Trait; subTrait: SubTrait; category: Category
 }
 type Shot = { x: number; y: number; vx: number; vy: number; life: number; owner: 'left' | 'right'; color: string; radius: number }
 const WEAPONS: Record<Weapon, { label: string; icon: string; color: string; damage: number; reach: number; speed: number; description: string }> = {
@@ -17,6 +20,11 @@ const WEAPONS: Record<Weapon, { label: string; icon: string; color: string; dama
   wand: { label: 'Wand', icon: '🪄', color: '#ffc857', damage: 11, reach: 250, speed: 5.5, description: 'Tembakkan orb sihir dari jarak jauh.' },
 }
 const OPTIONS: Weapon[] = ['shield', 'daggers', 'scythe', 'wand']
+const TRAITS: { value: Trait; label: string }[] = [{value:'survive',label:'Survive'},{value:'orbital',label:'Orbital'},{value:'range',label:'Range'},{value:'melee',label:'Melee'}]
+const SUBTRAITS: { value: SubTrait; label: string }[] = [{value:'offense',label:'Offense'},{value:'defense',label:'Defense'}]
+const CATEGORIES: { value: Category; label: string }[] = [{value:'speedster',label:'Speedster'},{value:'elemental',label:'Elemental'}]
+
+const distanceBetween = (a: Fighter, b: Fighter) => Math.hypot(b.x - a.x, b.y - a.y)
 
 export default function ToolsWarsGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -28,6 +36,12 @@ export default function ToolsWarsGame() {
   const [rightName, setRightName] = useState('RAVEN')
   const [leftRadius, setLeftRadius] = useState(27)
   const [rightRadius, setRightRadius] = useState(27)
+  const [leftTrait, setLeftTrait] = useState<Trait>('orbital')
+  const [rightTrait, setRightTrait] = useState<Trait>('melee')
+  const [leftSubTrait, setLeftSubTrait] = useState<SubTrait>('offense')
+  const [rightSubTrait, setRightSubTrait] = useState<SubTrait>('defense')
+  const [leftCategory, setLeftCategory] = useState<Category>('speedster')
+  const [rightCategory, setRightCategory] = useState<Category>('elemental')
   const [playing, setPlaying] = useState(true)
   const [roundKey, setRoundKey] = useState(0)
   const [winner, setWinner] = useState<string | null>(null)
@@ -50,8 +64,8 @@ export default function ToolsWarsGame() {
     let raf = 0
     let last = 0
     let frame = 0
-    let left: Fighter = { x: 0, y: 0, vx: 3.1, vy: 2.2, hp: 100, maxHp: 100, radius: leftRadius, cooldown: 0, flash: 0, facing: 1, weapon: leftWeapon, color: leftColor, name: leftName || 'NOVA', side: 'left' }
-    let right: Fighter = { x: 0, y: 0, vx: -3.1, vy: -2.1, hp: 100, maxHp: 100, radius: rightRadius, cooldown: 0, flash: 0, facing: -1, weapon: rightWeapon, color: rightColor, name: rightName || 'RAVEN', side: 'right' }
+    let left: Fighter = { x: 0, y: 0, vx: 3.1, vy: 2.2, hp: 100, maxHp: 100, radius: leftRadius, cooldown: 0, flash: 0, facing: 1, weapon: leftWeapon, color: leftColor, name: leftName || 'NOVA', side: 'left', trait: leftTrait, subTrait: leftSubTrait, category: leftCategory }
+    let right: Fighter = { x: 0, y: 0, vx: -3.1, vy: -2.1, hp: 100, maxHp: 100, radius: rightRadius, cooldown: 0, flash: 0, facing: -1, weapon: rightWeapon, color: rightColor, name: rightName || 'RAVEN', side: 'right', trait: rightTrait, subTrait: rightSubTrait, category: rightCategory }
     let shots: Shot[] = []
     let ended = false
     const resize = () => {
@@ -66,7 +80,9 @@ export default function ToolsWarsGame() {
     resize()
     window.addEventListener('resize', resize)
     const drawWeapon = (f: Fighter, t: number) => {
-      ctx.save(); ctx.translate(f.x, f.y); ctx.scale(f.facing, 1)
+      ctx.save(); ctx.translate(f.x, f.y)
+      if (f.trait === 'orbital') ctx.rotate(t / 250 * (f.side === 'left' ? 1 : -1))
+      ctx.scale(f.facing, 1)
       ctx.lineCap = 'round'; ctx.lineJoin = 'round'
       if (f.weapon === 'shield') {
         ctx.fillStyle = '#a5f3fc'; ctx.strokeStyle = '#e0faff'; ctx.lineWidth = 2
@@ -116,11 +132,12 @@ export default function ToolsWarsGame() {
       }
       const dx = other.x - f.x, dy = other.y - f.y
       if (Math.abs(dx) < spec.reach && Math.abs(dy) < (f.weapon === 'scythe' ? 92 : 58) && Math.sign(dx || f.facing) === f.facing) {
-        const dmg = spec.damage
+        const baseDamage = spec.damage * (f.subTrait === 'offense' ? 1.2 : 1) * (f.category === 'elemental' ? 1.08 : 1) * (f.trait === 'melee' && distanceBetween(f, other) < 90 ? 1.15 : 1)
+        const block = other.weapon === 'shield' ? .55 : 1
+        const defense = other.trait === 'survive' ? .68 : other.subTrait === 'defense' ? .78 : 1
+        const dmg = baseDamage * block * defense
         other.hp = Math.max(0, other.hp - dmg)
         other.flash = 9
-        const block = other.weapon === 'shield' ? .55 : 1
-        other.hp = Math.min(100, other.hp + dmg * (1-block))
         other.vx += f.facing * (f.weapon === 'shield' ? 8 : f.weapon === 'scythe' ? 7 : 5)
         other.vy -= f.weapon === 'shield' ? 3 : 4
       }
@@ -157,13 +174,27 @@ export default function ToolsWarsGame() {
           // Face the opponent for weapon visuals only; movement is physics-only.
           f.facing = dx >= 0 ? 1 : -1
 
-          // Weapons attack automatically when the opponent enters range.
-          if (distance <= spec.reach + f.radius * .35 || f.weapon === 'wand') attack(f, other)
+          // Orbital trait: the weapon physically sweeps around the ball; contact causes damage.
+          if (f.trait === 'orbital') {
+            const angle = now / 250 * (f.side === 'left' ? 1 : -1)
+            const tipX = f.x + Math.cos(angle) * (f.radius + 36)
+            const tipY = f.y + Math.sin(angle) * (f.radius + 36)
+            if (Math.hypot(other.x - tipX, other.y - tipY) < other.radius + 13 && f.cooldown <= 0) {
+              const raw = spec.damage * (f.subTrait === 'offense' ? 1.2 : 1) * (f.category === 'elemental' ? 1.08 : 1)
+              const reduction = other.trait === 'survive' ? .68 : other.subTrait === 'defense' ? .78 : 1
+              other.hp = Math.max(0, other.hp - raw * reduction)
+              other.flash = 10
+              other.vx += Math.cos(angle) * 5
+              other.vy += Math.sin(angle) * 5
+              f.cooldown = f.category === 'speedster' ? 12 : 20
+            }
+          } else if (distance <= (spec.reach + (f.trait === 'range' ? 75 : 0) + f.radius * .35) || f.weapon === 'wand') attack(f, other)
 
           // No gravity, steering AI, or random jumps: preserve momentum and bounce
           // off all four arena boundaries.
-          f.vx = Math.max(-7, Math.min(7, f.vx))
-          f.vy = Math.max(-6, Math.min(6, f.vy))
+          const speedCap = f.category === 'speedster' ? 9 : 7
+          f.vx = Math.max(-speedCap, Math.min(speedCap, f.vx))
+          f.vy = Math.max(-speedCap, Math.min(speedCap, f.vy))
           f.vx *= Math.pow(.999, dt)
           f.vy *= Math.pow(.999, dt)
           f.x += f.vx * dt
@@ -192,7 +223,9 @@ export default function ToolsWarsGame() {
           const target=s.owner==='left'?right:left
           if (Math.hypot(s.x-target.x,s.y-target.y)<target.radius + s.radius) {
             const blocked=target.weapon==='shield'
-            target.hp=Math.max(0,target.hp-WEAPONS.wand.damage*(blocked?.55:1))
+            const defense=target.trait==='survive'?.68:target.subTrait==='defense'?.78:1
+            const elementalBoost=s.owner==='left'?left.category==='elemental':right.category==='elemental'
+            target.hp=Math.max(0,target.hp-WEAPONS.wand.damage*(blocked?.55:1)*defense*(elementalBoost?1.08:1))
             target.flash=10; target.vx+=(s.owner==='left'?1:-1)*4; target.vy-=2
             s.life=0
           }
@@ -221,7 +254,7 @@ export default function ToolsWarsGame() {
     return () => {
       cancelAnimationFrame(raf); window.removeEventListener('resize',resize)
     }
-  }, [leftWeapon,rightWeapon,leftColor,rightColor,leftName,rightName,leftRadius,rightRadius,playing,roundKey,winner])
+  }, [leftWeapon,rightWeapon,leftColor,rightColor,leftName,rightName,leftRadius,rightRadius,leftTrait,rightTrait,leftSubTrait,rightSubTrait,leftCategory,rightCategory,playing,roundKey,winner])
 
   const weaponSelect = (side: 'left' | 'right', value: Weapon) => {
     if (side === 'left') setLeftWeapon(value); else setRightWeapon(value)
@@ -240,7 +273,7 @@ export default function ToolsWarsGame() {
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"/> AUTO BATTLE <span className="hidden sm:inline">• PHYSICS VS WEAPONS</span></div>
         </header>
 
-        <section className="mb-5 rounded-2xl border border-fuchsia-300/20 bg-white/[.04] p-4 sm:p-5"><div className="mb-4 flex items-center gap-2"><Sparkles size={18} className="text-fuchsia-200"/><div><h2 className="text-sm font-black tracking-[.2em]">CUSTOM BALL MAKER</h2><p className="mt-1 text-xs text-slate-400">Bikin identitas bola sendiri: nama, warna, ukuran, dan senjatanya.</p></div></div><div className="grid gap-4 md:grid-cols-2"><div className="rounded-xl border border-cyan-200/15 bg-black/20 p-4"><div className="mb-3 flex items-center gap-3"><div className="grid h-12 w-12 place-items-center rounded-full border-2 border-white/60 shadow-lg" style={{background:leftColor,boxShadow:`0 0 22px ${leftColor}`}}/><div><p className="text-xs font-black tracking-widest text-cyan-200">BALL 01</p><p className="text-[11px] text-slate-400">Custom fighter kiri</p></div></div><label className="mb-1 block text-xs font-bold text-slate-300">Nama bola</label><input maxLength={14} value={leftName} onChange={e=>setLeftName(e.target.value.toUpperCase())} placeholder="NOVA" className="mb-3 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-cyan-300/60"/><div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Warna inti</label><input aria-label="Warna bola 1" type="color" value={leftColor} onChange={e=>setLeftColor(e.target.value)} className="h-9 w-14 cursor-pointer rounded border-0 bg-transparent"/></div><div className="flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Ukuran bola <span className="font-mono text-cyan-200">{leftRadius}px</span></label><input aria-label="Ukuran bola 1" type="range" min={21} max={36} value={leftRadius} onChange={e=>setLeftRadius(Number(e.target.value))} className="w-28 accent-cyan-300"/></div></div><div className="rounded-xl border border-pink-200/15 bg-black/20 p-4"><div className="mb-3 flex items-center gap-3"><div className="grid h-12 w-12 place-items-center rounded-full border-2 border-white/60 shadow-lg" style={{background:rightColor,boxShadow:`0 0 22px ${rightColor}`}}/><div><p className="text-xs font-black tracking-widest text-pink-200">BALL 02</p><p className="text-[11px] text-slate-400">Custom fighter kanan</p></div></div><label className="mb-1 block text-xs font-bold text-slate-300">Nama bola</label><input maxLength={14} value={rightName} onChange={e=>setRightName(e.target.value.toUpperCase())} placeholder="RAVEN" className="mb-3 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-pink-300/60"/><div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Warna inti</label><input aria-label="Warna bola 2" type="color" value={rightColor} onChange={e=>setRightColor(e.target.value)} className="h-9 w-14 cursor-pointer rounded border-0 bg-transparent"/></div><div className="flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Ukuran bola <span className="font-mono text-pink-200">{rightRadius}px</span></label><input aria-label="Ukuran bola 2" type="range" min={21} max={36} value={rightRadius} onChange={e=>setRightRadius(Number(e.target.value))} className="w-28 accent-pink-300"/></div></div></div></section>
+        <section className="mb-5 rounded-2xl border border-fuchsia-300/20 bg-white/[.04] p-4 sm:p-5"><div className="mb-4 flex items-center gap-2"><Sparkles size={18} className="text-fuchsia-200"/><div><h2 className="text-sm font-black tracking-[.2em]">CUSTOM BALL MAKER</h2><p className="mt-1 text-xs text-slate-400">Bikin identitas bola sendiri: nama, warna, ukuran, dan senjatanya.</p></div></div><div className="grid gap-4 md:grid-cols-2"><div className="rounded-xl border border-cyan-200/15 bg-black/20 p-4"><div className="mb-3 flex items-center gap-3"><div className="grid h-12 w-12 place-items-center rounded-full border-2 border-white/60 shadow-lg" style={{background:leftColor,boxShadow:`0 0 22px ${leftColor}`}}/><div><p className="text-xs font-black tracking-widest text-cyan-200">BALL 01</p><p className="text-[11px] text-slate-400">Custom fighter kiri</p></div></div><label className="mb-1 block text-xs font-bold text-slate-300">Nama bola</label><input maxLength={14} value={leftName} onChange={e=>setLeftName(e.target.value.toUpperCase())} placeholder="NOVA" className="mb-3 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-cyan-300/60"/><div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Warna inti</label><input aria-label="Warna bola 1" type="color" value={leftColor} onChange={e=>setLeftColor(e.target.value)} className="h-9 w-14 cursor-pointer rounded border-0 bg-transparent"/></div><div className="flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Ukuran bola <span className="font-mono text-cyan-200">{leftRadius}px</span></label><input aria-label="Ukuran bola 1" type="range" min={21} max={36} value={leftRadius} onChange={e=>setLeftRadius(Number(e.target.value))} className="w-28 accent-cyan-300"/></div></div><div className="rounded-xl border border-pink-200/15 bg-black/20 p-4"><div className="mb-3 flex items-center gap-3"><div className="grid h-12 w-12 place-items-center rounded-full border-2 border-white/60 shadow-lg" style={{background:rightColor,boxShadow:`0 0 22px ${rightColor}`}}/><div><p className="text-xs font-black tracking-widest text-pink-200">BALL 02</p><p className="text-[11px] text-slate-400">Custom fighter kanan</p></div></div><label className="mb-1 block text-xs font-bold text-slate-300">Nama bola</label><input maxLength={14} value={rightName} onChange={e=>setRightName(e.target.value.toUpperCase())} placeholder="RAVEN" className="mb-3 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-pink-300/60"/><div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Warna inti</label><input aria-label="Warna bola 2" type="color" value={rightColor} onChange={e=>setRightColor(e.target.value)} className="h-9 w-14 cursor-pointer rounded border-0 bg-transparent"/></div><div className="flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Ukuran bola <span className="font-mono text-pink-200">{rightRadius}px</span></label><input aria-label="Ukuran bola 2" type="range" min={21} max={36} value={rightRadius} onChange={e=>setRightRadius(Number(e.target.value))} className="w-28 accent-pink-300"/></div><div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3"><label className="text-xs text-slate-300">Trait<select value={leftTrait} onChange={e=>{setLeftTrait(e.target.value as Trait);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="survive">Survive</option><option value="orbital">Orbital</option><option value="range">Range</option><option value="melee">Melee</option></select></label><label className="text-xs text-slate-300">Sub-trait<select value={leftSubTrait} onChange={e=>{setLeftSubTrait(e.target.value as SubTrait);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="offense">Offense</option><option value="defense">Defense</option></select></label><label className="text-xs text-slate-300">Sub-category<select value={leftCategory} onChange={e=>{setLeftCategory(e.target.value as Category);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="speedster">Speedster</option><option value="elemental">Elemental</option></select></label></div></div><div className="rounded-xl border border-pink-200/15 bg-black/20 p-4"><div className="mb-3 flex items-center gap-3"><div className="grid h-12 w-12 place-items-center rounded-full border-2 border-white/60 shadow-lg" style={{background:rightColor,boxShadow:`0 0 22px ${rightColor}`}}/><div><p className="text-xs font-black tracking-widest text-pink-200">BALL 02</p><p className="text-[11px] text-slate-400">Custom fighter kanan</p></div></div><label className="mb-1 block text-xs font-bold text-slate-300">Nama bola</label><input maxLength={14} value={rightName} onChange={e=>setRightName(e.target.value.toUpperCase())} placeholder="RAVEN" className="mb-3 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-pink-300/60"/><div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Warna inti</label><input aria-label="Warna bola 2" type="color" value={rightColor} onChange={e=>setRightColor(e.target.value)} className="h-9 w-14 cursor-pointer rounded border-0 bg-transparent"/></div><div className="flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Ukuran bola <span className="font-mono text-pink-200">{rightRadius}px</span></label><input aria-label="Ukuran bola 2" type="range" min={21} max={36} value={rightRadius} onChange={e=>setRightRadius(Number(e.target.value))} className="w-28 accent-pink-300"/></div><div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3"><label className="text-xs text-slate-300">Trait<select value={rightTrait} onChange={e=>{setRightTrait(e.target.value as Trait);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="survive">Survive</option><option value="orbital">Orbital</option><option value="range">Range</option><option value="melee">Melee</option></select></label><label className="text-xs text-slate-300">Sub-trait<select value={rightSubTrait} onChange={e=>{setRightSubTrait(e.target.value as SubTrait);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="offense">Offense</option><option value="defense">Defense</option></select></label><label className="text-xs text-slate-300">Sub-category<select value={rightCategory} onChange={e=>{setRightCategory(e.target.value as Category);setRoundKey(n=>n+1);setWinner(null);setLeftHp(100);setRightHp(100)}} className="mt-1 w-full rounded-lg border border-white/10 bg-[#17182b] px-2 py-2"><option value="speedster">Speedster</option><option value="elemental">Elemental</option></select></label></div></div></div></section>
 
         <section className="mb-5 grid gap-3 md:grid-cols-2">
           {[{side:'left' as const,title:'PLAYER 1',weapon:leftWeapon,color:'#5dd6ff',hp:leftHp},{side:'right' as const,title:'PLAYER 2',weapon:rightWeapon,color:'#ff5b8a',hp:rightHp}].map((p) => (
