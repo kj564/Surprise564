@@ -197,8 +197,7 @@ export default function ToolsWarsGame() {
           const speedCap = f.category === 'speedster' ? 9 : 7
           f.vx = Math.max(-speedCap, Math.min(speedCap, f.vx))
           f.vy = Math.max(-speedCap, Math.min(speedCap, f.vy))
-          f.vx *= Math.pow(.999, dt)
-          f.vy *= Math.pow(.999, dt)
+          // Perfectly elastic arena bounce: never damp velocity, so motion continues indefinitely.
           f.x += f.vx * dt
           f.y += f.vy * dt
 
