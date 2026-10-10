@@ -28,7 +28,7 @@ export default function ToolsWarsGame() {
   const [rightName, setRightName] = useState('RAVEN')
   const [leftRadius, setLeftRadius] = useState(27)
   const [rightRadius, setRightRadius] = useState(27)
-  const [playing, setPlaying] = useState(false)
+  const [playing, setPlaying] = useState(true)
   const [roundKey, setRoundKey] = useState(0)
   const [winner, setWinner] = useState<string | null>(null)
   const [leftHp, setLeftHp] = useState(100)
@@ -194,7 +194,7 @@ export default function ToolsWarsGame() {
         if (frame%6===0) { setLeftHp(Math.round(left.hp)); setRightHp(Math.round(right.hp)) }
         if (left.hp<=0 || right.hp<=0) {
           ended=true
-          const winnerName=left.hp<=0?'PLAYER 2':'PLAYER 1'
+          const winnerName=left.hp<=0?(right.name || 'RAVEN'):(left.name || 'NOVA')
           setWinner(winnerName)
           setPlaying(false)
         }
@@ -219,7 +219,7 @@ export default function ToolsWarsGame() {
 
   const weaponSelect = (side: 'left' | 'right', value: Weapon) => {
     if (side === 'left') setLeftWeapon(value); else setRightWeapon(value)
-    setPlaying(false); setWinner(null); setLeftHp(100); setRightHp(100)
+    setPlaying(true); setWinner(null); setLeftHp(100); setRightHp(100); setRoundKey(n => n + 1)
   }
 
   return (
@@ -262,9 +262,6 @@ export default function ToolsWarsGame() {
         <section className="mt-5 rounded-2xl border border-white/10 bg-white/[.03] p-4 sm:p-5"><div className="mb-3 flex items-center gap-2"><Trophy size={17} className="text-amber-300"/><h2 className="text-xs font-black tracking-[.25em] text-slate-300">ARSENAL / QUICK GUIDE</h2></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{OPTIONS.map(w=><div key={w} className="flex gap-3 rounded-xl border border-white/5 bg-black/10 p-3"><span className="text-2xl">{WEAPONS[w].icon}</span><div><p className="text-sm font-extrabold" style={{color:WEAPONS[w].color}}>{WEAPONS[w].label}</p><p className="mt-1 text-xs leading-5 text-slate-400">{WEAPONS[w].description}</p></div></div>)}</div></section>
         <footer className="py-6 text-center text-[10px] tracking-[.22em] text-slate-600">TOOLS WARS · AUTO WEAPON BALL SIMULATOR · BUILT TO BOUNCE</footer>
       </div>
-      <style jsx global>{`
-        .keycap { display:inline-flex; min-width:23px; justify-content:center; border:1px solid #ffffff25; border-bottom-width:2px; border-radius:6px; background:#ffffff0b; padding:0 5px; color:#e2e8f0; font:700 10px ui-monospace,monospace; }
-      `}</style>
     </main>
   )
 }
