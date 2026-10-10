@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Swords, RotateCcw, Trophy, Gamepad2, Sparkles } from 'lucide-react'
 
 type Weapon = 'shield' | 'daggers' | 'scythe' | 'wand'
