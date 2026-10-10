@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Swords, Shield, Zap, RotateCcw, Trophy, Gamepad2, Sparkles } from 'lucide-react'
+import { Swords, RotateCcw, Trophy, Gamepad2, Sparkles } from 'lucide-react'
 
 type Weapon = 'shield' | 'daggers' | 'scythe' | 'wand'
 type Fighter = {
@@ -28,7 +28,6 @@ export default function ToolsWarsGame() {
   const [winner, setWinner] = useState<string | null>(null)
   const [leftHp, setLeftHp] = useState(100)
   const [rightHp, setRightHp] = useState(100)
-  const [muted, setMuted] = useState(true)
 
   const resetRound = useCallback(() => {
     keysRef.current.clear()
@@ -50,8 +49,6 @@ export default function ToolsWarsGame() {
     let left: Fighter = { x: 0, y: 0, vx: 3.1, vy: -2, hp: 100, maxHp: 100, cooldown: 0, flash: 0, facing: 1, weapon: leftWeapon, color: '#5dd6ff', name: 'PLAYER 1', controls: 'left' }
     let right: Fighter = { x: 0, y: 0, vx: -3.1, vy: -1, hp: 100, maxHp: 100, cooldown: 0, flash: 0, facing: -1, weapon: rightWeapon, color: '#ff5b8a', name: 'PLAYER 2', controls: 'right' }
     let shots: Shot[] = []
-    let leftShown = 100
-    let rightShown = 100
     let ended = false
     const resize = () => {
       const rect = canvas.getBoundingClientRect()
@@ -262,6 +259,14 @@ export default function ToolsWarsGame() {
           <div className="grid gap-3 border-t border-white/10 bg-black/20 p-4 sm:grid-cols-2 sm:p-5">
             <div><p className="mb-2 text-xs font-black tracking-widest text-cyan-200">PLAYER 1 CONTROLS</p><p className="text-xs leading-6 text-slate-400"><kbd className="keycap">A</kbd> <kbd className="keycap">D</kbd> move · <kbd className="keycap">W</kbd> jump · <kbd className="keycap">F</kbd> attack</p></div>
             <div><p className="mb-2 text-xs font-black tracking-widest text-pink-200">PLAYER 2 CONTROLS</p><p className="text-xs leading-6 text-slate-400"><kbd className="keycap">←</kbd> <kbd className="keycap">→</kbd> move · <kbd className="keycap">↑</kbd> jump · <kbd className="keycap">/</kbd> attack</p></div>
+          </div>
+          <div className="grid gap-3 border-t border-white/10 bg-black/10 p-3 md:hidden sm:grid-cols-2">
+            <div><p className="mb-2 text-[10px] font-black tracking-widest text-cyan-200">TOUCH · PLAYER 1</p><div className="grid grid-cols-4 gap-2">
+              {[{key:'a',label:'◀'},{key:'d',label:'▶'},{key:'w',label:'JUMP'},{key:'f',label:'HIT'}].map(b=><button key={b.key} onPointerDown={e=>{e.preventDefault();hold(b.key,true)}} onPointerUp={()=>hold(b.key,false)} onPointerLeave={()=>hold(b.key,false)} onPointerCancel={()=>hold(b.key,false)} className="min-h-11 rounded-lg border border-cyan-200/20 bg-cyan-300/10 px-2 text-xs font-black text-cyan-100 active:bg-cyan-300/30">{b.label}</button>)}
+            </div></div>
+            <div><p className="mb-2 text-[10px] font-black tracking-widest text-pink-200">TOUCH · PLAYER 2</p><div className="grid grid-cols-4 gap-2">
+              {[{key:'arrowleft',label:'◀'},{key:'arrowright',label:'▶'},{key:'arrowup',label:'JUMP'},{key:'/',label:'HIT'}].map(b=><button key={b.key} onPointerDown={e=>{e.preventDefault();hold(b.key,true)}} onPointerUp={()=>hold(b.key,false)} onPointerLeave={()=>hold(b.key,false)} onPointerCancel={()=>hold(b.key,false)} className="min-h-11 rounded-lg border border-pink-200/20 bg-pink-300/10 px-2 text-xs font-black text-pink-100 active:bg-pink-300/30">{b.label}</button>)}
+            </div></div>
           </div>
         </section>
 
