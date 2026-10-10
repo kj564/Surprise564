@@ -50,8 +50,8 @@ export default function ToolsWarsGame() {
     let raf = 0
     let last = 0
     let frame = 0
-    let left: Fighter = { x: 0, y: 0, vx: 3.1, vy: -2, hp: 100, maxHp: 100, radius: leftRadius, cooldown: 0, flash: 0, facing: 1, weapon: leftWeapon, color: leftColor, name: leftName || 'NOVA', side: 'left' }
-    let right: Fighter = { x: 0, y: 0, vx: -3.1, vy: -1, hp: 100, maxHp: 100, radius: rightRadius, cooldown: 0, flash: 0, facing: -1, weapon: rightWeapon, color: rightColor, name: rightName || 'RAVEN', side: 'right' }
+    let left: Fighter = { x: 0, y: 0, vx: 3.1, vy: 2.2, hp: 100, maxHp: 100, radius: leftRadius, cooldown: 0, flash: 0, facing: 1, weapon: leftWeapon, color: leftColor, name: leftName || 'NOVA', side: 'left' }
+    let right: Fighter = { x: 0, y: 0, vx: -3.1, vy: -2.1, hp: 100, maxHp: 100, radius: rightRadius, cooldown: 0, flash: 0, facing: -1, weapon: rightWeapon, color: rightColor, name: rightName || 'RAVEN', side: 'right' }
     let shots: Shot[] = []
     let ended = false
     const resize = () => {
@@ -61,7 +61,7 @@ export default function ToolsWarsGame() {
       canvas.height = Math.max(1, Math.floor(rect.height * dpr))
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       left.x = rect.width * 0.27; right.x = rect.width * 0.73
-      left.y = right.y = rect.height * 0.47
+      left.y = rect.height * 0.35; right.y = rect.height * 0.65
     }
     resize()
     window.addEventListener('resize', resize)
@@ -153,23 +153,29 @@ export default function ToolsWarsGame() {
           const dy = other.y - f.y
           const distance = Math.max(1, Math.hypot(dx, dy))
           const spec = WEAPONS[f.weapon]
+
+          // Face the opponent for weapon visuals only; movement is physics-only.
           f.facing = dx >= 0 ? 1 : -1
-          // AI steers toward its opponent, but wand users try to keep some distance.
-          const preferred = f.weapon === 'wand' ? 185 : f.weapon === 'scythe' ? 72 : 48
-          if (distance > preferred + 12) f.vx += Math.sign(dx) * (f.weapon === 'wand' ? .10 : .19) * dt
-          else if (distance < preferred - 18) f.vx -= Math.sign(dx) * .14 * dt
-          // Small autonomous hops keep the fight lively without player input.
-          if (f.y >= floor - f.radius - 1 && Math.random() < .012 * dt) f.vy = -5.5 - Math.random() * 2
-          if (Math.abs(dy) > 45 && f.y >= floor - f.radius - 1) f.vx += Math.sign(dx) * .08 * dt
+
+          // Weapons attack automatically when the opponent enters range.
           if (distance <= spec.reach + f.radius * .35 || f.weapon === 'wand') attack(f, other)
-          f.vx = Math.max(-6.5, Math.min(6.5, f.vx))
-          f.vx *= Math.pow(.992,dt); f.vy += .36*dt
-          f.x += f.vx*dt; f.y += f.vy*dt
-          if (f.x < f.radius) { f.x=f.radius; f.vx=Math.abs(f.vx)*.82 }
-          if (f.x > w-f.radius) { f.x=w-f.radius; f.vx=-Math.abs(f.vx)*.82 }
-          if (f.y > floor-f.radius) { f.y=floor-f.radius; f.vy=-Math.abs(f.vy)*.83; if(Math.abs(f.vy)<1.5) f.vy=0 }
-          if (f.y < 55) { f.y=55; f.vy=Math.abs(f.vy)*.7 }
-          f.cooldown = Math.max(0,f.cooldown-dt); f.flash = Math.max(0,f.flash-dt)
+
+          // No gravity, steering AI, or random jumps: preserve momentum and bounce
+          // off all four arena boundaries.
+          f.vx = Math.max(-7, Math.min(7, f.vx))
+          f.vy = Math.max(-6, Math.min(6, f.vy))
+          f.vx *= Math.pow(.999, dt)
+          f.vy *= Math.pow(.999, dt)
+          f.x += f.vx * dt
+          f.y += f.vy * dt
+
+          if (f.x < f.radius) { f.x = f.radius; f.vx = Math.abs(f.vx) }
+          if (f.x > w - f.radius) { f.x = w - f.radius; f.vx = -Math.abs(f.vx) }
+          if (f.y < 55 + f.radius) { f.y = 55 + f.radius; f.vy = Math.abs(f.vy) }
+          if (f.y > floor - f.radius) { f.y = floor - f.radius; f.vy = -Math.abs(f.vy) }
+
+          f.cooldown = Math.max(0, f.cooldown - dt)
+          f.flash = Math.max(0, f.flash - dt)
         }
         step(left,right); step(right,left)
         const dx=right.x-left.x, dy=right.y-left.y, dist=Math.hypot(dx,dy)
@@ -231,7 +237,7 @@ export default function ToolsWarsGame() {
             <div className="grid h-12 w-12 place-items-center rounded-2xl border border-cyan-300/30 bg-cyan-300/10 text-cyan-200 shadow-lg shadow-cyan-500/10"><Swords size={25}/></div>
             <div><p className="text-xs font-bold tracking-[.35em] text-cyan-200">BOUNCING BALL BRAWL</p><h1 className="text-2xl font-black tracking-tight sm:text-3xl">TOOLS <span className="text-fuchsia-300">WARS</span></h1></div>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"/> AUTO BATTLE <span className="hidden sm:inline">• AI VS AI</span></div>
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"/> AUTO BATTLE <span className="hidden sm:inline">• PHYSICS VS WEAPONS</span></div>
         </header>
 
         <section className="mb-5 rounded-2xl border border-fuchsia-300/20 bg-white/[.04] p-4 sm:p-5"><div className="mb-4 flex items-center gap-2"><Sparkles size={18} className="text-fuchsia-200"/><div><h2 className="text-sm font-black tracking-[.2em]">CUSTOM BALL MAKER</h2><p className="mt-1 text-xs text-slate-400">Bikin identitas bola sendiri: nama, warna, ukuran, dan senjatanya.</p></div></div><div className="grid gap-4 md:grid-cols-2"><div className="rounded-xl border border-cyan-200/15 bg-black/20 p-4"><div className="mb-3 flex items-center gap-3"><div className="grid h-12 w-12 place-items-center rounded-full border-2 border-white/60 shadow-lg" style={{background:leftColor,boxShadow:`0 0 22px ${leftColor}`}}/><div><p className="text-xs font-black tracking-widest text-cyan-200">BALL 01</p><p className="text-[11px] text-slate-400">Custom fighter kiri</p></div></div><label className="mb-1 block text-xs font-bold text-slate-300">Nama bola</label><input maxLength={14} value={leftName} onChange={e=>setLeftName(e.target.value.toUpperCase())} placeholder="NOVA" className="mb-3 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-cyan-300/60"/><div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Warna inti</label><input aria-label="Warna bola 1" type="color" value={leftColor} onChange={e=>setLeftColor(e.target.value)} className="h-9 w-14 cursor-pointer rounded border-0 bg-transparent"/></div><div className="flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Ukuran bola <span className="font-mono text-cyan-200">{leftRadius}px</span></label><input aria-label="Ukuran bola 1" type="range" min={21} max={36} value={leftRadius} onChange={e=>setLeftRadius(Number(e.target.value))} className="w-28 accent-cyan-300"/></div></div><div className="rounded-xl border border-pink-200/15 bg-black/20 p-4"><div className="mb-3 flex items-center gap-3"><div className="grid h-12 w-12 place-items-center rounded-full border-2 border-white/60 shadow-lg" style={{background:rightColor,boxShadow:`0 0 22px ${rightColor}`}}/><div><p className="text-xs font-black tracking-widest text-pink-200">BALL 02</p><p className="text-[11px] text-slate-400">Custom fighter kanan</p></div></div><label className="mb-1 block text-xs font-bold text-slate-300">Nama bola</label><input maxLength={14} value={rightName} onChange={e=>setRightName(e.target.value.toUpperCase())} placeholder="RAVEN" className="mb-3 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-pink-300/60"/><div className="mb-3 flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Warna inti</label><input aria-label="Warna bola 2" type="color" value={rightColor} onChange={e=>setRightColor(e.target.value)} className="h-9 w-14 cursor-pointer rounded border-0 bg-transparent"/></div><div className="flex items-center justify-between gap-3"><label className="text-xs font-bold text-slate-300">Ukuran bola <span className="font-mono text-pink-200">{rightRadius}px</span></label><input aria-label="Ukuran bola 2" type="range" min={21} max={36} value={rightRadius} onChange={e=>setRightRadius(Number(e.target.value))} className="w-28 accent-pink-300"/></div></div></div></section>
@@ -250,12 +256,12 @@ export default function ToolsWarsGame() {
 
         <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#121426] shadow-2xl shadow-black/40">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-5"><div className="flex items-center gap-2 text-sm font-extrabold"><Gamepad2 size={17} className="text-cyan-200"/> THE ARENA <span className="text-xs font-normal text-slate-500">/ ROUND {roundKey || 1}</span></div><div className="flex gap-2"><span className="rounded-full bg-cyan-300/10 px-3 py-1 text-[10px] font-bold tracking-widest text-cyan-200">BOUNCE PHYSICS</span><span className="rounded-full bg-fuchsia-300/10 px-3 py-1 text-[10px] font-bold tracking-widest text-fuchsia-200">WEAPON COMBAT</span></div></div>
-          <canvas ref={canvasRef} className="block h-[340px] w-full sm:h-[430px] md:h-[490px]" aria-label="Arena game Tools Wars. Player one uses A D W F. Player two uses arrow keys and slash."/>
-          <div className="border-t border-white/10 bg-black/20 px-4 py-3 text-center text-xs text-slate-400">AUTO SIMULATION · Bola bergerak, memilih jarak, melompat, dan menyerang sendiri. Kamu cukup memilih build dan menonton pertarungan.</div>
+          <canvas ref={canvasRef} className="block h-[340px] w-full sm:h-[430px] md:h-[490px]" aria-label="Arena game Tools Wars: bola memantul tanpa gravitasi dan senjata menyerang otomatis."/>
+          <div className="border-t border-white/10 bg-black/20 px-4 py-3 text-center text-xs text-slate-400">AUTO SIMULATION · Bola bergerak dan memantul tanpa gravitasi; senjata menyerang otomatis saat lawan terjangkau.</div>
         </section>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-          <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[.035] p-4"><Sparkles size={20} className="mt-0.5 shrink-0 text-amber-200"/><div><p className="text-sm font-bold">Atur matchup, lalu saksikan pertarungan.</p><p className="mt-1 text-xs leading-5 text-slate-400">Kedua bola dikendalikan AI: bergerak, menjaga jarak sesuai senjata, melompat, dan menyerang otomatis.</p></div></div>
+          <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[.035] p-4"><Sparkles size={20} className="mt-0.5 shrink-0 text-amber-200"/><div><p className="text-sm font-bold">Atur matchup, lalu saksikan pertarungan.</p><p className="mt-1 text-xs leading-5 text-slate-400">Bola bergerak hanya berdasarkan momentum dan pantulan arena. Senjata menyerang otomatis saat lawan masuk jangkauan.</p></div></div>
           <button onClick={resetRound} className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-fuchsia-500 px-7 py-4 text-sm font-black tracking-wide text-[#090b17] shadow-lg shadow-fuchsia-500/20 transition hover:scale-[1.02] active:scale-[.98]"><RotateCcw size={18}/>{winner ? 'REMATCH' : playing ? 'RESET & FIGHT' : 'MULAI PERTARUNGAN'}</button>
         </div>
 
