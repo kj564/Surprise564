@@ -1621,10 +1621,17 @@
       toast('Pengaturan diterapkan');
     });
     canvas.addEventListener('click', startGame);
+    function clearPressedKeys() {
+      for (const code of Object.keys(keys)) keys[code] = false;
+      // A Space tap before focus loss must not combine with a tap after refocus.
+      lastSpaceTime = 0;
+    }
     document.addEventListener('pointerlockchange', () => {
       locked = document.pointerLockElement === canvas;
+      if (!locked) clearPressedKeys();
       overlay.classList.toggle('hidden', locked || inventoryOpen);
     });
+    window.addEventListener('blur', clearPressedKeys);
     document.addEventListener('mousemove', (e) => {
       if (!locked) return;
       const sens = 0.0024;
