@@ -1410,7 +1410,12 @@
     }
     function collidesAABB(px, py, pz) {
       const w = player.width / 2, h = player.height;
-      const x0 = px - w, x1 = px + w, y0 = py, y1 = py + h, z0 = pz - w, z1 = pz + w;
+      // Shrink the tested AABB by a tiny epsilon so merely touching a voxel
+      // face does not count as an overlap (notably at integer coordinates).
+      const epsilon = 1e-7;
+      const x0 = px - w + epsilon, x1 = px + w - epsilon;
+      const y0 = py + epsilon, y1 = py + h - epsilon;
+      const z0 = pz - w + epsilon, z1 = pz + w - epsilon;
       for (let bx = Math.floor(x0); bx <= Math.floor(x1); bx++) {
         for (let by = Math.floor(y0); by <= Math.floor(y1); by++) {
           for (let bz = Math.floor(z0); bz <= Math.floor(z1); bz++) {
@@ -1513,7 +1518,7 @@
       if (!hit) return;
       const id = world.getBlock(hit.x, hit.y, hit.z);
       if (id === 11) { toast('Bedrock tidak bisa dihancurkan'); return; }
-      world.setBlock(hit.x, hit.y, hit.z, 0);
+      if (!id || !world.setBlock(hit.x, hit.y, hit.z, 0)) return;
       remeshAround(hit.x, hit.y, hit.z);
       spawnBreakParticles(hit.x, hit.y, hit.z, id);
       playSound('break', id);
@@ -1529,7 +1534,11 @@
                       (player.pos.z + w > pz && player.pos.z - w < pz + 1);
       if (overlap) return;
       const id = HOTBAR[selectedSlot];
-      world.setBlock(px, py, pz, id);
+      // Placement may replace air or water, but must never overwrite another
+      // solid block if a ray/face edge resolves to an occupied target voxel.
+      const existing = world.getBlock(px, py, pz);
+      if (existing !== 0 && existing !== 19) return;
+      if (!world.setBlock(px, py, pz, id)) return;
       remeshAround(px, py, pz);
       playSound('place', id);
     }
