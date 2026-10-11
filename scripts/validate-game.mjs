@@ -41,6 +41,13 @@ if (source.includes('class="hud-brand">VoxelCraft') && source.includes('Overworl
   fail('Browser HUD should mirror the Behavior Pack action-bar layout');
 }
 
+if (source.includes('id="pauseOverlay"') && source.includes('id="resumeGameButton"') &&
+    source.includes('function syncMenuVisibility()') && source.includes('gameStarted && locked && !inventoryOpen && !vcGuideOpen')) {
+  pass('Bedrock-style pause screen is distinct from the title menu and pauses gameplay systems');
+} else {
+  fail('Pause screen must be separate from the title menu and pause gameplay systems');
+}
+
 const vanillaUiTextures = [
   'menubackground',
   'background_panel', 'background_with_border', 'button_borderless_dark',
