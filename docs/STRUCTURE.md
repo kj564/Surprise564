@@ -7,7 +7,7 @@ Surprise564/
 ├── public/                       # Static assets served by GitHub Pages (via Next.js export)
 │   ├── minecraft.html            # ★ Browser voxel game (Three.js, self-contained)
 │   └── VoxelCraft/
-│       └── textures/blocks/      #   Only the 24 textures minecraft.html uses
+│       └── textures/blocks/      #   Atlas source textures staged from vanilla RP
 │
 ├── src/
 │   └── app/
@@ -71,5 +71,5 @@ Surprise564/
 ## Why two copies of textures?
 
 - `VoxelCraft/` holds the **complete** 18,417-file vanilla resource pack so contributors can grab any texture they want for the browser game.
-- `public/VoxelCraft/textures/blocks/` holds only the 24 textures the browser game actually references today, to keep the GitHub Pages deployment small and fast.
-- `scripts/setup.sh` re-syncs the 24 textures from the full pack if they go missing.
+- `public/VoxelCraft/textures/blocks/` contains the browser atlas source textures at runtime. Setup and the Pages workflow sync the required PNGs from `VoxelCraft/textures/blocks/`; four ore tiles are generated procedurally by `buildAtlas()`. The source list is kept aligned with `TEXTURE_FILES` in `public/minecraft.html`.
+- `scripts/setup.sh` re-syncs all required source textures from the full pack; the Pages workflow does the same before building and fails if a required source PNG is missing.
