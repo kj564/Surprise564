@@ -92,6 +92,18 @@ for name in "${UI_REQUIRED[@]}"; do
   if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then cp "$src" "$dst"; echo "    staged UI $name.png"; fi
 done
 
+# Stage the original item sprites referenced by the Behavior Pack ActionForm menu.
+ITEM_TEX_DIR="public/VoxelCraft/textures/items"
+SRC_ITEM_DIR="VoxelCraft/textures/items"
+ITEM_REQUIRED=(book_writable apple feather clock_item bed_red compass_item book_normal)
+mkdir -p "$ITEM_TEX_DIR"
+for name in "${ITEM_REQUIRED[@]}"; do
+  src="$SRC_ITEM_DIR/$name.png"
+  dst="$ITEM_TEX_DIR/$name.png"
+  if [ ! -f "$src" ]; then echo "Missing Behavior Pack menu icon source: $src"; exit 1; fi
+  if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then cp "$src" "$dst"; echo "    staged item icon $name.png"; fi
+done
+
 echo "==> [3/3] Installing browser-game dependencies (bun)…"
 if command -v bun >/dev/null 2>&1; then
   bun install --frozen-lockfile
