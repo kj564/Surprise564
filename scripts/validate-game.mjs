@@ -90,6 +90,16 @@ if (!source.includes('invalidateChunk(cx - 1, cz)') ||
   fail('World.setBlock must invalidate loaded neighbors at all four horizontal chunk boundaries');
 } else pass('Block edits invalidate loaded chunks across all four horizontal boundaries');
 
+if (!source.includes('const epsilon = 1e-7')) fail('Player AABB collision must tolerate exact voxel-face contact');
+else pass('Player collision ignores zero-area contact at voxel faces');
+if (!source.includes('existing !== 0 && existing !== 19') ||
+    !source.includes('if (!world.setBlock(px, py, pz, id)) return;')) {
+  fail('Block placement must only replace air/water and must honor setBlock validation');
+} else pass('Block placement cannot overwrite occupied voxels and honors world bounds');
+if (!source.includes('if (!id || !world.setBlock(hit.x, hit.y, hit.z, 0)) return;')) {
+  fail('Block breaking must honor the world mutation result');
+} else pass('Block breaking stops when the world rejects a mutation');
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
