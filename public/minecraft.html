@@ -76,6 +76,41 @@
   }
   #toast.show { opacity: 1; }
 
+  /* Minecraft-inspired main menu */
+  #overlay {
+    background: linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.42));
+    backdrop-filter: none; cursor: default; padding: 24px; overflow-y: auto;
+  }
+  #overlay .menu-wrap { width: min(440px, 94vw); display:flex; flex-direction:column; align-items:center; margin:auto; }
+  #overlay .brand { position:relative; margin-bottom:30px; transform:scaleX(1.03); }
+  #overlay h1 { font-family: Impact, 'Arial Black', sans-serif; font-size:clamp(48px, 8vw, 76px); line-height:.92; letter-spacing:-2px; color:#fff; -webkit-text-stroke:2px #242424; text-shadow:4px 5px 0 #252525, 7px 8px 0 rgba(0,0,0,.45); margin:0; }
+  #overlay h1 span { color:#76d84c; }
+  #overlay .edition { font-size:12px; letter-spacing:5px; margin-top:12px; color:#e8e8e8; text-shadow:2px 2px #222; }
+  #overlay .splash { position:absolute; right:-94px; top:22px; color:#ffff00; font-size:16px; font-weight:900; white-space:nowrap; transform:rotate(-18deg); text-shadow:2px 2px #333; animation:splashPulse 1.2s ease-in-out infinite alternate; }
+  @keyframes splashPulse { to { transform:rotate(-18deg) scale(1.08); } }
+  #overlay .menu-buttons { width:100%; display:grid; gap:8px; }
+  #overlay button { width:100%; min-height:42px; padding:9px 14px; border:2px solid #171717; border-radius:2px; color:#fff; font-size:15px; font-weight:600; letter-spacing:.2px; text-shadow:2px 2px #333; background:linear-gradient(#777,#555); box-shadow:inset 2px 2px rgba(255,255,255,.28), inset -2px -3px rgba(0,0,0,.25), 0 2px 0 rgba(0,0,0,.4); cursor:pointer; }
+  #overlay button:hover, #overlay button:focus-visible { outline:none; background:linear-gradient(#91b5c9,#66899c); border-color:#fff; }
+  #overlay .button-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  #overlay .menu-foot { display:flex; justify-content:space-between; gap:12px; width:100%; margin-top:22px; font-size:11px; color:#eee; text-shadow:1px 1px #222; }
+  #overlay .menu-foot span:last-child { text-align:right; }
+  #overlay .menu-subtitle { font-size:12px; color:#f1f1f1; margin:0 0 18px; text-shadow:1px 2px #222; }
+  #overlay .keys { display:none; }
+  #overlay .cta { display:none; }
+  #overlay .settings-panel { display:none; width:100%; margin-top:12px; padding:14px; background:rgba(0,0,0,.8); border:2px solid #777; }
+  #overlay .settings-panel.open { display:block; }
+  #overlay .settings-panel h2 { font-size:17px; margin-bottom:12px; text-shadow:2px 2px #222; }
+  #overlay .settings-panel label { display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:13px; margin:10px 0; }
+  #overlay .settings-panel select { max-width:58%; padding:5px; background:#333; color:#fff; border:1px solid #aaa; }
+  #overlay .settings-panel .settings-close { margin-top:8px; }
+  #overlay p { max-width:none; }
+  @media (max-width:560px) {
+    #overlay { padding:16px; }
+    #overlay .brand { margin-bottom:26px; }
+    #overlay .splash { right:-56px; top:4px; font-size:12px; }
+    #overlay .menu-foot { font-size:10px; }
+  }
+
   /* Mobile touch hint */
   @media (hover: none) and (pointer: coarse) {
     #overlay .mobile-hint { display: block; }
@@ -96,20 +131,32 @@
   </div>
 
   <div id="overlay" class="hidden">
-    <h1>Voxel<span>Craft</span></h1>
-    <p>Minecraft sungguhan, jalan langsung di browser — memakai tekstur asli Minecraft Bedrock.</p>
-    <div class="cta">▶ Klik untuk Bermain</div>
-    <div class="keys">
-      <b>WASD</b><span>Bergerak</span>
-      <b>Mouse</b><span>Lihat sekeliling</span>
-      <b>Spasi</b><span>Lompat / terbang ke atas</span>
-      <b>Shift</b><span>Sneak / turun (terbang)</span>
-      <b>2× Spasi</b><span>Toggle mode terbang</span>
-      <b>Klik Kiri</b><span>Hancurkan blok</span>
-      <b>Klik Kanan</b><span>Letakkan blok</span>
-      <b>1–9 / Scroll</b><span>Pilih blok</span>
-      <b>K</b><span>Simpan dunia</span>
-      <b>Esc</b><span>Keluar dari kursor</span>
+    <div class="menu-wrap">
+      <div class="brand">
+        <h1>VOXEL<span>CRAFT</span></h1>
+        <div class="edition">BROWSER EDITION</div>
+        <div class="splash">Build something amazing!</div>
+      </div>
+      <p class="menu-subtitle">A world of blocks awaits.</p>
+      <div class="menu-buttons">
+        <button id="playButton">Singleplayer</button>
+        <button id="multiplayerButton">Multiplayer</button>
+        <div class="button-row">
+          <button id="optionsButton">Options...</button>
+          <button id="quitButton">Quit Game</button>
+        </div>
+      </div>
+      <div id="settingsPanel" class="settings-panel">
+        <h2>Game Options</h2>
+        <label for="renderQuality">Render Quality
+          <select id="renderQuality"><option value="high">High</option><option value="balanced" selected>Balanced</option><option value="low">Low</option></select>
+        </label>
+        <label for="menuFov">Field of View
+          <select id="menuFov"><option value="70">70</option><option value="80" selected>80</option><option value="90">90</option><option value="100">100</option></select>
+        </label>
+        <button id="saveOptionsButton" class="settings-close">Done</button>
+      </div>
+      <div class="menu-foot"><span>VoxelCraft 3D · Browser Edition</span><span>Not an official Minecraft product.</span></div>
     </div>
   </div>
 
@@ -782,6 +829,7 @@
     // ---- Input ----
     // The start overlay covers the canvas, so its click must request pointer lock too.
     function startGame() {
+      if (settingsPanel) settingsPanel.classList.remove('open');
       if (!locked && canvas.requestPointerLock) {
         const result = canvas.requestPointerLock();
         if (result && typeof result.catch === 'function') {
@@ -792,8 +840,29 @@
         }
       }
     }
+    const playButton = document.getElementById('playButton');
+    const multiplayerButton = document.getElementById('multiplayerButton');
+    const optionsButton = document.getElementById('optionsButton');
+    const quitButton = document.getElementById('quitButton');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const saveOptionsButton = document.getElementById('saveOptionsButton');
+    const menuFov = document.getElementById('menuFov');
+    const renderQuality = document.getElementById('renderQuality');
+
+    playButton.addEventListener('click', startGame);
+    multiplayerButton.addEventListener('click', () => toast('Multiplayer belum tersedia — saat ini mode Singleplayer aktif.'));
+    optionsButton.addEventListener('click', () => settingsPanel.classList.toggle('open'));
+    quitButton.addEventListener('click', () => toast('Terima kasih sudah bermain VoxelCraft! Tab browser bisa ditutup.'));
+    saveOptionsButton.addEventListener('click', () => {
+      camera.fov = Number(menuFov.value);
+      camera.updateProjectionMatrix();
+      const pixelRatio = renderQuality.value === 'high' ? Math.min(window.devicePixelRatio || 1, 2) : renderQuality.value === 'low' ? 0.75 : Math.min(window.devicePixelRatio || 1, 1.25);
+      renderer.setPixelRatio(pixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      settingsPanel.classList.remove('open');
+      toast('Pengaturan diterapkan');
+    });
     canvas.addEventListener('click', startGame);
-    overlay.addEventListener('click', startGame);
     document.addEventListener('pointerlockchange', () => {
       locked = document.pointerLockElement === canvas;
       overlay.classList.toggle('hidden', locked);
