@@ -1448,7 +1448,7 @@
     }
     function toggleInventory() {
       const opening = !inventoryOpen;
-      if (opening) inventoryReturnToGame = locked;
+      if (opening) inventoryReturnToGame = locked || inventoryReturnToGame;
       inventoryOpen = opening;
       inventoryEl.classList.toggle('hidden', !inventoryOpen);
       // Update both overlays immediately; do not wait for pointerlockchange.
@@ -1830,6 +1830,7 @@
       if (id === 11) { toast('Bedrock tidak bisa dihancurkan'); return; }
       if (!id || !world.setBlock(hit.x, hit.y, hit.z, 0)) return;
       remeshAround(hit.x, hit.y, hit.z);
+      browserBlocksBroken++;
       spawnBreakParticles(hit.x, hit.y, hit.z, id);
       playSound('break', id);
     }
@@ -1850,6 +1851,7 @@
       if (existing !== 0 && existing !== 19) return;
       if (!world.setBlock(px, py, pz, id)) return;
       remeshAround(px, py, pz);
+      browserBlocksPlaced++;
       playSound('place', id);
     }
     function remeshAround(wx, wy, wz) {
@@ -1915,12 +1917,12 @@
     function closeVcGuide(resume = true) {
       vcGuideOpen = false;
       vcGuide.classList.add('hidden');
-      overlay.classList.toggle('hidden', locked || inventoryOpen || vcGuideOpen);
       const shouldResume = resume && vcGuideReturnToGame;
+      overlay.classList.toggle('hidden', locked || inventoryOpen || vcGuideOpen || shouldResume);
       vcGuideReturnToGame = false;
       if (shouldResume && canvas.requestPointerLock) {
         const result = canvas.requestPointerLock();
-        if (result && typeof result.catch === 'function') result.catch(() => toast('Klik layar game untuk melanjutkan'));
+        if (result && typeof result.catch === 'function') result.catch(() => { overlay.classList.remove('hidden'); toast('Klik layar game untuk melanjutkan'); });
       }
     }
     vcGuide.querySelectorAll('[data-vc-action]').forEach((button) => {
@@ -1938,7 +1940,7 @@
           case 'day': worldTime = 0.5; toast('Waktu diatur ke siang'); updateVcGuideBody(false); break;
           case 'night': worldTime = 0; toast('Waktu diatur ke malam'); updateVcGuideBody(false); break;
           case 'stats': updateVcGuideBody(true); break;
-          case 'inventory': closeVcGuide(false); toggleInventory(); break;
+          case 'inventory': { const resumeAfterInventory = vcGuideReturnToGame; closeVcGuide(false); inventoryReturnToGame = resumeAfterInventory; toggleInventory(); break; }
           case 'close': closeVcGuide(true); break;
         }
       });
