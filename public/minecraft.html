@@ -1167,7 +1167,12 @@
         img.onload = () => {
           const col = i % ATLAS_COLS, row = Math.floor(i / ATLAS_COLS);
           ctx.globalCompositeOperation = 'source-over';
-          ctx.drawImage(img, 0, 0, TILE_PX, TILE_PX, col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX);
+          // Normalize each source texture to one full 16×16 atlas tile.
+          // Using a 16×16 source crop here silently cuts off larger PNGs (for example,
+          // textures supplied at 32×32 or 64×64) and makes their patterns look misaligned.
+          const sourceWidth = img.naturalWidth || img.width;
+          const sourceHeight = img.naturalHeight || img.height;
+          ctx.drawImage(img, 0, 0, sourceWidth, sourceHeight, col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX);
           // apply biome tint for grass/leaves (multiply)
           const tint = TINTS[name];
           if (tint) {
