@@ -359,6 +359,23 @@
     #hud { max-width: 65vw; font-size: 10px; }
   }
 
+
+  /* Native Bedrock hotbar end caps, scaled to the browser hotbar. */
+  #hotbar::before, #hotbar::after {
+    content: "";
+    display: block;
+    flex: 0 0 5px;
+    width: 5px;
+    height: 46px;
+    align-self: center;
+    margin: -4px 0;
+    background-size: 100% 100%;
+    image-rendering: pixelated;
+    pointer-events: none;
+  }
+  #hotbar::before { background-image: url('./VoxelCraft/textures/ui/hotbar_start_cap.png'); }
+  #hotbar::after { background-image: url('./VoxelCraft/textures/ui/hotbar_end_cap.png'); }
+
 </style>
 </head>
 <body>
