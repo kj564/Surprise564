@@ -587,14 +587,15 @@
 
     // Fail fast if a future edit adds a tile without its matching atlas image,
     // reuses an index, or silently exceeds the fixed atlas dimensions.
-    const TILE_INDICES = Object.values(TILE);
+    const TILE_ENTRIES = Object.entries(TILE);
+    const TILE_INDICES = TILE_ENTRIES.map(([, index]) => index);
     if (TEXTURE_FILES.length > ATLAS_COLS * ATLAS_ROWS) {
       throw new Error('[VoxelCraft] Texture atlas capacity exceeded: ' + TEXTURE_FILES.length);
     }
     if (TILE_INDICES.length !== TEXTURE_FILES.length ||
         new Set(TILE_INDICES).size !== TILE_INDICES.length ||
-        Math.max(...TILE_INDICES) !== TEXTURE_FILES.length - 1) {
-      throw new Error('[VoxelCraft] TILE indices and TEXTURE_FILES are out of sync.');
+        TILE_INDICES.some((index, position) => index !== position)) {
+      throw new Error('[VoxelCraft] TILE declaration order/indices and TEXTURE_FILES are out of sync.');
     }
 
     // Face definitions: dir, corners (CCW from outside), uv mapping

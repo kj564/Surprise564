@@ -17,6 +17,7 @@ function section(pattern, label) {
 const tileSource = section(/const TILE = \{([\s\S]*?)\n    \};/, 'TILE');
 const tileEntries = [...tileSource.matchAll(/\b([A-Z][A-Z0-9_]*):\s*(\d+)/g)];
 const tiles = new Map(tileEntries.map(([, name, index]) => [name, Number(index)]));
+const declaredTileIndices = tileEntries.map(([, , index]) => Number(index));
 const textureSource = section(/const TEXTURE_FILES = \[([\s\S]*?)\n    \];/, 'TEXTURE_FILES');
 const textures = [...textureSource.matchAll(/'([^']+)'/g)].map(([, name]) => name);
 const blockSource = section(/const BLOCKS = \{([\s\S]*?)\n    \};/, 'BLOCKS');
@@ -33,6 +34,9 @@ const expectedIndices = Array.from({ length: tileIndices.length }, (_, i) => i);
 if ([...tileIndices].sort((a, b) => a - b).some((value, i) => value !== expectedIndices[i])) {
   fail('TILE indices must be contiguous from 0');
 } else pass('Texture tile indices are contiguous from 0');
+if (declaredTileIndices.some((value, i) => value !== i)) {
+  fail('TILE declaration order must match TEXTURE_FILES array positions');
+} else pass('TILE declaration order matches TEXTURE_FILES array positions');
 
 if (textures.length !== tiles.size) fail(`TILE/TEXTURE_FILES count mismatch: ${tiles.size} vs ${textures.length}`);
 else pass('TILE and TEXTURE_FILES have matching lengths');
