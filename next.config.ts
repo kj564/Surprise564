@@ -8,9 +8,7 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // Do not publish a static site when TypeScript has errors.
   reactStrictMode: false,
 };
 
