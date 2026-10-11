@@ -92,6 +92,13 @@ for name in "${UI_REQUIRED[@]}"; do
   if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then cp "$src" "$dst"; echo "    staged UI $name.png"; fi
 done
 
+# Stage the original Bedrock UI font.
+FONT_SRC="VoxelCraft/font/minecraft-ten.ttf"
+FONT_DST="public/VoxelCraft/font/minecraft-ten.ttf"
+if [ ! -f "$FONT_SRC" ]; then echo "Missing vanilla UI font source: $FONT_SRC"; exit 1; fi
+mkdir -p "$(dirname "$FONT_DST")"
+if [ ! -f "$FONT_DST" ] || ! cmp -s "$FONT_SRC" "$FONT_DST"; then cp "$FONT_SRC" "$FONT_DST"; echo "    staged Minecraft Ten font"; fi
+
 echo "==> [3/3] Installing browser-game dependencies (bun)…"
 if command -v bun >/dev/null 2>&1; then
   bun install --frozen-lockfile
