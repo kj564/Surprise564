@@ -2768,7 +2768,7 @@
     ],
     "controls": [
       {
-        "voxelcraft_branding.branding_overlay": {
+        "branding_overlay@voxelcraft_branding.branding_overlay": {
           "layer": 20
         }
       },
