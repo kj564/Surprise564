@@ -20,7 +20,7 @@ const tiles = new Map(tileEntries.map(([, name, index]) => [name, Number(index)]
 const textureSource = section(/const TEXTURE_FILES = \[([\s\S]*?)\n    \];/, 'TEXTURE_FILES');
 const textures = [...textureSource.matchAll(/'([^']+)'/g)].map(([, name]) => name);
 const blockSource = section(/const BLOCKS = \{([\s\S]*?)\n    \};/, 'BLOCKS');
-const blockEntries = [...blockSource.matchAll(/^\s*(\d+):\s*(null|\{[^\\n]*\})/gm)];
+const blockEntries = [...blockSource.matchAll(/^\s*(\d+):\s*(null|\{[^\n]*\})/gm)];
 const blocks = new Map(blockEntries.map(([, id, definition]) => [Number(id), definition]));
 
 if (!tiles.size) fail('TILE table is empty');
