@@ -116,6 +116,10 @@ if (!source.includes('const maxStep = 0.25;') ||
   fail('Player movement must use bounded vertical collision substeps to prevent tunneling');
 } else pass('Player vertical movement uses collision substeps to prevent tunneling through blocks');
 
+if (!source.includes("if (e.code === 'Space' && !e.repeat)")) {
+  fail('Space double-tap flight toggle must ignore key-repeat events');
+} else pass('Holding Space cannot trigger repeated flight-mode toggles from keyboard repeat');
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
