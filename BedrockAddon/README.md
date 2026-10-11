@@ -33,6 +33,15 @@ Type these in chat. Read-only commands `!help` and `!stats` are available to all
 ### Auto-save
 - Every 5 minutes (6000 ticks), all player stats are persisted to world dynamic properties.
 
+## One-file installation (recommended)
+
+The repository's **Build native Minecraft Bedrock addon** workflow produces a `VoxelCraft.mcaddon` artifact containing both this Behavior Pack and `VoxelCraftResourcePack/` as separate `.mcpack` archives.
+
+1. Download the `VoxelCraft-Bedrock-Addon` artifact from the latest successful workflow run in GitHub Actions.
+2. Extract the artifact ZIP to get `VoxelCraft.mcaddon`.
+3. Open `VoxelCraft.mcaddon` in Minecraft Bedrock to import both packs.
+4. Enable **VoxelCraft Behavior Pack** in your world. Its manifest declares the Resource Pack dependency so Bedrock can activate the pair together.
+
 ## Install / test
 
 1. Copy the `BedrockAddon/` folder into the Minecraft Bedrock development behavior packs directory, or zip it as a `.mcpack` and double-click to import.
