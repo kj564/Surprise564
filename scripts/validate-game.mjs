@@ -105,6 +105,11 @@ if (!source.includes('if (!Number.isFinite(maxDist) || maxDist < 0) return null;
   fail('Voxel raycast must reject invalid reach and stop before entering a voxel beyond max distance');
 } else pass('Voxel raycast validates reach and enforces the maximum interaction distance');
 
+if (!source.includes("const sprint = keys['ShiftLeft'] && !player.fly;") ||
+    !source.includes('player.speed * (sprint ? 1.5 : 1)')) {
+  fail('Holding left Shift on the ground must enable sprint speed without changing flight controls');
+} else pass('Ground sprint increases movement speed while flight speed remains independent');
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
