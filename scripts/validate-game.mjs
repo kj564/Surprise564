@@ -48,6 +48,14 @@ if (source.includes('id="pauseOverlay"') && source.includes('id="resumeGameButto
   fail('Pause screen must be separate from the title menu and pause gameplay systems');
 }
 
+if (source.includes('data-inv-filter="all"') && source.includes('data-inv-filter="nature"') &&
+    source.includes('data-inv-filter="building"') && source.includes('data-inv-filter="minerals"') &&
+    source.includes('function buildInventory(filter = activeInventoryFilter)')) {
+  pass('Inventory UI has working category tabs for all blocks, nature, building, and minerals');
+} else {
+  fail('Inventory category tabs must filter the browser block catalog');
+}
+
 const vanillaUiTextures = [
   'menubackground',
   'background_panel', 'background_with_border', 'button_borderless_dark',
