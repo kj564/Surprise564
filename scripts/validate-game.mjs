@@ -91,7 +91,7 @@ for (const icon of inventoryTabIcons) {
   }
 }
 if (inventoryTabIcons.every(icon => source.includes(`./VoxelCraft/textures/items/${icon}.png`)) &&
-    source.includes("data-inv-filter=\\"all\\"]::before") &&
+    source.includes('button[data-inv-filter="all"]::before') &&
     source.includes("textures/ui/inventory_icon.png")) {
   pass('Inventory category tabs use original resource-pack icons for all, nature, building, and minerals');
 }
