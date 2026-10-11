@@ -51,6 +51,12 @@ if (source.includes('width: 40px;\n    height: 44px;') && source.includes('width
   fail('Hotbar slot proportions must follow the original Bedrock HUD grid at desktop and mobile scales');
 }
 
+if (source.includes('scaleX(1.2) scaleY(1.09)')) {
+  pass('Selected hotbar slot follows the original Bedrock 24x24 highlight proportions');
+} else {
+  fail('Selected hotbar slot must follow the original Bedrock 24x24 highlight proportions');
+}
+
 const behaviorPackMenuActions = ['kit', 'heal', 'fly', 'day', 'night', 'weather', 'stats', 'close'];
 for (const action of behaviorPackMenuActions) {
   if (!source.includes(`data-vc-action="${action}"`)) {
