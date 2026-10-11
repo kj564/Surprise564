@@ -67,6 +67,12 @@ else
   echo "    All ${#REQUIRED[@]} required textures present."
 fi
 
+# Copy the vanilla Bedrock chicken model and texture for the browser renderer.
+# The browser parses the original Bedrock geometry and uses the matching 64x32 atlas.
+mkdir -p public/VoxelCraft/models/entity public/VoxelCraft/textures/entity/chicken
+cp VoxelCraft/models/entity/chicken.geo.json public/VoxelCraft/models/entity/chicken.geo.json
+cp VoxelCraft/textures/entity/chicken/chicken.png public/VoxelCraft/textures/entity/chicken/chicken.png
+
 echo "==> [3/3] Installing browser-game dependencies (bun)…"
 if command -v bun >/dev/null 2>&1; then
   bun install --frozen-lockfile

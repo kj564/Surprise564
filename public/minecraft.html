@@ -839,36 +839,188 @@
       }
     }
 
-    // ---- Mobs (chicken) ----
+    // ---- Mobs (vanilla Bedrock chicken model + texture) ----
     const mobs = [];
-    const chickenBodyGeom = new THREE.BoxGeometry(0.45, 0.4, 0.55);
-    const chickenHeadGeom = new THREE.BoxGeometry(0.25, 0.25, 0.25);
-    const beakGeom = new THREE.BoxGeometry(0.1, 0.08, 0.12);
-    const legGeom = new THREE.BoxGeometry(0.07, 0.2, 0.07);
-    const chickenMat = new THREE.MeshLambertMaterial({ color: 0xfafafa });
-    const beakMat = new THREE.MeshLambertMaterial({ color: 0xff9900 });
-    const legMat = new THREE.MeshLambertMaterial({ color: 0xff9900 });
-    function spawnChicken(x, y, z) {
+    const CHICKEN_GEOMETRY_URL = new URL('./VoxelCraft/models/entity/chicken.geo.json', window.location.href).href;
+    const CHICKEN_TEXTURE_URL = new URL('./VoxelCraft/textures/entity/chicken/chicken.png', window.location.href).href;
+    let vanillaChickenGeometry = null;
+    let vanillaChickenTexture = null;
+
+    function setBedrockCubeUV(geometry, uv, size, textureWidth, textureHeight) {
+      if (!Array.isArray(uv)) return;
+      const [u, v] = uv;
+      const [w, h, d] = size;
+      // Bedrock's classic cube atlas layout: east, west, up, down, south, north.
+      const rects = [
+        [u, v + d, d, h],
+        [u + d + w, v + d, d, h],
+        [u + d, v, w, d],
+        [u + d + w, v, w, d],
+        [u + d + w + d, v + d, w, h],
+        [u + d, v + d, w, h],
+      ];
+      const attr = geometry.attributes.uv;
+      for (let face = 0; face < 6; face++) {
+        const [ru, rv, rw, rh] = rects[face];
+        const u0 = ru / textureWidth, u1 = (ru + rw) / textureWidth;
+        const vTop = 1 - rv / textureHeight, vBottom = 1 - (rv + rh) / textureHeight;
+        const values = [u1, vTop, u0, vTop, u0, vBottom, u1, vBottom];
+        for (let vertex = 0; vertex < 4; vertex++) {
+          attr.setXY(face * 4 + vertex, values[vertex * 2], values[vertex * 2 + 1]);
+        }
+      }
+      attr.needsUpdate = true;
+    }
+
+    function makeVanillaChickenModel() {
+      if (!vanillaChickenGeometry || !vanillaChickenTexture) return null;
+      const root = new THREE.Group();
+      const bones = new Map();
+      const geometryList = vanillaChickenGeometry['minecraft:geometry'] || [];
+      const model = geometryList.find(g => g.description?.identifier === 'geometry.chicken.v1.12')
+        || geometryList[0];
+      if (!model?.bones) return null;
+      const description = model.description || {};
+      const textureWidth = description.texture_width || 64;
+      const textureHeight = description.texture_height || 32;
+      const sourceBones = new Map(model.bones.map(b => [b.name, b]));
+
+      function buildBone(name) {
+        if (bones.has(name)) return bones.get(name);
+        const source = sourceBones.get(name);
+        if (!source) return root;
+        const bone = new THREE.Group();
+        const pivot = source.pivot || [0, 0, 0];
+        const parent = source.parent ? buildBone(source.parent) : root;
+        const parentPivot = source.parent ? (sourceBones.get(source.parent)?.pivot || [0, 0, 0]) : [0, 0, 0];
+        bone.position.set((pivot[0] - parentPivot[0]) / 16, (pivot[1] - parentPivot[1]) / 16, -(pivot[2] - parentPivot[2]) / 16);
+        bone.name = name;
+        parent.add(bone);
+        bones.set(name, bone);
+
+        for (const cube of (source.cubes || [])) {
+          const origin = cube.origin || [0, 0, 0];
+          const size = cube.size || [1, 1, 1];
+          const center = [
+            origin[0] + size[0] / 2,
+            origin[1] + size[1] / 2,
+            origin[2] + size[2] / 2
+          ];
+          const pivotPoint = cube.pivot || center;
+          const cubeGroup = new THREE.Group();
+          cubeGroup.position.set(
+            (pivotPoint[0] - pivot[0]) / 16,
+            (pivotPoint[1] - pivot[1]) / 16,
+            -(pivotPoint[2] - pivot[2]) / 16
+          );
+          if (cube.rotation) {
+            cubeGroup.rotation.set(
+              THREE.MathUtils.degToRad(cube.rotation[0] || 0),
+              THREE.MathUtils.degToRad(-(cube.rotation[1] || 0)),
+              THREE.MathUtils.degToRad(-(cube.rotation[2] || 0))
+            );
+          }
+          const box = new THREE.BoxGeometry(size[0] / 16, size[1] / 16, size[2] / 16);
+          setBedrockCubeUV(box, cube.uv, size, textureWidth, textureHeight);
+          const mesh = new THREE.Mesh(box, new THREE.MeshLambertMaterial({
+            map: vanillaChickenTexture,
+            transparent: true,
+            alphaTest: 0.05
+          }));
+          mesh.position.set(
+            (center[0] - pivotPoint[0]) / 16,
+            (center[1] - pivotPoint[1]) / 16,
+            -(center[2] - pivotPoint[2]) / 16
+          );
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          cubeGroup.add(mesh);
+          bone.add(cubeGroup);
+        }
+        return bone;
+      }
+
+      for (const bone of model.bones) buildBone(bone.name);
+      // The vanilla model's coordinates are measured from the feet; center it on the mob origin.
+      root.scale.setScalar(1);
+      root.userData.bones = bones;
+      return root;
+    }
+
+    function makeChickenFallback() {
       const group = new THREE.Group();
-      const body = new THREE.Mesh(chickenBodyGeom, chickenMat);
-      body.position.y = 0.3; group.add(body);
-      const head = new THREE.Mesh(chickenHeadGeom, chickenMat);
-      head.position.set(0, 0.6, 0.22); group.add(head);
-      const beak = new THREE.Mesh(beakGeom, beakMat);
-      beak.position.set(0, 0.57, 0.38); group.add(beak);
-      const leg1 = new THREE.Mesh(legGeom, legMat); leg1.position.set(-0.12, 0.1, 0); group.add(leg1);
-      const leg2 = new THREE.Mesh(legGeom, legMat); leg2.position.set(0.12, 0.1, 0); group.add(leg2);
+      const white = new THREE.MeshLambertMaterial({ color: 0xfafafa });
+      const orange = new THREE.MeshLambertMaterial({ color: 0xff9900 });
+      const red = new THREE.MeshLambertMaterial({ color: 0xd93636 });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.42, 0.42), white);
+      body.position.set(0, 0.38, 0); group.add(body);
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), white);
+      head.position.set(0, 0.69, -0.16); group.add(head);
+      const beak = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.1), orange);
+      beak.position.set(0, 0.65, -0.34); group.add(beak);
+      const comb = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.09, 0.08), red);
+      comb.position.set(0, 0.86, -0.16); group.add(comb);
+      for (const x of [-0.12, 0.12]) {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.2, 0.055), orange);
+        leg.position.set(x, 0.1, 0); group.add(leg);
+      }
+      group.userData.fallbackBody = body;
+      return group;
+    }
+
+    function replaceWithVanillaModel(mob) {
+      const oldMesh = mob.mesh;
+      const replacement = makeVanillaChickenModel();
+      if (!replacement) return false;
+      replacement.position.copy(oldMesh.position);
+      replacement.rotation.copy(oldMesh.rotation);
+      scene.remove(oldMesh);
+      scene.add(replacement);
+      mob.mesh = replacement;
+      mob.bones = replacement.userData.bones;
+      mob.body = mob.bones?.get('body') || replacement;
+      return true;
+    }
+
+    // Assets are copied from the repository's vanilla Bedrock resource pack during setup/build.
+    // Keep a visible fallback if a local preview is opened without running setup first.
+    Promise.all([
+      fetch(CHICKEN_GEOMETRY_URL).then(response => {
+        if (!response.ok) throw new Error('Chicken geometry HTTP ' + response.status);
+        return response.json();
+      }),
+      new Promise((resolve, reject) => {
+        new THREE.TextureLoader().load(CHICKEN_TEXTURE_URL, resolve, undefined, reject);
+      })
+    ]).then(([geometry, texture]) => {
+      vanillaChickenGeometry = geometry;
+      vanillaChickenTexture = texture;
+      vanillaChickenTexture.magFilter = THREE.NearestFilter;
+      vanillaChickenTexture.minFilter = THREE.NearestFilter;
+      if ('colorSpace' in vanillaChickenTexture && THREE.SRGBColorSpace) {
+        vanillaChickenTexture.colorSpace = THREE.SRGBColorSpace;
+      }
+      vanillaChickenTexture.needsUpdate = true;
+      for (const mob of mobs) replaceWithVanillaModel(mob);
+    }).catch(error => {
+      console.warn('[VoxelCraft] Vanilla chicken assets failed to load; using fallback model.', error);
+    });
+
+    function spawnChicken(x, y, z) {
+      const group = makeVanillaChickenModel() || makeChickenFallback();
       group.position.set(x, y, z);
       scene.add(group);
       mobs.push({
-        mesh: group, body,
+        mesh: group,
+        body: group.userData?.bones?.get('body') || group.userData?.fallbackBody || group,
+        bones: group.userData?.bones || null,
         vel: new THREE.Vector3(),
         yaw: Math.random() * Math.PI * 2,
         nextThink: 1 + Math.random() * 2,
       });
     }
     function updateMobs(dt) {
-      // spawn near player occasionally
+      // Spawn near player occasionally, preserving the existing lightweight mob logic.
       if (mobs.length < 4 && Math.random() < 0.008) {
         const ang = Math.random() * Math.PI * 2;
         const dist = 12 + Math.random() * 14;
@@ -899,14 +1051,25 @@
         const ny = np.y + m.vel.y * dt;
         if (!isSolid(np.x, ny, np.z)) np.y = ny;
         else m.vel.y = 0;
-        // despawn if too far
         if (np.distanceTo(player.pos) > 80) {
           scene.remove(m.mesh);
           mobs.splice(i, 1);
           continue;
         }
         m.mesh.rotation.y = m.yaw;
-        m.body.position.y = 0.3 + Math.abs(Math.sin(performance.now() * 0.005)) * 0.06;
+        const gait = Math.sin(performance.now() * 0.018) * 0.55;
+        if (m.bones) {
+          const leftLeg = m.bones.get('leg0');
+          const rightLeg = m.bones.get('leg1');
+          const leftWing = m.bones.get('wing0');
+          const rightWing = m.bones.get('wing1');
+          if (leftLeg) leftLeg.rotation.x = gait;
+          if (rightLeg) rightLeg.rotation.x = -gait;
+          if (leftWing) leftWing.rotation.z = Math.sin(performance.now() * 0.012) * 0.08;
+          if (rightWing) rightWing.rotation.z = -Math.sin(performance.now() * 0.012) * 0.08;
+        } else {
+          m.body.position.y = 0.38 + Math.abs(Math.sin(performance.now() * 0.005)) * 0.025;
+        }
       }
     }
     window.__mobs = mobs;
