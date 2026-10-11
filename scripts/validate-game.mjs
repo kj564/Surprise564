@@ -65,8 +65,16 @@ if (!source.includes('saved.version === 1')) fail('World save loader must valida
 else pass('World save loader validates schema version');
 if (!source.includes('Number.isFinite')) fail('World coordinate APIs must reject non-finite coordinates');
 else pass('World coordinate APIs guard non-finite coordinates');
+if (!source.includes('!Number.isSafeInteger(x) || !Number.isSafeInteger(z)')) fail('World coordinate APIs must reject unsafe integer coordinates');
+else pass('World coordinate APIs reject unsafe integer coordinates');
 if (!source.includes('!Object.prototype.hasOwnProperty.call(BLOCKS, v)')) fail('World.setBlock must reject unknown block IDs');
 else pass('World.setBlock rejects unknown block IDs');
+if (!source.includes('invalidateChunk(cx - 1, cz)') ||
+    !source.includes('invalidateChunk(cx + 1, cz)') ||
+    !source.includes('invalidateChunk(cx, cz - 1)') ||
+    !source.includes('invalidateChunk(cx, cz + 1)')) {
+  fail('World.setBlock must invalidate loaded neighbors at all four horizontal chunk boundaries');
+} else pass('Block edits invalidate loaded chunks across all four horizontal boundaries');
 
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
