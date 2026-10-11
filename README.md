@@ -88,6 +88,19 @@ The VoxelCraft BP (`BedrockAddon/`) ships:
 
 See [`BedrockAddon/README.md`](BedrockAddon/README.md) for install + test instructions.
 
+### Native Bedrock install (BP + RP together)
+
+To install VoxelCraft **inside Minecraft Bedrock Edition**, use the native add-on package—not the browser game:
+
+1. Open the latest successful **Build native Minecraft Bedrock addon** workflow run in the repository's Actions tab.
+2. Download the `VoxelCraft-Bedrock-Addon` artifact and extract `VoxelCraft.mcaddon`.
+3. Open `VoxelCraft.mcaddon` with Minecraft Bedrock to import both packs.
+4. Enable **VoxelCraft Behavior Pack** in the target world's Behavior Packs. Its manifest declares the matching **VoxelCraft Main Menu** Resource Pack dependency.
+5. For Script API functionality, use a Bedrock version compatible with the manifest's minimum engine and declared `@minecraft/server` / `@minecraft/server-ui` versions. Enable the required experiment only if your installed Bedrock version requests it.
+
+The packaging workflow validates both manifests, checks the RP UI registrations, builds the nested `.mcpack` archives, and publishes one `.mcaddon` artifact. This is native Bedrock packaging; it does **not** make the separate Three.js browser game run inside Bedrock.
+
+
 ## Repository structure
 
 See [`docs/STRUCTURE.md`](docs/STRUCTURE.md) for the full annotated tree. TL;DR:
