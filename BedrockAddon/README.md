@@ -5,7 +5,7 @@ A real Minecraft Bedrock behavior pack built around the stable Minecraft Script 
 ## Features
 
 ### Custom chat commands
-Type these in chat (works for any operator-level player):
+Type these in chat. Read-only commands `!help` and `!stats` are available to all players. World-changing commands require the `voxelcraft_admin` tag:
 
 | Command | Description |
 |---------|-------------|
@@ -39,8 +39,9 @@ Type these in chat (works for any operator-level player):
 2. Create or open a world with **Experiments > Beta APIs** enabled (required for `@minecraft/server` v2.x stable module in some game versions).
 3. Enable the **VoxelCraft Behavior Pack** in world settings.
 4. Join the world and check chat for the welcome message.
-5. Type `!help` in chat to see all commands.
-6. To open the menu UI: get a writable book (`!give writable_book`), rename it to "VoxelCraft Guide" in an anvil, then use it.
+5. From the server console, grant trusted administrators the tag with `/tag <player> add voxelcraft_admin`. Remove it with `/tag <player> remove voxelcraft_admin`.
+6. Type `!help` in chat to see all commands. `!give`, `!fly`, `!heal`, `!time`, `!weather`, `!tp`, and `!kit` require the admin tag.
+7. To open the menu UI, an admin gets a writable book (use `!give writable_book`), renames it to "VoxelCraft Guide" in an anvil, then uses it.
 
 ## References (sumber dokumentasi)
 
