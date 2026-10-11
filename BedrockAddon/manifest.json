@@ -2,7 +2,7 @@
   "format_version": 2,
   "header": {
     "name": "VoxelCraft Behavior Pack",
-    "description": "VoxelCraft behavior pack — custom commands, ActionForm UI menu, ore coin rewards, player stats, auto-save.",
+    "description": "VoxelCraft native Bedrock behavior pack — Script API gameplay, native ActionForm UI, stats and coin economy. Requires VoxelCraft Main Menu resource pack.",
     "uuid": "6b2c4b88-3d20-4d8d-9e56-4ab5ec4b81f2",
     "version": [
       1,
@@ -36,6 +36,14 @@
     {
       "module_name": "@minecraft/server-ui",
       "version": "2.0.0"
+    },
+    {
+      "uuid": "3c7ddce5-b2f4-44b8-a83b-9d8e5f3a7c21",
+      "version": [
+        1,
+        0,
+        0
+      ]
     }
   ]
 }
