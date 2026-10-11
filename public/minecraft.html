@@ -145,6 +145,7 @@
 
   /* Vanilla Bedrock UI skin: use the repository's original Resource Pack sprites. */
   #hotbar {
+    position: fixed;
     gap: 0;
     padding: 4px 6px;
     background-color: rgba(16, 16, 16, .82);
@@ -157,6 +158,18 @@
     backdrop-filter: none;
     box-shadow: 0 2px 0 rgba(0,0,0,.65);
   }
+  #hotbar::before, #hotbar::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    width: 4px;
+    pointer-events: none;
+    background-size: 100% 100%;
+    image-rendering: pixelated;
+  }
+  #hotbar::before { left: -2px; background-image: url('./VoxelCraft/textures/ui/hotbar_start_cap.png'); }
+  #hotbar::after { right: -2px; background-image: url('./VoxelCraft/textures/ui/hotbar_end_cap.png'); }
   .slot {
     width: 46px;
     height: 46px;
