@@ -345,6 +345,27 @@
     #hud { max-width: 65vw; font-size: 10px; }
   }
 
+
+  /* Use the pack's own pointer and inventory glyph instead of browser-default UI chrome. */
+  body { cursor: url('./VoxelCraft/textures/ui/cursor_pc.png') 4 4, auto; }
+  #game { cursor: none; }
+  #overlay button, .slot, .inv-slot, #invClose { cursor: url('./VoxelCraft/textures/ui/cursor_pc.png') 4 4, pointer; }
+  #inventory h2::before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    vertical-align: -4px;
+    background: url('./VoxelCraft/textures/ui/inventory_icon.png') center / contain no-repeat;
+    image-rendering: pixelated;
+  }
+  #inventory h2 { display: flex; align-items: center; }
+  @media (max-width: 600px) {
+    #inventory h2 { font-size: 14px; padding: 10px; }
+    #inventory h2::before { flex: 0 0 18px; width: 18px; height: 18px; }
+  }
+
 </style>
 </head>
 <body>
