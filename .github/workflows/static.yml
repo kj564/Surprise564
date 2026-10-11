@@ -23,11 +23,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Stage vanilla chicken assets for browser game
+      - name: Stage vanilla assets missing from the public texture directory
         run: |
-          mkdir -p public/VoxelCraft/models/entity public/VoxelCraft/textures/entity/chicken
+          mkdir -p public/VoxelCraft/models/entity public/VoxelCraft/textures/entity/chicken public/VoxelCraft/textures/blocks
           cp VoxelCraft/models/entity/chicken.geo.json public/VoxelCraft/models/entity/chicken.geo.json
           cp VoxelCraft/textures/entity/chicken/chicken.png public/VoxelCraft/textures/entity/chicken/chicken.png
+          # Non-oak log end-grain textures are referenced by the atlas but are
+          # not checked into public/VoxelCraft/textures/blocks.
+          cp VoxelCraft/textures/blocks/log_spruce_top.png public/VoxelCraft/textures/blocks/log_spruce_top.png
+          cp VoxelCraft/textures/blocks/log_jungle_top.png public/VoxelCraft/textures/blocks/log_jungle_top.png
+          cp VoxelCraft/textures/blocks/log_acacia_top.png public/VoxelCraft/textures/blocks/log_acacia_top.png
+          cp VoxelCraft/textures/blocks/log_big_oak_top.png public/VoxelCraft/textures/blocks/log_big_oak_top.png
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2

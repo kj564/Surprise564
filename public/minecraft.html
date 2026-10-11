@@ -241,6 +241,8 @@
       BOOKSHELF: 64, PUMPKIN_TOP: 65, PUMPKIN_SIDE: 66, SPONGE: 67,
       // === Phase 1E: wool colors (68-72) ===
       WOOL_WHITE: 68, WOOL_BLACK: 69, WOOL_RED: 70, WOOL_BLUE: 71, WOOL_GREEN: 72,
+      // Missing log end-grain textures, appended to preserve existing tile indices.
+      LOG_SPRUCE_TOP: 73, LOG_JUNGLE_TOP: 74, LOG_ACACIA_TOP: 75, LOG_DARK_OAK_TOP: 76,
     };
     const TEXTURE_FILES = [
       // 0-23: original 24 textures
@@ -269,6 +271,8 @@
       'bookshelf','pumpkin_top','pumpkin_side','sponge',
       // 68-72: wool colors
       'wool_colored_white','wool_colored_black','wool_colored_red','wool_colored_blue','wool_colored_green',
+      // Missing end-grain textures for non-oak logs.
+      'log_spruce_top','log_jungle_top','log_acacia_top','log_big_oak_top',
     ];
     const TEXTURE_DIR = './VoxelCraft/textures/blocks/';
 
@@ -291,8 +295,8 @@
       14: { name:'Berlian',       top:TILE.DIAMOND,    bottom:TILE.DIAMOND, side:TILE.DIAMOND,   solid:true },
       15: { name:'Besi',          top:TILE.IRON,       bottom:TILE.IRON,   side:TILE.IRON,        solid:true },
       16: { name:'Batubara',      top:TILE.COAL,       bottom:TILE.COAL,   side:TILE.COAL,        solid:true },
-      17: { name:'Meja Kerja',    top:TILE.CRAFT_TOP,  bottom:TILE.PLANKS, side:TILE.CRAFT_SIDE, solid:true },
-      18: { name:'Tungku',        top:TILE.FURNACE_SIDE, bottom:TILE.FURNACE_SIDE, side:TILE.FURNACE_FRONT, solid:true },
+      17: { name:'Meja Kerja',    top:TILE.CRAFT_TOP,  bottom:TILE.PLANKS, side:TILE.CRAFT_SIDE, front:TILE.CRAFT_FRONT, solid:true },
+      18: { name:'Tungku',        top:TILE.FURNACE_SIDE, bottom:TILE.FURNACE_SIDE, side:TILE.FURNACE_SIDE, front:TILE.FURNACE_FRONT, solid:true },
       19: { name:'Air',           top:TILE.WATER,      bottom:TILE.WATER, side:TILE.WATER,      solid:false, transparent:true, noCollide:true },
       20: { name:'Bijih Batubara', top:TILE.COAL_ORE,  bottom:TILE.COAL_ORE,  side:TILE.COAL_ORE,  solid:true },
       21: { name:'Bijih Besi',     top:TILE.IRON_ORE,  bottom:TILE.IRON_ORE,  side:TILE.IRON_ORE,  solid:true },
@@ -313,16 +317,16 @@
       34: { name:'Kayu Birch',    top:TILE.LOG_BIRCH_TOP, bottom:TILE.LOG_BIRCH_TOP, side:TILE.LOG_BIRCH, solid:true },
       35: { name:'Papan Birch',   top:TILE.PLANKS_BIRCH, bottom:TILE.PLANKS_BIRCH, side:TILE.PLANKS_BIRCH, solid:true },
       36: { name:'Daun Birch',    top:TILE.LEAVES_BIRCH, bottom:TILE.LEAVES_BIRCH, side:TILE.LEAVES_BIRCH, solid:true, transparent:true },
-      37: { name:'Kayu Spruce',   top:TILE.LOG_SPRUCE, bottom:TILE.LOG_SPRUCE, side:TILE.LOG_SPRUCE, solid:true },
+      37: { name:'Kayu Spruce',   top:TILE.LOG_SPRUCE_TOP, bottom:TILE.LOG_SPRUCE_TOP, side:TILE.LOG_SPRUCE, solid:true },
       38: { name:'Papan Spruce',  top:TILE.PLANKS_SPRUCE, bottom:TILE.PLANKS_SPRUCE, side:TILE.PLANKS_SPRUCE, solid:true },
       39: { name:'Daun Spruce',   top:TILE.LEAVES_SPRUCE, bottom:TILE.LEAVES_SPRUCE, side:TILE.LEAVES_SPRUCE, solid:true, transparent:true },
-      40: { name:'Kayu Jungle',   top:TILE.LOG_JUNGLE, bottom:TILE.LOG_JUNGLE, side:TILE.LOG_JUNGLE, solid:true },
+      40: { name:'Kayu Jungle',   top:TILE.LOG_JUNGLE_TOP, bottom:TILE.LOG_JUNGLE_TOP, side:TILE.LOG_JUNGLE, solid:true },
       41: { name:'Papan Jungle',  top:TILE.PLANKS_JUNGLE, bottom:TILE.PLANKS_JUNGLE, side:TILE.PLANKS_JUNGLE, solid:true },
       42: { name:'Daun Jungle',   top:TILE.LEAVES_JUNGLE, bottom:TILE.LEAVES_JUNGLE, side:TILE.LEAVES_JUNGLE, solid:true, transparent:true },
-      43: { name:'Kayu Acacia',   top:TILE.LOG_ACACIA, bottom:TILE.LOG_ACACIA, side:TILE.LOG_ACACIA, solid:true },
+      43: { name:'Kayu Acacia',   top:TILE.LOG_ACACIA_TOP, bottom:TILE.LOG_ACACIA_TOP, side:TILE.LOG_ACACIA, solid:true },
       44: { name:'Papan Acacia',  top:TILE.PLANKS_ACACIA, bottom:TILE.PLANKS_ACACIA, side:TILE.PLANKS_ACACIA, solid:true },
       45: { name:'Daun Acacia',   top:TILE.LEAVES_ACACIA, bottom:TILE.LEAVES_ACACIA, side:TILE.LEAVES_ACACIA, solid:true, transparent:true },
-      46: { name:'Kayu Dark Oak', top:TILE.LOG_DARK_OAK, bottom:TILE.LOG_DARK_OAK, side:TILE.LOG_DARK_OAK, solid:true },
+      46: { name:'Kayu Dark Oak', top:TILE.LOG_DARK_OAK_TOP, bottom:TILE.LOG_DARK_OAK_TOP, side:TILE.LOG_DARK_OAK, solid:true },
       47: { name:'Papan Dark Oak', top:TILE.PLANKS_DARK_OAK, bottom:TILE.PLANKS_DARK_OAK, side:TILE.PLANKS_DARK_OAK, solid:true },
       // === Phase 1C: stone variants (48-54) ===
       48: { name:'Granit',        top:TILE.GRANITE, bottom:TILE.GRANITE, side:TILE.GRANITE, solid:true },
@@ -562,10 +566,17 @@
     function tileUV(tile) {
       const col = tile % ATLAS_COLS;
       const row = Math.floor(tile / ATLAS_COLS);
-      const inset = 0.4 / ATLAS_W;
-      return { u0: col / ATLAS_COLS + inset, u1: (col + 1) / ATLAS_COLS - inset,
-               v0: 1 - (row + 1) / ATLAS_ROWS + inset / (ATLAS_W / ATLAS_H),
-               v1: 1 - row / ATLAS_ROWS - inset / (ATLAS_W / ATLAS_H) };
+      // UV insets must be normalized against their own axis. The old V inset
+      // divided by the atlas aspect ratio, leaving it far below half a texel
+      // and allowing edge samples to pick up pixels from the neighboring row.
+      const insetU = 0.51 / ATLAS_W;
+      const insetV = 0.51 / ATLAS_H;
+      return {
+        u0: col / ATLAS_COLS + insetU,
+        u1: (col + 1) / ATLAS_COLS - insetU,
+        v0: 1 - (row + 1) / ATLAS_ROWS + insetV,
+        v1: 1 - row / ATLAS_ROWS - insetV
+      };
     }
 
     function buildChunkGeometry(world, chunk, atlas) {
@@ -596,7 +607,12 @@
               if (id === 19 && nId === 19) draw = false;
               if (!draw) continue;
 
-              const tile = (f === 2) ? def.top : (f === 3) ? def.bottom : def.side;
+              // +Z is the model's designated front face; blocks without a
+              // directional front continue to use the same side texture.
+              const tile = (f === 2) ? def.top
+                : (f === 3) ? def.bottom
+                : (f === 4 && def.front != null) ? def.front
+                : def.side;
               const { u0, u1, v0, v1 } = tileUV(tile);
               const P = isTrans ? transPos : opaquePos;
               const N = isTrans ? transNorm : opaqueNorm;
@@ -864,7 +880,9 @@
         const [ru, rv, rw, rh] = rects[face];
         const u0 = ru / textureWidth, u1 = (ru + rw) / textureWidth;
         const vTop = 1 - rv / textureHeight, vBottom = 1 - (rv + rh) / textureHeight;
-        const values = [u1, vTop, u0, vTop, u0, vBottom, u1, vBottom];
+        // Three.js BoxGeometry vertices are ordered left-to-right on each face.
+        // Preserve the Bedrock atlas orientation instead of mirroring every face horizontally.
+        const values = [u0, vTop, u1, vTop, u0, vBottom, u1, vBottom];
         for (let vertex = 0; vertex < 4; vertex++) {
           attr.setXY(face * 4 + vertex, values[vertex * 2], values[vertex * 2 + 1]);
         }
@@ -1165,7 +1183,12 @@
         img.onload = () => {
           const col = i % ATLAS_COLS, row = Math.floor(i / ATLAS_COLS);
           ctx.globalCompositeOperation = 'source-over';
-          ctx.drawImage(img, 0, 0, TILE_PX, TILE_PX, col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX);
+          // Normalize each source texture to one full 16×16 atlas tile.
+          // Using a 16×16 source crop here silently cuts off larger PNGs (for example,
+          // textures supplied at 32×32 or 64×64) and makes their patterns look misaligned.
+          const sourceWidth = img.naturalWidth || img.width;
+          const sourceHeight = img.naturalHeight || img.height;
+          ctx.drawImage(img, 0, 0, sourceWidth, sourceHeight, col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX);
           // apply biome tint for grass/leaves (multiply)
           const tint = TINTS[name];
           if (tint) {
@@ -1192,7 +1215,11 @@
       for (const { tile, speck } of ORE_DEFS) {
         const col = tile % ATLAS_COLS, row = Math.floor(tile / ATLAS_COLS);
         // stone base
-        if (stoneImg) ctx.drawImage(stoneImg, 0, 0, TILE_PX, TILE_PX, col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX);
+        if (stoneImg) {
+          const sw = stoneImg.naturalWidth || stoneImg.width;
+          const sh = stoneImg.naturalHeight || stoneImg.height;
+          ctx.drawImage(stoneImg, 0, 0, sw, sh, col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX);
+        }
         // specks (deterministic pseudo-random positions)
         const speckImg = imgs[speck];
         if (speckImg) {
