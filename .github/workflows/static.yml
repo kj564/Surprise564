@@ -95,6 +95,20 @@ jobs:
           test -f out/VoxelCraft/textures/blocks/grass_side_carried.png
           test -f out/VoxelCraft/textures/blocks/leaves_oak_opaque.png
           test -f out/VoxelCraft/textures/blocks/furnace_top.png
+          test -d out/VoxelCraft/textures/ui
+          test -f out/VoxelCraft/textures/ui/background_panel.png
+          test -f out/VoxelCraft/textures/ui/background_with_border.png
+          test -f out/VoxelCraft/textures/ui/button_borderless_dark.png
+          test -f out/VoxelCraft/textures/ui/button_borderless_darkhover.png
+          test -f out/VoxelCraft/textures/ui/button_borderless_darkpressed.png
+          test -f out/VoxelCraft/textures/ui/dialog_background_opaque.png
+          test -f out/VoxelCraft/textures/ui/highlight_slot.png
+          test -f out/VoxelCraft/textures/ui/hotbar_start_cap.png
+          test -f out/VoxelCraft/textures/ui/hotbar_end_cap.png
+          test -f out/VoxelCraft/textures/ui/hotbar_0.png
+          test -f out/VoxelCraft/textures/ui/hotbar_8.png
+          test -f out/VoxelCraft/textures/ui/hud_tip_text_background.png
+          test -f out/VoxelCraft/textures/ui/item_cell.png
           test -f out/VoxelCraft/textures/blocks/pumpkin_face_off.png
           test -f out/VoxelCraft/textures/blocks/log_spruce_top.png
           test -f out/VoxelCraft/textures/blocks/log_jungle_top.png
