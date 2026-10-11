@@ -243,6 +243,7 @@
       WOOL_WHITE: 68, WOOL_BLACK: 69, WOOL_RED: 70, WOOL_BLUE: 71, WOOL_GREEN: 72,
       // Missing log end-grain textures, appended to preserve existing tile indices.
       LOG_SPRUCE_TOP: 73, LOG_JUNGLE_TOP: 74, LOG_ACACIA_TOP: 75, LOG_DARK_OAK_TOP: 76,
+      FURNACE_TOP: 77, PUMPKIN_FACE: 78,
     };
     const TEXTURE_FILES = [
       // 0-23: original 24 textures
@@ -273,6 +274,8 @@
       'wool_colored_white','wool_colored_black','wool_colored_red','wool_colored_blue','wool_colored_green',
       // Missing end-grain textures for non-oak logs.
       'log_spruce_top','log_jungle_top','log_acacia_top','log_big_oak_top',
+      // Correct face textures verified against VoxelCraft/blocks.json + terrain_texture.json.
+      'furnace_top','pumpkin_face_off',
     ];
     const TEXTURE_DIR = './VoxelCraft/textures/blocks/';
 
@@ -295,8 +298,8 @@
       14: { name:'Berlian',       top:TILE.DIAMOND,    bottom:TILE.DIAMOND, side:TILE.DIAMOND,   solid:true },
       15: { name:'Besi',          top:TILE.IRON,       bottom:TILE.IRON,   side:TILE.IRON,        solid:true },
       16: { name:'Batubara',      top:TILE.COAL,       bottom:TILE.COAL,   side:TILE.COAL,        solid:true },
-      17: { name:'Meja Kerja',    top:TILE.CRAFT_TOP,  bottom:TILE.PLANKS, side:TILE.CRAFT_SIDE, front:TILE.CRAFT_FRONT, solid:true },
-      18: { name:'Tungku',        top:TILE.FURNACE_SIDE, bottom:TILE.FURNACE_SIDE, side:TILE.FURNACE_SIDE, front:TILE.FURNACE_FRONT, solid:true },
+      17: { name:'Meja Kerja', top:TILE.CRAFT_TOP, bottom:TILE.PLANKS, side:TILE.CRAFT_SIDE, front:TILE.CRAFT_FRONT, frontBothZ:true, solid:true },
+      18: { name:'Tungku', top:TILE.FURNACE_TOP, bottom:TILE.FURNACE_TOP, side:TILE.FURNACE_SIDE, front:TILE.FURNACE_FRONT, solid:true },
       19: { name:'Air',           top:TILE.WATER,      bottom:TILE.WATER, side:TILE.WATER,      solid:false, transparent:true, noCollide:true },
       20: { name:'Bijih Batubara', top:TILE.COAL_ORE,  bottom:TILE.COAL_ORE,  side:TILE.COAL_ORE,  solid:true },
       21: { name:'Bijih Besi',     top:TILE.IRON_ORE,  bottom:TILE.IRON_ORE,  side:TILE.IRON_ORE,  solid:true },
@@ -342,7 +345,7 @@
       57: { name:'Netherrack',    top:TILE.NETHERRACK, bottom:TILE.NETHERRACK, side:TILE.NETHERRACK, solid:true },
       58: { name:'Soul Sand',     top:TILE.SOUL_SAND, bottom:TILE.SOUL_SAND, side:TILE.SOUL_SAND, solid:true },
       59: { name:'Rak Buku',      top:TILE.PLANKS, bottom:TILE.PLANKS, side:TILE.BOOKSHELF, solid:true },
-      60: { name:'Labu',          top:TILE.PUMPKIN_TOP, bottom:TILE.PUMPKIN_TOP, side:TILE.PUMPKIN_SIDE, solid:true },
+      60: { name:'Labu', top:TILE.PUMPKIN_TOP, bottom:TILE.PUMPKIN_TOP, side:TILE.PUMPKIN_SIDE, front:TILE.PUMPKIN_FACE, solid:true },
       61: { name:'Spons',         top:TILE.SPONGE, bottom:TILE.SPONGE, side:TILE.SPONGE, solid:true },
       // === Phase 1E: wool (62-66) ===
       62: { name:'Wol Putih',     top:TILE.WOOL_WHITE, bottom:TILE.WOOL_WHITE, side:TILE.WOOL_WHITE, solid:true },
@@ -552,6 +555,18 @@
     const ATLAS_COLS = 16, ATLAS_ROWS = 6, TILE_PX = 16;
     const ATLAS_W = ATLAS_COLS * TILE_PX, ATLAS_H = ATLAS_ROWS * TILE_PX;
 
+    // Fail fast if a future edit adds a tile without its matching atlas image,
+    // reuses an index, or silently exceeds the fixed atlas dimensions.
+    const TILE_INDICES = Object.values(TILE);
+    if (TEXTURE_FILES.length > ATLAS_COLS * ATLAS_ROWS) {
+      throw new Error('[VoxelCraft] Texture atlas capacity exceeded: ' + TEXTURE_FILES.length);
+    }
+    if (TILE_INDICES.length !== TEXTURE_FILES.length ||
+        new Set(TILE_INDICES).size !== TILE_INDICES.length ||
+        Math.max(...TILE_INDICES) !== TEXTURE_FILES.length - 1) {
+      throw new Error('[VoxelCraft] TILE indices and TEXTURE_FILES are out of sync.');
+    }
+
     // Face definitions: dir, corners (CCW from outside), uv mapping
     // face index: 0=+X 1=-X 2=+Y 3=-Y 4=+Z 5=-Z
     const FACES = [
@@ -607,11 +622,13 @@
               if (id === 19 && nId === 19) draw = false;
               if (!draw) continue;
 
-              // +Z is the model's designated front face; blocks without a
-              // directional front continue to use the same side texture.
+              // Face order follows FACES: +X, -X, +Y, -Y, +Z, -Z.
+              // Bedrock's crafting table has its front on both Z faces; furnace
+              // and pumpkin use the front on +Z only in this browser's fixed orientation.
               const tile = (f === 2) ? def.top
                 : (f === 3) ? def.bottom
                 : (f === 4 && def.front != null) ? def.front
+                : (f === 5 && def.frontBothZ && def.front != null) ? def.front
                 : def.side;
               const { u0, u1, v0, v1 } = tileUV(tile);
               const P = isTrans ? transPos : opaquePos;
@@ -1166,8 +1183,12 @@
     // Bedrock's grass_top and leaves are grayscale textures meant to be tinted
     // by biome color. We apply a green multiply tint so they look correct.
     const TINTS = {
-      'grass_top': [121, 192, 90],       // plains grass green
-      'leaves_oak_opaque': [86, 158, 48], // oak leaves green
+      'grass_top': [121, 192, 90],          // plains grass green
+      'leaves_oak_opaque': [86, 158, 48],   // oak leaves green
+      'leaves_birch_opaque': [128, 167, 85],
+      'leaves_spruce_opaque': [72, 111, 54],
+      'leaves_jungle_opaque': [65, 145, 52],
+      'leaves_acacia_opaque': [105, 151, 65],
     };
     async function buildAtlas() {
       const canvas2 = document.createElement('canvas');
@@ -1200,7 +1221,20 @@
           imgs[i] = img;
           resolve();
         };
-        img.onerror = () => { resolve(); };
+        img.onerror = () => {
+          const col = i % ATLAS_COLS, row = Math.floor(i / ATLAS_COLS);
+          const x = col * TILE_PX, y = row * TILE_PX;
+          // Never leave a silent transparent hole in the atlas: missing assets
+          // should be obvious during development and reported in the console.
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.fillStyle = '#ff00ff';
+          ctx.fillRect(x, y, TILE_PX, TILE_PX);
+          ctx.fillStyle = '#181018';
+          ctx.fillRect(x, y, TILE_PX / 2, TILE_PX / 2);
+          ctx.fillRect(x + TILE_PX / 2, y + TILE_PX / 2, TILE_PX / 2, TILE_PX / 2);
+          console.error('[VoxelCraft] Missing texture: ' + TEXTURE_DIR + name + '.png');
+          resolve();
+        };
         img.src = TEXTURE_DIR + name + '.png';
       })));
 

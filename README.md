@@ -95,7 +95,7 @@ See [`docs/STRUCTURE.md`](docs/STRUCTURE.md) for the full annotated tree. TL;DR:
 ```
 Surprise564/
 ├── public/minecraft.html         # ★ Browser voxel game
-├── public/VoxelCraft/textures/   #     24 textures the game uses
+├── public/VoxelCraft/textures/   #     Browser-game textures staged from vanilla RP
 ├── src/app/                      #     Next.js host page
 ├── VoxelCraft/                   #     Full vanilla Resource Pack (asset source)
 ├── VanillaBehaviorPack/          #     Git submodule: upstream vanilla BP
