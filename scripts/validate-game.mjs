@@ -24,6 +24,12 @@ const blockSource = section(/const BLOCKS = \{([\s\S]*?)\n    \};/, 'BLOCKS');
 const blockEntries = [...blockSource.matchAll(/^\s*(\d+):\s*(null|\{[^\n]*\})/gm)];
 const blocks = new Map(blockEntries.map(([, id, definition]) => [Number(id), definition]));
 
+if (!source.includes("font-family: 'Minecraft Ten'") || !source.includes("./VoxelCraft/font/minecraft-ten.ttf")) {
+  fail('Browser UI must use the original Bedrock Minecraft Ten font');
+} else {
+  pass('Browser UI references the original Bedrock Minecraft Ten font');
+}
+
 const vanillaUiTextures = [
   'background_panel', 'background_with_border', 'button_borderless_dark',
   'button_borderless_darkhover', 'button_borderless_darkpressed',
