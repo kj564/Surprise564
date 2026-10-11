@@ -1763,8 +1763,34 @@
     const vcFlyStatus = document.getElementById('vcFlyStatus');
     let vcGuideOpen = false;
     let vcGuideReturnToGame = false;
-    let browserBlocksBroken = 0;
-    let browserBlocksPlaced = 0;
+    // Mirror the Behavior Pack's persistent player stats in browser storage.
+    const BROWSER_STATS_KEY = 'voxelcraft_browser_stats_v1';
+    function safeBrowserCount(value) {
+      return Number.isSafeInteger(value) && value >= 0 ? value : 0;
+    }
+    function loadBrowserStats() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(BROWSER_STATS_KEY) || 'null');
+        return {
+          joins: safeBrowserCount(saved?.joins),
+          coins: safeBrowserCount(saved?.coins),
+          blocksBroken: safeBrowserCount(saved?.blocksBroken),
+          blocksPlaced: safeBrowserCount(saved?.blocksPlaced),
+          mobsKilled: safeBrowserCount(saved?.mobsKilled),
+        };
+      } catch {
+        return { joins: 0, coins: 0, blocksBroken: 0, blocksPlaced: 0, mobsKilled: 0 };
+      }
+    }
+    const browserStats = loadBrowserStats();
+    browserStats.joins++;
+    function saveBrowserStats() {
+      try { localStorage.setItem(BROWSER_STATS_KEY, JSON.stringify(browserStats)); }
+      catch { /* Stats are a convenience; gameplay must still work if storage is unavailable. */ }
+    }
+    saveBrowserStats();
+    let browserBlocksBroken = browserStats.blocksBroken;
+    let browserBlocksPlaced = browserStats.blocksPlaced;
     const inventoryFilterSets = {
       all: null,
       nature: new Set([1, 2, 3, 4, 5, 7, 8, 9, 19, 34, 36, 37, 39, 40, 42, 43, 45, 46, 48, 49, 50, 51, 52, 53, 55, 56, 57, 58]),
@@ -2197,6 +2223,14 @@
       if (!id || !world.setBlock(hit.x, hit.y, hit.z, 0)) return;
       remeshAround(hit.x, hit.y, hit.z);
       browserBlocksBroken++;
+      browserStats.blocksBroken = browserBlocksBroken;
+      const coinRewards = { 20: 2, 21: 3, 22: 5, 23: 15, 24: 4, 26: 3, 28: 20, 31: 2 };
+      const coinsEarned = coinRewards[id] || 0;
+      if (coinsEarned > 0) {
+        browserStats.coins += coinsEarned;
+        toast(`+${coinsEarned} koin`);
+      }
+      saveBrowserStats();
       spawnBreakParticles(hit.x, hit.y, hit.z, id);
       playSound('break', id);
     }
@@ -2218,6 +2252,8 @@
       if (!world.setBlock(px, py, pz, id)) return;
       remeshAround(px, py, pz);
       browserBlocksPlaced++;
+      browserStats.blocksPlaced = browserBlocksPlaced;
+      saveBrowserStats();
       playSound('place', id);
     }
     function remeshAround(wx, wy, wz) {
@@ -2273,14 +2309,16 @@
       if (showStats) {
         const pos = player.pos;
         const selected = BLOCKS[HOTBAR[selectedSlot]];
-        vcGuideBody.textContent = 'Statistik sesi browser\\n' +
-          'Posisi: ' + Math.floor(pos.x) + ', ' + Math.floor(pos.y) + ', ' + Math.floor(pos.z) + '\\n' +
-          'Blok dihancurkan: ' + browserBlocksBroken + '\\n' +
-          'Blok dipasang: ' + browserBlocksPlaced + '\\n' +
-          'Slot aktif: ' + (selectedSlot + 1) + ' — ' + (selected ? selected.name : 'kosong') + '\\n' +
+        vcGuideBody.textContent = 'Statistik VoxelCraft\n' +
+          'Koin: ' + browserStats.coins + '\n' +
+          'Kunjungan browser: ' + browserStats.joins + '\n' +
+          'Blok dihancurkan: ' + browserBlocksBroken + '\n' +
+          'Blok dipasang: ' + browserBlocksPlaced + '\n' +
+          'Posisi: ' + Math.floor(pos.x) + ', ' + Math.floor(pos.y) + ', ' + Math.floor(pos.z) + '\n' +
+          'Slot aktif: ' + (selectedSlot + 1) + ' — ' + (selected ? selected.name : 'kosong') + '\n' +
           'Mode terbang: ' + (player.fly ? 'ON' : 'OFF') + ' | Waktu: ' + clock;
       } else {
-        vcGuideBody.textContent = 'Halo, penjelajah!\\nPilih aksi VoxelCraft. Tampilan ini memakai tekstur UI dari resource pack; aksi yang belum didukung browser ditandai jelas.';
+        vcGuideBody.textContent = 'Halo, penjelajah!\nPilih aksi VoxelCraft. Tampilan ini memakai tekstur UI dari resource pack; aksi yang belum didukung browser ditandai jelas.';
       }
       vcFlyStatus.textContent = player.fly ? 'Status sekarang: ON' : 'Status sekarang: OFF';
     }
@@ -2499,7 +2537,7 @@
         const clockMinutes = Math.floor((((worldTime % 1) + 1) % 1) * 1440);
         const clock = `${String(Math.floor(clockMinutes / 60) % 24).padStart(2, '0')}:${String(clockMinutes % 60).padStart(2, '0')}`;
         hudEl.innerHTML =
-          `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> <b>${clock}</b> <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : 'Jalan'} <span class="hud-sep">|</span> Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
+          `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> <b>${clock}</b> <span class="hud-sep">|</span> Koin: <b>${browserStats.coins}</b> <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : 'Jalan'} <span class="hud-sep">|</span> Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
       }
     }
 

@@ -35,10 +35,24 @@ if (source.includes('#vcGuide .vc-actions { display: grid; grid-template-columns
   fail('Behavior Pack ActionForm buttons must use the native vertical list layout');
 }
 
-if (source.includes('class="hud-brand">VoxelCraft') && source.includes('Overworld') && source.includes('browserBlocksBroken')) {
-  pass('Browser HUD mirrors the Behavior Pack action bar with dimension, coordinates, time, and session stats');
+if (source.includes('class="hud-brand">VoxelCraft') && source.includes('Overworld') && source.includes('browserStats.coins')) {
+  pass('Browser HUD mirrors the Behavior Pack action bar with dimension, coordinates, time, and persistent coins');
 } else {
-  fail('Browser HUD should mirror the Behavior Pack action-bar layout');
+  fail('Browser HUD should mirror the Behavior Pack action bar including persistent coins');
+}
+if (source.includes('const BROWSER_STATS_KEY') &&
+    source.includes('browserStats.joins++') &&
+    source.includes('browserStats.blocksBroken = browserBlocksBroken') &&
+    source.includes('browserStats.blocksPlaced = browserBlocksPlaced') &&
+    source.includes('localStorage.setItem(BROWSER_STATS_KEY')) {
+  pass('Behavior Pack player stats persist safely in browser storage');
+} else {
+  fail('Browser stats should safely persist visits, coins, and block activity');
+}
+if (source.includes('const coinRewards = { 20: 2, 21: 3, 22: 5, 23: 15, 24: 4, 26: 3, 28: 20, 31: 2 }')) {
+  pass('Browser ore coin rewards match the Behavior Pack reward table');
+} else {
+  fail('Browser ore coin rewards must match the Behavior Pack reward table');
 }
 
 if (!source.includes("@font-face") ||
