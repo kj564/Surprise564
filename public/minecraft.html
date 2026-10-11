@@ -555,6 +555,18 @@
     const ATLAS_COLS = 16, ATLAS_ROWS = 6, TILE_PX = 16;
     const ATLAS_W = ATLAS_COLS * TILE_PX, ATLAS_H = ATLAS_ROWS * TILE_PX;
 
+    // Fail fast if a future edit adds a tile without its matching atlas image,
+    // reuses an index, or silently exceeds the fixed atlas dimensions.
+    const TILE_INDICES = Object.values(TILE);
+    if (TEXTURE_FILES.length > ATLAS_COLS * ATLAS_ROWS) {
+      throw new Error('[VoxelCraft] Texture atlas capacity exceeded: ' + TEXTURE_FILES.length);
+    }
+    if (TILE_INDICES.length !== TEXTURE_FILES.length ||
+        new Set(TILE_INDICES).size !== TILE_INDICES.length ||
+        Math.max(...TILE_INDICES) !== TEXTURE_FILES.length - 1) {
+      throw new Error('[VoxelCraft] TILE indices and TEXTURE_FILES are out of sync.');
+    }
+
     // Face definitions: dir, corners (CCW from outside), uv mapping
     // face index: 0=+X 1=-X 2=+Y 3=-Y 4=+Z 5=-Z
     const FACES = [
