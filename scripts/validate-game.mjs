@@ -39,7 +39,7 @@ const vanillaUiTextures = [
   'menubackground',
   'background_panel', 'background_with_border', 'button_borderless_dark',
   'button_borderless_darkhover', 'button_borderless_darkpressed',
-  'dialog_background_opaque', 'highlight_slot', 'hotbar_start_cap', 'hotbar_end_cap', 'cancel',
+  'dialog_background_opaque', 'highlight_slot', 'hotbar_start_cap', 'hotbar_end_cap', 'cancel', 'inventory_icon',
   'hud_tip_text_background', 'item_cell',
 ];
 for (const texture of vanillaUiTextures) {
