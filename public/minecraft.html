@@ -964,6 +964,7 @@
         const leg = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.2, 0.055), orange);
         leg.position.set(x, 0.1, 0); group.add(leg);
       }
+      group.userData.fallbackBody = body;
       return group;
     }
 
@@ -1011,7 +1012,7 @@
       scene.add(group);
       mobs.push({
         mesh: group,
-        body: group.userData?.bones?.get('body') || group,
+        body: group.userData?.bones?.get('body') || group.userData?.fallbackBody || group,
         bones: group.userData?.bones || null,
         vel: new THREE.Vector3(),
         yaw: Math.random() * Math.PI * 2,
