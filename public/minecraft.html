@@ -431,6 +431,7 @@
       <div class="menu-buttons">
         <button id="playButton">Singleplayer</button>
         <button id="multiplayerButton">Multiplayer</button>
+        <button id="guideButton">VoxelCraft Guide</button>
         <div class="button-row">
           <button id="optionsButton">Options...</button>
           <button id="quitButton">Quit Game</button>
@@ -1947,6 +1948,7 @@
     });
     vcGuide.addEventListener('click', (event) => { if (event.target === vcGuide) closeVcGuide(true); });
 
+    document.getElementById('guideButton').addEventListener('click', openVcGuide);
     playButton.addEventListener('click', startGame);
     multiplayerButton.addEventListener('click', () => toast('Multiplayer belum tersedia — saat ini mode Singleplayer aktif.'));
     optionsButton.addEventListener('click', () => settingsPanel.classList.toggle('open'));
