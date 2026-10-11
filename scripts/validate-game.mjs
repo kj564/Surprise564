@@ -120,6 +120,15 @@ if (!source.includes("if (e.code === 'Space' && !e.repeat)")) {
   fail('Space double-tap flight toggle must ignore key-repeat events');
 } else pass('Holding Space cannot trigger repeated flight-mode toggles from keyboard repeat');
 
+for (const key of ['KeyK', 'KeyE', 'KeyT']) {
+  if (!source.includes(`if (e.code === '${key}' && !e.repeat)`)) {
+    fail(`${key} one-shot action must ignore keyboard repeat events`);
+  }
+}
+if (!['KeyK', 'KeyE', 'KeyT'].some(key => !source.includes(`if (e.code === '${key}' && !e.repeat)`))) {
+  pass('Save, inventory toggle, and time advance trigger once per key press');
+}
+
 if (!source.includes('function clearPressedKeys()') ||
     !source.includes('if (!locked) clearPressedKeys();') ||
     !source.includes("window.addEventListener('blur', clearPressedKeys);") ||
