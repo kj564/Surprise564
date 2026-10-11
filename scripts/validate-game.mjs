@@ -24,6 +24,21 @@ const blockSource = section(/const BLOCKS = \{([\s\S]*?)\n    \};/, 'BLOCKS');
 const blockEntries = [...blockSource.matchAll(/^\s*(\d+):\s*(null|\{[^\n]*\})/gm)];
 const blocks = new Map(blockEntries.map(([, id, definition]) => [Number(id), definition]));
 
+const vanillaUiTextures = [
+  'background_panel', 'background_with_border', 'button_borderless_dark',
+  'button_borderless_darkhover', 'button_borderless_darkpressed',
+  'dialog_background_opaque', 'highlight_slot', 'hotbar_start_cap', 'hotbar_end_cap',
+  'hud_tip_text_background', 'item_cell',
+];
+for (const texture of vanillaUiTextures) {
+  if (!source.includes(`./VoxelCraft/textures/ui/${texture}.png`)) {
+    fail(`Browser UI must use the staged vanilla Bedrock texture: ${texture}.png`);
+  }
+}
+if (vanillaUiTextures.every(texture => source.includes(`./VoxelCraft/textures/ui/${texture}.png`))) {
+  pass(`Browser UI references all ${vanillaUiTextures.length} original Bedrock UI textures`);
+}
+
 if (!tiles.size) fail('TILE table is empty');
 else pass(`Parsed ${tiles.size} texture tile definitions`);
 
