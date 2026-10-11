@@ -36,6 +36,8 @@ if ([...tileIndices].sort((a, b) => a - b).some((value, i) => value !== expected
 
 if (textures.length !== tiles.size) fail(`TILE/TEXTURE_FILES count mismatch: ${tiles.size} vs ${textures.length}`);
 else pass('TILE and TEXTURE_FILES have matching lengths');
+if (new Set(textures).size !== textures.length) fail('TEXTURE_FILES contains duplicate texture names');
+else pass('Texture source names are unique');
 
 for (const [name, index] of tiles) {
   if (index >= textures.length) fail(`Tile ${name} points outside TEXTURE_FILES (index ${index})`);
@@ -55,8 +57,16 @@ for (const [id, definition] of blocks) {
   for (const [, tileName] of definition.matchAll(/TILE\.([A-Z][A-Z0-9_]*)/g)) {
     if (!tiles.has(tileName)) fail(`Block ${id} references undefined TILE.${tileName}`);
   }
-  for (const field of ['name:', 'top:', 'bottom:', 'side:']) {
+  for (const field of ['name:', 'top:', 'bottom:', 'side:', 'solid:']) {
     if (!definition.includes(field)) fail(`Block ${id} is missing required ${field.slice(0, -1)} field`);
+  }
+  const referencedTiles = [...definition.matchAll(/TILE\.([A-Z][A-Z0-9_]*)/g)].map(([, name]) => name);
+  const usesOpaqueLeafTexture = referencedTiles.some(name => {
+    const index = tiles.get(name);
+    return index !== undefined && /leaves_.*_opaque/.test(textures[index] || '');
+  });
+  if (usesOpaqueLeafTexture && /transparent:\s*true/.test(definition)) {
+    fail(`Block ${id} uses an opaque leaf texture but is configured as translucent`);
   }
 }
 if (!failures.some(message => message.startsWith('Block '))) pass('Every block texture reference resolves to a known tile');
