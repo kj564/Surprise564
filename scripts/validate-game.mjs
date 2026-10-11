@@ -45,6 +45,12 @@ if (vanillaUiTextures.every(texture => source.includes(`./VoxelCraft/textures/ui
   pass(`Browser UI references all ${vanillaUiTextures.length} original Bedrock UI textures`);
 }
 
+if (source.includes('width: 40px;\n    height: 44px;') && source.includes('width: min(10vw, 38px); height: min(11vw, 42px);')) {
+  pass('Hotbar slot proportions follow the original Bedrock HUD grid at desktop and mobile scales');
+} else {
+  fail('Hotbar slot proportions must follow the original Bedrock HUD grid at desktop and mobile scales');
+}
+
 const behaviorPackMenuActions = ['kit', 'heal', 'fly', 'day', 'night', 'weather', 'stats', 'close'];
 for (const action of behaviorPackMenuActions) {
   if (!source.includes(`data-vc-action="${action}"`)) {
