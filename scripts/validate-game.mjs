@@ -24,6 +24,12 @@ const blockSource = section(/const BLOCKS = \{([\s\S]*?)\n    \};/, 'BLOCKS');
 const blockEntries = [...blockSource.matchAll(/^\s*(\d+):\s*(null|\{[^\n]*\})/gm)];
 const blocks = new Map(blockEntries.map(([, id, definition]) => [Number(id), definition]));
 
+if (!source.includes('Overworld <span class="hud-separator">|</span> XYZ:') || !source.includes('Math.floor(worldTime * 1440)')) {
+  fail('HUD should show Bedrock-style dimension, integer coordinates, and in-game clock');
+} else {
+  pass('HUD shows Bedrock-style dimension, coordinates, and in-game clock');
+}
+
 if (!source.includes("font-family: 'Minecraft Ten'") || !source.includes("./VoxelCraft/font/minecraft-ten.ttf")) {
   fail('Browser UI must use the original Bedrock Minecraft Ten font');
 } else {
