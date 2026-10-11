@@ -1484,9 +1484,14 @@
 
     // ---- Raycast (DDA) ----
     function raycastVoxel(maxDist) {
+      if (!Number.isFinite(maxDist) || maxDist < 0) return null;
       const origin = new THREE.Vector3(player.pos.x, player.pos.y + player.eye, player.pos.z);
       const dir = new THREE.Vector3();
       camera.getWorldDirection(dir);
+      if (![origin.x, origin.y, origin.z, dir.x, dir.y, dir.z].every(Number.isFinite) ||
+          dir.lengthSq() === 0) return null;
+      dir.normalize();
+
       let x = Math.floor(origin.x), y = Math.floor(origin.y), z = Math.floor(origin.z);
       const stepX = Math.sign(dir.x), stepY = Math.sign(dir.y), stepZ = Math.sign(dir.z);
       const tDeltaX = dir.x !== 0 ? Math.abs(1 / dir.x) : Infinity;
@@ -1497,14 +1502,18 @@
       let tMaxZ = dir.z !== 0 ? ((stepZ > 0 ? (z + 1 - origin.z) : (origin.z - z)) * tDeltaZ) : Infinity;
       let face = null;
       let dist = 0;
-      while (dist < maxDist) {
+      while (dist <= maxDist) {
         const id = world.getBlock(x, y, z);
         if (id && BLOCKS[id] && !BLOCKS[id].noCollide) {
           return { x, y, z, face };
         }
-        if (tMaxX < tMaxY && tMaxX < tMaxZ) {
+
+        const nextDist = Math.min(tMaxX, tMaxY, tMaxZ);
+        // Do not inspect a voxel entered beyond the requested reach.
+        if (!Number.isFinite(nextDist) || nextDist > maxDist) return null;
+        if (tMaxX <= tMaxY && tMaxX <= tMaxZ) {
           x += stepX; dist = tMaxX; tMaxX += tDeltaX; face = [-stepX, 0, 0];
-        } else if (tMaxY < tMaxZ) {
+        } else if (tMaxY <= tMaxZ) {
           y += stepY; dist = tMaxY; tMaxY += tDeltaY; face = [0, -stepY, 0];
         } else {
           z += stepZ; dist = tMaxZ; tMaxZ += tDeltaZ; face = [0, 0, -stepZ];
