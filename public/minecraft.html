@@ -750,9 +750,20 @@
     }
 
     // ---- Input ----
-    canvas.addEventListener('click', () => {
-      if (!locked) canvas.requestPointerLock();
-    });
+    // The start overlay covers the canvas, so its click must request pointer lock too.
+    function startGame() {
+      if (!locked && canvas.requestPointerLock) {
+        const result = canvas.requestPointerLock();
+        if (result && typeof result.catch === 'function') {
+          result.catch((err) => {
+            console.warn('Pointer lock gagal:', err);
+            toast('Klik layar game untuk mulai bermain');
+          });
+        }
+      }
+    }
+    canvas.addEventListener('click', startGame);
+    overlay.addEventListener('click', startGame);
     document.addEventListener('pointerlockchange', () => {
       locked = document.pointerLockElement === canvas;
       overlay.classList.toggle('hidden', locked);
