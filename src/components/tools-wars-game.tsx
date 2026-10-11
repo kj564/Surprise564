@@ -13,7 +13,7 @@ type Fighter = {
   name: string; side: 'left' | 'right'; trait: Trait; subTrait: SubTrait; category: Category
   charId: string; bounceCount: number; lastHitAt: number; shieldUntil: number; hitCount: number
 }
-type Shot = { x: number; y: number; vx: number; vy: number; life: number; owner: 'left' | 'right'; color: string; radius: number }
+type Shot = { x: number; y: number; vx: number; vy: number; life: number; owner: 'left' | 'right'; color: string; radius: number; bounces: number }
 const WEAPONS: Record<Weapon, { label: string; icon: string; color: string; damage: number; reach: number; speed: number; description: string }> = {
   shield: { label: 'Shield', icon: '🛡️', color: '#5dd6ff', damage: 13, reach: 74, speed: 5.2, description: 'Tahan serangan, lalu dorong lawan dengan bash.' },
   daggers: { label: 'Daggers', icon: '🗡️', color: '#ff5b8a', damage: 8, reach: 65, speed: 8.2, description: 'Gerakan cepat dan combo jarak dekat.' },
@@ -211,7 +211,7 @@ export default function ToolsWarsGame() {
       f.cooldown = f.weapon === 'daggers' ? 20 : f.weapon === 'wand' ? 38 : 32
       if (f.weapon === 'wand') {
         const projectileSpeed = f.charId === 'thoth' ? 9.2 : f.charId === 'ra' ? 6.2 : 7.8
-        shots.push({ x: f.x + f.facing * 36, y: f.y - 8, vx: f.facing * projectileSpeed, vy: (other.y - f.y) * (f.charId === 'thoth' ? .035 : .025), life: f.charId === 'thoth' ? 105 : 95, owner: f.side, color: f.charId === 'ra' ? '#ffcf57' : spec.color, radius: f.charId === 'ra' ? 11 : 9 })
+        shots.push({ x: f.x + f.facing * 36, y: f.y - 8, vx: f.facing * projectileSpeed, vy: (other.y - f.y) * (f.charId === 'thoth' ? .035 : .025), life: f.charId === 'thoth' ? 105 : 95, owner: f.side, color: f.charId === 'ra' ? '#ffcf57' : spec.color, radius: f.charId === 'ra' ? 11 : 9, bounces: 0 })
         return
       }
       const dx = other.x - f.x, dy = other.y - f.y
@@ -303,17 +303,27 @@ export default function ToolsWarsGame() {
         shots = shots.filter(s => s.life > 0 && s.x > -20 && s.x < w+20 && s.y > 0 && s.y < h)
         for (const s of shots) {
           s.x += s.vx*dt; s.y += s.vy*dt; s.life -= dt
+          const attacker = s.owner === 'left' ? left : right
+
+          // Thoth's moonshot can ricochet once from the arena boundary.
+          // Other projectiles keep the existing behavior and expire off-screen.
+          if (attacker.charId === 'thoth' && s.bounces < 1) {
+            const minX = s.radius
+            const maxX = w - s.radius
+            const minY = 40 + s.radius
+            const maxY = floor - s.radius
+            if (s.x <= minX) { s.x = minX; s.vx = Math.abs(s.vx); s.bounces++ }
+            else if (s.x >= maxX) { s.x = maxX; s.vx = -Math.abs(s.vx); s.bounces++ }
+            else if (s.y <= minY) { s.y = minY; s.vy = Math.abs(s.vy); s.bounces++ }
+            else if (s.y >= maxY) { s.y = maxY; s.vy = -Math.abs(s.vy); s.bounces++ }
+          }
+
           ctx.save(); ctx.shadowColor=s.color; ctx.shadowBlur=20; ctx.fillStyle=s.color
           ctx.beginPath(); ctx.arc(s.x,s.y,s.radius,0,Math.PI*2); ctx.fill(); ctx.restore()
           const target=s.owner==='left'?right:left
           if (Math.hypot(s.x-target.x,s.y-target.y)<target.radius + s.radius) {
-            const attacker = s.owner === 'left' ? left : right
             const angle = Math.atan2(target.y - s.y, target.x - s.x)
             applyHit(attacker, target, WEAPONS.wand.damage, 'projectile', angle)
-            if (attacker.charId === 'thoth') {
-              // Thoth's measured moonshot ricochets once from an arena edge.
-              if (s.life > 40 && s.radius > 0) { s.vx *= -1; s.life = Math.min(s.life, 40); s.radius = 6; continue }
-            }
             s.life=0
           }
         }
