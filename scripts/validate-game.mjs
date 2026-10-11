@@ -110,6 +110,12 @@ if (!source.includes("const sprint = keys['ShiftLeft'] && !player.fly;") ||
   fail('Holding left Shift on the ground must enable sprint speed without changing flight controls');
 } else pass('Ground sprint increases movement speed while flight speed remains independent');
 
+if (!source.includes('const maxStep = 0.25;') ||
+    !source.includes('Math.ceil(Math.abs(dy) / maxStep)') ||
+    !source.includes('for (let i = 0; i < ySteps; i++)')) {
+  fail('Player movement must use bounded vertical collision substeps to prevent tunneling');
+} else pass('Player vertical movement uses collision substeps to prevent tunneling through blocks');
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
