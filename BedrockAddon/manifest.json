@@ -1,12 +1,12 @@
 {
   "format_version": 2,
   "header": {
-    "name": "VoxelCraft Script Starter",
-    "description": "Starter behavior pack for VoxelCraft using the stable Minecraft Bedrock Script API.",
+    "name": "VoxelCraft Behavior Pack",
+    "description": "VoxelCraft behavior pack — custom commands, ActionForm UI menu, ore coin rewards, player stats, auto-save.",
     "uuid": "6b2c4b88-3d20-4d8d-9e56-4ab5ec4b81f2",
     "version": [
       1,
-      0,
+      1,
       0
     ],
     "min_engine_version": [
@@ -22,7 +22,7 @@
       "uuid": "7c4d5c99-4e31-4e9e-af67-5bc6fd5c92a3",
       "version": [
         1,
-        0,
+        1,
         0
       ],
       "entry": "scripts/main.js"
@@ -32,6 +32,10 @@
     {
       "module_name": "@minecraft/server",
       "version": "2.10.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.0.0"
     }
   ]
 }
