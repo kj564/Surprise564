@@ -118,7 +118,7 @@
 
   /* Inventory panel (press E) */
   #inventory {
-    position: fixed; inset: 0; z-index: 9; background: rgba(0,0,0,0.65);
+    position: fixed; inset: 0; z-index: 11; background: rgba(0,0,0,0.65);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     color: #fff; backdrop-filter: blur(3px); padding: 20px;
   }
@@ -918,6 +918,7 @@
     const inventoryEl = document.getElementById('inventory');
     const invGridEl = document.getElementById('invGrid');
     let inventoryOpen = false;
+    let inventoryReturnToGame = false;
     function buildInventory() {
       invGridEl.innerHTML = '';
       for (let id = 1; id <= 66; id++) {
@@ -945,11 +946,28 @@
       }
     }
     function toggleInventory() {
-      inventoryOpen = !inventoryOpen;
+      const opening = !inventoryOpen;
+      if (opening) inventoryReturnToGame = locked;
+      inventoryOpen = opening;
       inventoryEl.classList.toggle('hidden', !inventoryOpen);
+      // Update both overlays immediately; do not wait for pointerlockchange.
+      overlay.classList.toggle('hidden', locked || inventoryOpen);
+
       if (inventoryOpen) {
         if (locked) document.exitPointerLock();
         buildInventory();
+      } else {
+        const shouldResumeGame = inventoryReturnToGame;
+        inventoryReturnToGame = false;
+        if (shouldResumeGame && canvas.requestPointerLock) {
+          const result = canvas.requestPointerLock();
+          if (result && typeof result.catch === 'function') {
+            result.catch((err) => {
+              console.warn('Pointer lock gagal saat menutup inventory:', err);
+              toast('Klik layar game untuk melanjutkan');
+            });
+          }
+        }
       }
     }
     document.getElementById('invClose').addEventListener('click', toggleInventory);
@@ -1309,7 +1327,7 @@
     canvas.addEventListener('click', startGame);
     document.addEventListener('pointerlockchange', () => {
       locked = document.pointerLockElement === canvas;
-      overlay.classList.toggle('hidden', locked);
+      overlay.classList.toggle('hidden', locked || inventoryOpen);
     });
     document.addEventListener('mousemove', (e) => {
       if (!locked) return;
