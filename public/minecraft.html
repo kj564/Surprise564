@@ -595,7 +595,7 @@
     background-image: url('./VoxelCraft/textures/ui/button_borderless_darkhover.png');
   }
   #pauseOverlay .pause-buttons button:active {
-    background-image: url('./VoxelCraft/textures/ui/button_borderless_darkpressed.png);
+    background-image: url('./VoxelCraft/textures/ui/button_borderless_darkpressed.png');
     transform: translateY(1px);
   }
   @media (max-width: 600px) {
@@ -2172,7 +2172,7 @@
       vcGuideReturnToGame = false;
       if (shouldResume && canvas.requestPointerLock) {
         const result = canvas.requestPointerLock();
-        if (result && typeof result.catch === 'function') result.catch(() => { overlay.classList.remove('hidden'); toast('Klik layar game untuk melanjutkan'); });
+        if (result && typeof result.catch === 'function') result.catch(() => { syncMenuVisibility(); toast('Klik layar game untuk melanjutkan'); });
       }
     }
     vcGuide.querySelectorAll('[data-vc-action]').forEach((button) => {
