@@ -1,0 +1,38 @@
+{
+  "namespace": "voxelcraft_branding",
+
+  "branding_title": {
+    "type": "label",
+    "text": "VOXELCRAFT",
+    "color": [0.75, 1.0, 0.48],
+    "font_size": "large",
+    "shadow": true,
+    "layer": 20,
+    "anchor_from": "top_middle",
+    "anchor_to": "top_middle",
+    "offset": [0, 12],
+    "size": ["100%c", "100%c"]
+  },
+
+  "branding_subtitle": {
+    "type": "label",
+    "text": "BEDROCK EDITION",
+    "color": [1.0, 1.0, 1.0],
+    "font_size": "small",
+    "shadow": true,
+    "layer": 20,
+    "anchor_from": "top_middle",
+    "anchor_to": "top_middle",
+    "offset": [0, 36],
+    "size": ["100%c", "100%c"]
+  },
+
+  "branding_overlay": {
+    "type": "panel",
+    "size": ["100%", "100%"],
+    "controls": [
+      { "branding_title@voxelcraft_branding.branding_title": {} },
+      { "branding_subtitle@voxelcraft_branding.branding_subtitle": {} }
+    ]
+  }
+}
