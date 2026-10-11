@@ -35,6 +35,12 @@ if (source.includes('#vcGuide .vc-actions { display: grid; grid-template-columns
   fail('Behavior Pack ActionForm buttons must use the native vertical list layout');
 }
 
+if (source.includes('class="hud-brand">VoxelCraft') && source.includes('Overworld') && source.includes('browserBlocksBroken')) {
+  pass('Browser HUD mirrors the Behavior Pack action bar with dimension, coordinates, time, and session stats');
+} else {
+  fail('Browser HUD should mirror the Behavior Pack action-bar layout');
+}
+
 const vanillaUiTextures = [
   'menubackground',
   'background_panel', 'background_with_border', 'button_borderless_dark',
