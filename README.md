@@ -1,44 +1,115 @@
 # VoxelCraft
 
-VoxelCraft contains two separate projects: a browser-playable voxel game published with GitHub Pages, and optional Minecraft Bedrock development packs. The Bedrock packs do **not** run inside the browser game.
+> A browser-playable Minecraft-style voxel game **plus** a Minecraft Bedrock addon toolkit, packaged as a single GitHub Pages site.
 
-## Browser game (GitHub Pages)
+[![Play VoxelCraft](https://img.shields.io/badge/PLAY-VoxelCraft-4a9a3a?style=for-the-badge)](https://kj564.github.io/Surprise564/minecraft.html)
+[![GitHub Pages](https://img.shields.io/badge/Pages-live-88c5ff?style=for-the-badge)](https://kj564.github.io/Surprise564/)
 
-- `public/minecraft.html` — Three.js voxel game and its in-browser UI.
-- `public/VoxelCraft/textures/blocks/` — textures used by the browser game.
-- `src/app/` — Next.js page that hosts the game.
-- `.github/workflows/static.yml` — static build and GitHub Pages deployment.
+**▶ Play now:** https://kj564.github.io/Surprise564/minecraft.html
 
-**Keep the web game's menu and gameplay changes in the web app**, primarily `public/minecraft.html` and the page that embeds it. A Bedrock Resource Pack or Behavior Pack cannot change the GitHub Pages game's UI.
+VoxelCraft is **not affiliated with, endorsed by, or sponsored by Mojang Studios or Microsoft.** "Minecraft" is a trademark of Mojang Studios. All vanilla assets belong to Mojang & Microsoft — see [`LICENSE-ATTRIBUTION.md`](LICENSE-ATTRIBUTION.md).
 
-## Minecraft Bedrock packs
+---
 
-| Path | Purpose |
-| --- | --- |
-| `BedrockAddon/` | Our small custom Script API Behavior Pack starter. |
-| `VoxelCraftResourcePack/` | Experimental Bedrock Resource Pack / JSON UI work. JSON UI is version-sensitive and may not work on versions using hard-coded Ore UI. |
-| `VanillaBehaviorPack/` | Git submodule referencing the upstream vanilla Behavior Pack template from ZtechNetwork. Keep upstream vanilla files separate from our custom pack. |
-| `VoxelCraft/` | Existing VoxelCraft assets retained for development. |
+## Table of contents
 
-### Get the vanilla Behavior Pack files
+- [What's in this repo](#whats-in-this-repo)
+- [Quick start](#quick-start)
+- [Browser game features](#browser-game-features)
+- [Bedrock addon features](#bedrock-addon-features)
+- [Repository structure](#repository-structure)
+- [Developing the browser game](#developing-the-browser-game)
+- [Bedrock references](#bedrock-references)
+- [Attribution](#attribution)
 
-Clone with submodules enabled:
+## What's in this repo
+
+Two separate, parallel projects share this repository:
+
+1. **Browser voxel game** — `public/minecraft.html` is a self-contained Three.js game that runs in any modern browser and is deployed to GitHub Pages.
+2. **Minecraft Bedrock addon toolkit** — `BedrockAddon/` (custom Script API pack) + `VoxelCraftResourcePack/` (JSON UI experiments) + reference data in `VoxelCraft/` and `VanillaBehaviorPack/`.
+
+The Bedrock packs **do not** run inside the browser game. The browser game reads textures from `public/VoxelCraft/textures/blocks/`, not from the Bedrock packs.
+
+## Quick start
 
 ```bash
+# Clone with the vanilla BP submodule
 git clone --recurse-submodules https://github.com/kj564/Surprise564.git
+cd Surprise564
+
+# One-shot setup (submodules + game textures + deps)
+./scripts/setup.sh
+
+# Run the dev server
+bun run dev
 ```
 
-If you already cloned the repository:
+Then open the **Preview Panel** in your IDE or visit `http://localhost:3000/Surprise564/`.
 
-```bash
-git submodule update --init --recursive
+Already cloned without `--recurse-submodules`? Run `git submodule update --init --recursive` first.
+
+## Browser game features
+
+| System | Detail |
+|--------|--------|
+| Engine | Three.js 0.160 via CDN, single self-contained `minecraft.html` |
+| World | Chunked 16×16×40 voxel terrain, procedural heightmap + beaches + oak trees + water |
+| Ores | Coal / iron / gold / diamond ore distributed by depth (procedurally generated ore textures) |
+| Day/night | Visible sun & moon arcs, 250-star field, sunrise/sunset tint |
+| Blocks | 23 block types with per-face textures from the real Bedrock atlas |
+| Controls | Pointer-lock mouse-look, WASD, jump, double-Space to fly |
+| Build/break | DDA raycast break (left click) + place (right click), 6-block reach |
+| Particles | Block-break particle burst, color-sampled from atlas |
+| Audio | WebAudio-synthesized break / place / step SFX |
+| Mobs | Chicken wander AI with hop + despawn + spawn near player |
+| Inventory | Press `E` to swap any of 23 blocks into the 9-slot hotbar |
+| Persistence | Per-browser save via `localStorage` (press `K` to save manually) |
+
+**Controls cheat-sheet:** WASD move · Mouse look · Space jump · 2× Space fly · E inventory · T advance time · K save · 1–9 / scroll hotbar · L-click break · R-click place
+
+## Bedrock addon features
+
+| Pack | Path | What it does |
+|------|------|--------------|
+| **VoxelCraft BP** | `BedrockAddon/` | Custom Script API behavior pack (`@minecraft/server` 2.10.0 + `@minecraft/server-ui` 2.0.0) |
+| **VoxelCraft RP (JSON UI)** | `VoxelCraftResourcePack/` | Experimental start-screen / main-menu UI reskin |
+| **Vanilla BP reference** | `VanillaBehaviorPack/` (submodule) | Read-only mirror of the official vanilla behavior pack template |
+| **Vanilla RP reference** | `VoxelCraft/` | Full 18,417-file vanilla resource pack; asset source for the browser game |
+
+The VoxelCraft BP (`BedrockAddon/`) ships:
+
+- **9 custom chat commands:** `!help`, `!give`, `!fly`, `!heal`, `!time`, `!weather`, `!tp`, `!kit`, `!stats`
+- **ActionForm UI menu** — rename a book to "VoxelCraft Guide" and use it to open an 8-button action menu
+- **Coin economy + ore rewards** — break ores for coins (coal +2 → emerald +20, deepslate variants give bonus)
+- **Player stats** — stored in world dynamic properties (survive restarts): coins, blocksBroken, mobsKilled, joins
+- **Action bar HUD** — dimension + XYZ + in-game clock + coin total
+- **Auto-save** every 5 minutes
+
+See [`BedrockAddon/README.md`](BedrockAddon/README.md) for install + test instructions.
+
+## Repository structure
+
+See [`docs/STRUCTURE.md`](docs/STRUCTURE.md) for the full annotated tree. TL;DR:
+
+```
+Surprise564/
+├── public/minecraft.html         # ★ Browser voxel game
+├── public/VoxelCraft/textures/   #     24 textures the game uses
+├── src/app/                      #     Next.js host page
+├── VoxelCraft/                   #     Full vanilla Resource Pack (asset source)
+├── VanillaBehaviorPack/          #     Git submodule: upstream vanilla BP
+├── BedrockAddon/                  # ★ Our custom Script API behavior pack
+├── VoxelCraftResourcePack/        #     Experimental JSON UI resource pack
+├── scripts/setup.sh              #     Repo bootstrap
+├── docs/                         #     STRUCTURE.md + ASSETS.md
+├── .github/workflows/static.yml  #     GitHub Pages build pipeline
+└── README.md                     #     You are here
 ```
 
-The submodule tracks [ZtechNetwork/MCBVanillaBehaviorPack](https://github.com/ZtechNetwork/MCBVanillaBehaviorPack). It is an upstream vanilla template, not custom gameplay logic written for the browser game. Its manifest currently targets a newer Bedrock version than older game releases, so check `VanillaBehaviorPack/manifest.json` before using it.
+## Developing the browser game
 
-### Develop the browser game locally
-
-Requirements: Bun and a modern Node.js runtime.
+Requirements: [Bun](https://bun.sh) and a modern Node.js runtime.
 
 ```bash
 bun install --frozen-lockfile
@@ -47,17 +118,23 @@ bun run dev
 
 Open `http://localhost:3000/Surprise564/`. To open the game file directly, use `http://localhost:3000/Surprise564/minecraft.html`.
 
+**Editor:** keep gameplay changes inside `public/minecraft.html`. The Next.js page in `src/app/page.tsx` only iframes the game — it shouldn't contain game logic.
+
 ### GitHub Pages
 
-The workflow builds a static Next.js export and publishes `out/`. Keep the browser game's HTML and required assets available under `public/` so they are included in the export.
+The workflow at `.github/workflows/static.yml` runs `bun run build` (Next.js static export with `output: "export"` and `basePath: "/Surprise564"`), then deploys the `out/` folder to Pages. Anything under `public/` is automatically included in the export.
 
 ## Bedrock references
 
-- [Jayly Script API docs](https://jaylydev.github.io/scriptapi-docs/)
-- [Bedrock Wiki](https://wiki.bedrock.dev/)
-- [Minecraft Creator reference](https://learn.microsoft.com/en-us/minecraft/creator/reference/?view=minecraft-bedrock-stable)
-- [MicrosoftDocs/minecraft-creator](https://github.com/MicrosoftDocs/minecraft-creator)
+Documentation sources used while building the addon and the game:
+
+- [JaylyDev Script API docs](https://jaylydev.github.io/scriptapi-docs/) — event signatures, dynamic properties, `ActionFormData`
+- [bedrock.dev](https://bedrock.dev/) — manifest schema, blocks.json, entity JSON
+- [Microsoft Learn — Minecraft Creator reference](https://learn.microsoft.com/en-us/minecraft/creator/reference/?view=minecraft-bedrock-stable) — `world.afterEvents`, `player.teleport`, `world.setTimeOfDay`
+- [MicrosoftDocs/minecraft-creator](https://github.com/MicrosoftDocs/minecraft-creator) — Script API patterns and conventions
 
 ## Attribution
 
-The vanilla Behavior Pack submodule remains maintained by its upstream repository. Its README notes that Minecraft assets belong to Mojang Studios and Microsoft. Review upstream notices and applicable terms before redistributing pack contents.
+The vanilla Resource Pack (`VoxelCraft/`) and the vanilla Behavior Pack submodule (`VanillaBehaviorPack/`) remain maintained by their upstream repositories. The upstream READMEs note that Minecraft assets belong to Mojang Studios and Microsoft. Review upstream notices and applicable terms before redistributing pack contents.
+
+Full attribution details: [`LICENSE-ATTRIBUTION.md`](LICENSE-ATTRIBUTION.md).

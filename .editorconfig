@@ -1,0 +1,32 @@
+# EditorConfig — https://editorconfig.org
+# Keeps formatting consistent across editors and platforms.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+# Markdown: keep trailing two spaces (hard line breaks) and a single trailing newline.
+trim_trailing_whitespace = false
+
+[*.{json,jsonc,json5}]
+indent_size = 2
+
+[*.{js,mjs,cjs,ts,tsx,jsx}]
+indent_size = 2
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+[*.sh]
+indent_style = space
+indent_size = 2
