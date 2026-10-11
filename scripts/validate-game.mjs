@@ -32,7 +32,7 @@ if (!source.includes('grid-template-columns: repeat(9, minmax(38px, 52px))') ||
 const vanillaUiTextures = [
   'background_panel', 'background_with_border', 'button_borderless_dark',
   'button_borderless_darkhover', 'button_borderless_darkpressed',
-  'dialog_background_opaque', 'highlight_slot', 'hotbar_start_cap', 'hotbar_end_cap',
+  'dialog_background_opaque', 'highlight_slot', 'hotbar_start_cap', 'hotbar_end_cap', 'cancel',
   'hud_tip_text_background', 'item_cell',
 ];
 for (const texture of vanillaUiTextures) {
@@ -53,6 +53,16 @@ for (const action of behaviorPackMenuActions) {
 if (behaviorPackMenuActions.every(action => source.includes(`data-vc-action="${action}"`)) &&
     source.includes("e.code === 'KeyG'") && source.includes("function openVcGuide()")) {
   pass('Behavior Pack-inspired VoxelCraft guide exposes all menu actions and the G shortcut');
+}
+
+const behaviorPackMenuIcons = ['book_writable', 'apple', 'feather', 'clock_item', 'bed_red', 'compass_item', 'book_normal'];
+for (const icon of behaviorPackMenuIcons) {
+  if (!source.includes(`./VoxelCraft/textures/items/${icon}.png`)) {
+    fail(`Behavior Pack menu icon must use the staged original item texture: ${icon}.png`);
+  }
+}
+if (behaviorPackMenuIcons.every(icon => source.includes(`./VoxelCraft/textures/items/${icon}.png`))) {
+  pass(`Browser Behavior Pack menu references all ${behaviorPackMenuIcons.length} original item icons`);
 }
 
 if (!tiles.size) fail('TILE table is empty');

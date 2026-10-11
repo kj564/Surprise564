@@ -81,7 +81,7 @@ SRC_UI_DIR="VoxelCraft/textures/ui"
 UI_REQUIRED=(
   background_panel background_with_border button_borderless_dark
   button_borderless_darkhover button_borderless_darkpressed dialog_background_opaque
-  highlight_slot hotbar_start_cap hotbar_end_cap
+  highlight_slot hotbar_start_cap hotbar_end_cap cancel
   hud_tip_text_background item_cell
 )
 mkdir -p "$UI_TEX_DIR"
@@ -90,6 +90,18 @@ for name in "${UI_REQUIRED[@]}"; do
   dst="$UI_TEX_DIR/$name.png"
   if [ ! -f "$src" ]; then echo "Missing vanilla UI texture source: $src"; exit 1; fi
   if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then cp "$src" "$dst"; echo "    staged UI $name.png"; fi
+done
+
+# Stage the original item sprites referenced by the Behavior Pack ActionForm menu.
+ITEM_TEX_DIR="public/VoxelCraft/textures/items"
+SRC_ITEM_DIR="VoxelCraft/textures/items"
+ITEM_REQUIRED=(book_writable apple feather clock_item bed_red compass_item book_normal)
+mkdir -p "$ITEM_TEX_DIR"
+for name in "${ITEM_REQUIRED[@]}"; do
+  src="$SRC_ITEM_DIR/$name.png"
+  dst="$ITEM_TEX_DIR/$name.png"
+  if [ ! -f "$src" ]; then echo "Missing Behavior Pack menu icon source: $src"; exit 1; fi
+  if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then cp "$src" "$dst"; echo "    staged item icon $name.png"; fi
 done
 
 echo "==> [3/3] Installing browser-game dependencies (bun)…"

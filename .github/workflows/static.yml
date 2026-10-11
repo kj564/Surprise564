@@ -60,13 +60,23 @@ jobs:
           ui_textures=(
             background_panel background_with_border button_borderless_dark
             button_borderless_darkhover button_borderless_darkpressed dialog_background_opaque
-            highlight_slot hotbar_start_cap hotbar_end_cap
+            highlight_slot hotbar_start_cap hotbar_end_cap cancel
             hud_tip_text_background item_cell
           )
           for name in "${ui_textures[@]}"; do
             src="VoxelCraft/textures/ui/${name}.png"
             test -f "$src" || { echo "Missing vanilla UI texture source: $src"; exit 1; }
             cp "$src" "public/VoxelCraft/textures/ui/${name}.png"
+          done
+
+      - name: Stage Behavior Pack ActionForm icons
+        run: |
+          mkdir -p public/VoxelCraft/textures/items
+          item_textures=(book_writable apple feather clock_item bed_red compass_item book_normal)
+          for name in "${item_textures[@]}"; do
+            src="VoxelCraft/textures/items/${name}.png"
+            test -f "$src" || { echo "Missing Behavior Pack menu icon source: $src"; exit 1; }
+            cp "$src" "public/VoxelCraft/textures/items/${name}.png"
           done
 
       - name: Setup Bun
@@ -106,6 +116,15 @@ jobs:
           test -f out/VoxelCraft/textures/ui/hotbar_start_cap.png
           test -f out/VoxelCraft/textures/ui/hotbar_end_cap.png
           test -f out/VoxelCraft/textures/ui/hud_tip_text_background.png
+          test -f out/VoxelCraft/textures/ui/cancel.png
+          test -d out/VoxelCraft/textures/items
+          test -f out/VoxelCraft/textures/items/book_writable.png
+          test -f out/VoxelCraft/textures/items/apple.png
+          test -f out/VoxelCraft/textures/items/feather.png
+          test -f out/VoxelCraft/textures/items/clock_item.png
+          test -f out/VoxelCraft/textures/items/bed_red.png
+          test -f out/VoxelCraft/textures/items/compass_item.png
+          test -f out/VoxelCraft/textures/items/book_normal.png
           test -f out/VoxelCraft/textures/ui/item_cell.png
           test -f out/VoxelCraft/textures/blocks/pumpkin_face_off.png
           test -f out/VoxelCraft/textures/blocks/log_spruce_top.png
