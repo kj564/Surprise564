@@ -1,0 +1,59 @@
+name: Build native Minecraft Bedrock addon
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "BedrockAddon/**"
+      - "VoxelCraftResourcePack/**"
+      - "scripts/package-bedrock-addon.sh"
+      - "scripts/validate-bedrock-addon.mjs"
+      - ".github/workflows/build-bedrock-addon.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "BedrockAddon/**"
+      - "VoxelCraftResourcePack/**"
+      - "scripts/package-bedrock-addon.sh"
+      - "scripts/validate-bedrock-addon.mjs"
+      - ".github/workflows/build-bedrock-addon.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-addon:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate native Bedrock packs
+        run: node scripts/validate-bedrock-addon.mjs
+
+      - name: Package .mcaddon
+        run: bash scripts/package-bedrock-addon.sh
+
+      - name: Verify imported pack archives
+        run: |
+          test -s dist/bedrock/VoxelCraft.mcaddon
+          unzip -l dist/bedrock/VoxelCraft.mcaddon | grep -q 'VoxelCraftBehaviorPack.mcpack'
+          unzip -l dist/bedrock/VoxelCraft.mcaddon | grep -q 'VoxelCraftResourcePack.mcpack'
+          unzip -p dist/bedrock/VoxelCraft.mcaddon VoxelCraftBehaviorPack.mcpack > /tmp/VoxelCraftBehaviorPack.mcpack
+          unzip -p dist/bedrock/VoxelCraft.mcaddon VoxelCraftResourcePack.mcpack > /tmp/VoxelCraftResourcePack.mcpack
+          unzip -l /tmp/VoxelCraftBehaviorPack.mcpack | grep -q 'manifest.json'
+          unzip -l /tmp/VoxelCraftResourcePack.mcpack | grep -q 'manifest.json'
+
+      - name: Upload native Bedrock addon
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoxelCraft-Bedrock-Addon
+          path: dist/bedrock/VoxelCraft.mcaddon
+          if-no-files-found: error
+          retention-days: 30
