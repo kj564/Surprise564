@@ -241,6 +241,8 @@
       BOOKSHELF: 64, PUMPKIN_TOP: 65, PUMPKIN_SIDE: 66, SPONGE: 67,
       // === Phase 1E: wool colors (68-72) ===
       WOOL_WHITE: 68, WOOL_BLACK: 69, WOOL_RED: 70, WOOL_BLUE: 71, WOOL_GREEN: 72,
+      // Missing log end-grain textures, appended to preserve existing tile indices.
+      LOG_SPRUCE_TOP: 73, LOG_JUNGLE_TOP: 74, LOG_ACACIA_TOP: 75, LOG_DARK_OAK_TOP: 76,
     };
     const TEXTURE_FILES = [
       // 0-23: original 24 textures
@@ -269,6 +271,8 @@
       'bookshelf','pumpkin_top','pumpkin_side','sponge',
       // 68-72: wool colors
       'wool_colored_white','wool_colored_black','wool_colored_red','wool_colored_blue','wool_colored_green',
+      // Missing end-grain textures for non-oak logs.
+      'log_spruce_top','log_jungle_top','log_acacia_top','log_big_oak_top',
     ];
     const TEXTURE_DIR = './VoxelCraft/textures/blocks/';
 
@@ -313,16 +317,16 @@
       34: { name:'Kayu Birch',    top:TILE.LOG_BIRCH_TOP, bottom:TILE.LOG_BIRCH_TOP, side:TILE.LOG_BIRCH, solid:true },
       35: { name:'Papan Birch',   top:TILE.PLANKS_BIRCH, bottom:TILE.PLANKS_BIRCH, side:TILE.PLANKS_BIRCH, solid:true },
       36: { name:'Daun Birch',    top:TILE.LEAVES_BIRCH, bottom:TILE.LEAVES_BIRCH, side:TILE.LEAVES_BIRCH, solid:true, transparent:true },
-      37: { name:'Kayu Spruce',   top:TILE.LOG_SPRUCE, bottom:TILE.LOG_SPRUCE, side:TILE.LOG_SPRUCE, solid:true },
+      37: { name:'Kayu Spruce',   top:TILE.LOG_SPRUCE_TOP, bottom:TILE.LOG_SPRUCE_TOP, side:TILE.LOG_SPRUCE, solid:true },
       38: { name:'Papan Spruce',  top:TILE.PLANKS_SPRUCE, bottom:TILE.PLANKS_SPRUCE, side:TILE.PLANKS_SPRUCE, solid:true },
       39: { name:'Daun Spruce',   top:TILE.LEAVES_SPRUCE, bottom:TILE.LEAVES_SPRUCE, side:TILE.LEAVES_SPRUCE, solid:true, transparent:true },
-      40: { name:'Kayu Jungle',   top:TILE.LOG_JUNGLE, bottom:TILE.LOG_JUNGLE, side:TILE.LOG_JUNGLE, solid:true },
+      40: { name:'Kayu Jungle',   top:TILE.LOG_JUNGLE_TOP, bottom:TILE.LOG_JUNGLE_TOP, side:TILE.LOG_JUNGLE, solid:true },
       41: { name:'Papan Jungle',  top:TILE.PLANKS_JUNGLE, bottom:TILE.PLANKS_JUNGLE, side:TILE.PLANKS_JUNGLE, solid:true },
       42: { name:'Daun Jungle',   top:TILE.LEAVES_JUNGLE, bottom:TILE.LEAVES_JUNGLE, side:TILE.LEAVES_JUNGLE, solid:true, transparent:true },
-      43: { name:'Kayu Acacia',   top:TILE.LOG_ACACIA, bottom:TILE.LOG_ACACIA, side:TILE.LOG_ACACIA, solid:true },
+      43: { name:'Kayu Acacia',   top:TILE.LOG_ACACIA_TOP, bottom:TILE.LOG_ACACIA_TOP, side:TILE.LOG_ACACIA, solid:true },
       44: { name:'Papan Acacia',  top:TILE.PLANKS_ACACIA, bottom:TILE.PLANKS_ACACIA, side:TILE.PLANKS_ACACIA, solid:true },
       45: { name:'Daun Acacia',   top:TILE.LEAVES_ACACIA, bottom:TILE.LEAVES_ACACIA, side:TILE.LEAVES_ACACIA, solid:true, transparent:true },
-      46: { name:'Kayu Dark Oak', top:TILE.LOG_DARK_OAK, bottom:TILE.LOG_DARK_OAK, side:TILE.LOG_DARK_OAK, solid:true },
+      46: { name:'Kayu Dark Oak', top:TILE.LOG_DARK_OAK_TOP, bottom:TILE.LOG_DARK_OAK_TOP, side:TILE.LOG_DARK_OAK, solid:true },
       47: { name:'Papan Dark Oak', top:TILE.PLANKS_DARK_OAK, bottom:TILE.PLANKS_DARK_OAK, side:TILE.PLANKS_DARK_OAK, solid:true },
       // === Phase 1C: stone variants (48-54) ===
       48: { name:'Granit',        top:TILE.GRANITE, bottom:TILE.GRANITE, side:TILE.GRANITE, solid:true },
