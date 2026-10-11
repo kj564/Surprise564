@@ -1436,8 +1436,8 @@
       if (keys['KeyD']) wish.add(right);
       if (keys['KeyA']) wish.sub(right);
       if (wish.lengthSq() > 0) wish.normalize();
-      const sprint = keys['ShiftLeft'] && !player.fly ? false : false;
-      const sp = player.fly ? player.flySpeed : player.speed;
+      const sprint = keys['ShiftLeft'] && !player.fly;
+      const sp = player.fly ? player.flySpeed : player.speed * (sprint ? 1.5 : 1);
       player.vel.x = wish.x * sp;
       player.vel.z = wish.z * sp;
 
