@@ -490,6 +490,46 @@
     image-rendering: pixelated;
   }
 
+
+
+  /* Compact action-bar layout adapted from Bedrock's Behavior Pack HUD. */
+  #hud {
+    top: auto;
+    left: 50%;
+    bottom: 82px;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: min(94vw, 920px);
+    padding: 6px 12px;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.45;
+    font-size: 11px;
+    color: #f5f5f5;
+    background-color: rgba(16,16,16,.82);
+    background-image: url('./VoxelCraft/textures/ui/hud_tip_text_background.png');
+    background-size: 100% 100%;
+    border: 0;
+    border-radius: 0;
+    box-shadow: 2px 2px 0 rgba(0,0,0,.3);
+    text-shadow: 2px 2px #222;
+  }
+  #hud .hud-brand { color: #8de35f; font-weight: 800; }
+  #hud .hud-sep { color: #9b9b9b; padding: 0 3px; }
+  #hud b { color: #fff; }
+  @media (max-width: 600px) {
+    #hud {
+      bottom: 60px;
+      width: max-content;
+      max-width: 96vw;
+      padding: 4px 7px;
+      font-size: 9px;
+      line-height: 1.35;
+    }
+    #hud .hud-sep { padding: 0 1px; }
+  }
+
 </style>
 </head>
 <body>
@@ -2215,10 +2255,9 @@
       hudTimer += dt;
       if (hudTimer >= 0.2) {
         hudTimer = 0;
+        const timeLabel = daylight < 0.25 ? 'Malam' : daylight < 0.48 ? 'Senja' : 'Siang';
         hudEl.innerHTML =
-          `FPS: <b>${fps}</b> &nbsp; XYZ: <b>${player.pos.x.toFixed(1)}, ${player.pos.y.toFixed(1)}, ${player.pos.z.toFixed(1)}</b><br>` +
-          `Mode: <b>${player.fly ? '✈ Terbang' : '🚶 Jalan'}</b> &nbsp; Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b> &nbsp; Waktu: <b>${daylight < 0.25 ? '🌙 Malam' : daylight < 0.48 ? '🌆 Senja' : '☀ Siang'}</b><br>` +
-          `Mob: <b>${mobs.length}</b> &nbsp; Tekan <b>E</b> inventaris · <b>K</b> simpan · <b>T</b> majukan waktu`;
+          `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> ${timeLabel} <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : 'Jalan'} <span class="hud-sep">|</span> Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
       }
     }
 
