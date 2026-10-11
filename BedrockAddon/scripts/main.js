@@ -17,7 +17,7 @@ const STATS_KEY = "voxelcraft:stats";
 // Commands that change the world or grant gameplay advantages require this tag.
 // Grant it from the server console with: /tag <player> add voxelcraft_admin
 const ADMIN_TAG = "voxelcraft_admin";
-const ADMIN_COMMANDS = new Set(["give", "fly", "heal", "time", "weather", "tp", "kit"]);
+const ADMIN_COMMANDS = new Set(["give", "fly", "heal", "time", "weather", "tp", "kit", "menu"]);
 
 function isVoxelCraftAdmin(player) {
   try { return player.hasTag(ADMIN_TAG); }
@@ -91,6 +91,10 @@ const COMMANDS = {
         player.sendMessage(`§e!${name}§7 — ${cmd.desc}`);
       }
     },
+  },
+  menu: {
+    desc: "Buka menu interaktif VoxelCraft",
+    run: (player) => { openVoxelCraftMenu(player); },
   },
   give: {
     desc: "Beri item. Contoh: !give cobblestone 64",

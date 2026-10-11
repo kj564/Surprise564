@@ -17,10 +17,10 @@ Type these in chat. Read-only commands `!help` and `!stats` are available to all
 | `!weather <clear\|rain\|thunder>` | Atur cuaca |
 | `!tp <x> <y> <z>` | Teleport ke koordinat |
 | `!kit` | Dapatkan kit starter (alat + blok) |
-| `!stats` | Lihat statistik pemain |
+| `!stats` | Lihat statistik pemain |\n| `!menu` | Buka menu interaktif VoxelCraft (admin) |
 
 ### ActionForm UI menu
-- Rename a writable or written book to include the word **VoxelCraft** (e.g. with an anvil), then use it (right-click) to open an in-game menu with 8 quick actions: kit, heal, fly toggle, time day/night, weather clear, stats, close.
+- Type `!menu` in chat to open the native Bedrock ActionForm UI (admin only). The writable/written-book shortcut remains available: rename a book to include **VoxelCraft** in an anvil, then use it. The menu offers kit, heal, fly toggle, time day/night, clear weather, stats, and close.
 
 ### Player stats + coin economy (dynamic properties)
 - Per-player stats stored as world dynamic properties (survive restarts): `coins`, `blocksBroken`, `mobsKilled`, `joins`.
