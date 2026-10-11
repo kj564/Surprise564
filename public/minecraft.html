@@ -1640,8 +1640,10 @@
       player.pitch = Math.max(-Math.PI / 2 + 0.001, Math.min(Math.PI / 2 - 0.001, player.pitch));
     });
     document.addEventListener('keydown', (e) => {
+      // Some browsers/input devices may emit duplicate keydown events without a reliable repeat flag.
+      const wasDown = keys[e.code] === true;
       keys[e.code] = true;
-      if (e.code === 'Space' && !e.repeat) {
+      if (e.code === 'Space' && !e.repeat && !wasDown) {
         const now = performance.now();
         if (now - lastSpaceTime < 280) {
           player.fly = !player.fly;
@@ -1650,14 +1652,14 @@
         }
         lastSpaceTime = now;
       }
-      if (e.code === 'KeyK' && !e.repeat) {
+      if (e.code === 'KeyK' && !e.repeat && !wasDown) {
         if (world.save()) toast('Dunia disimpan di browser ini');
       }
-      if (e.code === 'KeyE' && !e.repeat) {
+      if (e.code === 'KeyE' && !e.repeat && !wasDown) {
         e.preventDefault();
         toggleInventory();
       }
-      if (e.code === 'KeyT' && !e.repeat) {
+      if (e.code === 'KeyT' && !e.repeat && !wasDown) {
         // advance time of day for quick day/night testing
         worldTime = (worldTime + 0.15) % 1;
         toast('Waktu dimajukan');

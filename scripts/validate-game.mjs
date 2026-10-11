@@ -116,16 +116,16 @@ if (!source.includes('const maxStep = 0.25;') ||
   fail('Player movement must use bounded vertical collision substeps to prevent tunneling');
 } else pass('Player vertical movement uses collision substeps to prevent tunneling through blocks');
 
-if (!source.includes("if (e.code === 'Space' && !e.repeat)")) {
+if (!source.includes("if (e.code === 'Space' && !e.repeat && !wasDown)")) {
   fail('Space double-tap flight toggle must ignore key-repeat events');
 } else pass('Holding Space cannot trigger repeated flight-mode toggles from keyboard repeat');
 
 for (const key of ['KeyK', 'KeyE', 'KeyT']) {
-  if (!source.includes(`if (e.code === '${key}' && !e.repeat)`)) {
+  if (!source.includes(`if (e.code === '${key}' && !e.repeat && !wasDown)`)) {
     fail(`${key} one-shot action must ignore keyboard repeat events`);
   }
 }
-if (!['KeyK', 'KeyE', 'KeyT'].some(key => !source.includes(`if (e.code === '${key}' && !e.repeat)`))) {
+if (['KeyK', 'KeyE', 'KeyT'].every(key => source.includes(`if (e.code === '${key}' && !e.repeat && !wasDown)`))) {
   pass('Save, inventory toggle, and time advance trigger once per key press');
 }
 
