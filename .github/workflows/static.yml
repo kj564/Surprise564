@@ -23,17 +23,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Stage vanilla assets missing from the public texture directory
+      - name: Stage vanilla assets used by the browser game
         run: |
           mkdir -p public/VoxelCraft/models/entity public/VoxelCraft/textures/entity/chicken public/VoxelCraft/textures/blocks
           cp VoxelCraft/models/entity/chicken.geo.json public/VoxelCraft/models/entity/chicken.geo.json
           cp VoxelCraft/textures/entity/chicken/chicken.png public/VoxelCraft/textures/entity/chicken/chicken.png
-          # Non-oak log end-grain textures are referenced by the atlas but are
-          # not checked into public/VoxelCraft/textures/blocks.
-          cp VoxelCraft/textures/blocks/log_spruce_top.png public/VoxelCraft/textures/blocks/log_spruce_top.png
-          cp VoxelCraft/textures/blocks/log_jungle_top.png public/VoxelCraft/textures/blocks/log_jungle_top.png
-          cp VoxelCraft/textures/blocks/log_acacia_top.png public/VoxelCraft/textures/blocks/log_acacia_top.png
-          cp VoxelCraft/textures/blocks/log_big_oak_top.png public/VoxelCraft/textures/blocks/log_big_oak_top.png
+          # Keep deployed textures in sync with TEXTURE_FILES in minecraft.html.
+          # Ore tiles are generated procedurally by buildAtlas and need no source PNG.
+          textures=(
+            grass_top grass_side_carried dirt stone cobblestone
+            log_oak_top log_oak planks_oak leaves_oak_opaque sand
+            gravel glass bedrock brick gold_block diamond_block iron_block coal_block
+            crafting_table_top crafting_table_side crafting_table_front
+            furnace_front_off furnace_side furnace_top water_still
+            lapis_ore lapis_block redstone_ore redstone_block
+            emerald_ore emerald_block copper_ore quartz_ore obsidian glowstone
+            log_birch log_birch_top planks_birch leaves_birch_opaque
+            log_spruce log_spruce_top planks_spruce leaves_spruce_opaque
+            log_jungle log_jungle_top planks_jungle leaves_jungle_opaque
+            log_acacia log_acacia_top planks_acacia leaves_acacia_opaque
+            log_big_oak log_big_oak_top planks_big_oak
+            stone_granite stone_granite_smooth stone_diorite stone_diorite_smooth
+            stone_andesite stone_andesite_smooth stonebrick
+            snow ice netherrack soul_sand bookshelf pumpkin_top pumpkin_side pumpkin_face_off sponge
+            wool_colored_white wool_colored_black wool_colored_red wool_colored_blue wool_colored_green
+          )
+          for name in "${textures[@]}"; do
+            src="VoxelCraft/textures/blocks/${name}.png"
+            test -f "$src" || { echo "Missing vanilla texture source: $src"; exit 1; }
+            cp "$src" "public/VoxelCraft/textures/blocks/${name}.png"
+          done
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -54,6 +73,15 @@ jobs:
           test -f out/index.html
           test -f out/minecraft.html
           test -d out/VoxelCraft/textures/blocks
+          test -f out/VoxelCraft/textures/blocks/grass_top.png
+          test -f out/VoxelCraft/textures/blocks/grass_side_carried.png
+          test -f out/VoxelCraft/textures/blocks/leaves_oak_opaque.png
+          test -f out/VoxelCraft/textures/blocks/furnace_top.png
+          test -f out/VoxelCraft/textures/blocks/pumpkin_face_off.png
+          test -f out/VoxelCraft/textures/blocks/log_spruce_top.png
+          test -f out/VoxelCraft/textures/blocks/log_jungle_top.png
+          test -f out/VoxelCraft/textures/blocks/log_acacia_top.png
+          test -f out/VoxelCraft/textures/blocks/log_big_oak_top.png
           test -f out/VoxelCraft/models/entity/chicken.geo.json
           test -f out/VoxelCraft/textures/entity/chicken/chicken.png
           touch out/.nojekyll
