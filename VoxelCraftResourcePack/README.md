@@ -9,6 +9,12 @@ This is a **Resource Pack** for Minecraft Bedrock Edition, separate from the bro
 - `ui/main_menu.json`: adds VoxelCraft branding to the start screen.
 - `ui/start_screen.json`: based on Mojang's public Bedrock Samples start-screen UI, with a small branding control inserted.
 
+## Pack pairing
+
+The Behavior Pack manifest depends on this Resource Pack UUID and version. When both packs are imported from the generated `VoxelCraft.mcaddon`, enabling the VoxelCraft Behavior Pack can activate its matching Resource Pack dependency instead of requiring two unrelated downloads.
+
+The pack keeps the vanilla Bedrock start-screen structure and registers the custom branding through Bedrock JsonUI. It does not replace the game renderer or emulate the interface in HTML/CSS.
+
 ## Install for local testing
 
 1. Copy the `VoxelCraftResourcePack` folder to Minecraft's `development_resource_packs` directory.
