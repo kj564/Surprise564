@@ -345,6 +345,40 @@
     #hud { max-width: 65vw; font-size: 10px; }
   }
 
+
+  /* Browser adaptation of the Behavior Pack's ActionFormData menu. */
+  #vcGuide {
+    position: fixed; inset: 0; z-index: 35;
+    display: flex; align-items: center; justify-content: center;
+    padding: 18px; background: rgba(0,0,0,.62); backdrop-filter: none;
+  }
+  #vcGuide.hidden { display: none; }
+  #vcGuide .vc-form {
+    width: min(100%, 440px); max-height: min(88vh, 650px); overflow-y: auto;
+    padding: 18px; color: #262626;
+    background-color: #c6c6c6;
+    background-image: url('./VoxelCraft/textures/ui/background_panel.png'); background-size: 100% 100%;
+    border: 4px solid transparent;
+    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
+    box-shadow: 0 8px 0 rgba(0,0,0,.4);
+  }
+  #vcGuide .vc-title { margin: 0 0 8px; color: #262626; font-size: 20px; letter-spacing: 0; text-shadow: 1px 1px rgba(255,255,255,.45); }
+  #vcGuide .vc-body { margin: 0 0 14px; padding: 10px; background: rgba(0,0,0,.08); border: 2px solid rgba(0,0,0,.12); font-size: 13px; line-height: 1.5; white-space: pre-line; }
+  #vcGuide .vc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  #vcGuide button {
+    min-height: 48px; padding: 8px 10px; color: #fff; font-size: 13px; text-align: left;
+    background-color: #454545; background-image: url('./VoxelCraft/textures/ui/button_borderless_dark.png'); background-size: 100% 100%;
+    border: 2px solid transparent; border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 2px / 0 stretch;
+    border-radius: 0; box-shadow: 0 2px 0 rgba(0,0,0,.45); text-shadow: 2px 2px #222;
+  }
+  #vcGuide button:hover, #vcGuide button:focus-visible { background-image: url('./VoxelCraft/textures/ui/button_borderless_darkhover.png'); }
+  #vcGuide button:active { background-image: url('./VoxelCraft/textures/ui/button_borderless_darkpressed.png'); transform: translateY(1px); }
+  #vcGuide button:disabled { opacity: .55; cursor: not-allowed; }
+  #vcGuide button .vc-small { display: block; margin-top: 3px; color: #ddd; font-size: 10px; font-weight: normal; }
+  #vcGuide .vc-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
+  #vcGuide .vc-close { min-height: 38px; min-width: 116px; text-align: center; }
+  @media (max-width: 460px) { #vcGuide .vc-actions { grid-template-columns: 1fr; } #vcGuide .vc-form { padding: 12px; } }
+
 </style>
 </head>
 <body>
@@ -359,6 +393,25 @@
     <div class="inv-grid" id="invGrid"></div>
     <p class="inv-hint">Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di bawah.</p>
     <button id="invClose">Tutup (E)</button>
+  </div>
+
+
+  <div id="vcGuide" class="hidden" role="dialog" aria-modal="true" aria-labelledby="vcGuideTitle">
+    <div class="vc-form">
+      <h2 class="vc-title" id="vcGuideTitle">VoxelCraft Menu</h2>
+      <p class="vc-body" id="vcGuideBody">Selamat datang di VoxelCraft.</p>
+      <div class="vc-actions">
+        <button type="button" data-vc-action="kit">Kit Starter<span class="vc-small">Atur blok awal di hotbar</span></button>
+        <button type="button" data-vc-action="heal" disabled>Pulihkan HP<span class="vc-small">Fitur health belum ada di browser</span></button>
+        <button type="button" data-vc-action="fly">Mode Terbang<span class="vc-small" id="vcFlyStatus">ON / OFF</span></button>
+        <button type="button" data-vc-action="day">Waktu: Siang<span class="vc-small">Atur siklus siang</span></button>
+        <button type="button" data-vc-action="night">Waktu: Malam<span class="vc-small">Atur siklus malam</span></button>
+        <button type="button" data-vc-action="weather" disabled>Cuaca: Cerah<span class="vc-small">Cuaca belum didukung browser</span></button>
+        <button type="button" data-vc-action="stats">Lihat Statistik<span class="vc-small">Status sesi saat ini</span></button>
+        <button type="button" data-vc-action="inventory">Buka Inventaris<span class="vc-small">Pilih blok untuk hotbar</span></button>
+      </div>
+      <div class="vc-footer"><button type="button" class="vc-close" data-vc-action="close">Tutup Menu</button></div>
+    </div>
   </div>
 
   <div id="loading">
@@ -378,6 +431,7 @@
       <div class="menu-buttons">
         <button id="playButton">Singleplayer</button>
         <button id="multiplayerButton">Multiplayer</button>
+        <button id="guideButton">VoxelCraft Guide</button>
         <div class="button-row">
           <button id="optionsButton">Options...</button>
           <button id="quitButton">Quit Game</button>
@@ -1360,6 +1414,13 @@
     const invGridEl = document.getElementById('invGrid');
     let inventoryOpen = false;
     let inventoryReturnToGame = false;
+    const vcGuide = document.getElementById('vcGuide');
+    const vcGuideBody = document.getElementById('vcGuideBody');
+    const vcFlyStatus = document.getElementById('vcFlyStatus');
+    let vcGuideOpen = false;
+    let vcGuideReturnToGame = false;
+    let browserBlocksBroken = 0;
+    let browserBlocksPlaced = 0;
     function buildInventory() {
       invGridEl.innerHTML = '';
       for (let id = 1; id <= 66; id++) {
@@ -1388,11 +1449,11 @@
     }
     function toggleInventory() {
       const opening = !inventoryOpen;
-      if (opening) inventoryReturnToGame = locked;
+      if (opening) inventoryReturnToGame = locked || inventoryReturnToGame;
       inventoryOpen = opening;
       inventoryEl.classList.toggle('hidden', !inventoryOpen);
       // Update both overlays immediately; do not wait for pointerlockchange.
-      overlay.classList.toggle('hidden', locked || inventoryOpen);
+      overlay.classList.toggle('hidden', locked || inventoryOpen || vcGuideOpen);
 
       if (inventoryOpen) {
         if (locked) document.exitPointerLock();
@@ -1770,6 +1831,7 @@
       if (id === 11) { toast('Bedrock tidak bisa dihancurkan'); return; }
       if (!id || !world.setBlock(hit.x, hit.y, hit.z, 0)) return;
       remeshAround(hit.x, hit.y, hit.z);
+      browserBlocksBroken++;
       spawnBreakParticles(hit.x, hit.y, hit.z, id);
       playSound('break', id);
     }
@@ -1790,6 +1852,7 @@
       if (existing !== 0 && existing !== 19) return;
       if (!world.setBlock(px, py, pz, id)) return;
       remeshAround(px, py, pz);
+      browserBlocksPlaced++;
       playSound('place', id);
     }
     function remeshAround(wx, wy, wz) {
@@ -1825,6 +1888,67 @@
     const menuFov = document.getElementById('menuFov');
     const renderQuality = document.getElementById('renderQuality');
 
+
+    // ---- VoxelCraft ActionForm-inspired menu (adapted from BedrockAddon/scripts/main.js) ----
+    function updateVcGuideBody(showStats = false) {
+      const clock = Math.floor((((worldTime % 1) + 1) % 1) * 24).toString().padStart(2, '0') + ':00';
+      if (showStats) {
+        const pos = player.pos;
+        const selected = BLOCKS[HOTBAR[selectedSlot]];
+        vcGuideBody.textContent = 'Statistik sesi browser\\n' +
+          'Posisi: ' + Math.floor(pos.x) + ', ' + Math.floor(pos.y) + ', ' + Math.floor(pos.z) + '\\n' +
+          'Blok dihancurkan: ' + browserBlocksBroken + '\\n' +
+          'Blok dipasang: ' + browserBlocksPlaced + '\\n' +
+          'Slot aktif: ' + (selectedSlot + 1) + ' — ' + (selected ? selected.name : 'kosong') + '\\n' +
+          'Mode terbang: ' + (player.fly ? 'ON' : 'OFF') + ' | Waktu: ' + clock;
+      } else {
+        vcGuideBody.textContent = 'Halo, penjelajah!\\nPilih aksi VoxelCraft. Tampilan ini memakai tekstur UI dari resource pack; aksi yang belum didukung browser ditandai jelas.';
+      }
+      vcFlyStatus.textContent = player.fly ? 'Status sekarang: ON' : 'Status sekarang: OFF';
+    }
+    function openVcGuide() {
+      if (vcGuideOpen || inventoryOpen) return;
+      vcGuideReturnToGame = locked;
+      vcGuideOpen = true;
+      vcGuide.classList.remove('hidden');
+      overlay.classList.add('hidden');
+      updateVcGuideBody(false);
+      if (locked) document.exitPointerLock();
+    }
+    function closeVcGuide(resume = true) {
+      vcGuideOpen = false;
+      vcGuide.classList.add('hidden');
+      const shouldResume = resume && vcGuideReturnToGame;
+      overlay.classList.toggle('hidden', locked || inventoryOpen || vcGuideOpen || shouldResume);
+      vcGuideReturnToGame = false;
+      if (shouldResume && canvas.requestPointerLock) {
+        const result = canvas.requestPointerLock();
+        if (result && typeof result.catch === 'function') result.catch(() => { overlay.classList.remove('hidden'); toast('Klik layar game untuk melanjutkan'); });
+      }
+    }
+    vcGuide.querySelectorAll('[data-vc-action]').forEach((button) => {
+      button.addEventListener('click', () => {
+        switch (button.dataset.vcAction) {
+          case 'kit':
+            [1, 3, 5, 6, 12, 14, 33, 62, 19].forEach((id, i) => { if (BLOCKS[id]) HOTBAR[i] = id; });
+            buildHotbar(); selectSlot(selectedSlot);
+            toast('Kit blok starter dipasang ke hotbar');
+            break;
+          case 'fly':
+            player.fly = !player.fly; player.vel.y = 0;
+            updateVcGuideBody(false); toast(player.fly ? 'Mode terbang ON' : 'Mode terbang OFF');
+            break;
+          case 'day': worldTime = 0.5; toast('Waktu diatur ke siang'); updateVcGuideBody(false); break;
+          case 'night': worldTime = 0; toast('Waktu diatur ke malam'); updateVcGuideBody(false); break;
+          case 'stats': updateVcGuideBody(true); break;
+          case 'inventory': { const resumeAfterInventory = vcGuideReturnToGame; closeVcGuide(false); inventoryReturnToGame = resumeAfterInventory; toggleInventory(); break; }
+          case 'close': closeVcGuide(true); break;
+        }
+      });
+    });
+    vcGuide.addEventListener('click', (event) => { if (event.target === vcGuide) closeVcGuide(true); });
+
+    document.getElementById('guideButton').addEventListener('click', openVcGuide);
     playButton.addEventListener('click', startGame);
     multiplayerButton.addEventListener('click', () => toast('Multiplayer belum tersedia — saat ini mode Singleplayer aktif.'));
     optionsButton.addEventListener('click', () => settingsPanel.classList.toggle('open'));
@@ -1877,6 +2001,7 @@
         e.preventDefault();
         toggleInventory();
       }
+      if (e.code === 'KeyG' && !e.repeat && !wasDown && !inventoryOpen) { e.preventDefault(); openVcGuide(); return; }
       if (e.code === 'KeyT' && !e.repeat && !wasDown) {
         // advance time of day for quick day/night testing
         worldTime = (worldTime + 0.15) % 1;
