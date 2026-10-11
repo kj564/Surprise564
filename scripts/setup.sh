@@ -95,7 +95,7 @@ done
 # Stage the original item sprites referenced by the Behavior Pack ActionForm menu.
 ITEM_TEX_DIR="public/VoxelCraft/textures/items"
 SRC_ITEM_DIR="VoxelCraft/textures/items"
-ITEM_REQUIRED=(book_writable apple feather clock_item bed_red compass_item book_normal)
+ITEM_REQUIRED=(book_writable apple feather clock_item bed_red compass_item book_normal brick diamond)
 mkdir -p "$ITEM_TEX_DIR"
 for name in "${ITEM_REQUIRED[@]}"; do
   src="$SRC_ITEM_DIR/$name.png"
