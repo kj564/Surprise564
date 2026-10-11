@@ -422,7 +422,7 @@
         try {
           const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
           if (saved && saved.version === 1 && saved.blocks && typeof saved.blocks === 'object' && !Array.isArray(saved.blocks)) {
-            const validKey = /^-?\\d+,-?\\d+,-?\\d+$/;
+            const validKey = /^-?\d+,-?\d+,-?\d+$/;
             const maxBlockId = Math.max(...Object.keys(BLOCKS).map(Number));
             for (const [key, id] of Object.entries(saved.blocks)) {
               if (!validKey.test(key) || !Number.isInteger(id) || id < 0 || id > maxBlockId ||
