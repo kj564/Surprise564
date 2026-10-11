@@ -118,7 +118,7 @@
 
   /* Inventory panel (press E) */
   #inventory {
-    position: fixed; inset: 0; z-index: 9; background: rgba(0,0,0,0.65);
+    position: fixed; inset: 0; z-index: 11; background: rgba(0,0,0,0.65);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     color: #fff; backdrop-filter: blur(3px); padding: 20px;
   }
@@ -1309,7 +1309,7 @@
     canvas.addEventListener('click', startGame);
     document.addEventListener('pointerlockchange', () => {
       locked = document.pointerLockElement === canvas;
-      overlay.classList.toggle('hidden', locked);
+      overlay.classList.toggle('hidden', locked || inventoryOpen);
     });
     document.addEventListener('mousemove', (e) => {
       if (!locked) return;
