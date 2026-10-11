@@ -5,9 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>VoxelCraft — Minecraft di Browser</title>
 <style>
+  @font-face {
+    font-family: 'Minecraft Ten';
+    src: url('./VoxelCraft/font/minecraft-ten.ttf') format('truetype');
+    font-display: swap;
+  }
   :root { color-scheme: light; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #88c5ff; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; user-select: none; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #88c5ff; font-family: 'Minecraft Ten', 'Segoe UI', system-ui, -apple-system, sans-serif; user-select: none; }
   #game { position: fixed; inset: 0; display: block; }
 
   /* Crosshair */
@@ -2491,9 +2496,10 @@
       hudTimer += dt;
       if (hudTimer >= 0.2) {
         hudTimer = 0;
-        const timeLabel = daylight < 0.25 ? 'Malam' : daylight < 0.48 ? 'Senja' : 'Siang';
+        const clockMinutes = Math.floor((((worldTime % 1) + 1) % 1) * 1440);
+        const clock = `${String(Math.floor(clockMinutes / 60) % 24).padStart(2, '0')}:${String(clockMinutes % 60).padStart(2, '0')}`;
         hudEl.innerHTML =
-          `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> ${timeLabel} <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : 'Jalan'} <span class="hud-sep">|</span> Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
+          `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> <b>${clock}</b> <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : 'Jalan'} <span class="hud-sep">|</span> Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
       }
     }
 
