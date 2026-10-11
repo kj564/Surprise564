@@ -170,9 +170,10 @@
   }
   #hotbar::before { left: -2px; background-image: url('./VoxelCraft/textures/ui/hotbar_start_cap.png'); }
   #hotbar::after { right: -2px; background-image: url('./VoxelCraft/textures/ui/hotbar_end_cap.png'); }
+  /* Bedrock hud_screen.json defines a 20x22 slot; at 2x UI scale use 40x44. */
   .slot {
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 44px;
     background-color: rgba(0,0,0,.38);
     background-image: url('./VoxelCraft/textures/ui/item_cell.png');
     background-size: 100% 100%;
@@ -337,7 +338,7 @@
   #invClose:hover { background-image: url('./VoxelCraft/textures/ui/button_borderless_darkhover.png'); }
   @media (max-width: 600px) {
     #hotbar { bottom: 8px; padding: 3px 4px; }
-    .slot { width: min(10vw, 42px); height: min(10vw, 42px); }
+    .slot { width: min(10vw, 38px); height: min(11vw, 42px); }
     .slot canvas { width: 82%; height: 82%; }
     .inv-grid { grid-template-columns: repeat(6, minmax(34px, 1fr)); max-height: 56vh; overflow-y: auto; }
     .inv-slot { min-width: 0; }
