@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "VoxelCraft Main Menu",
+    "description": "VoxelCraft Bedrock resource pack: custom main-menu branding and JsonUI layout.",
+    "uuid": "3c7ddce5-b2f4-44b8-a83b-9d8e5f3a7c21",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      0
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "4d8eedf6-c3a5-45c9-b94c-ae9f604b8d32",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}
