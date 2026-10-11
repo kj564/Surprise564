@@ -94,6 +94,41 @@
   #overlay .edition { font-size:12px; letter-spacing:3px; margin-top:8px; color:#fff; text-shadow:2px 2px #222; }
   #overlay .splash { display:none; }
   #overlay .menu-buttons { width:100%; display:grid; gap:8px; }
+  #overlay .menu-buttons.hidden { display:none; }
+  #overlay .help-options-panel {
+    display:none;
+    width:100%;
+    margin-top:2px;
+    padding:14px;
+    color:#262626;
+    background-color:#c6c6c6;
+    background-image:url('./VoxelCraft/textures/ui/background_panel.png');
+    background-size:100% 100%;
+    border:4px solid transparent;
+    border-image:url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
+    box-shadow:0 5px 0 rgba(0,0,0,.35);
+  }
+  #overlay .help-options-panel.open { display:grid; gap:8px; }
+  #overlay .help-options-panel h2 {
+    margin:0 0 4px;
+    color:#262626;
+    font-size:17px;
+    text-align:left;
+    letter-spacing:0;
+    text-shadow:1px 1px rgba(255,255,255,.55);
+  }
+  #overlay .help-options-panel .menu-panel-note {
+    margin:3px 0 4px;
+    color:#444;
+    font-size:11px;
+    line-height:1.45;
+    text-align:left;
+    text-shadow:none;
+  }
+  #overlay .help-options-panel .menu-back {
+    margin-top:3px;
+    background-color:#5a5a5a;
+  }
   #overlay button { width:100%; min-height:42px; padding:9px 14px; border:2px solid #171717; border-radius:2px; color:#fff; font-size:15px; font-weight:600; letter-spacing:.2px; text-shadow:2px 2px #333; background:linear-gradient(#777,#555); box-shadow:inset 2px 2px rgba(255,255,255,.28), inset -2px -3px rgba(0,0,0,.25), 0 2px 0 rgba(0,0,0,.4); cursor:pointer; }
   #overlay button:hover, #overlay button:focus-visible { outline:none; background:linear-gradient(#91b5c9,#66899c); border-color:#fff; }
   #overlay .button-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -759,14 +794,16 @@
         <div class="edition">BROWSER EDITION</div>
       </div>
       <p class="menu-subtitle">A world of blocks awaits.</p>
-      <div class="menu-buttons">
-        <button id="playButton">Singleplayer</button>
-        <button id="multiplayerButton">Multiplayer</button>
-        <button id="guideButton">VoxelCraft Guide</button>
-        <div class="button-row">
-          <button id="optionsButton">Options...</button>
-          <button id="quitButton">Quit Game</button>
-        </div>
+      <div id="mainMenuButtons" class="menu-buttons">
+        <button id="playButton">Play Game</button>
+        <button id="helpOptionsButton">Help &amp; Options</button>
+      </div>
+      <div id="helpOptionsPanel" class="help-options-panel">
+        <h2>Help &amp; Options</h2>
+        <button id="guideButton">How to Play</button>
+        <button id="optionsButton">Game Options</button>
+        <p class="menu-panel-note">Controls, graphics, and world settings for this browser game.</p>
+        <button id="helpBackButton" class="menu-back">Back</button>
       </div>
       <div id="settingsPanel" class="settings-panel">
         <h2>Game Options</h2>
@@ -2294,9 +2331,11 @@
     }
     const startGame = resumeGame;
     const playButton = document.getElementById('playButton');
-    const multiplayerButton = document.getElementById('multiplayerButton');
+    const mainMenuButtons = document.getElementById('mainMenuButtons');
+    const helpOptionsButton = document.getElementById('helpOptionsButton');
+    const helpOptionsPanel = document.getElementById('helpOptionsPanel');
+    const helpBackButton = document.getElementById('helpBackButton');
     const optionsButton = document.getElementById('optionsButton');
-    const quitButton = document.getElementById('quitButton');
     const settingsPanel = document.getElementById('settingsPanel');
     const saveOptionsButton = document.getElementById('saveOptionsButton');
     const menuFov = document.getElementById('menuFov');
@@ -2365,6 +2404,16 @@
 
     document.getElementById('guideButton').addEventListener('click', openVcGuide);
     playButton.addEventListener('click', startGame);
+    helpOptionsButton.addEventListener('click', () => {
+      mainMenuButtons.classList.add('hidden');
+      helpOptionsPanel.classList.add('open');
+      settingsPanel.classList.remove('open');
+    });
+    helpBackButton.addEventListener('click', () => {
+      helpOptionsPanel.classList.remove('open');
+      settingsPanel.classList.remove('open');
+      mainMenuButtons.classList.remove('hidden');
+    });
     resumeGameButton.addEventListener('click', resumeGame);
     saveWorldButton.addEventListener('click', () => {
       if (world.save()) toast('Dunia disimpan di browser ini');
@@ -2373,11 +2422,15 @@
       if (world.save()) toast('Dunia disimpan sebelum kembali ke menu');
       gameStarted = false;
       if (locked && document.exitPointerLock) document.exitPointerLock();
+      helpOptionsPanel.classList.remove('open');
+      settingsPanel.classList.remove('open');
+      mainMenuButtons.classList.remove('hidden');
       syncMenuVisibility();
     });
-    multiplayerButton.addEventListener('click', () => toast('Multiplayer belum tersedia — saat ini mode Singleplayer aktif.'));
-    optionsButton.addEventListener('click', () => settingsPanel.classList.toggle('open'));
-    quitButton.addEventListener('click', () => toast('Terima kasih sudah bermain VoxelCraft! Tab browser bisa ditutup.'));
+    optionsButton.addEventListener('click', () => {
+      helpOptionsPanel.classList.remove('open');
+      settingsPanel.classList.add('open');
+    });
     saveOptionsButton.addEventListener('click', () => {
       camera.fov = Number(menuFov.value);
       camera.updateProjectionMatrix();
@@ -2385,6 +2438,7 @@
       renderer.setPixelRatio(pixelRatio);
       renderer.setSize(window.innerWidth, window.innerHeight);
       settingsPanel.classList.remove('open');
+      helpOptionsPanel.classList.add('open');
       toast('Pengaturan diterapkan');
     });
     canvas.addEventListener('click', startGame);
