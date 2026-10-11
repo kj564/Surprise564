@@ -123,6 +123,16 @@
     color: #fff; backdrop-filter: blur(3px); padding: 20px;
   }
   #inventory.hidden { display: none; }
+  #inventory h2::before {
+    content: "";
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    vertical-align: -4px;
+    background: url('./VoxelCraft/textures/ui/inventory_icon.png') center / contain no-repeat;
+    image-rendering: pixelated;
+  }
   #inventory h2 { font-size: 18px; margin-bottom: 12px; text-shadow: 2px 2px 0 #000; letter-spacing: 1px; }
   .inv-grid {
     display: grid; grid-template-columns: repeat(8, 54px); gap: 4px; padding: 14px;
