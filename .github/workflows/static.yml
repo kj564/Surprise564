@@ -105,6 +105,8 @@ jobs:
           test -f out/VoxelCraft/textures/ui/highlight_slot.png
           test -f out/VoxelCraft/textures/ui/hotbar_start_cap.png
           test -f out/VoxelCraft/textures/ui/hotbar_end_cap.png
+          test -f out/VoxelCraft/textures/ui/hotbar_0.png
+          test -f out/VoxelCraft/textures/ui/hotbar_8.png
           test -f out/VoxelCraft/textures/ui/hud_tip_text_background.png
           test -f out/VoxelCraft/textures/ui/item_cell.png
           test -f out/VoxelCraft/textures/ui/inventory_icon.png
