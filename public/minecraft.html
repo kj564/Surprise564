@@ -223,13 +223,52 @@
       DIAMOND: 15, IRON: 16, COAL: 17, CRAFT_TOP: 18, CRAFT_SIDE: 19,
       CRAFT_FRONT: 20, FURNACE_FRONT: 21, FURNACE_SIDE: 22, WATER: 23,
       COAL_ORE: 24, IRON_ORE: 25, GOLD_ORE: 26, DIAMOND_ORE: 27,
+      // === Phase 1A: more ores + mineral blocks (28-37) ===
+      LAPIS_ORE: 28, LAPIS_BLOCK: 29, REDSTONE_ORE: 30, REDSTONE_BLOCK: 31,
+      EMERALD_ORE: 32, EMERALD_BLOCK: 33, COPPER_ORE: 34, QUARTZ_ORE: 35,
+      OBSIDIAN: 36, GLOWSTONE: 37,
+      // === Phase 1B: wood variants (38-52) ===
+      LOG_BIRCH: 38, LOG_BIRCH_TOP: 39, PLANKS_BIRCH: 40, LEAVES_BIRCH: 41,
+      LOG_SPRUCE: 42, PLANKS_SPRUCE: 43, LEAVES_SPRUCE: 44,
+      LOG_JUNGLE: 45, PLANKS_JUNGLE: 46, LEAVES_JUNGLE: 47,
+      LOG_ACACIA: 48, PLANKS_ACACIA: 49, LEAVES_ACACIA: 50,
+      LOG_DARK_OAK: 51, PLANKS_DARK_OAK: 52,
+      // === Phase 1C: stone variants (53-59) ===
+      GRANITE: 53, GRANITE_SMOOTH: 54, DIORITE: 55, DIORITE_SMOOTH: 56,
+      ANDESITE: 57, ANDESITE_SMOOTH: 58, STONEBRICK: 59,
+      // === Phase 1D: nature + decorative (60-67) ===
+      SNOW: 60, ICE: 61, NETHERRACK: 62, SOUL_SAND: 63,
+      BOOKSHELF: 64, PUMPKIN_TOP: 65, PUMPKIN_SIDE: 66, SPONGE: 67,
+      // === Phase 1E: wool colors (68-72) ===
+      WOOL_WHITE: 68, WOOL_BLACK: 69, WOOL_RED: 70, WOOL_BLUE: 71, WOOL_GREEN: 72,
     };
     const TEXTURE_FILES = [
+      // 0-23: original 24 textures
       'grass_top','grass_side_carried','dirt','stone','cobblestone',
       'log_oak_top','log_oak','planks_oak','leaves_oak_opaque','sand',
       'gravel','glass','bedrock','brick','gold_block','diamond_block',
       'iron_block','coal_block','crafting_table_top','crafting_table_side',
       'crafting_table_front','furnace_front_off','furnace_side','water_still',
+      // 24-27: original 4 ores (procedurally generated in atlas)
+      'coal_ore','iron_ore','gold_ore','diamond_ore',
+      // 28-37: more ores + mineral blocks
+      'lapis_ore','lapis_block','redstone_ore','redstone_block',
+      'emerald_ore','emerald_block','copper_ore','quartz_ore',
+      'obsidian','glowstone',
+      // 38-52: wood variants
+      'log_birch','log_birch_top','planks_birch','leaves_birch_opaque',
+      'log_spruce','planks_spruce','leaves_spruce_opaque',
+      'log_jungle','planks_jungle','leaves_jungle_opaque',
+      'log_acacia','planks_acacia','leaves_acacia_opaque',
+      'log_big_oak','planks_big_oak',
+      // 53-59: stone variants
+      'stone_granite','stone_granite_smooth','stone_diorite','stone_diorite_smooth',
+      'stone_andesite','stone_andesite_smooth','stonebrick',
+      // 60-67: nature + decorative
+      'snow','ice','netherrack','soul_sand',
+      'bookshelf','pumpkin_top','pumpkin_side','sponge',
+      // 68-72: wool colors
+      'wool_colored_white','wool_colored_black','wool_colored_red','wool_colored_blue','wool_colored_green',
     ];
     const TEXTURE_DIR = './VoxelCraft/textures/blocks/';
 
@@ -259,10 +298,58 @@
       21: { name:'Bijih Besi',     top:TILE.IRON_ORE,  bottom:TILE.IRON_ORE,  side:TILE.IRON_ORE,  solid:true },
       22: { name:'Bijih Emas',     top:TILE.GOLD_ORE,  bottom:TILE.GOLD_ORE,  side:TILE.GOLD_ORE,  solid:true },
       23: { name:'Bijih Berlian',  top:TILE.DIAMOND_ORE, bottom:TILE.DIAMOND_ORE, side:TILE.DIAMOND_ORE, solid:true },
+      // === Phase 1A: more ores + mineral blocks (24-33) ===
+      24: { name:'Bijih Lapis',    top:TILE.LAPIS_ORE, bottom:TILE.LAPIS_ORE, side:TILE.LAPIS_ORE, solid:true },
+      25: { name:'Blok Lapis',    top:TILE.LAPIS_BLOCK, bottom:TILE.LAPIS_BLOCK, side:TILE.LAPIS_BLOCK, solid:true },
+      26: { name:'Bijih Redstone', top:TILE.REDSTONE_ORE, bottom:TILE.REDSTONE_ORE, side:TILE.REDSTONE_ORE, solid:true },
+      27: { name:'Blok Redstone', top:TILE.REDSTONE_BLOCK, bottom:TILE.REDSTONE_BLOCK, side:TILE.REDSTONE_BLOCK, solid:true },
+      28: { name:'Bijih Zamrud',  top:TILE.EMERALD_ORE, bottom:TILE.EMERALD_ORE, side:TILE.EMERALD_ORE, solid:true },
+      29: { name:'Blok Zamrud',   top:TILE.EMERALD_BLOCK, bottom:TILE.EMERALD_BLOCK, side:TILE.EMERALD_BLOCK, solid:true },
+      30: { name:'Bijih Tembaga',  top:TILE.COPPER_ORE, bottom:TILE.COPPER_ORE, side:TILE.COPPER_ORE, solid:true },
+      31: { name:'Bijih Kuarsa',   top:TILE.QUARTZ_ORE, bottom:TILE.QUARTZ_ORE, side:TILE.QUARTZ_ORE, solid:true },
+      32: { name:'Obsidian',      top:TILE.OBSIDIAN, bottom:TILE.OBSIDIAN, side:TILE.OBSIDIAN, solid:true },
+      33: { name:'Batu Bersinar', top:TILE.GLOWSTONE, bottom:TILE.GLOWSTONE, side:TILE.GLOWSTONE, solid:true },
+      // === Phase 1B: wood variants (34-47) ===
+      34: { name:'Kayu Birch',    top:TILE.LOG_BIRCH_TOP, bottom:TILE.LOG_BIRCH_TOP, side:TILE.LOG_BIRCH, solid:true },
+      35: { name:'Papan Birch',   top:TILE.PLANKS_BIRCH, bottom:TILE.PLANKS_BIRCH, side:TILE.PLANKS_BIRCH, solid:true },
+      36: { name:'Daun Birch',    top:TILE.LEAVES_BIRCH, bottom:TILE.LEAVES_BIRCH, side:TILE.LEAVES_BIRCH, solid:true, transparent:true },
+      37: { name:'Kayu Spruce',   top:TILE.LOG_SPRUCE, bottom:TILE.LOG_SPRUCE, side:TILE.LOG_SPRUCE, solid:true },
+      38: { name:'Papan Spruce',  top:TILE.PLANKS_SPRUCE, bottom:TILE.PLANKS_SPRUCE, side:TILE.PLANKS_SPRUCE, solid:true },
+      39: { name:'Daun Spruce',   top:TILE.LEAVES_SPRUCE, bottom:TILE.LEAVES_SPRUCE, side:TILE.LEAVES_SPRUCE, solid:true, transparent:true },
+      40: { name:'Kayu Jungle',   top:TILE.LOG_JUNGLE, bottom:TILE.LOG_JUNGLE, side:TILE.LOG_JUNGLE, solid:true },
+      41: { name:'Papan Jungle',  top:TILE.PLANKS_JUNGLE, bottom:TILE.PLANKS_JUNGLE, side:TILE.PLANKS_JUNGLE, solid:true },
+      42: { name:'Daun Jungle',   top:TILE.LEAVES_JUNGLE, bottom:TILE.LEAVES_JUNGLE, side:TILE.LEAVES_JUNGLE, solid:true, transparent:true },
+      43: { name:'Kayu Acacia',   top:TILE.LOG_ACACIA, bottom:TILE.LOG_ACACIA, side:TILE.LOG_ACACIA, solid:true },
+      44: { name:'Papan Acacia',  top:TILE.PLANKS_ACACIA, bottom:TILE.PLANKS_ACACIA, side:TILE.PLANKS_ACACIA, solid:true },
+      45: { name:'Daun Acacia',   top:TILE.LEAVES_ACACIA, bottom:TILE.LEAVES_ACACIA, side:TILE.LEAVES_ACACIA, solid:true, transparent:true },
+      46: { name:'Kayu Dark Oak', top:TILE.LOG_DARK_OAK, bottom:TILE.LOG_DARK_OAK, side:TILE.LOG_DARK_OAK, solid:true },
+      47: { name:'Papan Dark Oak', top:TILE.PLANKS_DARK_OAK, bottom:TILE.PLANKS_DARK_OAK, side:TILE.PLANKS_DARK_OAK, solid:true },
+      // === Phase 1C: stone variants (48-54) ===
+      48: { name:'Granit',        top:TILE.GRANITE, bottom:TILE.GRANITE, side:TILE.GRANITE, solid:true },
+      49: { name:'Granit Pole',   top:TILE.GRANITE_SMOOTH, bottom:TILE.GRANITE_SMOOTH, side:TILE.GRANITE_SMOOTH, solid:true },
+      50: { name:'Diorit',        top:TILE.DIORITE, bottom:TILE.DIORITE, side:TILE.DIORITE, solid:true },
+      51: { name:'Diorit Pole',   top:TILE.DIORITE_SMOOTH, bottom:TILE.DIORITE_SMOOTH, side:TILE.DIORITE_SMOOTH, solid:true },
+      52: { name:'Andesit',       top:TILE.ANDESITE, bottom:TILE.ANDESITE, side:TILE.ANDESITE, solid:true },
+      53: { name:'Andesit Pole',  top:TILE.ANDESITE_SMOOTH, bottom:TILE.ANDESITE_SMOOTH, side:TILE.ANDESITE_SMOOTH, solid:true },
+      54: { name:'Batu Bata',     top:TILE.STONEBRICK, bottom:TILE.STONEBRICK, side:TILE.STONEBRICK, solid:true },
+      // === Phase 1D: nature + decorative (55-61) ===
+      55: { name:'Salju',         top:TILE.SNOW, bottom:TILE.SNOW, side:TILE.SNOW, solid:true },
+      56: { name:'Es',            top:TILE.ICE, bottom:TILE.ICE, side:TILE.ICE, solid:true, transparent:true },
+      57: { name:'Netherrack',    top:TILE.NETHERRACK, bottom:TILE.NETHERRACK, side:TILE.NETHERRACK, solid:true },
+      58: { name:'Soul Sand',     top:TILE.SOUL_SAND, bottom:TILE.SOUL_SAND, side:TILE.SOUL_SAND, solid:true },
+      59: { name:'Rak Buku',      top:TILE.PLANKS, bottom:TILE.PLANKS, side:TILE.BOOKSHELF, solid:true },
+      60: { name:'Labu',          top:TILE.PUMPKIN_TOP, bottom:TILE.PUMPKIN_TOP, side:TILE.PUMPKIN_SIDE, solid:true },
+      61: { name:'Spons',         top:TILE.SPONGE, bottom:TILE.SPONGE, side:TILE.SPONGE, solid:true },
+      // === Phase 1E: wool (62-66) ===
+      62: { name:'Wol Putih',     top:TILE.WOOL_WHITE, bottom:TILE.WOOL_WHITE, side:TILE.WOOL_WHITE, solid:true },
+      63: { name:'Wol Hitam',     top:TILE.WOOL_BLACK, bottom:TILE.WOOL_BLACK, side:TILE.WOOL_BLACK, solid:true },
+      64: { name:'Wol Merah',     top:TILE.WOOL_RED, bottom:TILE.WOOL_RED, side:TILE.WOOL_RED, solid:true },
+      65: { name:'Wol Biru',      top:TILE.WOOL_BLUE, bottom:TILE.WOOL_BLUE, side:TILE.WOOL_BLUE, solid:true },
+      66: { name:'Wol Hijau',     top:TILE.WOOL_GREEN, bottom:TILE.WOOL_GREEN, side:TILE.WOOL_GREEN, solid:true },
     };
 
-    // Hotbar block ids (9 slots)
-    const HOTBAR = [1, 3, 4, 5, 6, 7, 8, 10, 14]; // grass, stone, cobble, log, planks, leaves, sand, glass, diamond
+    // Hotbar block ids (9 slots) — Phase 1: more variety
+    const HOTBAR = [1, 3, 5, 6, 12, 32, 14, 62, 33]; // grass, stone, oak log, planks, brick, obsidian, diamond, wool white, glowstone
 
     // ============================================================
     //  NOISE
@@ -381,23 +468,44 @@
               else if (y > hf - 4) b = beachy ? 8 : 2; // dirt/sand
               c.set(lx, y, lz, b);
             }
-            // ores in stone layer (depth-based)
+            // ores in stone layer (depth-based) — Phase 1: more ore types
             for (let y = 1; y < hf - 4; y++) {
               if (c.get(lx, y, lz) !== 3) continue; // only stone
               const oreNoise = hash2(wx * 31 + 7, wz * 19 + y * 3);
+              const oreNoise2 = hash2(wx * 53 + 17, wz * 29 + y * 5);
               if (y <= 10 && oreNoise < 0.0018) c.set(lx, y, lz, 23);       // diamond (deep, rare)
+              else if (y <= 10 && oreNoise2 < 0.0022) c.set(lx, y, lz, 28);  // lapis (deep)
+              else if (y <= 12 && oreNoise2 < 0.0028) c.set(lx, y, lz, 32);  // emerald (very rare)
               else if (y <= 14 && oreNoise < 0.005) c.set(lx, y, lz, 22);    // gold
+              else if (y <= 16 && oreNoise2 < 0.006) c.set(lx, y, lz, 26);   // redstone
+              else if (y <= 18 && oreNoise2 < 0.008) c.set(lx, y, lz, 30);   // copper
               else if (y <= 22 && oreNoise < 0.015) c.set(lx, y, lz, 21);   // iron
               else if (y <= 30 && oreNoise < 0.025) c.set(lx, y, lz, 20);   // coal
+              // === Phase 1C: stone variant patches (rare blobs) ===
+              else if (y > 5 && y < 25) {
+                const stoneNoise = hash2(wx * 73 + 3, wz * 41 + y * 11);
+                if (stoneNoise < 0.008) c.set(lx, y, lz, 48);    // granite
+                else if (stoneNoise < 0.016) c.set(lx, y, lz, 50); // diorite
+                else if (stoneNoise < 0.024) c.set(lx, y, lz, 52); // andesite
+              }
             }
             // water fill
             if (hf < WATER_LEVEL) {
               for (let y = hf + 1; y <= WATER_LEVEL; y++) c.set(lx, y, lz, 19);
             }
-            // trees on grass
+            // snow caps on high terrain
+            if (hf >= WATER_LEVEL + 10) {
+              c.set(lx, hf, lz, 55); // snow on top of mountains
+            }
+            // trees on grass — Phase 1: random wood type per tree
             if (!beachy && hf > WATER_LEVEL + 1) {
               const th = hash2(wx * 7 + 13, wz * 11 + 5);
-              if (th > 0.985) this.plantTree(c, lx, hf + 1, lz);
+              if (th > 0.985) {
+                const woodType = hash2(wx * 91, wz * 83) ;
+                // pick a wood type: 0=oak (default), 1=birch, 2=spruce, 3=jungle, 4=acacia, 5=dark_oak
+                const wt = Math.floor(woodType * 6);
+                this.plantTree(c, lx, hf + 1, lz, wt);
+              }
             }
           }
         }
@@ -409,10 +517,15 @@
         }
         c.dirty = true;
       }
-      plantTree(c, lx, ly, lz) {
+      plantTree(c, lx, ly, lz, woodType = 0) {
+        // woodType: 0=oak, 1=birch, 2=spruce, 3=jungle, 4=acacia, 5=dark_oak
+        const logIds = [5, 34, 37, 40, 43, 46];
+        const leavesIds = [7, 36, 39, 42, 45, 45]; // dark oak uses oak-like (we don't have dark_oak leaves tile, use acacia)
+        const logId = logIds[woodType] || 5;
+        const leavesId = leavesIds[woodType] || 7;
         const h = 4 + Math.floor(hash2(lx * 31, lz * 17) * 3);
         for (let i = 0; i < h; i++) {
-          if (ly + i < CHUNK_Y) c.set(lx, ly + i, lz, 5); // oak log
+          if (ly + i < CHUNK_Y) c.set(lx, ly + i, lz, logId);
         }
         const topY = ly + h - 1;
         for (let dy = -2; dy <= 1; dy++) {
@@ -422,7 +535,7 @@
               if (dx === 0 && dz === 0 && dy < 1) continue;
               const x = lx + dx, y = topY + dy, z = lz + dz;
               if (x < 0 || x >= CHUNK_X || z < 0 || z >= CHUNK_Z || y < 0 || y >= CHUNK_Y) continue;
-              if (c.get(x, y, z) === 0) c.set(x, y, z, 7); // leaves
+              if (c.get(x, y, z) === 0) c.set(x, y, z, leavesId);
             }
           }
         }
@@ -432,7 +545,7 @@
     // ============================================================
     //  MESHING
     // ============================================================
-    const ATLAS_COLS = 8, ATLAS_ROWS = 4, TILE_PX = 16;
+    const ATLAS_COLS = 16, ATLAS_ROWS = 6, TILE_PX = 16;
     const ATLAS_W = ATLAS_COLS * TILE_PX, ATLAS_H = ATLAS_ROWS * TILE_PX;
 
     // Face definitions: dir, corners (CCW from outside), uv mapping
@@ -807,7 +920,7 @@
     let inventoryOpen = false;
     function buildInventory() {
       invGridEl.innerHTML = '';
-      for (let id = 1; id <= 23; id++) {
+      for (let id = 1; id <= 66; id++) {
         const def = BLOCKS[id];
         if (!def) continue;
         const slot = document.createElement('div');
