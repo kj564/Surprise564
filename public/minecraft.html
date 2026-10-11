@@ -1634,7 +1634,7 @@
     });
     document.addEventListener('keydown', (e) => {
       keys[e.code] = true;
-      if (e.code === 'Space') {
+      if (e.code === 'Space' && !e.repeat) {
         const now = performance.now();
         if (now - lastSpaceTime < 280) {
           player.fly = !player.fly;
