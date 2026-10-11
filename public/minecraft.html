@@ -379,6 +379,65 @@
   #vcGuide .vc-close { min-height: 38px; min-width: 116px; text-align: center; }
   @media (max-width: 460px) { #vcGuide .vc-actions { grid-template-columns: 1fr; } #vcGuide .vc-form { padding: 12px; } }
 
+
+  /* ActionForm button icons use the same item sprites referenced by the Bedrock Behavior Pack. */
+  #vcGuide .vc-actions button {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    align-items: center;
+    column-gap: 8px;
+    min-height: 58px;
+    padding: 8px 10px;
+  }
+  #vcGuide .vc-actions button::before {
+    content: "";
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 28px;
+    height: 28px;
+    justify-self: center;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(1px 1px 0 rgba(0,0,0,.35));
+  }
+  #vcGuide .vc-action-label {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    align-self: end;
+  }
+  #vcGuide .vc-actions button .vc-small {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+  }
+  #vcGuide [data-vc-action="kit"]::before { background-image: url('./VoxelCraft/textures/items/book_writable.png'); }
+  #vcGuide [data-vc-action="heal"]::before { background-image: url('./VoxelCraft/textures/items/apple.png'); }
+  #vcGuide [data-vc-action="fly"]::before { background-image: url('./VoxelCraft/textures/items/feather.png'); }
+  #vcGuide [data-vc-action="day"]::before { background-image: url('./VoxelCraft/textures/items/clock_item.png'); }
+  #vcGuide [data-vc-action="night"]::before { background-image: url('./VoxelCraft/textures/items/bed_red.png'); }
+  #vcGuide [data-vc-action="weather"]::before { background-image: url('./VoxelCraft/textures/items/compass_item.png'); }
+  #vcGuide [data-vc-action="stats"]::before { background-image: url('./VoxelCraft/textures/items/book_normal.png'); }
+  #vcGuide [data-vc-action="inventory"]::before { background-image: url('./VoxelCraft/textures/items/book_writable.png'); }
+  #vcGuide .vc-close::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 7px;
+    vertical-align: middle;
+    background: url('./VoxelCraft/textures/ui/cancel.png') center / contain no-repeat;
+    image-rendering: pixelated;
+  }
+  @media (max-width: 460px) {
+    #vcGuide .vc-actions button { min-height: 54px; grid-template-columns: 26px minmax(0, 1fr); column-gap: 6px; padding: 7px; }
+    #vcGuide .vc-actions button::before { width: 24px; height: 24px; }
+  }
+
 </style>
 </head>
 <body>
@@ -401,14 +460,14 @@
       <h2 class="vc-title" id="vcGuideTitle">VoxelCraft Menu</h2>
       <p class="vc-body" id="vcGuideBody">Selamat datang di VoxelCraft.</p>
       <div class="vc-actions">
-        <button type="button" data-vc-action="kit">Kit Starter<span class="vc-small">Atur blok awal di hotbar</span></button>
-        <button type="button" data-vc-action="heal" disabled>Pulihkan HP<span class="vc-small">Fitur health belum ada di browser</span></button>
-        <button type="button" data-vc-action="fly">Mode Terbang<span class="vc-small" id="vcFlyStatus">ON / OFF</span></button>
-        <button type="button" data-vc-action="day">Waktu: Siang<span class="vc-small">Atur siklus siang</span></button>
-        <button type="button" data-vc-action="night">Waktu: Malam<span class="vc-small">Atur siklus malam</span></button>
-        <button type="button" data-vc-action="weather" disabled>Cuaca: Cerah<span class="vc-small">Cuaca belum didukung browser</span></button>
-        <button type="button" data-vc-action="stats">Lihat Statistik<span class="vc-small">Status sesi saat ini</span></button>
-        <button type="button" data-vc-action="inventory">Buka Inventaris<span class="vc-small">Pilih blok untuk hotbar</span></button>
+        <button type="button" data-vc-action="kit"><span class="vc-action-label">Kit Starter</span><span class="vc-small">Atur blok awal di hotbar</span></button>
+        <button type="button" data-vc-action="heal" disabled><span class="vc-action-label">Pulihkan HP</span><span class="vc-small">Fitur health belum ada di browser</span></button>
+        <button type="button" data-vc-action="fly"><span class="vc-action-label">Mode Terbang</span><span class="vc-small" id="vcFlyStatus">ON / OFF</span></button>
+        <button type="button" data-vc-action="day"><span class="vc-action-label">Waktu: Siang</span><span class="vc-small">Atur siklus siang</span></button>
+        <button type="button" data-vc-action="night"><span class="vc-action-label">Waktu: Malam</span><span class="vc-small">Atur siklus malam</span></button>
+        <button type="button" data-vc-action="weather" disabled><span class="vc-action-label">Cuaca: Cerah</span><span class="vc-small">Cuaca belum didukung browser</span></button>
+        <button type="button" data-vc-action="stats"><span class="vc-action-label">Lihat Statistik</span><span class="vc-small">Status sesi saat ini</span></button>
+        <button type="button" data-vc-action="inventory"><span class="vc-action-label">Buka Inventaris</span><span class="vc-small">Pilih blok untuk hotbar</span></button>
       </div>
       <div class="vc-footer"><button type="button" class="vc-close" data-vc-action="close">Tutup Menu</button></div>
     </div>
