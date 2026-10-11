@@ -23,6 +23,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate game foundations
+        run: bun run validate:game
+
       - name: Stage vanilla assets used by the browser game
         run: |
           mkdir -p public/VoxelCraft/models/entity public/VoxelCraft/textures/entity/chicken public/VoxelCraft/textures/blocks
