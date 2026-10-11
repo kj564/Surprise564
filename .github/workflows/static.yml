@@ -58,7 +58,7 @@ jobs:
         run: |
           mkdir -p public/VoxelCraft/textures/ui
           ui_textures=(
-            background_panel background_with_border button_borderless_dark
+            menubackground background_panel background_with_border button_borderless_dark
             button_borderless_darkhover button_borderless_darkpressed dialog_background_opaque
             highlight_slot hotbar_start_cap hotbar_end_cap cancel
             hud_tip_text_background item_cell
@@ -106,6 +106,7 @@ jobs:
           test -f out/VoxelCraft/textures/blocks/leaves_oak_opaque.png
           test -f out/VoxelCraft/textures/blocks/furnace_top.png
           test -d out/VoxelCraft/textures/ui
+          test -f out/VoxelCraft/textures/ui/menubackground.png
           test -f out/VoxelCraft/textures/ui/background_panel.png
           test -f out/VoxelCraft/textures/ui/background_with_border.png
           test -f out/VoxelCraft/textures/ui/button_borderless_dark.png

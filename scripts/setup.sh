@@ -79,7 +79,7 @@ cp VoxelCraft/textures/entity/chicken/chicken.png public/VoxelCraft/textures/ent
 UI_TEX_DIR="public/VoxelCraft/textures/ui"
 SRC_UI_DIR="VoxelCraft/textures/ui"
 UI_REQUIRED=(
-  background_panel background_with_border button_borderless_dark
+  menubackground background_panel background_with_border button_borderless_dark
   button_borderless_darkhover button_borderless_darkpressed dialog_background_opaque
   highlight_slot hotbar_start_cap hotbar_end_cap cancel
   hud_tip_text_background item_cell

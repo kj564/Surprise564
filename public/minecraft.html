@@ -438,6 +438,27 @@
     #vcGuide .vc-actions button::before { width: 24px; height: 24px; }
   }
 
+
+  /* Main menu backdrop from the original Bedrock Resource Pack. */
+  #overlay {
+    background-color: #202020;
+    background-image:
+      linear-gradient(rgba(0, 0, 0, .30), rgba(0, 0, 0, .56)),
+      url('./VoxelCraft/textures/ui/menubackground.png');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+  #overlay .menu-wrap {
+    padding: 18px;
+    background: rgba(20, 20, 20, .18);
+  }
+  @media (max-width: 560px) {
+    #overlay { background-position: center; }
+    #overlay .menu-wrap { padding: 10px; }
+  }
+
 </style>
 </head>
 <body>
