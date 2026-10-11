@@ -291,8 +291,8 @@
       14: { name:'Berlian',       top:TILE.DIAMOND,    bottom:TILE.DIAMOND, side:TILE.DIAMOND,   solid:true },
       15: { name:'Besi',          top:TILE.IRON,       bottom:TILE.IRON,   side:TILE.IRON,        solid:true },
       16: { name:'Batubara',      top:TILE.COAL,       bottom:TILE.COAL,   side:TILE.COAL,        solid:true },
-      17: { name:'Meja Kerja',    top:TILE.CRAFT_TOP,  bottom:TILE.PLANKS, side:TILE.CRAFT_SIDE, solid:true },
-      18: { name:'Tungku',        top:TILE.FURNACE_SIDE, bottom:TILE.FURNACE_SIDE, side:TILE.FURNACE_FRONT, solid:true },
+      17: { name:'Meja Kerja',    top:TILE.CRAFT_TOP,  bottom:TILE.PLANKS, side:TILE.CRAFT_SIDE, front:TILE.CRAFT_FRONT, solid:true },
+      18: { name:'Tungku',        top:TILE.FURNACE_SIDE, bottom:TILE.FURNACE_SIDE, side:TILE.FURNACE_SIDE, front:TILE.FURNACE_FRONT, solid:true },
       19: { name:'Air',           top:TILE.WATER,      bottom:TILE.WATER, side:TILE.WATER,      solid:false, transparent:true, noCollide:true },
       20: { name:'Bijih Batubara', top:TILE.COAL_ORE,  bottom:TILE.COAL_ORE,  side:TILE.COAL_ORE,  solid:true },
       21: { name:'Bijih Besi',     top:TILE.IRON_ORE,  bottom:TILE.IRON_ORE,  side:TILE.IRON_ORE,  solid:true },
@@ -562,10 +562,17 @@
     function tileUV(tile) {
       const col = tile % ATLAS_COLS;
       const row = Math.floor(tile / ATLAS_COLS);
-      const inset = 0.4 / ATLAS_W;
-      return { u0: col / ATLAS_COLS + inset, u1: (col + 1) / ATLAS_COLS - inset,
-               v0: 1 - (row + 1) / ATLAS_ROWS + inset / (ATLAS_W / ATLAS_H),
-               v1: 1 - row / ATLAS_ROWS - inset / (ATLAS_W / ATLAS_H) };
+      // UV insets must be normalized against their own axis. The old V inset
+      // divided by the atlas aspect ratio, leaving it far below half a texel
+      // and allowing edge samples to pick up pixels from the neighboring row.
+      const insetU = 0.51 / ATLAS_W;
+      const insetV = 0.51 / ATLAS_H;
+      return {
+        u0: col / ATLAS_COLS + insetU,
+        u1: (col + 1) / ATLAS_COLS - insetU,
+        v0: 1 - (row + 1) / ATLAS_ROWS + insetV,
+        v1: 1 - row / ATLAS_ROWS - insetV
+      };
     }
 
     function buildChunkGeometry(world, chunk, atlas) {
@@ -596,7 +603,12 @@
               if (id === 19 && nId === 19) draw = false;
               if (!draw) continue;
 
-              const tile = (f === 2) ? def.top : (f === 3) ? def.bottom : def.side;
+              // +Z is the model's designated front face; blocks without a
+              // directional front continue to use the same side texture.
+              const tile = (f === 2) ? def.top
+                : (f === 3) ? def.bottom
+                : (f === 4 && def.front != null) ? def.front
+                : def.side;
               const { u0, u1, v0, v1 } = tileUV(tile);
               const P = isTrans ? transPos : opaquePos;
               const N = isTrans ? transNorm : opaqueNorm;
@@ -1199,7 +1211,11 @@
       for (const { tile, speck } of ORE_DEFS) {
         const col = tile % ATLAS_COLS, row = Math.floor(tile / ATLAS_COLS);
         // stone base
-        if (stoneImg) ctx.drawImage(stoneImg, 0, 0, TILE_PX, TILE_PX, col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX);
+        if (stoneImg) {
+          const sw = stoneImg.naturalWidth || stoneImg.width;
+          const sh = stoneImg.naturalHeight || stoneImg.height;
+          ctx.drawImage(stoneImg, 0, 0, sw, sh, col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX);
+        }
         // specks (deterministic pseudo-random positions)
         const speckImg = imgs[speck];
         if (speckImg) {
