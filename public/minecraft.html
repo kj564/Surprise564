@@ -415,7 +415,7 @@
         try {
           const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
           for (const [key, id] of Object.entries(saved.blocks || {})) {
-            if (Number.isInteger(id) && id >= 0 && id <= 19) this.overrides.set(key, id);
+            if (Number.isInteger(id) && id >= 0 && id <= 66 && Object.prototype.hasOwnProperty.call(BLOCKS, id)) this.overrides.set(key, id);
           }
         } catch (err) { console.warn('Save VoxelCraft tidak dapat dibaca:', err); }
       }

@@ -14,6 +14,16 @@ import { system, world } from "@minecraft/server";
 const WELCOME_TITLE = "§a§lVoxelCraft§r";
 const STATS_KEY = "voxelcraft:stats";
 
+// Commands that change the world or grant gameplay advantages require this tag.
+// Grant it from the server console with: /tag <player> add voxelcraft_admin
+const ADMIN_TAG = "voxelcraft_admin";
+const ADMIN_COMMANDS = new Set(["give", "fly", "heal", "time", "weather", "tp", "kit"]);
+
+function isVoxelCraftAdmin(player) {
+  try { return player.hasTag(ADMIN_TAG); }
+  catch { return false; }
+}
+
 function loadStats(player) {
   try {
     const raw = world.getDynamicProperty(`${STATS_KEY}:${player.id}`);
@@ -187,6 +197,10 @@ world.beforeEvents.chatSend.subscribe((event) => {
       event.sender.sendMessage(`§cPerintah tidak dikenal: §e!${name}§c. Ketik §e!help§c.`);
       return;
     }
+    if (ADMIN_COMMANDS.has(name) && !isVoxelCraftAdmin(event.sender)) {
+      event.sender.sendMessage(`§cPerintah ini hanya untuk admin VoxelCraft. Minta admin server memberi tag ${ADMIN_TAG}.`);
+      return;
+    }
     try { cmd.run(event.sender, args); }
     catch (err) { event.sender.sendMessage(`§cError: ${err.message || err}`); }
   });
@@ -231,6 +245,10 @@ world.afterEvents.entityDie.subscribe(({ deadEntity, damageSource }) => {
 // ============================================================
 
 async function openVoxelCraftMenu(player) {
+  if (!isVoxelCraftAdmin(player)) {
+    player.sendMessage(`§cMenu admin hanya tersedia untuk admin VoxelCraft. Minta admin server memberi tag ${ADMIN_TAG}.`);
+    return;
+  }
   try {
     const { ActionFormData } = await import("@minecraft/server-ui");
     const stats = loadStats(player);
@@ -282,7 +300,7 @@ system.runInterval(() => {
   for (const player of world.getAllPlayers()) {
     saveStats(player, loadStats(player));
   }
-  world.sendMessage("§7[VoxelCraft] Statistik tersimpan otomatis.");
+  // Keep periodic persistence silent to avoid flooding multiplayer chat.
 }, 6000);
 
 console.log("[VoxelCraft] Behavior pack loaded — commands: !help | ore rewards | auto-save aktif.");

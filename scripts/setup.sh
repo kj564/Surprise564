@@ -22,13 +22,27 @@ echo "==> [2/3] Ensuring browser-game textures are present…"
 GAME_TEX_DIR="public/VoxelCraft/textures/blocks"
 SRC_TEX_DIR="VoxelCraft/textures/blocks"
 
-# Textures the browser game (public/minecraft.html) actually references.
+# Keep this list aligned with TEXTURE_FILES in public/minecraft.html.
+# The four basic ores below are generated procedurally by buildAtlas(), so
+# their source PNGs are not required.
 REQUIRED=(
   grass_top grass_side_carried dirt stone cobblestone
   log_oak_top log_oak planks_oak leaves_oak_opaque sand
   gravel glass bedrock brick gold_block diamond_block
   iron_block coal_block crafting_table_top crafting_table_side
   crafting_table_front furnace_front_off furnace_side water_still
+  lapis_ore lapis_block redstone_ore redstone_block
+  emerald_ore emerald_block copper_ore quartz_ore obsidian glowstone
+  log_birch log_birch_top planks_birch leaves_birch_opaque
+  log_spruce planks_spruce leaves_spruce_opaque
+  log_jungle planks_jungle leaves_jungle_opaque
+  log_acacia planks_acacia leaves_acacia_opaque
+  log_big_oak planks_big_oak
+  stone_granite stone_granite_smooth stone_diorite stone_diorite_smooth
+  stone_andesite stone_andesite_smooth stonebrick
+  snow ice netherrack soul_sand bookshelf pumpkin_top pumpkin_side sponge
+  wool_colored_white wool_colored_black wool_colored_red
+  wool_colored_blue wool_colored_green
 )
 
 mkdir -p "$GAME_TEX_DIR"
