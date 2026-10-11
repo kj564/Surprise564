@@ -108,6 +108,7 @@
       <b>Klik Kiri</b><span>Hancurkan blok</span>
       <b>Klik Kanan</b><span>Letakkan blok</span>
       <b>1–9 / Scroll</b><span>Pilih blok</span>
+      <b>K</b><span>Simpan dunia</span>
       <b>Esc</b><span>Keluar dari kursor</span>
     </div>
   </div>
@@ -132,6 +133,7 @@
     const SEA_BASE = 14;            // base terrain height
     const SEA_AMP = 14;
     const SEED = 1337;
+    const SAVE_KEY = 'voxelcraft-world-v1';
 
     // Texture tile indices (order MUST match TEXTURE_FILES)
     const TILE = {
@@ -235,7 +237,26 @@
 
     // World holds all chunks; getBlock/setBlock operate in world coords.
     class World {
-      constructor() { this.chunks = new Map(); }
+      constructor() {
+        this.chunks = new Map();
+        this.overrides = new Map();
+        try {
+          const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
+          for (const [key, id] of Object.entries(saved.blocks || {})) {
+            if (Number.isInteger(id) && id >= 0 && id <= 19) this.overrides.set(key, id);
+          }
+        } catch (err) { console.warn('Save VoxelCraft tidak dapat dibaca:', err); }
+      }
+      save() {
+        try {
+          localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 1, blocks: Object.fromEntries(this.overrides) }));
+          return true;
+        } catch (err) {
+          console.warn('Save VoxelCraft gagal:', err);
+          toast('Penyimpanan gagal: ruang browser mungkin penuh');
+          return false;
+        }
+      }
       ensureChunk(cx, cz) {
         const k = chunkKey(cx, cz);
         let c = this.chunks.get(k);
@@ -257,6 +278,8 @@
         const c = this.ensureChunk(cx, cz);
         const lx = x - cx * CHUNK_X, lz = z - cz * CHUNK_Z;
         c.set(lx, y, lz, v);
+        this.overrides.set(x + ',' + y + ',' + z, v);
+        this.save();
       }
       generate(c) {
         const baseX = c.cx * CHUNK_X, baseZ = c.cz * CHUNK_Z;
@@ -282,6 +305,12 @@
               const th = hash2(wx * 7 + 13, wz * 11 + 5);
               if (th > 0.985) this.plantTree(c, lx, hf + 1, lz);
             }
+          }
+        }
+        for (const [key, id] of this.overrides) {
+          const [wx, wy, wz] = key.split(',').map(Number);
+          if (Math.floor(wx / CHUNK_X) === c.cx && Math.floor(wz / CHUNK_Z) === c.cz && wy >= 0 && wy < CHUNK_Y) {
+            c.set(wx - c.cx * CHUNK_X, wy, wz - c.cz * CHUNK_Z, id);
           }
         }
         c.dirty = true;
@@ -456,6 +485,7 @@
     let locked = false;
     let lastSpaceTime = 0;
     let lastBreak = 0, lastPlace = 0;
+    let worldTime = 0.28;
 
     // debug exports
     window.__w = world;
@@ -786,6 +816,9 @@
         }
         lastSpaceTime = now;
       }
+      if (e.code === 'KeyK') {
+        if (world.save()) toast('Dunia disimpan di browser ini');
+      }
       // number keys
       if (e.code.startsWith('Digit')) {
         const n = parseInt(e.code.slice(5));
@@ -838,6 +871,13 @@
       camera.rotation.y = player.yaw;
       camera.rotation.x = player.pitch;
 
+      worldTime = (worldTime + dt / 480) % 1;
+      const sunAngle = worldTime * Math.PI * 2 - Math.PI / 2;
+      const daylight = Math.max(0.08, Math.sin(sunAngle) * 0.5 + 0.5);
+      sun.position.set(Math.cos(sunAngle) * 70, Math.sin(sunAngle) * 100, 35);
+      sun.intensity = 0.12 + daylight * 0.95;
+      scene.background.setRGB(0.035 + daylight * 0.50, 0.055 + daylight * 0.66, 0.12 + daylight * 0.82);
+      scene.fog.color.copy(scene.background);
       // highlight
       const hit = locked ? raycastVoxel(6) : null;
       if (hit) {
@@ -857,7 +897,8 @@
         hudTimer = 0;
         hudEl.innerHTML =
           `FPS: <b>${fps}</b> &nbsp; XYZ: <b>${player.pos.x.toFixed(1)}, ${player.pos.y.toFixed(1)}, ${player.pos.z.toFixed(1)}</b><br>` +
-          `Mode: <b>${player.fly ? '✈ Terbang' : '🚶 Jalan'}</b> &nbsp; Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b>`;
+          `Mode: <b>${player.fly ? '✈ Terbang' : '🚶 Jalan'}</b> &nbsp; Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b> &nbsp; Waktu: <b>${daylight < 0.25 ? 'Malam' : daylight < 0.48 ? 'Senja/Subuh' : 'Siang'}</b><br>` +
+          `Dunia: <b>tersimpan otomatis</b> · Tekan <b>K</b> untuk simpan manual`;
       }
     }
 
