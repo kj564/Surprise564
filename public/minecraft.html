@@ -269,7 +269,7 @@
     padding: 18px;
   }
   #inventory h2 {
-    width: min(100%, 590px);
+    width: min(100%, 620px);
     margin: 0;
     padding: 12px 14px 8px;
     color: #262626;
@@ -284,9 +284,10 @@
     font-size: 16px;
   }
   .inv-grid {
-    grid-template-columns: repeat(8, minmax(38px, 52px));
+    /* Bedrock inventory uses nine columns, matching the nine-slot hotbar. */
+    grid-template-columns: repeat(9, minmax(38px, 52px));
     gap: 3px;
-    width: min(100%, 590px);
+    width: min(100%, 620px);
     padding: 12px;
     background-color: #c6c6c6;
     background-image: url('./VoxelCraft/textures/ui/background_panel.png');
