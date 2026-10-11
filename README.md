@@ -79,7 +79,7 @@ Already cloned without `--recurse-submodules`? Run `git submodule update --init 
 
 The VoxelCraft BP (`BedrockAddon/`) ships:
 
-- **9 custom chat commands:** `!help`, `!give`, `!fly`, `!heal`, `!time`, `!weather`, `!tp`, `!kit`, `!stats`
+- **10 custom chat commands:** `!help`, `!menu`, `!give`, `!fly`, `!heal`, `!time`, `!weather`, `!tp`, `!kit`, `!stats`
 - **ActionForm UI menu** — rename a book to "VoxelCraft Guide" and use it to open an 8-button action menu
 - **Coin economy + ore rewards** — break ores for coins (coal +2 → emerald +20, deepslate variants give bonus)
 - **Player stats** — stored in world dynamic properties (survive restarts): coins, blocksBroken, mobsKilled, joins
