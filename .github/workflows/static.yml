@@ -60,7 +60,7 @@ jobs:
           ui_textures=(
             background_panel background_with_border button_borderless_dark
             button_borderless_darkhover button_borderless_darkpressed dialog_background_opaque
-            highlight_slot hotbar_start_cap hotbar_end_cap hotbar_0 hotbar_8
+            highlight_slot hotbar_start_cap hotbar_end_cap
             hud_tip_text_background item_cell
           )
           for name in "${ui_textures[@]}"; do
@@ -105,8 +105,6 @@ jobs:
           test -f out/VoxelCraft/textures/ui/highlight_slot.png
           test -f out/VoxelCraft/textures/ui/hotbar_start_cap.png
           test -f out/VoxelCraft/textures/ui/hotbar_end_cap.png
-          test -f out/VoxelCraft/textures/ui/hotbar_0.png
-          test -f out/VoxelCraft/textures/ui/hotbar_8.png
           test -f out/VoxelCraft/textures/ui/hud_tip_text_background.png
           test -f out/VoxelCraft/textures/ui/item_cell.png
           test -f out/VoxelCraft/textures/blocks/pumpkin_face_off.png
