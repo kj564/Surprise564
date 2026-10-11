@@ -1,3 +1,14 @@
+# Dependencies and build output
+node_modules/
+.next/
+out/
+coverage/
+dist/
+
+# Local environment files (keep examples shareable)
+.env
+.env.*
+!.env.example
 
 # Duplicate data subfolders (same files as root-level in html/ and ucapan-embed/)
 public/surprise/html/data/
