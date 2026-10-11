@@ -104,6 +104,16 @@ for name in "${ITEM_REQUIRED[@]}"; do
   if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then cp "$src" "$dst"; echo "    staged item icon $name.png"; fi
 done
 
+# Stage the original Bedrock Minecraft Ten font used by the UI.
+FONT_SRC="VoxelCraft/font/minecraft-ten.ttf"
+FONT_DST="public/VoxelCraft/font/minecraft-ten.ttf"
+if [ ! -f "$FONT_SRC" ]; then echo "Missing original Bedrock font: $FONT_SRC"; exit 1; fi
+mkdir -p "$(dirname "$FONT_DST")"
+if [ ! -f "$FONT_DST" ] || ! cmp -s "$FONT_SRC" "$FONT_DST"; then
+  cp "$FONT_SRC" "$FONT_DST"
+  echo "    staged original Minecraft Ten font"
+fi
+
 echo "==> [3/3] Installing browser-game dependencies (bun)…"
 if command -v bun >/dev/null 2>&1; then
   bun install --frozen-lockfile
