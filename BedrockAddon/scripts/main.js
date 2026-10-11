@@ -260,8 +260,8 @@ async function openVoxelCraftMenu(player) {
       .button("Mode Terbang: " + (player.hasTag("voxelcraft_fly") ? "§aON" : "§cOFF"), "textures/items/feather")
       .button("Waktu: Siang", "textures/items/clock_item")
       .button("Waktu: Malam", "textures/items/bed_red")
-      .button("Cuaca: Cerah", "textures/items/sunflower")
-      .button("Lihat Statistik", "textures/items/paper")
+      .button("Cuaca: Cerah", "textures/items/compass_item")
+      .button("Lihat Statistik", "textures/items/book_normal")
       .button("Tutup Menu", "textures/ui/cancel");
 
     const response = await form.show(player);
