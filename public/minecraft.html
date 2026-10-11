@@ -530,6 +530,79 @@
     #hud .hud-sep { padding: 0 1px; }
   }
 
+
+
+  /* Bedrock pause-screen adaptation, based on VoxelCraft/ui/pause_screen.json. */
+  #pauseOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 34;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(0,0,0,.64);
+    color: #fff;
+    backdrop-filter: none;
+  }
+  #pauseOverlay.hidden { display: none; }
+  #pauseOverlay .pause-wrap {
+    width: min(100%, 430px);
+    padding: 18px;
+    color: #262626;
+    background-color: #c6c6c6;
+    background-image: url('./VoxelCraft/textures/ui/background_panel.png');
+    background-size: 100% 100%;
+    border: 4px solid transparent;
+    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
+    box-shadow: 0 8px 0 rgba(0,0,0,.4);
+  }
+  #pauseOverlay h2 {
+    margin: 0 0 5px;
+    color: #262626;
+    font-size: 20px;
+    letter-spacing: 0;
+    text-align: center;
+    text-shadow: 1px 1px rgba(255,255,255,.5);
+  }
+  #pauseOverlay .pause-subtitle {
+    margin: 0 0 14px;
+    color: #4b4b4b;
+    font-size: 12px;
+    text-align: center;
+    text-shadow: none;
+  }
+  #pauseOverlay .pause-buttons { display: grid; grid-template-columns: 1fr; gap: 7px; }
+  #pauseOverlay .pause-buttons button {
+    width: 100%;
+    min-height: 44px;
+    padding: 9px 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    text-shadow: 2px 2px #222;
+    background-color: #454545;
+    background-image: url('./VoxelCraft/textures/ui/button_borderless_dark.png');
+    background-size: 100% 100%;
+    border: 2px solid transparent;
+    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 2px / 0 stretch;
+    border-radius: 0;
+    box-shadow: 0 2px 0 rgba(0,0,0,.45);
+  }
+  #pauseOverlay .pause-buttons button:hover,
+  #pauseOverlay .pause-buttons button:focus-visible {
+    background-image: url('./VoxelCraft/textures/ui/button_borderless_darkhover.png');
+  }
+  #pauseOverlay .pause-buttons button:active {
+    background-image: url('./VoxelCraft/textures/ui/button_borderless_darkpressed.png);
+    transform: translateY(1px);
+  }
+  @media (max-width: 600px) {
+    #pauseOverlay { padding: 12px; }
+    #pauseOverlay .pause-wrap { padding: 12px; }
+  }
+
 </style>
 </head>
 <body>
@@ -598,6 +671,18 @@
         <button id="saveOptionsButton" class="settings-close">Done</button>
       </div>
       <div class="menu-foot"><span>VoxelCraft 3D · Browser Edition</span><span>Not an official Minecraft product.</span></div>
+    </div>
+  </div>
+
+  <div id="pauseOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+    <div class="pause-wrap">
+      <h2 id="pauseTitle">Game Menu</h2>
+      <p class="pause-subtitle">Permainan dijeda</p>
+      <div class="pause-buttons">
+        <button id="resumeGameButton" type="button">Resume Game</button>
+        <button id="saveWorldButton" type="button">Save World</button>
+        <button id="returnTitleButton" type="button">Save &amp; Return to Title</button>
+      </div>
     </div>
   </div>
 
@@ -1193,6 +1278,7 @@
     let selectedSlot = 0;
     const keys = {};
     let locked = false;
+    let gameStarted = false;
     let lastSpaceTime = 0;
     let lastBreak = 0, lastPlace = 0;
     let worldTime = 0.28;
@@ -1603,7 +1689,7 @@
       inventoryOpen = opening;
       inventoryEl.classList.toggle('hidden', !inventoryOpen);
       // Update both overlays immediately; do not wait for pointerlockchange.
-      overlay.classList.toggle('hidden', locked || inventoryOpen || vcGuideOpen);
+      syncMenuVisibility();
 
       if (inventoryOpen) {
         if (locked) document.exitPointerLock();
@@ -2017,8 +2103,20 @@
 
     // ---- Input ----
     // The start overlay covers the canvas, so its click must request pointer lock too.
-    function startGame() {
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    const resumeGameButton = document.getElementById('resumeGameButton');
+    const saveWorldButton = document.getElementById('saveWorldButton');
+    const returnTitleButton = document.getElementById('returnTitleButton');
+
+    function syncMenuVisibility() {
+      const blockingUi = inventoryOpen || vcGuideOpen;
+      overlay.classList.toggle('hidden', locked || blockingUi || gameStarted);
+      pauseOverlay.classList.toggle('hidden', !gameStarted || locked || blockingUi);
+    }
+    function resumeGame() {
       if (settingsPanel) settingsPanel.classList.remove('open');
+      gameStarted = true;
+      syncMenuVisibility();
       if (!locked && canvas.requestPointerLock) {
         const result = canvas.requestPointerLock();
         if (result && typeof result.catch === 'function') {
@@ -2029,6 +2127,7 @@
         }
       }
     }
+    const startGame = resumeGame;
     const playButton = document.getElementById('playButton');
     const multiplayerButton = document.getElementById('multiplayerButton');
     const optionsButton = document.getElementById('optionsButton');
@@ -2061,7 +2160,7 @@
       vcGuideReturnToGame = locked;
       vcGuideOpen = true;
       vcGuide.classList.remove('hidden');
-      overlay.classList.add('hidden');
+      syncMenuVisibility();
       updateVcGuideBody(false);
       if (locked) document.exitPointerLock();
     }
@@ -2069,7 +2168,7 @@
       vcGuideOpen = false;
       vcGuide.classList.add('hidden');
       const shouldResume = resume && vcGuideReturnToGame;
-      overlay.classList.toggle('hidden', locked || inventoryOpen || vcGuideOpen || shouldResume);
+      syncMenuVisibility();
       vcGuideReturnToGame = false;
       if (shouldResume && canvas.requestPointerLock) {
         const result = canvas.requestPointerLock();
@@ -2099,6 +2198,16 @@
 
     document.getElementById('guideButton').addEventListener('click', openVcGuide);
     playButton.addEventListener('click', startGame);
+    resumeGameButton.addEventListener('click', resumeGame);
+    saveWorldButton.addEventListener('click', () => {
+      if (world.save()) toast('Dunia disimpan di browser ini');
+    });
+    returnTitleButton.addEventListener('click', () => {
+      if (world.save()) toast('Dunia disimpan sebelum kembali ke menu');
+      gameStarted = false;
+      if (locked && document.exitPointerLock) document.exitPointerLock();
+      syncMenuVisibility();
+    });
     multiplayerButton.addEventListener('click', () => toast('Multiplayer belum tersedia — saat ini mode Singleplayer aktif.'));
     optionsButton.addEventListener('click', () => settingsPanel.classList.toggle('open'));
     quitButton.addEventListener('click', () => toast('Terima kasih sudah bermain VoxelCraft! Tab browser bisa ditutup.'));
@@ -2120,7 +2229,7 @@
     document.addEventListener('pointerlockchange', () => {
       locked = document.pointerLockElement === canvas;
       if (!locked) clearPressedKeys();
-      overlay.classList.toggle('hidden', locked || inventoryOpen);
+      syncMenuVisibility();
     });
     window.addEventListener('blur', clearPressedKeys);
     document.addEventListener('mousemove', (e) => {
@@ -2200,11 +2309,14 @@
         overlay.classList.remove('hidden');
       }
 
-      if (locked && !inventoryOpen) movePlayer(dt);
+      const gameplayActive = gameStarted && locked && !inventoryOpen && !vcGuideOpen;
+      if (gameplayActive) movePlayer(dt);
 
-      // drive world systems
-      updateParticles(dt);
-      updateMobs(dt);
+      // Pause gameplay systems while the title, pause, inventory, or guide UI is open.
+      if (gameplayActive) {
+        updateParticles(dt);
+        updateMobs(dt);
+      }
 
       // camera follow
       camera.position.set(player.pos.x, player.pos.y + player.eye, player.pos.z);
@@ -2213,7 +2325,7 @@
       camera.rotation.x = player.pitch;
 
       // ---- Day/night cycle with visible sun/moon + stars + sunset tint ----
-      worldTime = (worldTime + dt / 600) % 1;
+      if (gameplayActive) worldTime = (worldTime + dt / 600) % 1;
       const sunAngle = worldTime * Math.PI * 2 - Math.PI / 2;
       const daylight = Math.max(0.05, Math.sin(sunAngle) * 0.5 + 0.5);
       const sunDirX = Math.cos(sunAngle);
