@@ -420,9 +420,17 @@
         this.chunks = new Map();
         this.overrides = new Map();
         try {
-          const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
-          for (const [key, id] of Object.entries(saved.blocks || {})) {
-            if (Number.isInteger(id) && id >= 0 && id <= 66 && Object.prototype.hasOwnProperty.call(BLOCKS, id)) this.overrides.set(key, id);
+          const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+          if (saved && saved.version === 1 && saved.blocks && typeof saved.blocks === 'object' && !Array.isArray(saved.blocks)) {
+            const validKey = /^-?\d+,-?\d+,-?\d+$/;
+            const maxBlockId = Math.max(...Object.keys(BLOCKS).map(Number));
+            for (const [key, id] of Object.entries(saved.blocks)) {
+              if (!validKey.test(key) || !Number.isInteger(id) || id < 0 || id > maxBlockId ||
+                  !Object.prototype.hasOwnProperty.call(BLOCKS, id)) continue;
+              const [x, y, z] = key.split(',').map(Number);
+              if (!Number.isSafeInteger(x) || !Number.isSafeInteger(z) || !Number.isInteger(y) || y < 0 || y >= CHUNK_Y) continue;
+              this.overrides.set(key, id);
+            }
           }
         } catch (err) { console.warn('Save VoxelCraft tidak dapat dibaca:', err); }
       }
@@ -444,6 +452,8 @@
       }
       getChunk(cx, cz) { return this.chunks.get(chunkKey(cx, cz)); }
       getBlock(x, y, z) {
+        if (![x, y, z].every(Number.isFinite)) return 0;
+        x = Math.floor(x); y = Math.floor(y); z = Math.floor(z);
         if (y < 0) return 11; // bedrock below
         if (y >= CHUNK_Y) return 0;
         const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
@@ -452,13 +462,17 @@
         return c.get(lx, y, lz);
       }
       setBlock(x, y, z, v) {
-        if (y < 0 || y >= CHUNK_Y) return;
+        if (![x, y, z].every(Number.isFinite)) return false;
+        x = Math.floor(x); y = Math.floor(y); z = Math.floor(z);
+        if (y < 0 || y >= CHUNK_Y || !Number.isInteger(v) ||
+            !Object.prototype.hasOwnProperty.call(BLOCKS, v)) return false;
         const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
         const c = this.ensureChunk(cx, cz);
         const lx = x - cx * CHUNK_X, lz = z - cz * CHUNK_Z;
         c.set(lx, y, lz, v);
         this.overrides.set(x + ',' + y + ',' + z, v);
         this.save();
+        return true;
       }
       generate(c) {
         const baseX = c.cx * CHUNK_X, baseZ = c.cz * CHUNK_Z;
