@@ -69,6 +69,16 @@ jobs:
             cp "$src" "public/VoxelCraft/textures/ui/${name}.png"
           done
 
+      - name: Stage Behavior Pack ActionForm icons
+        run: |
+          mkdir -p public/VoxelCraft/textures/items
+          item_textures=(book_writable apple feather clock_item bed_red compass_item book_normal)
+          for name in "${item_textures[@]}"; do
+            src="VoxelCraft/textures/items/${name}.png"
+            test -f "$src" || { echo "Missing Behavior Pack menu icon source: $src"; exit 1; }
+            cp "$src" "public/VoxelCraft/textures/items/${name}.png"
+          done
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
