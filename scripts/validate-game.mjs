@@ -125,7 +125,7 @@ for (const key of ['KeyK', 'KeyE', 'KeyT']) {
     fail(`${key} one-shot action must ignore keyboard repeat events`);
   }
 }
-if (!['KeyK', 'KeyE', 'KeyT'].some(key => !source.includes(`if (e.code === '${key}' && !e.repeat)`))) {
+if (['KeyK', 'KeyE', 'KeyT'].every(key => source.includes(`if (e.code === '${key}' && !e.repeat && !wasDown)`))) {
   pass('Save, inventory toggle, and time advance trigger once per key press');
 }
 
