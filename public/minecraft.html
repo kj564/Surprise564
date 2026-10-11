@@ -864,7 +864,9 @@
         const [ru, rv, rw, rh] = rects[face];
         const u0 = ru / textureWidth, u1 = (ru + rw) / textureWidth;
         const vTop = 1 - rv / textureHeight, vBottom = 1 - (rv + rh) / textureHeight;
-        const values = [u1, vTop, u0, vTop, u0, vBottom, u1, vBottom];
+        // Three.js BoxGeometry vertices are ordered left-to-right on each face.
+        // Preserve the Bedrock atlas orientation instead of mirroring every face horizontally.
+        const values = [u0, vTop, u1, vTop, u0, vBottom, u1, vBottom];
         for (let vertex = 0; vertex < 4; vertex++) {
           attr.setXY(face * 4 + vertex, values[vertex * 2], values[vertex * 2 + 1]);
         }
