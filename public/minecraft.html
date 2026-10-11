@@ -454,6 +454,7 @@
       getBlock(x, y, z) {
         if (![x, y, z].every(Number.isFinite)) return 0;
         x = Math.floor(x); y = Math.floor(y); z = Math.floor(z);
+        if (!Number.isSafeInteger(x) || !Number.isSafeInteger(z)) return 0;
         if (y < 0) return 11; // bedrock below
         if (y >= CHUNK_Y) return 0;
         const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
@@ -464,15 +465,30 @@
       setBlock(x, y, z, v) {
         if (![x, y, z].every(Number.isFinite)) return false;
         x = Math.floor(x); y = Math.floor(y); z = Math.floor(z);
-        if (y < 0 || y >= CHUNK_Y || !Number.isInteger(v) ||
+        if (!Number.isSafeInteger(x) || !Number.isSafeInteger(z) ||
+            y < 0 || y >= CHUNK_Y || !Number.isInteger(v) ||
             !Object.prototype.hasOwnProperty.call(BLOCKS, v)) return false;
+
         const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
         const c = this.ensureChunk(cx, cz);
         const lx = x - cx * CHUNK_X, lz = z - cz * CHUNK_Z;
         c.set(lx, y, lz, v);
+
+        // A face at a chunk edge may become visible/hidden in both chunks.
+        // Rebuild only already-loaded neighbors; unloaded chunks will mesh
+        // from the latest world data when they are generated again.
+        if (lx === 0) this.invalidateChunk(cx - 1, cz);
+        if (lx === CHUNK_X - 1) this.invalidateChunk(cx + 1, cz);
+        if (lz === 0) this.invalidateChunk(cx, cz - 1);
+        if (lz === CHUNK_Z - 1) this.invalidateChunk(cx, cz + 1);
+
         this.overrides.set(x + ',' + y + ',' + z, v);
         this.save();
         return true;
+      }
+      invalidateChunk(cx, cz) {
+        const neighbor = this.getChunk(cx, cz);
+        if (neighbor) neighbor.dirty = true;
       }
       generate(c) {
         const baseX = c.cx * CHUNK_X, baseZ = c.cz * CHUNK_Z;
