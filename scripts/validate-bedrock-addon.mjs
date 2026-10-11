@@ -60,4 +60,11 @@ const source = fs.readFileSync(path.join(root, bpDir, scriptModule?.entry || "sc
 for (const required of ["@minecraft/server", "@minecraft/server-ui", "ActionFormData", "world.afterEvents.itemUse"]) {
   if (!source.includes(required)) fail(`Native BP feature check missing: ${required}`);
 }
+const menuIsCommand = source.includes('menu: {') &&
+  source.includes('desc: "Buka menu interaktif VoxelCraft"') &&
+  source.includes('new Set(["give", "fly", "heal", "time", "weather", "tp", "kit", "menu"])') &&
+  source.includes("openVoxelCraftMenu(player)");
+if (!menuIsCommand) fail("Native !menu command must open the ActionForm UI and remain admin-gated.");
+else pass("Native !menu command opens the ActionForm UI and is admin-gated.");
+
 if (!process.exitCode) pass("Native Bedrock Script API and ActionForm menu hooks are present.");
