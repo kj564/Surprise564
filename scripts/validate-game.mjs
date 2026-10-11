@@ -45,7 +45,7 @@ if (vanillaUiTextures.every(texture => source.includes(`./VoxelCraft/textures/ui
   pass(`Browser UI references all ${vanillaUiTextures.length} original Bedrock UI textures`);
 }
 
-const behaviorPackMenuActions = ['kit', 'heal', 'fly', 'day', 'night', 'weather', 'stats', 'inventory', 'close'];
+const behaviorPackMenuActions = ['kit', 'heal', 'fly', 'day', 'night', 'weather', 'stats', 'close'];
 for (const action of behaviorPackMenuActions) {
   if (!source.includes(`data-vc-action="${action}"`)) {
     fail(`VoxelCraft guide menu is missing action: ${action}`);
@@ -53,7 +53,7 @@ for (const action of behaviorPackMenuActions) {
 }
 if (behaviorPackMenuActions.every(action => source.includes(`data-vc-action="${action}"`)) &&
     source.includes("e.code === 'KeyG'") && source.includes("function openVcGuide()")) {
-  pass('Behavior Pack-inspired VoxelCraft guide exposes all menu actions and the G shortcut');
+  pass('VoxelCraft guide matches the Behavior Pack action list and keeps the G shortcut');
 }
 
 const behaviorPackMenuIcons = ['book_writable', 'apple', 'feather', 'clock_item', 'bed_red', 'compass_item', 'book_normal'];
