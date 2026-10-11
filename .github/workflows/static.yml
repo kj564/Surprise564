@@ -72,7 +72,7 @@ jobs:
       - name: Stage Behavior Pack ActionForm icons
         run: |
           mkdir -p public/VoxelCraft/textures/items
-          item_textures=(book_writable apple feather clock_item bed_red compass_item book_normal)
+          item_textures=(book_writable apple feather clock_item bed_red compass_item book_normal brick diamond)
           for name in "${item_textures[@]}"; do
             src="VoxelCraft/textures/items/${name}.png"
             test -f "$src" || { echo "Missing Behavior Pack menu icon source: $src"; exit 1; }
@@ -127,6 +127,8 @@ jobs:
           test -f out/VoxelCraft/textures/items/bed_red.png
           test -f out/VoxelCraft/textures/items/compass_item.png
           test -f out/VoxelCraft/textures/items/book_normal.png
+          test -f out/VoxelCraft/textures/items/brick.png
+          test -f out/VoxelCraft/textures/items/diamond.png
           test -f out/VoxelCraft/textures/ui/item_cell.png
           test -f out/VoxelCraft/textures/blocks/pumpkin_face_off.png
           test -f out/VoxelCraft/textures/blocks/log_spruce_top.png
