@@ -43,11 +43,11 @@ jobs:
       - name: Verify imported pack archives
         run: |
           test -s dist/bedrock/VoxelCraft.mcaddon
-          unzip -l dist/bedrock/VoxelCraft.mcaddon | grep -q 'VoxelCraftBehaviorPack.mcpack'
-          unzip -l dist/bedrock/VoxelCraft.mcaddon | grep -q 'VoxelCraftResourcePack.mcpack'
+          unzip -l dist/bedrock/VoxelCraft.mcaddon | grep -F 'VoxelCraftBehaviorPack.mcpack' >/dev/null
+          unzip -l dist/bedrock/VoxelCraft.mcaddon | grep -F 'VoxelCraftResourcePack.mcpack' >/dev/null
           unzip -p dist/bedrock/VoxelCraft.mcaddon VoxelCraftBehaviorPack.mcpack > /tmp/VoxelCraftBehaviorPack.mcpack
           unzip -p dist/bedrock/VoxelCraft.mcaddon VoxelCraftResourcePack.mcpack > /tmp/VoxelCraftResourcePack.mcpack
-          unzip -l /tmp/VoxelCraftBehaviorPack.mcpack | grep -q 'manifest.json'
+          unzip -l /tmp/VoxelCraftBehaviorPack.mcpack | grep -F 'manifest.json' >/dev/null
           unzip -l /tmp/VoxelCraftResourcePack.mcpack | grep -q 'manifest.json'
 
       - name: Upload native Bedrock addon
