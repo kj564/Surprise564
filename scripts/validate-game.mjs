@@ -120,6 +120,13 @@ if (!source.includes("if (e.code === 'Space' && !e.repeat)")) {
   fail('Space double-tap flight toggle must ignore key-repeat events');
 } else pass('Holding Space cannot trigger repeated flight-mode toggles from keyboard repeat');
 
+if (!source.includes('function clearPressedKeys()') ||
+    !source.includes('if (!locked) clearPressedKeys();') ||
+    !source.includes("window.addEventListener('blur', clearPressedKeys);") ||
+    !source.includes('lastSpaceTime = 0;')) {
+  fail('Pressed keys and the Space double-tap timer must reset when focus or pointer lock is lost');
+} else pass('Input state resets on focus loss and pointer-lock exit');
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
