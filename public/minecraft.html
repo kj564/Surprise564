@@ -1980,10 +1980,12 @@
       hudTimer += dt;
       if (hudTimer >= 0.2) {
         hudTimer = 0;
+        const clockMinutes = Math.floor(worldTime * 1440);
+        const clock = `${String(Math.floor(clockMinutes / 60) % 24).padStart(2, '0')}:${String(clockMinutes % 60).padStart(2, '0')}`;
         hudEl.innerHTML =
-          `FPS: <b>${fps}</b> &nbsp; XYZ: <b>${player.pos.x.toFixed(1)}, ${player.pos.y.toFixed(1)}, ${player.pos.z.toFixed(1)}</b><br>` +
-          `Mode: <b>${player.fly ? '✈ Terbang' : '🚶 Jalan'}</b> &nbsp; Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b> &nbsp; Waktu: <b>${daylight < 0.25 ? '🌙 Malam' : daylight < 0.48 ? '🌆 Senja' : '☀ Siang'}</b><br>` +
-          `Mob: <b>${mobs.length}</b> &nbsp; Tekan <b>E</b> inventaris · <b>K</b> simpan · <b>T</b> majukan waktu`;
+          `Overworld <span class="hud-separator">|</span> XYZ: <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-separator">|</span> <b>${clock}</b><br>` +
+          `Mode: <b>${player.fly ? 'Terbang' : 'Jalan'}</b> <span class="hud-separator">|</span> Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b><br>` +
+          `Mob: <b>${mobs.length}</b> <span class="hud-separator">|</span> <b>E</b> Inventaris · <b>K</b> Simpan · <b>T</b> Waktu`;
       }
     }
 
