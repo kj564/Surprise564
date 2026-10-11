@@ -43,6 +43,7 @@ REQUIRED=(
   snow ice netherrack soul_sand bookshelf pumpkin_top pumpkin_side sponge
   wool_colored_white wool_colored_black wool_colored_red
   wool_colored_blue wool_colored_green
+  log_spruce_top log_jungle_top log_acacia_top log_big_oak_top
 )
 
 mkdir -p "$GAME_TEX_DIR"
