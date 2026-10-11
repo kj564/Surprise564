@@ -24,6 +24,11 @@ const blockSource = section(/const BLOCKS = \{([\s\S]*?)\n    \};/, 'BLOCKS');
 const blockEntries = [...blockSource.matchAll(/^\s*(\d+):\s*(null|\{[^\n]*\})/gm)];
 const blocks = new Map(blockEntries.map(([, id, definition]) => [Number(id), definition]));
 
+if (!source.includes('grid-template-columns: repeat(9, minmax(38px, 52px))') ||
+    !source.includes('grid-template-columns: repeat(6, minmax(34px, 1fr))')) {
+  fail('Inventory grid must use nine Bedrock-style columns on desktop and a compact six-column layout on mobile');
+} else pass('Inventory grid matches Bedrock-style desktop and mobile column layouts');
+
 const vanillaUiTextures = [
   'background_panel', 'background_with_border', 'button_borderless_dark',
   'button_borderless_darkhover', 'button_borderless_darkpressed',
