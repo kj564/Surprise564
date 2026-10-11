@@ -29,6 +29,12 @@ if (!source.includes('grid-template-columns: repeat(9, minmax(38px, 52px))') ||
   fail('Inventory grid must use nine Bedrock-style columns on desktop and a compact six-column layout on mobile');
 } else pass('Inventory grid matches Bedrock-style desktop and mobile column layouts');
 
+if (source.includes('#vcGuide .vc-actions { display: grid; grid-template-columns: 1fr; gap: 7px; }')) {
+  pass('Behavior Pack ActionForm buttons use the native vertical list layout');
+} else {
+  fail('Behavior Pack ActionForm buttons must use the native vertical list layout');
+}
+
 const vanillaUiTextures = [
   'menubackground',
   'background_panel', 'background_with_border', 'button_borderless_dark',
