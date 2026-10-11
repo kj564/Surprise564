@@ -2309,16 +2309,16 @@
       if (showStats) {
         const pos = player.pos;
         const selected = BLOCKS[HOTBAR[selectedSlot]];
-        vcGuideBody.textContent = 'Statistik VoxelCraft\\n' +
-          'Koin: ' + browserStats.coins + '\\n' +
-          'Kunjungan browser: ' + browserStats.joins + '\\n' +
-          'Blok dihancurkan: ' + browserBlocksBroken + '\\n' +
-          'Blok dipasang: ' + browserBlocksPlaced + '\\n' +
-          'Posisi: ' + Math.floor(pos.x) + ', ' + Math.floor(pos.y) + ', ' + Math.floor(pos.z) + '\\n' +
-          'Slot aktif: ' + (selectedSlot + 1) + ' — ' + (selected ? selected.name : 'kosong') + '\\n' +
+        vcGuideBody.textContent = 'Statistik VoxelCraft\n' +
+          'Koin: ' + browserStats.coins + '\n' +
+          'Kunjungan browser: ' + browserStats.joins + '\n' +
+          'Blok dihancurkan: ' + browserBlocksBroken + '\n' +
+          'Blok dipasang: ' + browserBlocksPlaced + '\n' +
+          'Posisi: ' + Math.floor(pos.x) + ', ' + Math.floor(pos.y) + ', ' + Math.floor(pos.z) + '\n' +
+          'Slot aktif: ' + (selectedSlot + 1) + ' — ' + (selected ? selected.name : 'kosong') + '\n' +
           'Mode terbang: ' + (player.fly ? 'ON' : 'OFF') + ' | Waktu: ' + clock;
       } else {
-        vcGuideBody.textContent = 'Halo, penjelajah!\\nPilih aksi VoxelCraft. Tampilan ini memakai tekstur UI dari resource pack; aksi yang belum didukung browser ditandai jelas.';
+        vcGuideBody.textContent = 'Halo, penjelajah!\nPilih aksi VoxelCraft. Tampilan ini memakai tekstur UI dari resource pack; aksi yang belum didukung browser ditandai jelas.';
       }
       vcFlyStatus.textContent = player.fly ? 'Status sekarang: ON' : 'Status sekarang: OFF';
     }
