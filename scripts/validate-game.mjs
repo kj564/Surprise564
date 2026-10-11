@@ -33,7 +33,7 @@ const vanillaUiTextures = [
   'background_panel', 'background_with_border', 'button_borderless_dark',
   'button_borderless_darkhover', 'button_borderless_darkpressed',
   'dialog_background_opaque', 'highlight_slot', 'hotbar_start_cap', 'hotbar_end_cap',
-  'hud_tip_text_background', 'item_cell',
+  'hud_tip_text_background', 'item_cell', 'cursor_pc', 'inventory_icon',
 ];
 for (const texture of vanillaUiTextures) {
   if (!source.includes(`./VoxelCraft/textures/ui/${texture}.png`)) {
