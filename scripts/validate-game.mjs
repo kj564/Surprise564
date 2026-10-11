@@ -55,6 +55,16 @@ if (behaviorPackMenuActions.every(action => source.includes(`data-vc-action="${a
   pass('Behavior Pack-inspired VoxelCraft guide exposes all menu actions and the G shortcut');
 }
 
+const behaviorPackMenuIcons = ['book_writable', 'apple', 'feather', 'clock_item', 'bed_red', 'compass_item', 'book_normal'];
+for (const icon of behaviorPackMenuIcons) {
+  if (!source.includes(`./VoxelCraft/textures/items/${icon}.png`)) {
+    fail(`Behavior Pack menu icon must use the staged original item texture: ${icon}.png`);
+  }
+}
+if (behaviorPackMenuIcons.every(icon => source.includes(`./VoxelCraft/textures/items/${icon}.png`))) {
+  pass(`Browser Behavior Pack menu references all ${behaviorPackMenuIcons.length} original item icons`);
+}
+
 if (!tiles.size) fail('TILE table is empty');
 else pass(`Parsed ${tiles.size} texture tile definitions`);
 
