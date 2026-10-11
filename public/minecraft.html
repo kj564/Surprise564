@@ -1345,6 +1345,14 @@
     window.__spawnChicken = spawnChicken;
     window.__setTime = (t) => { worldTime = t % 1; };
     window.__getTime = () => worldTime;
+    window.__getChickenState = () => ({
+      hasGeometry: !!vanillaChickenGeometry,
+      hasTexture: !!vanillaChickenTexture,
+      geometryKeys: vanillaChickenGeometry ? Object.keys(vanillaChickenGeometry) : null,
+      geometryListLen: vanillaChickenGeometry?.['minecraft:geometry']?.length || 0,
+      geometryIdentifiers: vanillaChickenGeometry?.['minecraft:geometry']?.map(g => g.description?.identifier) || [],
+      textureSize: vanillaChickenTexture ? `${vanillaChickenTexture.image?.width}x${vanillaChickenTexture.image?.height}` : null,
+    });
 
     // ---- Inventory panel ----
     const inventoryEl = document.getElementById('inventory');
@@ -1458,15 +1466,21 @@
         img.onerror = () => {
           const col = i % ATLAS_COLS, row = Math.floor(i / ATLAS_COLS);
           const x = col * TILE_PX, y = row * TILE_PX;
-          // Never leave a silent transparent hole in the atlas: missing assets
-          // should be obvious during development and reported in the console.
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.fillStyle = '#ff00ff';
-          ctx.fillRect(x, y, TILE_PX, TILE_PX);
-          ctx.fillStyle = '#181018';
-          ctx.fillRect(x, y, TILE_PX / 2, TILE_PX / 2);
-          ctx.fillRect(x + TILE_PX / 2, y + TILE_PX / 2, TILE_PX / 2, TILE_PX / 2);
-          console.error('[VoxelCraft] Missing texture: ' + TEXTURE_DIR + name + '.png');
+          // Procedurally-generated ores (coal/iron/gold/diamond_ore) have no
+          // source file — they're composited from stone + mineral block later.
+          // Don't log a misleading "missing texture" error for those tiles.
+          const isProceduralOre = /^(coal|iron|gold|diamond)_ore$/.test(name);
+          if (!isProceduralOre) {
+            // Never leave a silent transparent hole in the atlas: missing assets
+            // should be obvious during development and reported in the console.
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#ff00ff';
+            ctx.fillRect(x, y, TILE_PX, TILE_PX);
+            ctx.fillStyle = '#181018';
+            ctx.fillRect(x, y, TILE_PX / 2, TILE_PX / 2);
+            ctx.fillRect(x + TILE_PX / 2, y + TILE_PX / 2, TILE_PX / 2, TILE_PX / 2);
+            console.error('[VoxelCraft] Missing texture: ' + TEXTURE_DIR + name + '.png');
+          }
           resolve();
         };
         img.src = TEXTURE_DIR + name + '.png';
