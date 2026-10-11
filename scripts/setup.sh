@@ -75,6 +75,23 @@ mkdir -p public/VoxelCraft/models/entity public/VoxelCraft/textures/entity/chick
 cp VoxelCraft/models/entity/chicken.geo.json public/VoxelCraft/models/entity/chicken.geo.json
 cp VoxelCraft/textures/entity/chicken/chicken.png public/VoxelCraft/textures/entity/chicken/chicken.png
 
+# Stage the original Bedrock UI sprites used by the browser HUD, inventory, and menus.
+UI_TEX_DIR="public/VoxelCraft/textures/ui"
+SRC_UI_DIR="VoxelCraft/textures/ui"
+UI_REQUIRED=(
+  background_panel background_with_border button_borderless_dark
+  button_borderless_darkhover button_borderless_darkpressed dialog_background_opaque
+  highlight_slot hotbar_start_cap hotbar_end_cap hotbar_0 hotbar_8
+  hud_tip_text_background item_cell
+)
+mkdir -p "$UI_TEX_DIR"
+for name in "${UI_REQUIRED[@]}"; do
+  src="$SRC_UI_DIR/$name.png"
+  dst="$UI_TEX_DIR/$name.png"
+  if [ ! -f "$src" ]; then echo "Missing vanilla UI texture source: $src"; exit 1; fi
+  if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then cp "$src" "$dst"; echo "    staged UI $name.png"; fi
+done
+
 echo "==> [3/3] Installing browser-game dependencies (bun)…"
 if command -v bun >/dev/null 2>&1; then
   bun install --frozen-lockfile
