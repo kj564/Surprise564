@@ -366,7 +366,8 @@
   }
   #vcGuide .vc-title { margin: 0 0 8px; color: #262626; font-size: 20px; letter-spacing: 0; text-shadow: 1px 1px rgba(255,255,255,.45); }
   #vcGuide .vc-body { margin: 0 0 14px; padding: 10px; background: rgba(0,0,0,.08); border: 2px solid rgba(0,0,0,.12); font-size: 13px; line-height: 1.5; white-space: pre-line; }
-  #vcGuide .vc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  /* Bedrock ActionFormData stacks its action buttons vertically. */
+  #vcGuide .vc-actions { display: grid; grid-template-columns: 1fr; gap: 7px; }
   #vcGuide button {
     min-height: 48px; padding: 8px 10px; color: #fff; font-size: 13px; text-align: left;
     background-color: #454545; background-image: url('./VoxelCraft/textures/ui/button_borderless_dark.png'); background-size: 100% 100%;
