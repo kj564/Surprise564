@@ -1650,14 +1650,14 @@
         }
         lastSpaceTime = now;
       }
-      if (e.code === 'KeyK') {
+      if (e.code === 'KeyK' && !e.repeat) {
         if (world.save()) toast('Dunia disimpan di browser ini');
       }
-      if (e.code === 'KeyE') {
+      if (e.code === 'KeyE' && !e.repeat) {
         e.preventDefault();
         toggleInventory();
       }
-      if (e.code === 'KeyT') {
+      if (e.code === 'KeyT' && !e.repeat) {
         // advance time of day for quick day/night testing
         worldTime = (worldTime + 0.15) % 1;
         toast('Waktu dimajukan');
