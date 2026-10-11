@@ -23,6 +23,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Stage vanilla chicken assets for browser game
+        run: |
+          mkdir -p public/VoxelCraft/models/entity public/VoxelCraft/textures/entity/chicken
+          cp VoxelCraft/models/entity/chicken.geo.json public/VoxelCraft/models/entity/chicken.geo.json
+          cp VoxelCraft/textures/entity/chicken/chicken.png public/VoxelCraft/textures/entity/chicken/chicken.png
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
