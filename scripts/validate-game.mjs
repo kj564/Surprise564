@@ -30,6 +30,7 @@ if (!source.includes('grid-template-columns: repeat(9, minmax(38px, 52px))') ||
 } else pass('Inventory grid matches Bedrock-style desktop and mobile column layouts');
 
 const vanillaUiTextures = [
+  'menubackground',
   'background_panel', 'background_with_border', 'button_borderless_dark',
   'button_borderless_darkhover', 'button_borderless_darkpressed',
   'dialog_background_opaque', 'highlight_slot', 'hotbar_start_cap', 'hotbar_end_cap', 'cancel',
