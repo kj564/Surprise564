@@ -100,6 +100,11 @@ if (!source.includes('if (!id || !world.setBlock(hit.x, hit.y, hit.z, 0)) return
   fail('Block breaking must honor the world mutation result');
 } else pass('Block breaking stops when the world rejects a mutation');
 
+if (!source.includes('if (!Number.isFinite(maxDist) || maxDist < 0) return null;') ||
+    !source.includes('if (!Number.isFinite(nextDist) || nextDist > maxDist) return null;')) {
+  fail('Voxel raycast must reject invalid reach and stop before entering a voxel beyond max distance');
+} else pass('Voxel raycast validates reach and enforces the maximum interaction distance');
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
