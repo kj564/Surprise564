@@ -84,6 +84,18 @@ if (source.includes('scaleX(1.2) scaleY(1.09)')) {
   fail('Selected hotbar slot must follow the original Bedrock 24x24 highlight proportions');
 }
 
+const inventoryTabIcons = ['apple', 'brick', 'diamond'];
+for (const icon of inventoryTabIcons) {
+  if (!source.includes(`./VoxelCraft/textures/items/${icon}.png`)) {
+    fail(`Inventory category tab must use the original resource-pack icon: ${icon}.png`);
+  }
+}
+if (inventoryTabIcons.every(icon => source.includes(`./VoxelCraft/textures/items/${icon}.png`)) &&
+    source.includes("data-inv-filter=\\"all\\"]::before") &&
+    source.includes("textures/ui/inventory_icon.png")) {
+  pass('Inventory category tabs use original resource-pack icons for all, nature, building, and minerals');
+}
+
 const behaviorPackMenuActions = ['kit', 'heal', 'fly', 'day', 'night', 'weather', 'stats', 'close'];
 for (const action of behaviorPackMenuActions) {
   if (!source.includes(`data-vc-action="${action}"`)) {
