@@ -23,9 +23,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate game foundations
-        run: bun run validate:game
-
       - name: Stage vanilla assets used by the browser game
         run: |
           mkdir -p public/VoxelCraft/models/entity public/VoxelCraft/textures/entity/chicken public/VoxelCraft/textures/blocks
@@ -61,6 +58,9 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
+      - name: Validate game foundations
+        run: bun run validate:game
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
