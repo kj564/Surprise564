@@ -41,6 +41,17 @@ if (source.includes('class="hud-brand">VoxelCraft') && source.includes('Overworl
   fail('Browser HUD should mirror the Behavior Pack action-bar layout');
 }
 
+if (!source.includes("@font-face") ||
+    !source.includes("font-family: 'Minecraft Ten'") ||
+    !source.includes("./VoxelCraft/font/minecraft-ten.ttf")) {
+  fail('Browser UI must use the original Bedrock Minecraft Ten font');
+} else pass('Browser UI references the original Bedrock Minecraft Ten font');
+
+if (!source.includes('const clockMinutes = Math.floor((((worldTime % 1) + 1) % 1) * 1440);') ||
+    !source.includes("padStart(2, '0')")) {
+  fail('Browser HUD must show a live HH:mm clock like the Behavior Pack action bar');
+} else pass('Browser HUD shows a live HH:mm clock like the Behavior Pack action bar');
+
 if (source.includes('id="pauseOverlay"') && source.includes('id="resumeGameButton"') &&
     source.includes('function syncMenuVisibility()') && source.includes('gameStarted && locked && !inventoryOpen && !vcGuideOpen')) {
   pass('Bedrock-style pause screen is distinct from the title menu and pauses gameplay systems');
