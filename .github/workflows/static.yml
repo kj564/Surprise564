@@ -69,6 +69,12 @@ jobs:
             cp "$src" "public/VoxelCraft/textures/ui/${name}.png"
           done
 
+      - name: Stage original Bedrock UI font
+        run: |
+          test -f VoxelCraft/font/minecraft-ten.ttf
+          mkdir -p public/VoxelCraft/font
+          cp VoxelCraft/font/minecraft-ten.ttf public/VoxelCraft/font/minecraft-ten.ttf
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -109,6 +115,7 @@ jobs:
           test -f out/VoxelCraft/textures/ui/hotbar_8.png
           test -f out/VoxelCraft/textures/ui/hud_tip_text_background.png
           test -f out/VoxelCraft/textures/ui/item_cell.png
+          test -f out/VoxelCraft/font/minecraft-ten.ttf
           test -f out/VoxelCraft/textures/ui/inventory_icon.png
           test -f out/VoxelCraft/textures/blocks/pumpkin_face_off.png
           test -f out/VoxelCraft/textures/blocks/log_spruce_top.png
