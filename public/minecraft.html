@@ -422,7 +422,6 @@
   #vcGuide [data-vc-action="night"]::before { background-image: url('./VoxelCraft/textures/items/bed_red.png'); }
   #vcGuide [data-vc-action="weather"]::before { background-image: url('./VoxelCraft/textures/items/compass_item.png'); }
   #vcGuide [data-vc-action="stats"]::before { background-image: url('./VoxelCraft/textures/items/book_normal.png'); }
-  #vcGuide [data-vc-action="inventory"]::before { background-image: url('./VoxelCraft/textures/items/book_writable.png'); }
   #vcGuide .vc-close::before {
     content: "";
     display: inline-block;
@@ -488,7 +487,6 @@
         <button type="button" data-vc-action="night"><span class="vc-action-label">Waktu: Malam</span><span class="vc-small">Atur siklus malam</span></button>
         <button type="button" data-vc-action="weather" disabled><span class="vc-action-label">Cuaca: Cerah</span><span class="vc-small">Cuaca belum didukung browser</span></button>
         <button type="button" data-vc-action="stats"><span class="vc-action-label">Lihat Statistik</span><span class="vc-small">Status sesi saat ini</span></button>
-        <button type="button" data-vc-action="inventory"><span class="vc-action-label">Buka Inventaris</span><span class="vc-small">Pilih blok untuk hotbar</span></button>
       </div>
       <div class="vc-footer"><button type="button" class="vc-close" data-vc-action="close">Tutup Menu</button></div>
     </div>
@@ -2021,7 +2019,6 @@
           case 'day': worldTime = 0.5; toast('Waktu diatur ke siang'); updateVcGuideBody(false); break;
           case 'night': worldTime = 0; toast('Waktu diatur ke malam'); updateVcGuideBody(false); break;
           case 'stats': updateVcGuideBody(true); break;
-          case 'inventory': { const resumeAfterInventory = vcGuideReturnToGame; closeVcGuide(false); inventoryReturnToGame = resumeAfterInventory; toggleInventory(); break; }
           case 'close': closeVcGuide(true); break;
         }
       });
