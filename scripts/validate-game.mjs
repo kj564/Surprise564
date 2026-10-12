@@ -506,6 +506,16 @@ if (source.includes('// Match the reference LevelChunk behavior: identical write
   fail('World.setBlock must skip unchanged values, following the reference LevelChunk no-op behavior');
 }
 
+const oreGenerationSource = source.match(/\/\/ ores in stone layer[\s\S]*?\/\/ === Phase 1C: stone variant patches/)?.[0] || '';
+if (oreGenerationSource.includes('c.set(lx, y, lz, 24);  // lapis ore (deep; BLOCKS[24])') &&
+    oreGenerationSource.includes('c.set(lx, y, lz, 28);  // emerald ore (very rare; BLOCKS[28])') &&
+    /24:\s*\{\s*name:'Bijih Lapis'/.test(blockSource) &&
+    /28:\s*\{\s*name:'Bijih Zamrud'/.test(blockSource)) {
+  pass('Generated lapis and emerald ores use their matching BLOCKS ids');
+} else {
+  fail('Ore generation must map lapis to block id 24 and emerald to block id 28');
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
