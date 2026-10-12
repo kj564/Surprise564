@@ -239,15 +239,15 @@ if (inventoryTabIcons.every(icon => source.includes(`./VoxelCraft/textures/items
   pass('Inventory category tabs use original resource-pack icons for all, nature, building, and minerals');
 }
 
-const behaviorPackMenuActions = ['kit', 'heal', 'fly', 'day', 'night', 'weather', 'stats', 'close'];
-for (const action of behaviorPackMenuActions) {
+const browserGuideActions = ['kit', 'heal', 'fly', 'day', 'night', 'weather', 'stats', 'close'];
+for (const action of browserGuideActions) {
   if (!source.includes(`data-vc-action="${action}"`)) {
     fail(`VoxelCraft guide menu is missing action: ${action}`);
   }
 }
-if (behaviorPackMenuActions.every(action => source.includes(`data-vc-action="${action}"`)) &&
+if (browserGuideActions.every(action => source.includes(`data-vc-action="${action}"`)) &&
     source.includes("e.code === 'KeyG'") && source.includes("function openVcGuide()")) {
-  pass('VoxelCraft guide matches the Behavior Pack action list and keeps the G shortcut');
+  pass('Browser guide actions are present and the G shortcut is retained (browser adaptation, not Behavior Pack commands)');
 }
 
 const behaviorPackMenuIcons = ['book_writable', 'apple', 'feather', 'clock_item', 'bed_red', 'compass_item', 'book_normal'];
