@@ -85,6 +85,17 @@ if (source.includes('id="pauseOverlay"') && source.includes('id="resumeGameButto
   fail('UI screens and gameplay activation must be derived from one screen state');
 }
 
+if (source.includes('body[data-ui-screen="inventory"] #overlay') &&
+    source.includes('body[data-ui-screen="inventory"] #pauseOverlay') &&
+    source.includes('body[data-ui-screen="inventory"] #vcGuide') &&
+    source.includes('body[data-ui-screen="inventory"] #inventory') &&
+    source.includes('display: none !important;') &&
+    source.includes('z-index: 1000;')) {
+  pass('Inventory screen has a final CSS guard against title, pause, or guide overlays covering it');
+} else {
+  fail('Inventory screen must forcibly hide competing overlays and remain on top while active');
+}
+
 if (source.includes('aria-labelledby="inventoryTitle"') &&
     source.includes("if (e.code === 'Escape' && !e.repeat && !wasDown)") &&
     source.includes("if (inventoryOpen) { e.preventDefault(); toggleInventory(); return; }") &&
