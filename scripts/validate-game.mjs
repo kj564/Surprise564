@@ -37,29 +37,29 @@ if (!source.includes('grid-template-columns: repeat(9, minmax(38px, 52px))') ||
 } else pass('Inventory grid matches Bedrock-style desktop and mobile column layouts');
 
 if (source.includes('#vcGuide .vc-actions { display: grid; grid-template-columns: 1fr; gap: 7px; }')) {
-  pass('Behavior Pack ActionForm buttons use the native vertical list layout');
+  pass('Browser guide buttons use a single-column action list');
 } else {
-  fail('Behavior Pack ActionForm buttons must use the native vertical list layout');
+  fail('Browser guide action buttons must use a single-column layout');
 }
 
 if (source.includes('class="hud-brand">VoxelCraft') && source.includes('Overworld') && source.includes('browserStats.coins')) {
-  pass('Browser HUD mirrors the Behavior Pack action bar with dimension, coordinates, time, and persistent coins');
+  pass('Browser HUD displays browser-owned dimension, coordinates, time, and session statistics');
 } else {
-  fail('Browser HUD should mirror the Behavior Pack action bar including persistent coins');
+  fail('Browser HUD should display browser-owned dimension, coordinates, time, and session statistics');
 }
 if (source.includes('const BROWSER_STATS_KEY') &&
     source.includes('browserStats.joins++') &&
     source.includes('browserStats.blocksBroken = browserBlocksBroken') &&
     source.includes('browserStats.blocksPlaced = browserBlocksPlaced') &&
     source.includes('localStorage.setItem(BROWSER_STATS_KEY')) {
-  pass('Behavior Pack player stats persist safely in browser storage');
+  pass('Browser-only player statistics persist safely in browser storage');
 } else {
   fail('Browser stats should safely persist visits, coins, and block activity');
 }
 if (source.includes('const coinRewards = { 20: 2, 21: 3, 22: 5, 23: 15, 24: 4, 26: 3, 28: 20, 31: 2 }')) {
-  pass('Browser ore coin rewards match the Behavior Pack reward table');
+  pass('Browser ore coin rewards use the browser game's local reward table');
 } else {
-  fail('Browser ore coin rewards must match the Behavior Pack reward table');
+  fail('Browser ore coin rewards must use the browser game's local reward table');
 }
 
 if (!source.includes("@font-face") ||
@@ -87,8 +87,8 @@ if (source.includes('#overlay .brand {') &&
 
 if (!source.includes('const clockMinutes = Math.floor((((worldTime % 1) + 1) % 1) * 1440);') ||
     !source.includes("padStart(2, '0')")) {
-  fail('Browser HUD must show a live HH:mm clock like the Behavior Pack action bar');
-} else pass('Browser HUD shows a live HH:mm clock like the Behavior Pack action bar');
+  fail('Browser HUD must show a live HH:mm clock in the browser runtime');
+} else pass('Browser HUD shows a live HH:mm clock in the browser runtime');
 
 if (source.includes('id="pauseOverlay"') && source.includes('id="resumeGameButton"') &&
     source.includes('function syncMenuVisibility()') && source.includes("function getActiveUiScreen()") &&
@@ -172,7 +172,7 @@ const stagedAssetGroups = [
     ]),
   },
   {
-    label: 'Behavior Pack menu item icons',
+    label: 'Resource Pack item sprites used by the browser guide',
     files: ['book_writable', 'apple', 'feather', 'clock_item', 'bed_red', 'compass_item', 'book_normal', 'brick', 'diamond'].map(name => [
       `VoxelCraft/textures/items/${name}.png`, `public/VoxelCraft/textures/items/${name}.png`,
     ]),
@@ -250,14 +250,14 @@ if (browserGuideActions.every(action => source.includes(`data-vc-action="${actio
   pass('Browser guide actions are present and the G shortcut is retained (browser adaptation, not Behavior Pack commands)');
 }
 
-const behaviorPackMenuIcons = ['book_writable', 'apple', 'feather', 'clock_item', 'bed_red', 'compass_item', 'book_normal'];
-for (const icon of behaviorPackMenuIcons) {
+const browserGuideIcons = ['book_writable', 'apple', 'feather', 'clock_item', 'bed_red', 'compass_item', 'book_normal'];
+for (const icon of browserGuideIcons) {
   if (!source.includes(`./VoxelCraft/textures/items/${icon}.png`)) {
-    fail(`Behavior Pack menu icon must use the staged original item texture: ${icon}.png`);
+    fail(`Browser guide must use the staged original Resource Pack item texture: ${icon}.png`);
   }
 }
-if (behaviorPackMenuIcons.every(icon => source.includes(`./VoxelCraft/textures/items/${icon}.png`))) {
-  pass(`Browser Behavior Pack menu references all ${behaviorPackMenuIcons.length} original item icons`);
+if (browserGuideIcons.every(icon => source.includes(`./VoxelCraft/textures/items/${icon}.png`))) {
+  pass(`Browser guide references all ${browserGuideIcons.length} original Resource Pack item sprites`);
 }
 
 if (!tiles.size) fail('TILE table is empty');
