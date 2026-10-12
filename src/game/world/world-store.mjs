@@ -33,6 +33,9 @@ export class WorldStore {
 
   /** The single mutation path for block edits. A missing chunk is treated as air. */
   setBlock(worldPosition, blockId) {
+    if (!Number.isSafeInteger(blockId) || blockId < 0 || blockId > 65535) {
+      throw new RangeError("blockId must fit Uint16");
+    }
     const chunkPosition = worldToChunk(worldPosition, this.chunkSize);
     const localPosition = worldToLocal(worldPosition, this.chunkSize);
     const existing = this.getChunk(chunkPosition);
