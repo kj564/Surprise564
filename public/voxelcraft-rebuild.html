@@ -76,14 +76,20 @@ const worldGroup=new THREE.Group();scene.add(worldGroup);
 const cubeGeometry=new THREE.BoxGeometry(1,1,1);
 const materials=new Map();
 function materialFor(key){if(!materials.has(key)){materials.set(key,new THREE.MeshStandardMaterial({color:blockColors[key]??0xa0a0a0,roughness:key==='minecraft:glass'?.22:.92,metalness:0,transparent:key==='minecraft:glass',opacity:key==='minecraft:glass'?.48:1}))}return materials.get(key)}
-const meshByPosition=new Map();
 function rebuildWorldMeshes(){
-  worldGroup.clear();meshByPosition.clear();
+  worldGroup.clear();
+  const groups=new Map();
   for(let y=0;y<engine.world.dimensions.height;y++)for(let z=0;z<16;z++)for(let x=0;x<16;x++){
     const id=engine.world.getBlock(x,y,z);if(id===undefined||id===0)continue;
     const def=registry.getById(id);if(!def)continue;
-    const key=def.key;const mesh=new THREE.Mesh(cubeGeometry,materialFor(key));mesh.position.set(x+.5,y+.5,z+.5);mesh.castShadow=def.solid;mesh.receiveShadow=true;mesh.userData.block={x,y,z};
-    worldGroup.add(mesh);meshByPosition.set(x+','+y+','+z,mesh);
+    if(!groups.has(def.key))groups.set(def.key,{definition:def,positions:[]});
+    groups.get(def.key).positions.push({x,y,z});
+  }
+  for(const [key,group] of groups){
+    const instances=new THREE.InstancedMesh(cubeGeometry,materialFor(key),group.positions.length);
+    const matrix=new THREE.Matrix4();
+    group.positions.forEach((position,index)=>{matrix.makeTranslation(position.x+.5,position.y+.5,position.z+.5);instances.setMatrixAt(index,matrix)});
+    instances.instanceMatrix.needsUpdate=true;instances.castShadow=group.definition.solid;instances.receiveShadow=true;worldGroup.add(instances);
   }
 }
 rebuildWorldMeshes();
