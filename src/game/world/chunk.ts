@@ -14,7 +14,7 @@ export class ChunkData {
   readonly sizeX: number;
   readonly height: number;
   readonly sizeZ: number;
-  readonly blocks: Uint16Array;
+  private readonly blockData: Uint16Array;
   private _revision = 0;
 
   constructor(dimensions: ChunkDimensions, initialBlocks?: ArrayLike<number>) {
@@ -28,15 +28,20 @@ export class ChunkData {
     if (initialBlocks && initialBlocks.length !== volume) {
       throw new RangeError('Initial block data length does not match chunk volume');
     }
-    this.blocks = initialBlocks ? ChunkData.copyAndValidate(initialBlocks, volume) : new Uint16Array(volume);
+    this.blockData = initialBlocks ? ChunkData.copyAndValidate(initialBlocks, volume) : new Uint16Array(volume);
   }
 
   get revision(): number {
     return this._revision;
   }
 
+  /** Compatibility snapshot; mutating this array never mutates authoritative chunk data. */
+  get blocks(): Uint16Array {
+    return this.blockData.slice();
+  }
+
   getBlock(x: number, y: number, z: number): number {
-    return this.blocks[localBlockIndex(x, y, z, this.sizeX, this.height, this.sizeZ)];
+    return this.blockData[localBlockIndex(x, y, z, this.sizeX, this.height, this.sizeZ)];
   }
 
   /** Returns true only when the stored block value changed. */
@@ -45,15 +50,15 @@ export class ChunkData {
       throw new RangeError('blockId must be an integer from 0 to 65535');
     }
     const index = localBlockIndex(x, y, z, this.sizeX, this.height, this.sizeZ);
-    if (this.blocks[index] === blockId) return false;
-    this.blocks[index] = blockId;
+    if (this.blockData[index] === blockId) return false;
+    this.blockData[index] = blockId;
     this._revision += 1;
     return true;
   }
 
   /** Copy the current data for persistence; callers cannot mutate this chunk through the copy. */
   toArray(): Uint16Array {
-    return this.blocks.slice();
+    return this.blockData.slice();
   }
 
   private static copyAndValidate(source: ArrayLike<number>, expectedLength: number): Uint16Array {
