@@ -1,6 +1,6 @@
 # Live Runtime Integration Notes
 
-Inspected source: `public/minecraft.html` on `rebuild/voxelcraft-modern-engine`.
+Inspected source: `public/minecraft.html` on the merged `main` baseline; the new playable mechanics preview is `public/voxelcraft-rebuild.html`.
 
 ## Important compatibility finding
 
@@ -47,4 +47,4 @@ This mismatch is material: e.g. browser ID `1` means grass, while engine ID `1` 
 4. Migrate block edits and saves only after a versioned conversion test proves round-trip preservation.
 5. Remove the old live path only after parity tests and browser play tests pass.
 
-The adapter is a first compatibility seam, not a claim that the new engine is already controlling the live game. Main remains unchanged and the draft PR must not be merged until checks and parity tests pass.
+The adapter is a first compatibility seam, not a claim that the rebuilt engine already controls the original `public/minecraft.html` runtime. The rebuild is now merged into `main` as a separate playable preview at `public/voxelcraft-rebuild.html`; the original runtime remains intact. Future work should expand identity mappings and parity tests before migrating the original save format or replacing its runtime.
