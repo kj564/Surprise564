@@ -8,6 +8,7 @@
     "build": "next build",
     "stage:item-catalog": "node scripts/stage-item-catalog.mjs",
     "validate:game": "node scripts/stage-item-catalog.mjs && node scripts/validate-game.mjs",
+    "validate:rebuild-preview": "node scripts/validate-rebuild-preview.mjs",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
     "db:push": "prisma db push --accept-data-loss",
