@@ -6,7 +6,7 @@ VoxelCraft is a **browser voxel game**. These rules keep development focused on 
 
 1. **Consult `rujukan/` before writing comparable game code.** Find the closest original class/component/flow and understand its responsibilities before implementing a new version.
 2. **Keep `VanillaBehaviorPack/` as a future game-logic reference.** It is an intentional submodule that will inform game behavior; do not remove it during repository cleanup. Adapt relevant logic to the browser runtime.
-3. **Use original Minecraft files as the source of truth for matching assets.** Inspect the original files in `VoxelCraft/`. Never invent a replacement when the correct source exists.
+3. **Use the upstream Resource Pack as the source of truth for matching assets.** The upstream is [ZtechNetwork/MCBVanillaResourcePack](https://github.com/ZtechNetwork/MCBVanillaResourcePack); inspect its checked-in mirror in `VoxelCraft/`. Never invent a replacement when the correct source exists.
 4. **Do not copy old code blindly.** The Pocket Edition reference is historical (2013). Learn from its architecture and behavior, then adapt to the browser runtime and document version-specific differences.
 5. **Keep canonical sources immutable during adaptation.** Browser-specific changes belong in the browser implementation or staged runtime copy, not in the canonical original asset.
 6. **Keep the scope on the browser game.** The game runs on Three.js, JavaScript, HTML, and CSS. Do not introduce unrelated addon/toolkit systems into the project without an explicit change of scope.
