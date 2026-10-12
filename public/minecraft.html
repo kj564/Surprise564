@@ -850,6 +850,197 @@
     cursor: url('./VoxelCraft/textures/ui/cursor_pc.png') 4 4, pointer;
   }
 
+
+  /* === UI pass: consistent Bedrock-style layout, readable hierarchy, responsive sizing === */
+  #overlay {
+    align-items: stretch;
+    justify-content: center;
+    padding: 18px clamp(12px, 3vw, 40px);
+    background-position: center;
+    background-size: cover;
+    overflow: auto;
+  }
+  #overlay .menu-wrap {
+    flex: 0 0 auto;
+    width: min(370px, calc(100vw - 28px));
+    margin: auto auto auto 2vw;
+    padding: 22px 20px 14px;
+    gap: 0;
+    background-color: rgba(20, 20, 20, .86);
+    background-image: url('./VoxelCraft/textures/ui/background_panel.png');
+    background-size: 100% 100%;
+    border: 4px solid transparent;
+    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
+    box-shadow: 0 8px 0 rgba(0,0,0,.42);
+  }
+  #overlay .brand {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 0 22px;
+    transform: none;
+    text-align: left;
+  }
+  #overlay h1 {
+    color: #fff;
+    font-family: 'Minecraft Ten', 'Segoe UI', system-ui, sans-serif;
+    font-size: clamp(28px, 3.2vw, 38px);
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1.05;
+    -webkit-text-stroke: 1px #262626;
+    text-shadow: 2px 2px #262626, 4px 4px rgba(0,0,0,.55);
+  }
+  #overlay h1 span { color: #9fe65b; }
+  #overlay .edition {
+    margin-top: 7px;
+    color: #e4e4e4;
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-shadow: 1px 1px #222;
+  }
+  #overlay .menu-buttons { gap: 8px; }
+  #overlay .menu-buttons > button,
+  #overlay .button-row > button {
+    min-height: 46px;
+    padding: 10px 14px;
+    font-family: inherit;
+    font-size: 14px;
+    letter-spacing: .2px;
+    text-align: center;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: filter .12s ease, transform .08s ease;
+  }
+  #overlay .menu-buttons > button:hover,
+  #overlay .button-row > button:hover { filter: brightness(1.15); }
+  #overlay .menu-buttons > button:focus-visible,
+  #overlay .button-row > button:focus-visible,
+  #pauseOverlay button:focus-visible,
+  #inventory button:focus-visible,
+  #vcGuide button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+  #overlay .help-options-panel,
+  #overlay .settings-panel {
+    margin-top: 12px;
+    padding: 12px;
+  }
+  #overlay .help-options-panel.open { gap: 8px; }
+  #overlay .help-options-panel h2,
+  #overlay .settings-panel h2 {
+    color: #252525;
+    font-size: 16px;
+    text-shadow: 1px 1px rgba(255,255,255,.55);
+  }
+  #overlay .menu-foot {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    margin-top: 18px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,.18);
+    color: #d4d4d4;
+    font-size: 9px;
+    line-height: 1.4;
+    text-align: left;
+  }
+  #overlay .menu-foot span:last-child { text-align: left; }
+  #hud {
+    top: max(10px, env(safe-area-inset-top));
+    bottom: auto;
+    left: max(10px, env(safe-area-inset-left));
+    transform: none;
+    width: auto;
+    max-width: min(56vw, 560px);
+    padding: 7px 10px;
+    text-align: left;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    font-size: 11px;
+  }
+  #hotbar {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    max-width: calc(100vw - 12px);
+  }
+  .slot { flex: 0 1 40px; min-width: 0; }
+  .slot.active { transform: translateY(-2px) scale(1.08); }
+  #crosshair {
+    filter: drop-shadow(1px 1px 0 rgba(0,0,0,.8)) drop-shadow(-1px -1px 0 rgba(0,0,0,.6));
+  }
+  #inventory {
+    justify-content: center;
+    gap: 0;
+    padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+  #inventory h2 { flex: 0 0 auto; }
+  #inventory .inv-tabs { flex: 0 0 auto; }
+  #inventory .inv-grid {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: min(54vh, 460px);
+    overscroll-behavior: contain;
+  }
+  .inv-hint {
+    flex: 0 0 auto;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  #invClose { flex: 0 0 auto; min-height: 40px; }
+  #pauseOverlay {
+    padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+  #pauseOverlay .pause-wrap {
+    width: min(100%, 390px);
+    padding: 18px;
+    box-shadow: 0 6px 0 rgba(0,0,0,.4);
+  }
+  #pauseOverlay .pause-buttons { gap: 9px; }
+  #pauseOverlay .pause-buttons button { min-height: 46px; }
+  #vcGuide .vc-form { overscroll-behavior: contain; }
+  button, select { touch-action: manipulation; }
+  @media (max-width: 600px) {
+    #overlay { padding: 10px 12px; }
+    #overlay .menu-wrap {
+      width: min(370px, calc(100vw - 24px));
+      margin: auto;
+      padding: 17px 14px 12px;
+    }
+    #overlay .brand { margin-bottom: 17px; }
+    #overlay h1 { font-size: clamp(26px, 8vw, 34px); }
+    #overlay .edition { font-size: 9px; letter-spacing: 2px; }
+    #overlay .menu-buttons > button { min-height: 44px; }
+    #overlay .menu-foot { margin-top: 14px; font-size: 8px; }
+    #hud {
+      max-width: min(66vw, 430px);
+      padding: 5px 7px;
+      font-size: 9px;
+      line-height: 1.4;
+    }
+    #hotbar { gap: 0; padding: 3px 4px; }
+    .slot { width: min(10vw, 38px); height: min(11vw, 42px); flex: 0 1 min(10vw, 38px); }
+    .slot .num { top: 1px; left: 2px; font-size: 9px; }
+    .slot .name { display: none; }
+    #inventory h2 { font-size: 13px; padding: 8px; }
+    #inventory .inv-grid { max-height: 48dvh; padding: 8px; }
+    .inv-hint { padding: 7px; font-size: 10px; }
+    #pauseOverlay .pause-wrap { padding: 14px; }
+  }
+  @media (max-height: 520px) and (orientation: landscape) {
+    #overlay { justify-content: flex-start; }
+    #overlay .menu-wrap { margin: 8px auto; padding: 12px 16px; }
+    #overlay .brand { margin-bottom: 10px; }
+    #overlay h1 { font-size: 26px; }
+    #overlay .menu-foot { margin-top: 10px; }
+    #inventory { justify-content: flex-start; }
+    #inventory .inv-grid { max-height: 36dvh; }
+  }
+
 </style>
 </head>
 <body>
@@ -904,38 +1095,38 @@
       </div>
       <p class="menu-subtitle">A world of blocks awaits.</p>
       <div id="mainMenuButtons" class="menu-buttons">
-        <button id="playButton">Play Game</button>
-        <button id="helpOptionsButton">Help &amp; Options</button>
+        <button id="playButton">Main</button>
+        <button id="helpOptionsButton">Bantuan &amp; Opsi</button>
       </div>
       <div id="helpOptionsPanel" class="help-options-panel">
-        <h2>Help &amp; Options</h2>
-        <button id="guideButton">How to Play</button>
-        <button id="optionsButton">Game Options</button>
-        <p class="menu-panel-note">Controls, graphics, and world settings for this browser game.</p>
-        <button id="helpBackButton" class="menu-back">Back</button>
+        <h2>Bantuan &amp; Opsi</h2>
+        <button id="guideButton">Cara Bermain</button>
+        <button id="optionsButton">Pengaturan</button>
+        <p class="menu-panel-note">Atur kontrol dan kualitas tampilan permainan.</p>
+        <button id="helpBackButton" class="menu-back">Kembali</button>
       </div>
       <div id="settingsPanel" class="settings-panel">
-        <h2>Game Options</h2>
-        <label for="renderQuality">Render Quality
+        <h2>Pengaturan Permainan</h2>
+        <label for="renderQuality">Kualitas Grafis
           <select id="renderQuality"><option value="high">High</option><option value="balanced" selected>Balanced</option><option value="low">Low</option></select>
         </label>
-        <label for="menuFov">Field of View
+        <label for="menuFov">Sudut Pandang
           <select id="menuFov"><option value="70">70</option><option value="80" selected>80</option><option value="90">90</option><option value="100">100</option></select>
         </label>
-        <button id="saveOptionsButton" class="settings-close">Done</button>
+        <button id="saveOptionsButton" class="settings-close">Selesai</button>
       </div>
-      <div class="menu-foot"><span>VoxelCraft 3D · Browser Edition</span><span>Not an official Minecraft product.</span></div>
+      <div class="menu-foot"><span>VoxelCraft 3D · Edisi Browser</span><span>Bukan produk resmi Minecraft.</span></div>
     </div>
   </div>
 
   <div id="pauseOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
     <div class="pause-wrap">
-      <h2 id="pauseTitle">Game Menu</h2>
+      <h2 id="pauseTitle">Menu Permainan</h2>
       <p class="pause-subtitle">Permainan dijeda</p>
       <div class="pause-buttons">
-        <button id="resumeGameButton" type="button">Resume Game</button>
-        <button id="saveWorldButton" type="button">Save World</button>
-        <button id="returnTitleButton" type="button">Save &amp; Return to Title</button>
+        <button id="resumeGameButton" type="button">Lanjutkan Permainan</button>
+        <button id="saveWorldButton" type="button">Simpan Dunia</button>
+        <button id="returnTitleButton" type="button">Simpan &amp; Kembali ke Menu</button>
       </div>
     </div>
   </div>
