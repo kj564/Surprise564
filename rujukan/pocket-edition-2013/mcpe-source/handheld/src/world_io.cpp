@@ -55,9 +55,10 @@ bool loadWorld(World& world, const std::string& path) {
     if (!(in >> width >> height >> depth)) return false;
     if (width != world.width() || height != world.height() || depth != world.depth()) return false;
 
+    const std::size_t total = static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * static_cast<std::size_t>(depth);
     std::vector<Block> decoded;
-    decoded.reserve(static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * static_cast<std::size_t>(depth));
-    for (std::size_t i = 0; i < decoded.capacity(); ++i) {
+    decoded.reserve(total);
+    for (std::size_t i = 0; i < total; ++i) {
         int value = -1;
         Block block = Block::Air;
         if (!(in >> value) || !decodeBlock(value, block)) return false;
