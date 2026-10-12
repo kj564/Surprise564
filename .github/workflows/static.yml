@@ -106,6 +106,9 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Test independent game core
+        run: bun run test:game-core
+
       - name: Validate repository foundations (rujukan, RP, BP, and asset staging)
         run: bun run validate:foundation
 
