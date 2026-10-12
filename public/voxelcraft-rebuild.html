@@ -57,8 +57,8 @@ const engine = new Engine({dimensions:{chunkSizeX:16,height:32,chunkSizeZ:16},sp
 engine.loadChunk(0,0);
 const registry=engine.registry;
 const idFor=key=>{const id=registry.getIdByKey(key);if(id===undefined)throw new Error('Missing block definition: '+key);return id};
-const blockKeys=['minecraft:stone','minecraft:dirt','minecraft:grass_block','minecraft:cobblestone','minecraft:glass','minecraft:sand','minecraft:oak_planks','minecraft:bricks','minecraft:glowstone'];
-const blockColors={'minecraft:stone':0x888d95,'minecraft:dirt':0x8a5c3c,'minecraft:grass_block':0x65a94c,'minecraft:cobblestone':0x747b82,'minecraft:glass':0xb4e9ef,'minecraft:sand':0xd9c58c,'minecraft:oak_planks':0xb48a54,'minecraft:bricks':0x9e5748,'minecraft:glowstone':0xf7d783};
+const blockKeys=['minecraft:stone','minecraft:dirt','minecraft:grass_block','minecraft:cobblestone','minecraft:glass','minecraft:sand','minecraft:oak_planks','minecraft:bricks','minecraft:torch'];
+const blockColors={'minecraft:stone':0x888d95,'minecraft:dirt':0x8a5c3c,'minecraft:grass_block':0x65a94c,'minecraft:cobblestone':0x747b82,'minecraft:glass':0xb4e9ef,'minecraft:sand':0xd9c58c,'minecraft:oak_planks':0xb48a54,'minecraft:bricks':0x9e5748,'minecraft:torch':0xf7d783};
 blockKeys.forEach(key=>engine.inventory.setSlot(blockKeys.indexOf(key),{itemKey:key,count:key==='minecraft:stone'?64:32,maxStackSize:64}));
 for(let z=0;z<16;z++)for(let x=0;x<16;x++){
   engine.world.setBlock({x,y:0,z},idFor('minecraft:stone'));
