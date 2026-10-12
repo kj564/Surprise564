@@ -15,7 +15,7 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "validate:foundation": "node scripts/validate-foundation.mjs",
-    "test:engine": "node --test tests/game-world.test.mjs"
+    "test:engine": "node --test tests/game-world.test.mjs tests/game-physics.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
