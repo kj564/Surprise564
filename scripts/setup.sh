@@ -93,6 +93,18 @@ for name in "${UI_REQUIRED[@]}"; do
   if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then cp "$src" "$dst"; echo "    staged UI $name.png"; fi
 done
 
+# Stage the original Resource Pack newgui button-state sprites.
+GUI_TEX_DIR="public/VoxelCraft/textures/gui/newgui"
+SRC_GUI_TEX_DIR="VoxelCraft/textures/gui/newgui"
+GUI_REQUIRED=(ButtonWithBorder ButtonWithBorderHover ButtonWithBorderPressed)
+mkdir -p "$GUI_TEX_DIR"
+for name in "${GUI_REQUIRED[@]}"; do
+  src="$SRC_GUI_TEX_DIR/$name.png"
+  dst="$GUI_TEX_DIR/$name.png"
+  if [ ! -f "$src" ]; then echo "Missing original newgui texture source: $src"; exit 1; fi
+  if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then cp "$src" "$dst"; echo "    staged newgui $name.png"; fi
+done
+
 # Stage the original item sprites referenced by the Behavior Pack ActionForm menu.
 ITEM_TEX_DIR="public/VoxelCraft/textures/items"
 SRC_ITEM_DIR="VoxelCraft/textures/items"

@@ -108,6 +108,16 @@ if (vanillaUiTextures.every(texture => source.includes(`./VoxelCraft/textures/ui
   pass(`Browser UI references all ${vanillaUiTextures.length} original Bedrock UI textures`);
 }
 
+const vanillaMenuTextures = ['ButtonWithBorder', 'ButtonWithBorderHover', 'ButtonWithBorderPressed'];
+for (const texture of vanillaMenuTextures) {
+  if (!source.includes(`./VoxelCraft/textures/gui/newgui/${texture}.png`)) {
+    fail(`Main-menu buttons must use original Bedrock newgui texture: ${texture}.png`);
+  }
+}
+if (vanillaMenuTextures.every(texture => source.includes(`./VoxelCraft/textures/gui/newgui/${texture}.png`))) {
+  pass('Main-menu button states reference original Bedrock newgui textures');
+}
+
 if (source.includes('width: 40px;\n    height: 44px;') && source.includes('width: min(10vw, 38px); height: min(11vw, 42px);')) {
   pass('Hotbar slot proportions follow the original Bedrock HUD grid at desktop and mobile scales');
 } else {

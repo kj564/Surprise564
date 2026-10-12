@@ -815,6 +815,32 @@
     #inventory .inv-tabs button { min-height: 44px; }
   }
 
+
+  /* Main-menu controls use the original Resource Pack's newgui button states. */
+  #overlay .menu-buttons > button,
+  #overlay .button-row > button {
+    background-color: transparent;
+    background-image: url('./VoxelCraft/textures/gui/newgui/ButtonWithBorder.png');
+    background-size: 100% 100%;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    text-shadow: 1px 1px #222;
+    image-rendering: pixelated;
+  }
+  #overlay .menu-buttons > button:hover,
+  #overlay .menu-buttons > button:focus-visible,
+  #overlay .button-row > button:hover,
+  #overlay .button-row > button:focus-visible {
+    background-image: url('./VoxelCraft/textures/gui/newgui/ButtonWithBorderHover.png');
+    outline: none;
+  }
+  #overlay .menu-buttons > button:active,
+  #overlay .button-row > button:active {
+    background-image: url('./VoxelCraft/textures/gui/newgui/ButtonWithBorderPressed.png');
+    transform: translateY(1px);
+  }
+
 </style>
 </head>
 <body>
