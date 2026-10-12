@@ -33,7 +33,7 @@ export function importLegacyBlockSave(input: unknown, options: LegacyImportOptio
   const chunks = new Set<string>();
   let skipped = 0;
   for (const [key, id] of entries) {
-    const match = /^(-?\\d+),(-?\\d+),(-?\\d+)$/.exec(key);
+    const match = /^(-?\d+),(-?\d+),(-?\d+)$/.exec(key);
     if (!match || !Number.isSafeInteger(Number(match[1])) || !Number.isSafeInteger(Number(match[2])) ||
         !Number.isSafeInteger(Number(match[3])) || !Number.isSafeInteger(id) || id < 0 || id > 0xffff ||
         !registry.getById(id)) { skipped += 1; continue; }
