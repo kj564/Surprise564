@@ -3,7 +3,7 @@ import { FixedStepClock, type FixedStepResult } from './core/fixed-step';
 import { Inventory } from './inventory/inventory';
 import { beginMining, finishBlockBreak, type MiningProgressResult, type MiningSession, type MiningStartResult } from './interaction/mining';
 import { placeBlockFromInventory } from './interaction/placement';
-import type { VoxelRayHit } from './interaction/raycast';
+import { raycastVoxels, type RayVector, type VoxelRayHit, type VoxelRayResult } from './interaction/raycast';
 import { Aabb } from './physics/aabb';
 import { PlayerPhysics, type PlayerInput, type PlayerPhysicsState, type PlayerPosition } from './physics/player-physics';
 import { queryCollisionBoxes } from './physics/world-collision';
@@ -61,12 +61,18 @@ export class VoxelCraftEngine {
     return Object.freeze({ clock: clockResult, player: playerState });
   }
 
+  /** Trace a view ray against authoritative world data; unloaded chunks stop the ray. */
+  target(origin: RayVector, direction: RayVector, reach = 6): VoxelRayResult {
+    return raycastVoxels(this.world, origin, direction, reach, id => this.registry.getById(id)?.selectable ?? false);
+  }
+
   startMining(target: BlockPosition, miningSpeed = 1): MiningStartResult {
     const result = beginMining(this.world, target, this.registry, miningSpeed);
     this.miningSession = result.status === 'started' ? result.session : null;
     return result;
   }
 
+  /** Advance mining only while the caller confirms the same currently targeted block. */
   advanceMining(deltaSeconds: number, currentTarget: BlockPosition | null): MiningProgressResult | { readonly status: 'no-session' } | { readonly status: 'broken'; readonly dropsRemaining: readonly { readonly itemKey: string; readonly count: number; readonly maxStackSize: number }[] } {
     const session = this.miningSession;
     if (!session) return { status: 'no-session' };
