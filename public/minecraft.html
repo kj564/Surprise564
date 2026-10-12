@@ -2124,7 +2124,7 @@
     const vcFlyStatus = document.getElementById('vcFlyStatus');
     let vcGuideOpen = false;
     let vcGuideReturnToGame = false;
-    // Mirror the Behavior Pack's persistent player stats in browser storage.
+    // Track browser-only player statistics in browser storage; these are not Behavior Pack data.
     const BROWSER_STATS_KEY = 'voxelcraft_browser_stats_v1';
     function safeBrowserCount(value) {
       return Number.isSafeInteger(value) && value >= 0 ? value : 0;
