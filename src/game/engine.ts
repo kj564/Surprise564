@@ -9,7 +9,6 @@ import { PlayerPhysics, type PlayerInput, type PlayerPhysicsState, type PlayerPo
 import { queryCollisionBoxes } from './physics/world-collision';
 import { createWorldSave, restoreWorldSave, type PlayerSnapshot, type SaveMetadataInput } from './persistence/world-save';
 import { ChunkData } from './world/chunk';
-import type { WorldSaveV1 } from './persistence/save-schema';
 import { VoxelWorld, type BlockPosition, type WorldDimensions } from './world/world';
 
 export interface VoxelCraftEngineOptions {
@@ -143,37 +142,6 @@ export class VoxelCraftEngine {
       pitch: view.pitch,
     };
     return createWorldSave(this.world, this.inventory, metadata, snapshot);
-  }
-
-  createSave(metadata: SaveMetadataInput, view: Pick<PlayerSnapshot, 'yaw' | 'pitch'>): WorldSaveV1 {
-    const state = this.player.state;
-    return createWorldSave(this.world, this.inventory, metadata, {
-      position: state.position, yaw: view.yaw, pitch: view.pitch,
-    });
-  }
-
-  /** Rebuilds a fresh engine only after the complete payload passes save-schema validation. */
-  static fromSave(input: unknown, registry: BlockRegistry = defaultBlockRegistry):
-    | { readonly ok: true; readonly engine: VoxelCraftEngine; readonly view: Readonly<{ yaw: number; pitch: number }> }
-    | { readonly ok: false; readonly errors: readonly string[] } {
-    const result = restoreWorldSave(input);
-    if (!result.ok) return result;
-    const restored = result.restored;
-    const engine = new VoxelCraftEngine({
-      dimensions: restored.world.dimensions,
-      spawn: restored.player.position,
-      inventorySlots: restored.inventory.size,
-      registry,
-    });
-    for (const chunk of restored.world.exportChunks()) engine.loadChunk(chunk.x, chunk.z, chunk.blocks);
-    restored.inventory.snapshot().forEach((stack, index) => {
-      if (stack) engine.inventory.setSlot(index, stack);
-    });
-    return Object.freeze({
-      ok: true,
-      engine,
-      view: Object.freeze({ yaw: restored.player.yaw, pitch: restored.player.pitch }),
-    });
   }
 
   /** Exposes the current body bounds for camera placement and browser adapters. */
