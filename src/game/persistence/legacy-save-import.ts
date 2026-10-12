@@ -35,7 +35,7 @@ export function importLegacyBlockSave(input: unknown, options: LegacyImportOptio
   for (const [key, id] of entries) {
     const match = /^(-?\d+),(-?\d+),(-?\d+)$/.exec(key);
     if (!match || !Number.isSafeInteger(Number(match[1])) || !Number.isSafeInteger(Number(match[2])) ||
-        !Number.isSafeInteger(Number(match[3])) || !Number.isSafeInteger(id) || id < 0 || id > 0xffff ||
+        !Number.isSafeInteger(Number(match[3])) || typeof id !== 'number' || !Number.isSafeInteger(id) || id < 0 || id > 0xffff ||
         !registry.getById(id)) { skipped += 1; continue; }
     const x = Number(match[1]), y = Number(match[2]), z = Number(match[3]);
     if (y < 0 || y >= dimensions.height) { skipped += 1; continue; }
