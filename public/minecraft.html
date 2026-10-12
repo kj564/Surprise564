@@ -1448,6 +1448,8 @@
         const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
         const c = this.ensureChunk(cx, cz);
         const lx = x - cx * CHUNK_X, lz = z - cz * CHUNK_Z;
+        // Match the reference LevelChunk behavior: identical writes are no-ops.
+        if (c.get(lx, y, lz) === v) return false;
         c.set(lx, y, lz, v);
 
         // A face at a chunk edge may become visible/hidden in both chunks.
