@@ -6,7 +6,7 @@ This repository is a fan project. **VoxelCraft is not affiliated with, endorsed 
 
 All vanilla Minecraft Bedrock assets (textures, sounds, models, animations, entity definitions, recipe JSON, etc.) located in:
 
-- `VoxelCraft/` — full vanilla resource pack (mirror of [ZtechNetwork/MCBVanillaResourcePack](https://github.com/ZtechNetwork/MCBVanillaResourcePack))
+- `VoxelCraft/` — checked-in mirror/snapshot of the upstream [ZtechNetwork/MCBVanillaResourcePack](https://github.com/ZtechNetwork/MCBVanillaResourcePack)
 - `VanillaBehaviorPack/` — full vanilla behavior pack template (git submodule of [ZtechNetwork/MCBVanillaBehaviorPack](https://github.com/ZtechNetwork/MCBVanillaBehaviorPack))
 
 …are the property of **Mojang Studios / Microsoft**. They are included here solely as reference data and runtime assets for the browser game, consistent with how the upstream repositories distribute them.
