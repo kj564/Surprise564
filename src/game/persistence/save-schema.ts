@@ -28,6 +28,8 @@ export interface WorldSaveV1 {
     readonly yaw: number;
     /** Radians, clamped to the vertical look range. */
     readonly pitch: number;
+    /** Selected hotbar slot, normalized to zero for older version-1 saves. */
+    readonly selectedSlot: number;
     readonly inventory: readonly (ItemStack | null)[];
   };
 }
@@ -121,6 +123,10 @@ export function validateWorldSave(input: unknown): SaveValidationResult {
     }
     if (!Number.isFinite(player.yaw)) errors.push('player.yaw must be finite');
     if (!Number.isFinite(player.pitch) || (typeof player.pitch === 'number' && Math.abs(player.pitch) > Math.PI / 2)) errors.push('player.pitch must be within [-pi/2, pi/2]');
+    const rawSelectedSlot = player.selectedSlot === undefined ? 0 : player.selectedSlot;
+    const maxSelectedSlot = Array.isArray(player.inventory) && player.inventory.length > 0 ? Math.min(8, player.inventory.length - 1) : 8;
+    const selectedSlotValid = isBoundedInteger(rawSelectedSlot, 0, maxSelectedSlot);
+    if (!selectedSlotValid) errors.push('player.selectedSlot must refer to an existing hotbar slot');
     const normalizedInventory: (ItemStack | null)[] = [];
     if (!Array.isArray(player.inventory)) errors.push('player.inventory must be an array');
     else {
@@ -141,11 +147,12 @@ export function validateWorldSave(input: unknown): SaveValidationResult {
     }
     if (isRecord(position) && [position.x, position.y, position.z].every(Number.isFinite) &&
         Number.isFinite(player.yaw) && Number.isFinite(player.pitch) && Math.abs(player.pitch as number) <= Math.PI / 2 &&
-        Array.isArray(player.inventory) && player.inventory.length <= MAX_INVENTORY_SLOTS && normalizedInventory.length === player.inventory.length) {
+        Array.isArray(player.inventory) && player.inventory.length <= MAX_INVENTORY_SLOTS && normalizedInventory.length === player.inventory.length && selectedSlotValid) {
       normalizedPlayer = Object.freeze({
         position: Object.freeze({ x: position.x as number, y: position.y as number, z: position.z as number }),
         yaw: player.yaw as number,
         pitch: player.pitch as number,
+        selectedSlot: rawSelectedSlot as number,
         inventory: Object.freeze(normalizedInventory),
       });
     }
