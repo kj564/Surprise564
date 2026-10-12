@@ -21,7 +21,7 @@ try {
   }
   if (!ready) throw new Error('Static preview server did not become ready');
 
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--enable-webgl', '--use-gl=angle', '--use-angle=swiftshader'] });
   const page = await browser.newPage({ viewport: { width: 1365, height: 900 } });
   const pageErrors = [];
   const consoleErrors = [];
@@ -61,12 +61,12 @@ try {
   const itemCount = await page.locator('#invGrid .inv-slot img').count();
   if (itemCount < 1) throw new Error('Item icon catalog did not render');
 
-  if (textureFailures.length) throw new Error('Block texture requests failed:\\n' + textureFailures.join('\\n'));
-  if (pageErrors.length) throw new Error('Uncaught browser exceptions:\\n' + pageErrors.join('\\n'));
+  if (textureFailures.length) throw new Error('Block texture requests failed:\\n' + textureFailures.join('\n'));
+  if (pageErrors.length) throw new Error('Uncaught browser exceptions:\\n' + pageErrors.join('\n'));
   const seriousConsoleErrors = consoleErrors.filter(message =>
     !/favicon|third.party cookie|deprecated/i.test(message)
   );
-  if (seriousConsoleErrors.length) throw new Error('Browser console errors:\\n' + seriousConsoleErrors.join('\\n'));
+  if (seriousConsoleErrors.length) throw new Error('Browser console errors:\\n' + seriousConsoleErrors.join('\n'));
 
   console.log(JSON.stringify({
     result: 'PASS',
