@@ -100,6 +100,12 @@ export class BlockRegistry {
     return this.byKey.get(key);
   }
 
+  /** Numeric storage ID for a known block key; undefined when no mapping is established. */
+  getIdByKey(key: string): number | undefined {
+    if (key === 'minecraft:air') return 0;
+    return this.byKey.get(key)?.legacyId;
+  }
+
   /** Runtime storage ID used by the new engine; currently equal to legacy ID where available. */
   getById(id: number): BlockDefinition | undefined {
     if (!Number.isInteger(id) || id < 0 || id > 0xffff) return undefined;
