@@ -1,6 +1,8 @@
 import type { VoxelRayHit, RayVector } from './raycast';
 import type { VoxelWorld, BlockPosition } from '../world/world';
 import type { BlockRegistry } from '../blocks/registry';
+import { Aabb } from '../physics/aabb';
+import type { Inventory } from '../inventory/inventory';
 
 export type PlacementValidation =
   | { readonly status: 'ready'; readonly target: BlockPosition; readonly replacedBlockId: number }
@@ -48,9 +50,6 @@ function cardinalFace(face: RayVector): RayVector | undefined {
   return face;
 }
 
-
-import { Aabb } from '../physics/aabb';
-import type { Inventory } from '../inventory/inventory';
 
 export type PlaceBlockResult =
   | { readonly status: 'placed'; readonly target: BlockPosition; readonly blockId: number; readonly dirtyChunks: readonly string[]; readonly remainingInSlot: number }
