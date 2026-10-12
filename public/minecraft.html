@@ -741,6 +741,38 @@
     }
   }
 
+
+  /* Match the original VoxelCraft JsonUI branding anchors: title at top-middle. */
+  #overlay .brand {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    z-index: 2;
+    width: max-content;
+    max-width: 96vw;
+    margin: 0;
+    transform: translateX(-50%);
+    text-align: center;
+    pointer-events: none;
+  }
+  #overlay h1 {
+    font-size: clamp(26px, 4vw, 38px);
+    line-height: 1;
+    letter-spacing: 1px;
+  }
+  #overlay .edition {
+    margin-top: 2px;
+    font-size: 10px;
+    line-height: 1.2;
+    letter-spacing: 3px;
+  }
+  #overlay .menu-subtitle { display: none; }
+  @media (max-width: 560px) {
+    #overlay .brand { top: 10px; }
+    #overlay h1 { font-size: clamp(24px, 7vw, 32px); }
+    #overlay .edition { font-size: 9px; letter-spacing: 2px; }
+  }
+
 </style>
 </head>
 <body>
