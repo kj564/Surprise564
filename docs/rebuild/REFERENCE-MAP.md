@@ -27,6 +27,7 @@ This is a guide for investigation, not permission to copy historical code or red
 - `src/game/interaction/mining.ts`: time-based mining sessions, target-change cancellation, guarded block removal, drop insertion and explicit reporting of inventory overflow.
 - `src/game/blocks/registry.ts`: immutable data-driven block definitions with namespaced keys, MCPE legacy ID mappings, shape/render traits, hardness, sound, light and drop metadata. The initial catalog is intentionally a subset, not a claim of full block parity.
 - `src/game/inventory/inventory.ts`: immutable item stacks, slot operations, stack merging, overflow reporting, removal and conservation-focused tests.
+- `src/game/persistence/save-schema.ts` and `world-save.ts`: versioned save validation, corruption/size limits, detached chunk snapshots, and safe world/inventory/player capture and restore. Browser storage integration remains a later step.
 - `src/game/physics/aabb.ts`: immutable AABB bounds, strict intersection, per-axis displacement clipping and swept bounds.
 - Unit tests run via `bun run test:game-core`.
 
