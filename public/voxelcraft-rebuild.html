@@ -175,7 +175,7 @@ function rebuildWorldMeshes(){
 
 const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.006,1.006,1.006)),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.95}));
 outline.visible=false;scene.add(outline);
-const keyDown=new Set();let yaw=0,pitch=0,jumpQueued=false,miningHeld=false,lastTime=performance.now(),frames=0,fps=0,fpsElapsed=0;
+const keyDown=new Set();let yaw=0,pitch=0,jumpQueued=false,leftMouseDown=false,miningHeld=false,lastTime=performance.now(),frames=0,fps=0,fpsElapsed=0;
 const moveKeys=new Set(['KeyW','KeyA','KeyS','KeyD','Space','ShiftLeft','ShiftRight','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
 function getViewDirection(){return new THREE.Vector3(0,0,-1).applyEuler(camera.rotation).normalize()}
 function currentTarget(){return engine.target({x:camera.position.x,y:camera.position.y,z:camera.position.z},getViewDirection(),6)}
@@ -207,11 +207,11 @@ function updateCamera(){const p=engine.player.state.position;camera.position.set
 function rebuildAfterMutation(){rebuildWorldMeshes();updateHotbar()}
 function onPointerDown(event){
   if(document.pointerLockElement!==renderer.domElement){renderer.domElement.requestPointerLock?.();return}
-  if(event.button===0){const hit=currentTarget();if(hit.status==='hit'){const result=engine.startMining(hit.block);if(result.status==='started'){miningHeld=true;toast('Menambang '+(registry.getById(hit.blockId)?.displayName??'blok'))}else toast('Blok tidak dapat ditambang')}}
+  if(event.button===0){leftMouseDown=true;const hit=currentTarget();if(hit.status==='hit'){const result=engine.startMining(hit.block);if(result.status==='started'){miningHeld=true;toast('Menambang '+(registry.getById(hit.blockId)?.displayName??'blok'))}else toast('Blok tidak dapat ditambang')}}
   else if(event.button===2){const hit=currentTarget();if(hit.status!=='hit'){toast('Tidak ada blok yang ditarget');return}const result=engine.placeSelected(hit);if(result.status==='placed'){rebuildAfterMutation();toast('Blok dipasang')}else toast('Tidak dapat memasang: '+result.status)}
 }
 renderer.domElement.addEventListener('pointerdown',onPointerDown);
-window.addEventListener('pointerup',event=>{if(event.button===0&&miningHeld){miningHeld=false;engine.cancelMining()}});
+window.addEventListener('pointerup',event=>{if(event.button===0){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}}});
 renderer.domElement.addEventListener('contextmenu',event=>event.preventDefault());
 document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==renderer.domElement)return;yaw-=event.movementX*.0022;pitch-=event.movementY*.0022;pitch=Math.max(-Math.PI*.49,Math.min(Math.PI*.49,pitch))});
 function saveWorld(){
@@ -250,8 +250,8 @@ document.addEventListener('keydown',event=>{
   if(/^Digit[1-9]$/.test(event.code)){engine.selectSlot(Number(event.code.slice(5))-1);updateHotbar()}
 });
 document.addEventListener('keyup',event=>keyDown.delete(event.code));
-document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement!==renderer.domElement&&miningHeld){miningHeld=false;engine.cancelMining()}});
-window.addEventListener('blur',()=>{keyDown.clear();if(miningHeld){miningHeld=false;engine.cancelMining()}});
+document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement!==renderer.domElement){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}}});
+window.addEventListener('blur',()=>{keyDown.clear();leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,2))});
 function animate(now){
   requestAnimationFrame(animate);
@@ -268,7 +268,17 @@ function animate(now){
   if(target.status==='hit'){outline.visible=true;outline.position.set(target.block.x+.5,target.block.y+.5,target.block.z+.5)}else outline.visible=false;
   if(miningHeld){
     const result=engine.advanceMining(dt,target.status==='hit'?target.block:null);
-    if(result.status==='broken'){miningHeld=false;rebuildAfterMutation();toast('Blok dihancurkan')}
+    if(result.status==='broken'){
+      miningHeld=false;rebuildAfterMutation();
+      if(leftMouseDown){
+        const nextTarget=currentTarget();
+        if(nextTarget.status==='hit'){
+          const nextMining=engine.startMining(nextTarget.block);
+          if(nextMining.status==='started'){miningHeld=true;toast('Menambang '+(registry.getById(nextTarget.blockId)?.displayName??'blok'))}
+        }
+      }
+      if(!miningHeld)toast(result.dropsRemaining.length?'Blok dihancurkan · sebagian drop tidak masuk inventaris':'Blok dihancurkan');
+    }
     else if(result.status==='cancelled'){miningHeld=false;toast('Penambangan dibatalkan')}
   }
   frames++;fpsElapsed+=dt;if(fpsElapsed>=.5){fps=Math.round(frames/fpsElapsed);frames=0;fpsElapsed=0}
