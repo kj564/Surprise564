@@ -21,6 +21,7 @@ Before changing gameplay or UI, read the relevant original implementation in `ru
 
 - `rujukan/` is the primary code/architecture reference. Its Pocket Edition source is historical (2013): learn from its structure and behavior, but do not assume its APIs match modern Minecraft or browser APIs.
 - `VoxelCraft/` contains the original Resource Pack files used as the canonical source for game assets.
+- `VanillaBehaviorPack/` is a retained submodule that will inform the game's future logic; do not remove it as unrelated tooling.
 - `public/VoxelCraft/` contains only the staged subset loaded by the browser. Treat these as derived runtime copies.
 - Adapt original behavior to the browser runtime only where needed. The game uses Three.js, JavaScript, HTML, and CSS; it is not the original Minecraft engine.
 - When adding runtime assets, update both `scripts/setup.sh` and `.github/workflows/static.yml`.
@@ -66,6 +67,7 @@ See [`docs/STRUCTURE.md`](docs/STRUCTURE.md) for the full annotated tree.
 Surprise564/
 ├── rujukan/                       # Primary original-code/behavior reference
 ├── VoxelCraft/                    # Canonical original Minecraft resource-pack assets
+├── VanillaBehaviorPack/            # Retained source for future game logic (Git submodule)
 ├── public/
 │   ├── minecraft.html             # Browser game's main implementation
 │   └── VoxelCraft/                # Staged runtime assets
