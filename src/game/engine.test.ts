@@ -69,6 +69,29 @@ describe('VoxelCraftEngine composition root', () => {
     expect(engine.cancelMining()).toBe(false);
   });
 
+  test('captures world, inventory and player pose in a validated versioned save', () => {
+    const engine = makeGroundedEngine();
+    engine.inventory.insert('minecraft:oak_planks', 12);
+    const save = engine.createSave({
+      name: 'Test World',
+      seed: 564,
+      createdAt: '2026-10-12T00:00:00.000Z',
+      updatedAt: '2026-10-12T00:00:00.000Z',
+      generatorVersion: 1,
+    }, { yaw: 1.25, pitch: -0.2 });
+
+    expect(save.format).toBe('voxelcraft-world');
+    expect(save.schemaVersion).toBe(1);
+    expect(save.chunks).toHaveLength(1);
+    expect(save.player.position).toEqual(engine.player.state.position);
+    expect(save.player.yaw).toBe(1.25);
+    expect(save.player.pitch).toBe(-0.2);
+    expect(save.player.inventory.some(stack => stack?.itemKey === 'minecraft:oak_planks' && stack.count === 12)).toBe(true);
+
+    engine.world.setBlock({ x: 1, y: 1, z: 1 }, 1);
+    expect(save.chunks[0].blocks[1 + 4 * (1 + 4 * 1)]).toBe(0);
+  });
+
   test('validates hotbar selection bounds', () => {
     const engine = makeGroundedEngine();
     engine.selectSlot(8);
