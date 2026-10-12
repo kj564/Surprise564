@@ -8,6 +8,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+echo "==> Initializing VanillaBehaviorPack game-logic reference…"
+if [ -f .gitmodules ]; then
+  git submodule update --init --recursive VanillaBehaviorPack
+fi
+
 echo "==> [1/2] Ensuring browser-game textures are present…"
 GAME_TEX_DIR="public/VoxelCraft/textures/blocks"
 SRC_TEX_DIR="VoxelCraft/textures/blocks"
