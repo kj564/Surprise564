@@ -7,7 +7,6 @@ export {
   chunkToWorld,
   worldToChunk,
   worldToLocal,
-  localToWorld,
   localBlockIndex,
 } from './core/coordinates';
 export { Inventory, type ItemStack, type InsertResult } from './inventory/inventory';
