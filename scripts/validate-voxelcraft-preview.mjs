@@ -12,7 +12,8 @@ if (modules.length !== 1) throw new Error('Expected exactly one inline module sc
 if (!html.includes('voxelcraft-engine.bundle.js')) throw new Error('Preview does not load the generated engine bundle');
 if (!html.includes("event.code==='KeyS'" ) || !html.includes("event.code==='KeyO'")) throw new Error('Preview must expose keyboard save/load shortcuts');
 if (!html.includes('localStorage.setItem') || !html.includes('Engine.fromSave')) throw new Error('Preview must persist and validate browser-local world saves');
-if (!html.includes('createdAt:worldCreatedAt') || !html.includes('worldCreatedAt=parsedSave.metadata.createdAt')) throw new Error('Preview must preserve original world creation metadata when saving and loading');\nif (!html.includes('ensureTerrainNeighborhood(engine.world,restoredPosition.x,restoredPosition.z,{seed:parsedSave.metadata.seed,radius:1})')) throw new Error('Preview must refill the nearby terrain around the restored player without overwriting saved chunks');
+if (!html.includes('createdAt:worldCreatedAt') || !html.includes('worldCreatedAt=parsedSave.metadata.createdAt')) throw new Error('Preview must preserve original world creation metadata when saving and loading');
+if (!html.includes('ensureTerrainNeighborhood(engine.world,restoredPosition.x,restoredPosition.z,{seed:parsedSave.metadata.seed,radius:1})')) throw new Error('Preview must refill the nearby terrain around the restored player without overwriting saved chunks');
 if (!html.includes('VoxelCraftGenerateTerrainChunk') || !html.includes('generateTerrainChunk(engine.world,cx,cz,{seed:564})')) throw new Error('Preview must initialize reproducible seeded terrain rather than a flat placeholder');
 if (!html.includes('VoxelCraftEnsureTerrainNeighborhood') || !html.includes('ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:564,radius:1})')) throw new Error('Preview must stream terrain when the player crosses chunk boundaries');
 if (!html.includes("sprint:keyDown.has('ShiftLeft')||keyDown.has('ShiftRight')")) throw new Error('Preview must wire Shift keys to the tested sprint mechanic');
@@ -28,7 +29,8 @@ try {
   writeFileSync(tempFile, modules[0][1], 'utf8');
   const result = spawnSync(process.execPath, ['--check', tempFile], { encoding: 'utf8' });
   if (result.status !== 0) {
-    throw new Error('Preview module syntax check failed:\n' + (result.stderr || result.stdout || 'unknown syntax error'));
+    throw new Error('Preview module syntax check failed:
+' + (result.stderr || result.stdout || 'unknown syntax error'));
   }
 } finally {
   rmSync(tempDir, { recursive: true, force: true });
