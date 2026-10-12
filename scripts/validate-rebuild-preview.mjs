@@ -12,7 +12,7 @@ if (!existsSync(htmlPath)) {
   fail('Playable rebuild preview HTML is missing');
 } else {
   const html = readFileSync(htmlPath, 'utf8');
-  if (html.includes('\\\\n')) fail('Preview markup contains escaped newline artifacts instead of real line breaks');
+  if (html.includes(String.fromCharCode(92) + 'n')) fail('Preview markup contains escaped newline artifacts instead of real line breaks');
   else pass('Preview markup has no escaped newline artifacts');
 
   for (const [snippet, label] of [
