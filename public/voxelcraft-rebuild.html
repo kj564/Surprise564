@@ -258,7 +258,7 @@ $('touch-place').addEventListener('pointerdown',event=>{
   const result=engine.placeSelected(hit);if(result.status==='placed'){rebuildAfterMutation();toast('Blok dipasang')}else toast('Tidak dapat memasang: '+result.status);
 });
 
-window.addEventListener('pointerup',event=>{if(event.button===0){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}}});
+window.addEventListener('pointerup',event=>{if(event.pointerType!=='touch'&&event.button===0){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}}});
 renderer.domElement.addEventListener('contextmenu',event=>event.preventDefault());
 document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==renderer.domElement)return;yaw-=event.movementX*.0022;pitch-=event.movementY*.0022;pitch=Math.max(-Math.PI*.49,Math.min(Math.PI*.49,pitch))});
 function saveWorld(){
