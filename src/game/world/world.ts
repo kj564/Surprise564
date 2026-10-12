@@ -130,6 +130,16 @@ export class VoxelWorld {
     return this.chunks.size;
   }
 
+  /** Stable, detached snapshots for persistence; edits to returned arrays never affect the live world. */
+  exportChunks(): readonly { readonly x: number; readonly z: number; readonly blocks: Uint16Array }[] {
+    const chunks = [...this.chunks.entries()].map(([key, chunk]) => {
+      const [xText, zText] = key.split(',');
+      return { x: Number(xText), z: Number(zText), blocks: chunk.toArray() };
+    });
+    chunks.sort((a, b) => a.x - b.x || a.z - b.z);
+    return Object.freeze(chunks.map(chunk => Object.freeze(chunk)));
+  }
+
   private markAffectedChunksDirty(chunkX: number, chunkZ: number, localX: number, localZ: number): string[] {
     const affected = new Set([VoxelWorld.chunkKey(chunkX, chunkZ)]);
     if (localX === 0) affected.add(VoxelWorld.chunkKey(chunkX - 1, chunkZ));
