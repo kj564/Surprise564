@@ -12,32 +12,31 @@ if (!existsSync(htmlPath)) {
   fail('Playable rebuild preview HTML is missing');
 } else {
   const html = readFileSync(htmlPath, 'utf8');
-  if (html.includes('\\n')) fail('Preview markup contains escaped newline artifacts instead of real line breaks');
+  if (html.includes('\\\\n')) fail('Preview markup contains escaped newline artifacts instead of real line breaks');
   else pass('Preview markup has no escaped newline artifacts');
 
-  for (const [pattern, label] of [
-    [/import \\* as THREE from 'three';/, 'Three.js runtime import'],
-    [/import '\\.\\/voxelcraft-engine\\.bundle\\.js';/, 'rebuilt engine bundle import'],
-    [/new Engine\\(/, 'engine composition root initialization'],
-    [/engine\\.step\\(dt,/, 'fixed-step player simulation'],
-    [/engine\\.target|currentTarget\\(\\)/, 'voxel targeting flow'],
-    [/engine\\.startMining\\(/, 'timed block mining'],
-    [/engine\\.placeSelected\\(/, 'inventory-backed block placement'],
-    [/engine\\.createSave\\(/, 'versioned world save'],
-    [/Engine\\.fromSave\\(/, 'validated world load'],
-    [/id="inventory-grid"/, 'inventory overlay'],
-    [/id="touch-controls"/, 'touch controls'],
+  for (const [snippet, label] of [
+    ["import * as THREE from 'three';", 'Three.js runtime import'],
+    ["import './voxelcraft-engine.bundle.js';", 'rebuilt engine bundle import'],
+    ['new Engine(', 'engine composition root initialization'],
+    ['engine.step(dt,', 'fixed-step player simulation'],
+    ['currentTarget()', 'voxel targeting flow'],
+    ['engine.startMining(', 'timed block mining'],
+    ['engine.placeSelected(', 'inventory-backed block placement'],
+    ['engine.createSave(', 'versioned world save'],
+    ['Engine.fromSave(', 'validated world load'],
+    ['id="inventory-grid"', 'inventory overlay'],
+    ['id="touch-controls"', 'touch controls'],
   ]) {
-    if (pattern.test(html)) pass(label + ' is wired in the preview');
+    if (html.includes(snippet)) pass(label + ' is wired in the preview');
     else fail('Preview is missing ' + label);
   }
 
-  const worldSeedDeclaration = /let worldSeed\\s*=\\s*564\\s*;/;
-  if (!worldSeedDeclaration.test(html) ||
-      !/generateTerrainChunk\\(engine\\.world,cx,cz,\\{seed:worldSeed\\}\\)/.test(html) ||
-      !/seed:worldSeed,createdAt:worldCreatedAt/.test(html) ||
-      !/worldSeed=parsedSave\\.metadata\\.seed/.test(html) ||
-      !/ensureTerrainNeighborhood\\(engine\\.world,playerPosition\\.x,playerPosition\\.z,\\{seed:worldSeed,radius:1\\}\\)/.test(html)) {
+  if (!html.includes('let worldSeed=564;') ||
+      !html.includes('generateTerrainChunk(engine.world,cx,cz,{seed:worldSeed})') ||
+      !html.includes('seed:worldSeed,createdAt:worldCreatedAt') ||
+      !html.includes('worldSeed=parsedSave.metadata.seed') ||
+      !html.includes('ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:worldSeed,radius:1})')) {
     fail('Active terrain seed must be preserved across generation, save/load, and chunk streaming');
   } else pass('Terrain generation, persistence, and exploration share the active world seed');
 }
@@ -46,13 +45,13 @@ if (!existsSync(bundlePath)) {
   fail('Rebuilt engine browser bundle is missing; run scripts/setup.sh');
 } else {
   const bundle = readFileSync(bundlePath, 'utf8');
-  for (const [pattern, label] of [
-    [/VoxelCraftEngine/, 'engine composition root'],
-    [/VoxelCraftGenerateTerrainChunk/, 'seeded terrain generator'],
-    [/VoxelCraftEnsureTerrainNeighborhood/, 'terrain neighborhood streaming'],
-    [/VoxelCraftCreateMeshCache/, 'dirty chunk mesh cache'],
+  for (const [snippet, label] of [
+    ['VoxelCraftEngine', 'engine composition root'],
+    ['VoxelCraftGenerateTerrainChunk', 'seeded terrain generator'],
+    ['VoxelCraftEnsureTerrainNeighborhood', 'terrain neighborhood streaming'],
+    ['VoxelCraftCreateMeshCache', 'dirty chunk mesh cache'],
   ]) {
-    if (pattern.test(bundle)) pass('Engine bundle includes ' + label);
+    if (bundle.includes(snippet)) pass('Engine bundle includes ' + label);
     else fail('Engine bundle is missing ' + label);
   }
 }
