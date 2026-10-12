@@ -103,6 +103,9 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Validate repository foundations (rujukan, RP, BP, and asset staging)
+        run: bun run validate:foundation
+
       - name: Validate game foundations
         run: bun run validate:game
 
