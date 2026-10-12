@@ -110,7 +110,7 @@ mkdir -p "$ITEM_TEX_DIR"
 for name in "${ITEM_REQUIRED[@]}"; do
   src="$SRC_ITEM_DIR/$name.png"
   dst="$ITEM_TEX_DIR/$name.png"
-  if [ ! -f "$src" ]; then echo "Missing Behavior Pack menu icon source: $src"; exit 1; fi
+  if [ ! -f "$src" ]; then echo "Missing Resource Pack item icon source: $src"; exit 1; fi
   if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then cp "$src" "$dst"; echo "    staged item icon $name.png"; fi
 done
 
