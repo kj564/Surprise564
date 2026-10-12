@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, unlinkSync, existsSync, mkdtempSync } from 'node:fs';
+import { readFileSync, writeFileSync, rmSync, existsSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -23,6 +23,6 @@ try {
     throw new Error('Preview module syntax check failed:\n' + (result.stderr || result.stdout || 'unknown syntax error'));
   }
 } finally {
-  try { unlinkSync(tempFile); } catch {}
+  rmSync(tempDir, { recursive: true, force: true });
 }
 console.log('Playable preview HTML, engine bundle and inline module syntax are valid.');
