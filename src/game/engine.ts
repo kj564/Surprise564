@@ -7,6 +7,7 @@ import { raycastVoxels, type RayVector, type VoxelRayHit, type VoxelRayResult } 
 import { Aabb } from './physics/aabb';
 import { PlayerPhysics, type PlayerInput, type PlayerPhysicsState, type PlayerPosition } from './physics/player-physics';
 import { queryCollisionBoxes } from './physics/world-collision';
+import { createWorldSave, type PlayerSnapshot, type SaveMetadataInput } from './persistence/world-save';
 import { ChunkData } from './world/chunk';
 import { VoxelWorld, type BlockPosition, type WorldDimensions } from './world/world';
 
@@ -104,6 +105,17 @@ export class VoxelCraftEngine {
 
   placeSelected(hit: VoxelRayHit) {
     return placeBlockFromInventory(this.world, hit, this.inventory, this.selectedSlotValue, this.registry, this.player.bounds);
+  }
+
+  /** Captures the authoritative world, inventory and player pose using the versioned save schema. */
+  createSave(metadata: SaveMetadataInput, view: { readonly yaw: number; readonly pitch: number }): ReturnType<typeof createWorldSave> {
+    const state = this.player.state;
+    const snapshot: PlayerSnapshot = {
+      position: state.position,
+      yaw: view.yaw,
+      pitch: view.pitch,
+    };
+    return createWorldSave(this.world, this.inventory, metadata, snapshot);
   }
 
   /** Exposes the current body bounds for camera placement and browser adapters. */
