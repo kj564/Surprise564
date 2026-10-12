@@ -219,7 +219,10 @@ function animate(now){
   const strafe=(keyDown.has('KeyD')||keyDown.has('ArrowRight')?1:0)-(keyDown.has('KeyA')||keyDown.has('ArrowLeft')?1:0);
   const moveX=(-Math.sin(yaw)*forward+Math.cos(yaw)*strafe);
   const moveZ=(-Math.cos(yaw)*forward-Math.sin(yaw)*strafe);
-  const simulation=engine.step(dt,{moveX,moveZ,jump:jumpQueued});if(simulation.clock.steps>0)jumpQueued=false;\n  const playerPosition=simulation.player.position;const chunkX=Math.floor(playerPosition.x/engine.world.dimensions.chunkSizeX),chunkZ=Math.floor(playerPosition.z/engine.world.dimensions.chunkSizeZ);\n  if(chunkX!==lastChunkX||chunkZ!==lastChunkZ){lastChunkX=chunkX;lastChunkZ=chunkZ;const streamed=ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:564,radius:1});if(streamed.generated.length){rebuildWorldMeshes();toast('Area baru dimuat')}}\n  updateCamera();
+  const simulation=engine.step(dt,{moveX,moveZ,jump:jumpQueued});if(simulation.clock.steps>0)jumpQueued=false;
+  const playerPosition=simulation.player.position;const chunkX=Math.floor(playerPosition.x/engine.world.dimensions.chunkSizeX),chunkZ=Math.floor(playerPosition.z/engine.world.dimensions.chunkSizeZ);
+  if(chunkX!==lastChunkX||chunkZ!==lastChunkZ){lastChunkX=chunkX;lastChunkZ=chunkZ;const streamed=ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:564,radius:1});if(streamed.generated.length){rebuildWorldMeshes();toast('Area baru dimuat')}}
+  updateCamera();
   const target=currentTarget();$('target').textContent=target.status==='hit'?(registry.getById(target.blockId)?.displayName??'blok'):(target.status==='unloaded'?'chunk unloaded':'none');
   if(target.status==='hit'){outline.visible=true;outline.position.set(target.block.x+.5,target.block.y+.5,target.block.z+.5)}else outline.visible=false;
   if(miningHeld){
