@@ -106,7 +106,7 @@ export function validateWorldSave(input: unknown): SaveValidationResult {
         blocks.push(blockId);
       }
       if (blocks.length === volume && chunk.blocks.length === volume) {
-        normalizedChunks.push(Object.freeze({ x: chunk.x, z: chunk.z, blocks: Object.freeze(blocks) }));
+        normalizedChunks.push(Object.freeze({ x: chunk.x as number, z: chunk.z as number, blocks: Object.freeze(blocks) }));
       }
     });
   }
