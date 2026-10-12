@@ -38,3 +38,10 @@ jobs:
 
       - name: Build application
         run: bun run build
+
+      - name: Verify playable rebuild preview is exported
+        run: |
+          test -s public/voxelcraft-engine.bundle.js
+          grep -q 'VoxelCraftEngine' public/voxelcraft-engine.bundle.js
+          test -s out/voxelcraft-engine.bundle.js
+          test -s out/voxelcraft-rebuild.html
