@@ -61,7 +61,7 @@ requirePaths([
 
 requirePaths([
   'VoxelCraft/manifest.json',
-  'VoxelCraft/ui/main_menu.json',
+  'VoxelCraft/ui/start_screen.json',
   'VoxelCraft/ui/hud_screen.json',
   'VoxelCraft/textures/blocks/grass_top.png',
   'VoxelCraft/textures/ui/menubackground.png',
