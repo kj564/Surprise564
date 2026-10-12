@@ -47,6 +47,7 @@ export class VoxelCraftEngine {
     inventory.snapshot().forEach((stack, index) => {
       if (stack) engine.inventory.setSlot(index, stack);
     });
+    engine.selectSlot(player.selectedSlot ?? 0);
     return Object.freeze({
       ok: true,
       engine,
@@ -140,6 +141,7 @@ export class VoxelCraftEngine {
       position: state.position,
       yaw: view.yaw,
       pitch: view.pitch,
+      selectedSlot: this.selectedSlotValue,
     };
     return createWorldSave(this.world, this.inventory, metadata, snapshot);
   }
