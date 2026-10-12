@@ -35,12 +35,7 @@ function parseShellArray(source, name, label) {
     fail(`${label}: array ${name} was not found`);
     return [];
   }
-  return match[1]
-    .split('\\n')
-    .map((line) => line.replace(/#.*$/, '').trim())
-    .join(' ')
-    .split(/\\s+/)
-    .filter(Boolean);
+  return (match[1].replace(/#.*$/gm, '').match(/[A-Za-z][A-Za-z0-9_]*/g) || []);
 }
 
 function compareArrays(sourceText, sourceName, ciText, ciName, label) {
