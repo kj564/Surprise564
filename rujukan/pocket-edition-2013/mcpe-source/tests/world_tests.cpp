@@ -1,7 +1,10 @@
 #include "game.hpp"
 #include "world.hpp"
+#include "world_io.hpp"
 
+#include <cstdio>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 
 namespace {
@@ -28,6 +31,22 @@ int main() {
     check(world.get({0, 2, 0}) == Block::Dirt, "subsurface layer is dirt");
     check(world.get({0, 0, 0}) == Block::Stone, "deep layer is stone");
     check(world.get({0, 5, 0}) == Block::Air, "space above terrain is air");
+
+    const char* savePath = "pocket_world_test.save";
+    check(saveWorld(world, savePath), "world save succeeds");
+    World restored(4, 6, 3);
+    check(loadWorld(restored, savePath), "world load succeeds");
+    check(restored.get({0, 3, 0}) == Block::Grass, "saved surface survives round trip");
+    check(restored.get({0, 0, 0}) == Block::Stone, "saved stone survives round trip");
+
+    {
+        std::ofstream corrupt(savePath, std::ios::trunc);
+        corrupt << "POCKET_WORLD 1\n4 6 3\n999\n";
+    }
+    const Block beforeFailedLoad = restored.get({0, 3, 0});
+    check(!loadWorld(restored, savePath), "invalid block ID is rejected");
+    check(restored.get({0, 3, 0}) == beforeFailedLoad, "failed load leaves world unchanged");
+    std::remove(savePath);
 
     Game game(8, 8, 8);
     const Position before = game.playerPosition();
