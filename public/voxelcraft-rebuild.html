@@ -277,7 +277,7 @@ function animate(now){
           if(nextMining.status==='started'){miningHeld=true;toast('Menambang '+(registry.getById(nextTarget.blockId)?.displayName??'blok'))}
         }
       }
-      if(!miningHeld)toast(result.dropsRemaining.length?'Blok dihancurkan · sebagian drop tidak masuk inventaris':'Blok dihancurkan');
+      if(!miningHeld)toast(result.dropsRemaining.length?'Blok dihancurkan · drop berlebih belum didukung':'Blok dihancurkan');
     }
     else if(result.status==='cancelled'){miningHeld=false;toast('Penambangan dibatalkan')}
   }
