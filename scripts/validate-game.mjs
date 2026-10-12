@@ -498,6 +498,14 @@ if (source.includes('this.chunkOverrides = new Map()') &&
   fail('Chunk generation must apply only edits indexed for that chunk, not scan every saved world edit');
 }
 
+// Match LevelChunk::setTile's no-op guard: unchanged block writes must not dirty chunks or rewrite the save.
+if (source.includes('// Match the reference LevelChunk behavior: identical writes are no-ops.') &&
+    source.includes('if (c.get(lx, y, lz) === v) return false;')) {
+  pass('World block writes skip unchanged values before dirtying chunks or saving');
+} else {
+  fail('World.setBlock must skip unchanged values, following the reference LevelChunk no-op behavior');
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
