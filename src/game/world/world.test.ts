@@ -40,7 +40,7 @@ describe('VoxelWorld', () => {
     const mutation = world.setBlock({ x: 0, y: 1, z: 0 }, 3);
     expect(mutation.changed).toBe(true);
     expect(mutation.previousId).toBe(0);
-    expect(mutation.dirtyChunks.sort()).toEqual(['-1,0', '0,0']);
+    expect([...mutation.dirtyChunks].sort()).toEqual(['-1,0', '0,0']);
     expect(world.consumeDirtyChunks().sort()).toEqual(['-1,0', '0,0']);
   });
 
