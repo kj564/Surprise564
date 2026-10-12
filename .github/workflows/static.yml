@@ -49,11 +49,64 @@ jobs:
             stone_andesite stone_andesite_smooth stonebrick
             snow ice netherrack soul_sand bookshelf pumpkin_top pumpkin_side pumpkin_face_off sponge
             wool_colored_white wool_colored_black wool_colored_red wool_colored_blue wool_colored_green
+            cobblestone_mossy
+            sandstone_top
+            sandstone_bottom
+            sandstone_normal
+            sandstone_smooth
+            sandstone_carved
+            clay
+            tnt_top
+            tnt_bottom
+            tnt_side
+            melon_top
+            melon_side
+            nether_brick
+            quartz_block_top
+            quartz_block_bottom
+            quartz_block_side
+            quartz_block_chiseled
+            prismarine_rough
+            prismarine_bricks
+            prismarine_dark
+            sea_lantern
+            red_sandstone_top
+            red_sandstone_bottom
+            red_sandstone_normal
+            end_stone
+            end_bricks
+            purpur_block
+            hay_block_top
+            hay_block_side
+            basalt_top
+            basalt_side
+            polished_basalt_top
+            polished_basalt_side
+            blackstone
+            calcite
+            dripstone_block
+            deepslate/deepslate_top
+            deepslate/deepslate
+            deepslate/polished_deepslate
+            deepslate/deepslate_bricks
+            deepslate/deepslate_tiles
+            copper_block
+            amethyst_block
+            mud
+            packed_mud
+            moss_block
+            mud_bricks
+            tuff
+            polished_tuff
+            tuff_bricks
+            red_nether_brick
           )
           for name in "${textures[@]}"; do
             src="VoxelCraft/textures/blocks/${name}.png"
             test -f "$src" || { echo "Missing vanilla texture source: $src"; exit 1; }
-            cp "$src" "public/VoxelCraft/textures/blocks/${name}.png"
+            dest="public/VoxelCraft/textures/blocks/${name}.png"
+            mkdir -p "$(dirname "$dest")"
+            cp "$src" "$dest"
           done
 
       - name: Stage original UI sprites used by the browser game
