@@ -8,7 +8,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-echo "==> [1/2] Ensuring browser-game textures are present…"
+echo "==> [1/3] Initializing VanillaBehaviorPack game-logic reference…"
+if [ -f .gitmodules ]; then
+  git submodule update --init --recursive VanillaBehaviorPack
+else
+  echo "    .gitmodules not found — skipping submodule initialization."
+fi
+
+echo "==> [2/3] Ensuring browser-game textures are present…"
 GAME_TEX_DIR="public/VoxelCraft/textures/blocks"
 SRC_TEX_DIR="VoxelCraft/textures/blocks"
 
@@ -117,7 +124,7 @@ if [ ! -f "$FONT_DST" ] || ! cmp -s "$FONT_SRC" "$FONT_DST"; then
   echo "    staged original Minecraft Ten font"
 fi
 
-echo "==> [2/2] Installing browser-game dependencies (bun)…"
+echo "==> [3/3] Installing browser-game dependencies (bun)…"
 if command -v bun >/dev/null 2>&1; then
   bun install --frozen-lockfile
   echo "    Done. Run 'bun run dev' to start the dev server."
