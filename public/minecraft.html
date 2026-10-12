@@ -1058,6 +1058,17 @@
     #inventory .inv-grid { max-height: 36dvh; }
   }
 
+
+  /* The active screen owns overlay visibility, even when pointer-lock events race with inventory changes. */
+  body[data-ui-screen="inventory"] #overlay,
+  body[data-ui-screen="inventory"] #pauseOverlay,
+  body[data-ui-screen="inventory"] #vcGuide {
+    display: none !important;
+  }
+  body[data-ui-screen="inventory"] #inventory {
+    display: flex !important;
+    z-index: 1000;
+  }
 </style>
 </head>
 <body>
