@@ -85,6 +85,16 @@ if (source.includes('id="pauseOverlay"') && source.includes('id="resumeGameButto
   fail('UI screens and gameplay activation must be derived from one screen state');
 }
 
+if (source.includes('aria-labelledby="inventoryTitle"') &&
+    source.includes("if (e.code === 'Escape' && !e.repeat && !wasDown)") &&
+    source.includes("if (inventoryOpen) { e.preventDefault(); toggleInventory(); return; }") &&
+    source.includes("if (vcGuideOpen) { e.preventDefault(); closeVcGuide(); return; }") &&
+    source.includes("if (gameStarted && !locked) { e.preventDefault(); resumeGame(); return; }")) {
+  pass('Escape closes blocking screens, returns from pause, and inventory is announced as a modal dialog');
+} else {
+  fail('Escape navigation and accessible inventory dialog semantics must be present');
+}
+
 if (!source.includes("inventoryEl.classList.toggle('hidden', !inventoryOpen)") &&
     !source.includes("vcGuide.classList.remove('hidden')") &&
     !source.includes("vcGuide.classList.add('hidden')") &&
