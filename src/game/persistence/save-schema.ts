@@ -124,6 +124,7 @@ export function validateWorldSave(input: unknown): SaveValidationResult {
     const normalizedInventory: (ItemStack | null)[] = [];
     if (!Array.isArray(player.inventory)) errors.push('player.inventory must be an array');
     else {
+      if (player.inventory.length === 0) errors.push('player.inventory must contain at least one slot');
       if (player.inventory.length > MAX_INVENTORY_SLOTS) errors.push('player.inventory exceeds the maximum slot count');
       player.inventory.slice(0, MAX_INVENTORY_SLOTS).forEach((stack, index) => {
         if (stack === null) {
