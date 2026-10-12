@@ -773,6 +773,48 @@
     #overlay .edition { font-size: 9px; letter-spacing: 2px; }
   }
 
+
+  /* Use Bedrock's actual tab sprites, not CSS-painted tab approximations. */
+  #inventory .inv-tabs {
+    gap: 0;
+    padding: 8px 10px 0;
+    border-image: none;
+    border: 0;
+    background: url('./VoxelCraft/textures/ui/background_panel.png') center / 100% 100% repeat;
+  }
+  #inventory .inv-tabs button {
+    min-height: 36px;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+    background-image: url('./VoxelCraft/textures/ui/TabTopBack.png');
+    background-size: 100% 100%;
+    box-shadow: none;
+    text-shadow: 1px 1px #333;
+  }
+  #inventory .inv-tabs button:hover,
+  #inventory .inv-tabs button:focus-visible {
+    background-image: url('./VoxelCraft/textures/ui/TabTopBackHover.png');
+    outline: 1px solid rgba(255,255,255,.55);
+    outline-offset: -2px;
+  }
+  #inventory .inv-tabs button.active,
+  #inventory .inv-tabs button[aria-selected="true"] {
+    background-image: url('./VoxelCraft/textures/ui/TabTopFront.png');
+    box-shadow: none;
+    color: #262626;
+    text-shadow: 1px 1px rgba(255,255,255,.45);
+  }
+  #inventory .inv-tabs button.active:hover,
+  #inventory .inv-tabs button[aria-selected="true"]:hover {
+    background-image: url('./VoxelCraft/textures/ui/TabTopFrontHover.png');
+  }
+  @media (max-width: 460px) {
+    #inventory .inv-tabs { padding: 6px 6px 0; }
+    #inventory .inv-tabs button { min-height: 44px; }
+  }
+
 </style>
 </head>
 <body>
