@@ -88,7 +88,7 @@ jobs:
           item_textures=(book_writable apple feather clock_item bed_red compass_item book_normal brick diamond)
           for name in "${item_textures[@]}"; do
             src="VoxelCraft/textures/items/${name}.png"
-            test -f "$src" || { echo "Missing Behavior Pack menu icon source: $src"; exit 1; }
+            test -f "$src" || { echo "Missing Resource Pack item icon source: $src"; exit 1; }
             cp "$src" "public/VoxelCraft/textures/items/${name}.png"
           done
 

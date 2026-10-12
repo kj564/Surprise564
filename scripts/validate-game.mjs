@@ -14,6 +14,13 @@ function section(pattern, label) {
   return match[1];
 }
 
+const uiPanelSource = section(/(\/\* === UI pass: consistent Bedrock-style layout, readable hierarchy, responsive sizing === \*\/[\s\S]*?<\/style>)/, 'final UI layer');
+if (!uiPanelSource.includes("background-size: 16px 16px;") ||
+    !uiPanelSource.includes("background-repeat: repeat;") ||
+    !uiPanelSource.includes("border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;")) {
+  fail('Main menu panel must preserve original Resource Pack pixel tiling and 1px nine-slice border');
+} else pass('Main menu panel uses original Resource Pack tile scale and nine-slice border');
+
 const tileSource = section(/const TILE = \{([\s\S]*?)\n    \};/, 'TILE');
 const tileEntries = [...tileSource.matchAll(/\b([A-Z][A-Z0-9_]*):\s*(\d+)/g)];
 const tiles = new Map(tileEntries.map(([, name, index]) => [name, Number(index)]));
@@ -30,29 +37,29 @@ if (!source.includes('grid-template-columns: repeat(9, minmax(38px, 52px))') ||
 } else pass('Inventory grid matches Bedrock-style desktop and mobile column layouts');
 
 if (source.includes('#vcGuide .vc-actions { display: grid; grid-template-columns: 1fr; gap: 7px; }')) {
-  pass('Behavior Pack ActionForm buttons use the native vertical list layout');
+  pass('Browser guide buttons use a single-column action list');
 } else {
-  fail('Behavior Pack ActionForm buttons must use the native vertical list layout');
+  fail('Browser guide action buttons must use a single-column layout');
 }
 
 if (source.includes('class="hud-brand">VoxelCraft') && source.includes('Overworld') && source.includes('browserStats.coins')) {
-  pass('Browser HUD mirrors the Behavior Pack action bar with dimension, coordinates, time, and persistent coins');
+  pass('Browser HUD displays browser-owned dimension, coordinates, time, and session statistics');
 } else {
-  fail('Browser HUD should mirror the Behavior Pack action bar including persistent coins');
+  fail('Browser HUD should display browser-owned dimension, coordinates, time, and session statistics');
 }
 if (source.includes('const BROWSER_STATS_KEY') &&
     source.includes('browserStats.joins++') &&
     source.includes('browserStats.blocksBroken = browserBlocksBroken') &&
     source.includes('browserStats.blocksPlaced = browserBlocksPlaced') &&
     source.includes('localStorage.setItem(BROWSER_STATS_KEY')) {
-  pass('Behavior Pack player stats persist safely in browser storage');
+  pass('Browser-only player statistics persist safely in browser storage');
 } else {
   fail('Browser stats should safely persist visits, coins, and block activity');
 }
 if (source.includes('const coinRewards = { 20: 2, 21: 3, 22: 5, 23: 15, 24: 4, 26: 3, 28: 20, 31: 2 }')) {
-  pass('Browser ore coin rewards match the Behavior Pack reward table');
+  pass('Browser ore coin rewards use the browser game's local reward table');
 } else {
-  fail('Browser ore coin rewards must match the Behavior Pack reward table');
+  fail('Browser ore coin rewards must use the browser game's local reward table');
 }
 
 if (!source.includes("@font-face") ||
@@ -80,8 +87,8 @@ if (source.includes('#overlay .brand {') &&
 
 if (!source.includes('const clockMinutes = Math.floor((((worldTime % 1) + 1) % 1) * 1440);') ||
     !source.includes("padStart(2, '0')")) {
-  fail('Browser HUD must show a live HH:mm clock like the Behavior Pack action bar');
-} else pass('Browser HUD shows a live HH:mm clock like the Behavior Pack action bar');
+  fail('Browser HUD must show a live HH:mm clock in the browser runtime');
+} else pass('Browser HUD shows a live HH:mm clock in the browser runtime');
 
 if (source.includes('id="pauseOverlay"') && source.includes('id="resumeGameButton"') &&
     source.includes('function syncMenuVisibility()') && source.includes("function getActiveUiScreen()") &&
@@ -165,7 +172,7 @@ const stagedAssetGroups = [
     ]),
   },
   {
-    label: 'Behavior Pack menu item icons',
+    label: 'Resource Pack item sprites used by the browser guide',
     files: ['book_writable', 'apple', 'feather', 'clock_item', 'bed_red', 'compass_item', 'book_normal', 'brick', 'diamond'].map(name => [
       `VoxelCraft/textures/items/${name}.png`, `public/VoxelCraft/textures/items/${name}.png`,
     ]),
@@ -232,25 +239,25 @@ if (inventoryTabIcons.every(icon => source.includes(`./VoxelCraft/textures/items
   pass('Inventory category tabs use original resource-pack icons for all, nature, building, and minerals');
 }
 
-const behaviorPackMenuActions = ['kit', 'heal', 'fly', 'day', 'night', 'weather', 'stats', 'close'];
-for (const action of behaviorPackMenuActions) {
+const browserGuideActions = ['kit', 'heal', 'fly', 'day', 'night', 'weather', 'stats', 'close'];
+for (const action of browserGuideActions) {
   if (!source.includes(`data-vc-action="${action}"`)) {
     fail(`VoxelCraft guide menu is missing action: ${action}`);
   }
 }
-if (behaviorPackMenuActions.every(action => source.includes(`data-vc-action="${action}"`)) &&
+if (browserGuideActions.every(action => source.includes(`data-vc-action="${action}"`)) &&
     source.includes("e.code === 'KeyG'") && source.includes("function openVcGuide()")) {
-  pass('VoxelCraft guide matches the Behavior Pack action list and keeps the G shortcut');
+  pass('Browser guide actions are present and the G shortcut is retained (browser adaptation, not Behavior Pack commands)');
 }
 
-const behaviorPackMenuIcons = ['book_writable', 'apple', 'feather', 'clock_item', 'bed_red', 'compass_item', 'book_normal'];
-for (const icon of behaviorPackMenuIcons) {
+const browserGuideIcons = ['book_writable', 'apple', 'feather', 'clock_item', 'bed_red', 'compass_item', 'book_normal'];
+for (const icon of browserGuideIcons) {
   if (!source.includes(`./VoxelCraft/textures/items/${icon}.png`)) {
-    fail(`Behavior Pack menu icon must use the staged original item texture: ${icon}.png`);
+    fail(`Browser guide must use the staged original Resource Pack item texture: ${icon}.png`);
   }
 }
-if (behaviorPackMenuIcons.every(icon => source.includes(`./VoxelCraft/textures/items/${icon}.png`))) {
-  pass(`Browser Behavior Pack menu references all ${behaviorPackMenuIcons.length} original item icons`);
+if (browserGuideIcons.every(icon => source.includes(`./VoxelCraft/textures/items/${icon}.png`))) {
+  pass(`Browser guide references all ${browserGuideIcons.length} original Resource Pack item sprites`);
 }
 
 if (!tiles.size) fail('TILE table is empty');
