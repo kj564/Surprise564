@@ -14,7 +14,7 @@ function section(pattern, label) {
   return match[1];
 }
 
-const uiPanelSource = section(/\/\* === UI pass: consistent Bedrock-style layout, readable hierarchy, responsive sizing === \*\/[\s\S]*?<\/style>/, 'final UI layer');
+const uiPanelSource = section(/(\/\* === UI pass: consistent Bedrock-style layout, readable hierarchy, responsive sizing === \*\/[\s\S]*?<\/style>)/, 'final UI layer');
 if (!uiPanelSource.includes("background-size: 16px 16px;") ||
     !uiPanelSource.includes("background-repeat: repeat;") ||
     !uiPanelSource.includes("border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;")) {
