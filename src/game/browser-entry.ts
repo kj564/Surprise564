@@ -1,10 +1,12 @@
 import { VoxelCraftEngine } from './engine';
 import { ChunkMeshCache } from './rendering/chunk-mesh-cache';
+import { generateTerrainChunk } from './world/terrain-generator';
 
 declare global {
   interface Window {
     VoxelCraftEngine: typeof VoxelCraftEngine;
     VoxelCraftCreateMeshCache: (engine: VoxelCraftEngine) => ChunkMeshCache;
+    VoxelCraftGenerateTerrainChunk: typeof generateTerrainChunk;
   }
 }
 
@@ -12,3 +14,4 @@ declare global {
 // renderer-independent chunk mesher/cache; it never mutates authoritative world data via meshes.
 window.VoxelCraftEngine = VoxelCraftEngine;
 window.VoxelCraftCreateMeshCache = engine => new ChunkMeshCache(engine.world, engine.registry);
+window.VoxelCraftGenerateTerrainChunk = generateTerrainChunk;
