@@ -73,6 +73,13 @@ export class VoxelCraftEngine {
   }
 
   /** Advance mining only while the caller confirms the same currently targeted block. */
+  cancelMining(): boolean {
+    if (!this.miningSession) return false;
+    this.miningSession.advance(0, null, undefined);
+    this.miningSession = null;
+    return true;
+  }
+
   advanceMining(deltaSeconds: number, currentTarget: BlockPosition | null): MiningProgressResult | { readonly status: 'no-session' } | { readonly status: 'broken'; readonly dropsRemaining: readonly { readonly itemKey: string; readonly count: number; readonly maxStackSize: number }[] } {
     const session = this.miningSession;
     if (!session) return { status: 'no-session' };
