@@ -112,6 +112,9 @@ jobs:
       - name: Validate game foundations
         run: bun run validate:game
 
+      - name: Validate playable rebuild preview
+        run: bun run validate:rebuild-preview
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -125,6 +128,8 @@ jobs:
         run: |
           test -f out/index.html
           test -f out/minecraft.html
+          test -f out/voxelcraft-rebuild.html
+          test -f out/voxelcraft-engine.bundle.js
           test -f out/item-catalog.json
           test -f out/VoxelCraft/textures/items/apple.png
           test -f out/VoxelCraft/textures/items/diamond.png
