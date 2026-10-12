@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# VoxelCraft development setup.
-#
-# Initializes the vanilla Bedrock behavior-pack submodule and ensures the
-# browser game has the textures it needs under public/VoxelCraft/textures/blocks/.
-#
+# VoxelCraft browser-game setup.
+# Stages original game assets under public/VoxelCraft/ and installs dependencies.
 # Safe to re-run.
 
 set -euo pipefail
@@ -11,14 +8,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-echo "==> [1/3] Initializing git submodules (VanillaBehaviorPack)…"
-if [ -f .gitmodules ]; then
-  git submodule update --init --recursive
-else
-  echo "    .gitmodules not found — skipping submodule init."
-fi
-
-echo "==> [2/3] Ensuring browser-game textures are present…"
+echo "==> [1/2] Ensuring browser-game textures are present…"
 GAME_TEX_DIR="public/VoxelCraft/textures/blocks"
 SRC_TEX_DIR="VoxelCraft/textures/blocks"
 
@@ -105,7 +95,7 @@ for name in "${GUI_REQUIRED[@]}"; do
   if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then cp "$src" "$dst"; echo "    staged newgui $name.png"; fi
 done
 
-# Stage the original item sprites referenced by the Behavior Pack ActionForm menu.
+# Stage the original item sprites used by browser-game UI.
 ITEM_TEX_DIR="public/VoxelCraft/textures/items"
 SRC_ITEM_DIR="VoxelCraft/textures/items"
 ITEM_REQUIRED=(book_writable apple feather clock_item bed_red compass_item book_normal brick diamond)
@@ -127,7 +117,7 @@ if [ ! -f "$FONT_DST" ] || ! cmp -s "$FONT_SRC" "$FONT_DST"; then
   echo "    staged original Minecraft Ten font"
 fi
 
-echo "==> [3/3] Installing browser-game dependencies (bun)…"
+echo "==> [2/2] Installing browser-game dependencies (bun)…"
 if command -v bun >/dev/null 2>&1; then
   bun install --frozen-lockfile
   echo "    Done. Run 'bun run dev' to start the dev server."
