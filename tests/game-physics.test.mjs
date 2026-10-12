@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AABB, clipMovementX, clipMovementY, clipMovementZ, raycastBlocks, WorldStore } from "../src/game/world/index.mjs";
+import { WorldStore } from "../src/game/world/index.mjs";
 import { raycastBlocks as castBlocks } from "../src/game/physics/raycast-blocks.mjs";
 import { clipMovementX as clipX, clipMovementY as clipY, clipMovementZ as clipZ, AABB as Box } from "../src/game/physics/aabb.mjs";
 
