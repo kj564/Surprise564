@@ -20,7 +20,7 @@ VoxelCraft is **not affiliated with, endorsed by, or sponsored by Mojang Studios
 Before changing gameplay or UI, read the relevant original implementation in `rujukan/` and consult [the Foundation Reference Map](docs/FOUNDATION-REFERENCE-MAP.md). For original Minecraft assets, use the matching source files in `VoxelCraft/`. Do not guess at behavior or replace available original assets with approximations.
 
 - `rujukan/` is the primary code/architecture reference. Its Pocket Edition source is historical (2013): learn from its structure and behavior, but do not assume its APIs match modern Minecraft or browser APIs.
-- `VoxelCraft/` contains the original Resource Pack files used as the canonical source for game assets.
+- Upstream Resource Pack: [ZtechNetwork/MCBVanillaResourcePack](https://github.com/ZtechNetwork/MCBVanillaResourcePack). `VoxelCraft/` is the checked-in mirror/snapshot used as the canonical in-repository asset source; runtime copies are staged from it.
 - `VanillaBehaviorPack/` is a retained submodule that will inform the game's future logic; do not remove it as unrelated tooling.
 - `public/VoxelCraft/` contains only the staged subset loaded by the browser. Treat these as derived runtime copies.
 - Adapt original behavior to the browser runtime only where needed. The game uses Three.js, JavaScript, HTML, and CSS; it is not the original Minecraft engine.
@@ -66,7 +66,7 @@ See [`docs/STRUCTURE.md`](docs/STRUCTURE.md) for the full annotated tree.
 ```text
 Surprise564/
 ├── rujukan/                       # Primary original-code/behavior reference
-├── VoxelCraft/                    # Canonical original Minecraft resource-pack assets
+├── VoxelCraft/                    # Checked-in mirror of MCBVanillaResourcePack
 ├── VanillaBehaviorPack/            # Retained source for future game logic (Git submodule)
 ├── public/
 │   ├── minecraft.html             # Browser game's main implementation
