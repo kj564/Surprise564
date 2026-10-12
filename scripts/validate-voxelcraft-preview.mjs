@@ -14,6 +14,7 @@ if (!html.includes("event.code==='KeyS'" ) || !html.includes("event.code==='KeyO
 if (!html.includes('localStorage.setItem') || !html.includes('Engine.fromSave')) throw new Error('Preview must persist and validate browser-local world saves');
 if (!html.includes('VoxelCraftGenerateTerrainChunk') || !html.includes('generateTerrainChunk(engine.world,cx,cz,{seed:564})')) throw new Error('Preview must initialize reproducible seeded terrain rather than a flat placeholder');
 if (!html.includes('VoxelCraftEnsureTerrainNeighborhood') || !html.includes('ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:564,radius:1})')) throw new Error('Preview must stream terrain when the player crosses chunk boundaries');
+if (!html.includes("sprint:keyDown.has('ShiftLeft')||keyDown.has('ShiftRight')")) throw new Error('Preview must wire Shift keys to the tested sprint mechanic');
 if (!html.includes("./VoxelCraft/textures/blocks/" ) || !html.includes('new THREE.Float32BufferAttribute(group.uvs,2)')) throw new Error('Preview must map face UVs and load staged block textures');
 if (!existsSync(bundlePath)) throw new Error('Generated engine bundle is missing; run prebuild first');
 const bundle = readFileSync(bundlePath, 'utf8');
