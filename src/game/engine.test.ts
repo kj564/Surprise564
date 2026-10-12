@@ -59,6 +59,16 @@ describe('VoxelCraftEngine composition root', () => {
     expect(engine.world.getBlock(2, 1, 1)).toBe(1);
   });
 
+  test('explicitly cancels an active mining session on input release', () => {
+    const engine = makeGroundedEngine();
+    engine.world.setBlock({ x: 2, y: 1, z: 1 }, 1);
+    expect(engine.startMining({ x: 2, y: 1, z: 1 }).status).toBe('started');
+    expect(engine.cancelMining()).toBe(true);
+    expect(engine.advanceMining(1, { x: 2, y: 1, z: 1 }).status).toBe('no-session');
+    expect(engine.world.getBlock(2, 1, 1)).toBe(1);
+    expect(engine.cancelMining()).toBe(false);
+  });
+
   test('validates hotbar selection bounds', () => {
     const engine = makeGroundedEngine();
     engine.selectSlot(8);
