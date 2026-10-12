@@ -1151,13 +1151,20 @@
       }
       idx(x, y, z) { return y * CHUNK_X * CHUNK_Z + z * CHUNK_X + x; }
       get(x, y, z) {
-        if (y < 0 || y >= CHUNK_Y) return 0;
+        // Chunk storage is a flat array; unchecked x/z can alias another row
+        // or read undefined when a caller crosses a chunk boundary.
+        if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z) ||
+            x < 0 || x >= CHUNK_X || y < 0 || y >= CHUNK_Y || z < 0 || z >= CHUNK_Z) return 0;
         return this.data[this.idx(x, y, z)];
       }
       set(x, y, z, v) {
-        if (y < 0 || y >= CHUNK_Y) return;
+        // Reject invalid local coordinates and block ids before indexing Uint8Array.
+        if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z) ||
+            x < 0 || x >= CHUNK_X || y < 0 || y >= CHUNK_Y || z < 0 || z >= CHUNK_Z ||
+            !Number.isInteger(v) || v < 0 || v > 255) return false;
         this.data[this.idx(x, y, z)] = v;
         this.dirty = true;
+        return true;
       }
     }
 

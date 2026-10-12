@@ -462,6 +462,23 @@ if (source.includes('for (let wx = baseX - 2; wx < baseX + CHUNK_X + 2; wx++)') 
   fail('Tree generation must use world-space origins and write neighboring tree portions into each chunk');
 }
 
+// Chunk-local storage uses a flat typed array, so x/z bounds must be checked
+// before indexing to avoid out-of-range coordinates aliasing adjacent voxel rows.
+const chunkGetSource = source.match(/get\(x, y, z\)\s*\{([\s\S]*?)\n\s*\}/)?.[1] || '';
+const chunkSetSource = source.match(/set\(x, y, z, v\)\s*\{([\s\S]*?)\n\s*\}/)?.[1] || '';
+if (/x < 0 \|\| x >= CHUNK_X/.test(chunkGetSource) &&
+    /y < 0 \|\| y >= CHUNK_Y/.test(chunkGetSource) &&
+    /z < 0 \|\| z >= CHUNK_Z/.test(chunkGetSource) &&
+    /x < 0 \|\| x >= CHUNK_X/.test(chunkSetSource) &&
+    /y < 0 \|\| y >= CHUNK_Y/.test(chunkSetSource) &&
+    /z < 0 \|\| z >= CHUNK_Z/.test(chunkSetSource) &&
+    /!Number\.isInteger\(v\) \|\| v < 0 \|\| v > 255/.test(chunkSetSource) &&
+    /return this\.data\[this\.idx\(x, y, z\)\];/.test(chunkGetSource)) {
+  pass('Chunk voxel reads/writes guard local coordinates and byte-sized block ids');
+} else {
+  fail('Chunk voxel reads/writes must validate x/y/z bounds and block id range before indexing typed storage');
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
