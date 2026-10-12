@@ -27,7 +27,7 @@ export interface VoxelRayUnloaded {
 }
 
 export type VoxelRayResult = VoxelRayHit | VoxelRayMiss | VoxelRayUnloaded;
-export type BlockReader = Pick<VoxelWorld, 'getBlock'>;
+export type BlockReader = Pick<VoxelWorld, 'getBlock'> & Partial<Pick<VoxelWorld, 'dimensions'>>;
 
 /**
  * Grid DDA ray traversal in block coordinates.
@@ -68,7 +68,9 @@ export function raycastVoxels(
   let face: RayVector = { x: 0, y: 0, z: 0 };
 
   while (distance <= maxDistance) {
-    const blockId = world.getBlock(x, y, z);
+    // Vertical build limits are known empty space for ray traversal, not unloaded chunks.
+    const outsideVerticalWorld = world.dimensions !== undefined && (y < 0 || y >= world.dimensions.height);
+    const blockId = outsideVerticalWorld ? 0 : world.getBlock(x, y, z);
     if (blockId === undefined) {
       return { status: 'unloaded', block: Object.freeze({ x, y, z }), distance };
     }
