@@ -21,13 +21,13 @@ export class ChunkMeshCache {
   }
 
   get(chunkX: number, chunkZ: number): ChunkMeshData | undefined {
-    return this.meshes.get(VoxelWorldKey(chunkX, chunkZ));
+    return this.meshes.get(chunkKey(chunkX, chunkZ));
   }
 
   /** Synchronize cache membership and rebuild every dirty loaded chunk once per call. */
   sync(): MeshSyncResult {
     const loadedKeys = new Set(
-      this.world.getLoadedChunkCoordinates().map(({ x, z }) => VoxelWorldKey(x, z)),
+      this.world.getLoadedChunkCoordinates().map(({ x, z }) => chunkKey(x, z)),
     );
     let removed = 0;
     for (const key of this.meshes.keys()) {
@@ -55,6 +55,6 @@ export class ChunkMeshCache {
   }
 }
 
-function VoxelWorldKey(chunkX: number, chunkZ: number): string {
+function chunkKey(chunkX: number, chunkZ: number): string {
   return chunkX + ',' + chunkZ;
 }
