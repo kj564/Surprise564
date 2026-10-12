@@ -31,6 +31,48 @@ const blockSource = section(/const BLOCKS = \{([\s\S]*?)\n    \};/, 'BLOCKS');
 const blockEntries = [...blockSource.matchAll(/^\s*(\d+):\s*(null|\{[^\n]*\})/gm)];
 const blocks = new Map(blockEntries.map(([, id, definition]) => [Number(id), definition]));
 
+if (!source.includes('data-inv-filter="items"') ||
+    !source.includes("fetch('./item-catalog.json')") ||
+    !source.includes("encodeURIComponent(item.file)") ||
+    !source.includes("filter === 'items'")) {
+  fail('Inventory must expose a browsable original item-icon catalog');
+} else pass('Inventory exposes a dedicated item-icon catalog without pretending icons are gameplay mechanics');
+
+const itemCatalogPath = resolve('public/item-catalog.json');
+if (!existsSync(itemCatalogPath)) {
+  fail('Generated item-catalog.json is missing; run scripts/stage-item-catalog.mjs before validation');
+} else {
+  try {
+    const catalog = JSON.parse(readFileSync(itemCatalogPath, 'utf8'));
+    if (catalog.version !== 1 || !Array.isArray(catalog.items) || catalog.count !== catalog.items.length || !catalog.items.length) {
+      fail('Generated item catalog must have a valid version, count, and non-empty item list');
+    } else {
+      let catalogAssetsValid = true;
+      const seenFiles = new Set();
+      for (const item of catalog.items) {
+        if (!item || typeof item.id !== 'string' || typeof item.file !== 'string' ||
+            !item.file.endsWith('.png') || seenFiles.has(item.file)) {
+          fail('Item catalog entries must have unique PNG filenames and stable IDs');
+          catalogAssetsValid = false;
+          break;
+        }
+        seenFiles.add(item.file);
+        const originalPath = resolve('VoxelCraft/textures/items', item.file);
+        const stagedPath = resolve('public/VoxelCraft/textures/items', item.file);
+        if (!existsSync(originalPath) || !existsSync(stagedPath) ||
+            !readFileSync(originalPath).equals(readFileSync(stagedPath))) {
+          fail('Item icon must be staged byte-identically from Resource Pack: ' + item.file);
+          catalogAssetsValid = false;
+          break;
+        }
+      }
+      if (catalogAssetsValid) pass('All ' + catalog.items.length + ' item catalog icons are staged byte-identically from the original Resource Pack');
+    }
+  } catch (error) {
+    fail('Generated item catalog JSON is invalid: ' + error.message);
+  }
+}
+
 const inventoryFilterSource = section(/const inventoryFilterSets = \{([\s\S]*?)\n    \};/, 'inventory category filters');
 const inventoryCategoryIds = {};
 for (const category of ['nature', 'building', 'minerals']) {
