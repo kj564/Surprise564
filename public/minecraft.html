@@ -1173,6 +1173,8 @@
       constructor() {
         this.chunks = new Map();
         this.overrides = new Map();
+        // Index edits by chunk so generating one chunk does not scan every saved edit.
+        this.chunkOverrides = new Map();
         try {
           const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
           if (saved && saved.version === 1 && saved.blocks && typeof saved.blocks === 'object' && !Array.isArray(saved.blocks)) {
@@ -1184,9 +1186,21 @@
               const [x, y, z] = key.split(',').map(Number);
               if (!Number.isSafeInteger(x) || !Number.isSafeInteger(z) || !Number.isInteger(y) || y < 0 || y >= CHUNK_Y) continue;
               this.overrides.set(key, id);
+              this.indexOverride(x, y, z, id);
             }
           }
         } catch (err) { console.warn('Save VoxelCraft tidak dapat dibaca:', err); }
+      }
+      indexOverride(x, y, z, id) {
+        const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
+        const key = chunkKey(cx, cz);
+        let edits = this.chunkOverrides.get(key);
+        if (!edits) {
+          edits = new Map();
+          this.chunkOverrides.set(key, edits);
+        }
+        const lx = x - cx * CHUNK_X, lz = z - cz * CHUNK_Z;
+        edits.set(lx + ',' + y + ',' + lz, id);
       }
       save() {
         try {
@@ -1237,6 +1251,7 @@
         if (lz === CHUNK_Z - 1) this.invalidateChunk(cx, cz + 1);
 
         this.overrides.set(x + ',' + y + ',' + z, v);
+        this.indexOverride(x, y, z, v);
         this.save();
         return true;
       }
@@ -1302,10 +1317,11 @@
             this.plantTree(c, wx, hf + 1, wz, wt);
           }
         }
-        for (const [key, id] of this.overrides) {
-          const [wx, wy, wz] = key.split(',').map(Number);
-          if (Math.floor(wx / CHUNK_X) === c.cx && Math.floor(wz / CHUNK_Z) === c.cz && wy >= 0 && wy < CHUNK_Y) {
-            c.set(wx - c.cx * CHUNK_X, wy, wz - c.cz * CHUNK_Z, id);
+        const chunkEdits = this.chunkOverrides.get(chunkKey(c.cx, c.cz));
+        if (chunkEdits) {
+          for (const [localKey, id] of chunkEdits) {
+            const [lx, y, lz] = localKey.split(',').map(Number);
+            c.set(lx, y, lz, id);
           }
         }
         c.dirty = true;
