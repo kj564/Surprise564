@@ -464,9 +464,16 @@ if (source.includes('for (let wx = baseX - 2; wx < baseX + CHUNK_X + 2; wx++)') 
 
 // Chunk-local storage uses a flat typed array, so x/z bounds must be checked
 // before indexing to avoid out-of-range coordinates aliasing adjacent voxel rows.
-if (source.includes('x < 0 || x >= CHUNK_X || y < 0 || y >= CHUNK_Y || z < 0 || z >= CHUNK_Z') &&
-    source.includes('if (!Number.isInteger(v) || v < 0 || v > 255) return false;') &&
-    source.includes('return this.data[this.idx(x, y, z)];')) {
+const chunkGetSource = source.match(/get\(x, y, z\)\s*\{([\s\S]*?)\n\s*\}/)?.[1] || '';
+const chunkSetSource = source.match(/set\(x, y, z, v\)\s*\{([\s\S]*?)\n\s*\}/)?.[1] || '';
+if (/x < 0 \|\| x >= CHUNK_X/.test(chunkGetSource) &&
+    /y < 0 \|\| y >= CHUNK_Y/.test(chunkGetSource) &&
+    /z < 0 \|\| z >= CHUNK_Z/.test(chunkGetSource) &&
+    /x < 0 \|\| x >= CHUNK_X/.test(chunkSetSource) &&
+    /y < 0 \|\| y >= CHUNK_Y/.test(chunkSetSource) &&
+    /z < 0 \|\| z >= CHUNK_Z/.test(chunkSetSource) &&
+    /!Number\.isInteger\(v\) \|\| v < 0 \|\| v > 255/.test(chunkSetSource) &&
+    /return this\.data\[this\.idx\(x, y, z\)\];/.test(chunkGetSource)) {
   pass('Chunk voxel reads/writes guard local coordinates and byte-sized block ids');
 } else {
   fail('Chunk voxel reads/writes must validate x/y/z bounds and block id range before indexing typed storage');
