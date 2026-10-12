@@ -1,0 +1,40 @@
+name: VoxelCraft rebuild checks
+
+on:
+  push:
+    branches: ["rebuild/voxelcraft-modern-engine"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mechanics-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository and reference submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Test game-core mechanics
+        run: bun run test:game-core
+
+      - name: Validate foundation references and assets
+        run: bun run validate:foundation
+
+      - name: Validate current game baseline
+        run: bun run validate:game
+
+      - name: Build application
+        run: bun run build
