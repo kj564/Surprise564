@@ -23,7 +23,7 @@ describe('raycastVoxels', () => {
     const world = makeWorld();
     world.loadChunk(-1, 0);
     world.setBlock({ x: -2, y: 1, z: 1 }, 4);
-    const hit = raycastVoxels(world, { x: -1.5, y: 1.5, z: 1.5 }, { x: -1, y: 0, z: 0 }, 3, id => id !== 0);
+    const hit = raycastVoxels(world, { x: -0.5, y: 1.5, z: 1.5 }, { x: -1, y: 0, z: 0 }, 3, id => id !== 0);
     expect(hit.status).toBe('hit');
     if (hit.status !== 'hit') return;
     expect(hit.block.x).toBe(-2);
