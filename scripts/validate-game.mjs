@@ -38,12 +38,19 @@ for (const category of ['nature', 'building', 'minerals']) {
   inventoryCategoryIds[category] = match ? match[1].split(',').map((value) => Number(value.trim())).filter(Number.isInteger) : [];
 }
 const listedInventoryIds = Object.values(inventoryCategoryIds).flat();
+const knownBlockIds = [...blocks.keys()];
+const uncategorizedBlockIds = knownBlockIds.filter((id) => !listedInventoryIds.includes(id));
+const unknownCategoryBlockIds = listedInventoryIds.filter((id) => !blocks.has(id));
 if (new Set(listedInventoryIds).size !== listedInventoryIds.length) {
   fail('Inventory category filters must not list a block in multiple categories');
+} else if (uncategorizedBlockIds.length || unknownCategoryBlockIds.length) {
+  fail('Every defined block must appear in exactly one inventory category; missing: ' +
+    (uncategorizedBlockIds.join(', ') || 'none') + '; unknown: ' +
+    (unknownCategoryBlockIds.join(', ') || 'none'));
 } else if (![25, 27, 29, 30, 31, 32, 33].every((id) => inventoryCategoryIds.minerals.includes(id)) ||
            [25, 27, 29, 32, 33].some((id) => inventoryCategoryIds.building.includes(id))) {
   fail('Mineral blocks must appear only in the minerals inventory category');
-} else pass('Inventory category filters are exclusive and classify mineral blocks consistently');
+} else pass('Inventory categories are exclusive, complete, and classify mineral blocks consistently');
 
 if (!source.includes('grid-template-columns: repeat(9, minmax(38px, 52px))') ||
     !source.includes('grid-template-columns: repeat(6, minmax(34px, 1fr))')) {
