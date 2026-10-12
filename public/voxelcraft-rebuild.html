@@ -313,6 +313,12 @@ function animate(now){
   updateCamera();
   const target=currentTarget();$('target').textContent=target.status==='hit'?(registry.getById(target.blockId)?.displayName??'blok'):(target.status==='unloaded'?'chunk unloaded':'none');
   if(target.status==='hit'){outline.visible=true;outline.position.set(target.block.x+.5,target.block.y+.5,target.block.z+.5)}else outline.visible=false;
+  // Holding mine while changing aim should immediately begin work on the newly targeted block.
+  // The current session still cancels when its target changes; this starts the next session on the following frame.
+  if(leftMouseDown&&!miningHeld&&target.status==='hit'){
+    const nextMining=engine.startMining(target.block);
+    if(nextMining.status==='started')miningHeld=true;
+  }
   if(miningHeld){
     const result=engine.advanceMining(dt,target.status==='hit'?target.block:null);
     if(result.status==='broken'){
