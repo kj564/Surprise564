@@ -53,3 +53,6 @@ export {
   type WorldSaveV1,
   type SaveValidationResult,
 } from './persistence/save-schema';
+
+export { ensureTerrainNeighborhood, type TerrainNeighborhoodResult } from './world/terrain-streaming';
+export { generateTerrainChunk, type TerrainOptions } from './world/terrain-generator';
