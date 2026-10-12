@@ -64,7 +64,8 @@ const definitions: readonly BlockDefinition[] = [
   block({ key: 'minecraft:cactus', legacyId: 81, displayName: 'Cactus', shape: 'cube', renderLayer: 'opaque', solid: true, selectable: true, replaceable: false, hardness: 0.4, sound: 'cloth', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:cactus'] }),
   block({ key: 'minecraft:reeds', legacyId: 83, displayName: 'Sugar Cane', shape: 'cross', renderLayer: 'cutout', solid: false, selectable: true, replaceable: true, hardness: 0, sound: 'grass', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:reeds'] }),
   block({ key: 'minecraft:oak_fence', legacyId: 85, displayName: 'Oak Fence', shape: 'cube', renderLayer: 'cutout', solid: true, selectable: true, replaceable: false, hardness: 2, sound: 'wood', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:oak_fence'] }),
-  block({ key: 'minecraft:water', displayName: 'Water', shape: 'liquid', renderLayer: 'translucent', solid: false, selectable: true, replaceable: true, hardness: 100, sound: 'silent', lightOpacity: 2, lightEmission: 0, drops: [] }),
+  block({ key: 'minecraft:water', legacyId: 8, displayName: 'Water', shape: 'liquid', renderLayer: 'translucent', solid: false, selectable: true, replaceable: true, hardness: 100, sound: 'silent', lightOpacity: 3, lightEmission: 0, drops: [] }),
+  block({ key: 'minecraft:lava', legacyId: 10, displayName: 'Lava', shape: 'liquid', renderLayer: 'translucent', solid: false, selectable: true, replaceable: true, hardness: 100, sound: 'silent', lightOpacity: 15, lightEmission: 15, drops: [] }),
 ];
 
 /** Immutable registry indexes; unknown IDs never silently become solid cubes. */
