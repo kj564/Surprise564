@@ -12,6 +12,8 @@ if (modules.length !== 1) throw new Error('Expected exactly one inline module sc
 if (!html.includes('voxelcraft-engine.bundle.js')) throw new Error('Preview does not load the generated engine bundle');
 if (!html.includes("event.code==='KeyS'" ) || !html.includes("event.code==='KeyO'")) throw new Error('Preview must expose keyboard save/load shortcuts');
 if (!html.includes('localStorage.setItem') || !html.includes('Engine.fromSave')) throw new Error('Preview must persist and validate browser-local world saves');
+if (!html.includes('VoxelCraftGenerateTerrainChunk') || !html.includes('generateTerrainChunk(engine.world,cx,cz,{seed:564})')) throw new Error('Preview must initialize reproducible seeded terrain rather than a flat placeholder');
+if (!html.includes("./VoxelCraft/textures/blocks/" ) || !html.includes('new THREE.Float32BufferAttribute(group.uvs,2)')) throw new Error('Preview must map face UVs and load staged block textures');
 if (!existsSync(bundlePath)) throw new Error('Generated engine bundle is missing; run prebuild first');
 const bundle = readFileSync(bundlePath, 'utf8');
 if (!bundle.includes('VoxelCraftEngine')) throw new Error('Generated bundle does not expose VoxelCraftEngine');
