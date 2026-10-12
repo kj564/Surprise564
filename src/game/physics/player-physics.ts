@@ -5,6 +5,8 @@ export interface PlayerInput {
   readonly moveX: number;
   readonly moveZ: number;
   readonly jump: boolean;
+  /** Optional run modifier; omitted input preserves normal walking speed. */
+  readonly sprint?: boolean;
 }
 
 export interface PlayerPosition {
@@ -18,6 +20,7 @@ export interface PlayerPhysicsConfig {
   readonly width?: number;
   readonly height?: number;
   readonly moveSpeed?: number;
+  readonly sprintMultiplier?: number;
   readonly gravity?: number;
   readonly jumpSpeed?: number;
   readonly terminalVelocity?: number;
@@ -40,6 +43,7 @@ export class PlayerPhysics {
   readonly width: number;
   readonly height: number;
   readonly moveSpeed: number;
+  readonly sprintMultiplier: number;
   readonly gravity: number;
   readonly jumpSpeed: number;
   readonly terminalVelocity: number;
@@ -55,6 +59,7 @@ export class PlayerPhysics {
     this.width = positiveFinite(config.width ?? 0.6, 'width');
     this.height = positiveFinite(config.height ?? 1.8, 'height');
     this.moveSpeed = positiveFinite(config.moveSpeed ?? 4.3, 'moveSpeed');
+    this.sprintMultiplier = positiveFinite(config.sprintMultiplier ?? 1.3, 'sprintMultiplier');
     this.gravity = positiveFinite(config.gravity ?? 24, 'gravity');
     this.jumpSpeed = positiveFinite(config.jumpSpeed ?? 8, 'jumpSpeed');
     this.terminalVelocity = positiveFinite(config.terminalVelocity ?? 50, 'terminalVelocity');
@@ -95,6 +100,7 @@ export class PlayerPhysics {
     }
     if (![input.moveX, input.moveZ].every(Number.isFinite)) throw new TypeError('Movement input must be finite');
     if (typeof input.jump !== 'boolean') throw new TypeError('jump input must be boolean');
+    if (input.sprint !== undefined && typeof input.sprint !== 'boolean') throw new TypeError('sprint input must be boolean when provided');
     if (typeof obstaclesFor !== 'function') throw new TypeError('obstaclesFor must be a function');
 
     let moveX = clamp(input.moveX, -1, 1);
@@ -104,8 +110,9 @@ export class PlayerPhysics {
       moveX /= moveLength;
       moveZ /= moveLength;
     }
-    const dx = moveX * this.moveSpeed * deltaSeconds;
-    const dz = moveZ * this.moveSpeed * deltaSeconds;
+    const horizontalSpeed = this.moveSpeed * (input.sprint === true ? this.sprintMultiplier : 1);
+    const dx = moveX * horizontalSpeed * deltaSeconds;
+    const dz = moveZ * horizontalSpeed * deltaSeconds;
 
     if (input.jump && this.onGroundValue) {
       this.velocityYValue = this.jumpSpeed;
