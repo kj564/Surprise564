@@ -1,20 +1,38 @@
-# Asset Attribution & Licensing Notes
+# Asset Provenance, Authority, and Staging Rules
 
-See [`LICENSE-ATTRIBUTION.md`](../LICENSE-ATTRIBUTION.md) at the repo root for the authoritative statement.
+## Source of truth
 
-## Quick reference
+- **Original Minecraft assets are authoritative.** Use the exact matching source file when it exists; do not recreate a texture, model, sprite, or font from memory.
+- **Canonical modern Resource Pack:** `VoxelCraft/` is the source for the modern vanilla Bedrock assets used by the browser game.
+- **Reference source:** `rujukan/` is the first place to consult for original code architecture and behavior; if it contains the exact original asset or source file relevant to the task, inspect it as well.
+- **Runtime copies:** `public/VoxelCraft/` is a staged subset for browser delivery. It is derived output, not the authoritative source.
 
-| Folder | Owned by | Use |
-|--------|----------|-----|
-| `public/minecraft.html`, `src/`, `BedrockAddon/`, `scripts/`, `.github/` | VoxelCraft project (original code) | Edit freely |
-| `VoxelCraft/` (resource pack) | Mojang / Microsoft | Read-only asset source; do not redistribute outside the repo |
-| `VanillaBehaviorPack/` (submodule) | Mojang / Microsoft | Read-only reference template; same caveat |
-| `VoxelCraftResourcePack/` (JSON UI experiments) | VoxelCraft project | Edit, but be aware the JSON UI spec is version-sensitive |
+## Rules when adding or changing assets
 
-## If a Mojang asset is missing from `VoxelCraft/`
+1. Find and inspect the exact original source file first.
+2. Keep original source assets unchanged. Do not modify canonical originals to work around browser limitations.
+3. If the browser needs a copy, stage it at the correct path under `public/VoxelCraft/`.
+4. Add the same staging operation to both `scripts/setup.sh` and `.github/workflows/static.yml`; otherwise local and CI builds may diverge.
+5. Update any runtime path list in `public/minecraft.html` and the corresponding checks in `scripts/validate-game.mjs`.
+6. Validate file existence and, where appropriate, byte identity, image dimensions, model geometry, UV bounds, and runtime path wiring.
+7. If an asset is missing, report that explicitly. A fallback is acceptable only when documented and must not be presented as the original asset.
+8. Keep attribution and license notes accurate. Original Minecraft assets remain the property of their respective rights holders.
 
-Either fetch the latest from the upstream [ZtechNetwork/MCBVanillaResourcePack](https://github.com/ZtechNetwork/MCBVanillaResourcePack) repository, or extract it from your own legally-owned Minecraft Bedrock installation.
+## Current asset flow
+
+```text
+VoxelCraft/ (canonical original Resource Pack)
+        │
+        ├── scripts/setup.sh
+        └── .github/workflows/static.yml
+                    │
+                    ▼
+        public/VoxelCraft/ (runtime subset)
+                    │
+                    ▼
+        public/minecraft.html (browser renderer)
+```
 
 ## Game music
 
-Per the upstream pack README, game music is intentionally omitted for copyright reasons. The browser game uses WebAudio-synthesized SFX only, so no music files are required.
+The upstream pack README notes that game music is intentionally omitted. The browser game currently uses Web Audio synthesized sound effects; do not assume music assets are available.
