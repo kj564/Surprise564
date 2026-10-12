@@ -8,8 +8,7 @@ export {
   worldToChunk,
   worldToLocal,
   localToWorld,
-  blockIndex,
-  type ChunkCoordinates,
+  localBlockIndex,
 } from './core/coordinates';
 export { Inventory, type ItemStack, type InsertResult } from './inventory/inventory';
 export {
@@ -25,7 +24,7 @@ export {
 } from './interaction/raycast';
 export {
   Aabb,
-  type AxisDisplacement,
+  type Axis,
 } from './physics/aabb';
 export {
   PlayerPhysics,
@@ -34,7 +33,7 @@ export {
   type PlayerPhysicsState,
   type PlayerPosition,
 } from './physics/player-physics';
-export { queryCollisionBoxes, type WorldCollisionQuery } from './physics/world-collision';
+export { queryCollisionBoxes, type CollisionQueryResult } from './physics/world-collision';
 export { ChunkData, type ChunkDimensions } from './world/chunk';
 export {
   VoxelWorld,
