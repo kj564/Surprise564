@@ -25,11 +25,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
       - name: Verify runtime
         run: node --version && bun --version
+      - name: Stage runtime assets and install dependencies
+        run: bash scripts/setup.sh
       - name: Test world-core contracts
         run: bun run test:engine
       - name: Validate existing game foundations
@@ -37,4 +41,4 @@ jobs:
       - name: Validate existing browser game
         run: bun run validate:game
       - name: Build existing application
-        run: bun install --frozen-lockfile && bun run build
+        run: bun run build
