@@ -63,8 +63,7 @@ export function buildChunkMesh(
   chunkZ: number,
   registry: BlockRegistry,
 ): ChunkMeshData {
-  const chunk = world.exportChunks().find(entry => entry.x === chunkX && entry.z === chunkZ);
-  if (!chunk) throw new Error('Cannot mesh an unloaded chunk: ' + chunkX + ',' + chunkZ);
+  if (!world.hasChunk(chunkX, chunkZ)) throw new Error('Cannot mesh an unloaded chunk: ' + chunkX + ',' + chunkZ);
 
   const dimensions = world.dimensions;
   const baseX = chunkX * dimensions.chunkSizeX;
