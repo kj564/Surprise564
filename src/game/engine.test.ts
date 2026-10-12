@@ -134,7 +134,6 @@ describe('VoxelCraftEngine composition root', () => {
     expect(restored.engine.world.getBlock(2, 2, 2)).toBe(1);
     expect(restored.engine.inventory.getSlot(0)?.count).toBe(12);
     expect(restored.engine.selectedSlot).toBe(3);
-    expect(restored.engine.selectedSlot).toBe(3);
     expect(restored.engine.player.state.position).toEqual(engine.player.state.position);
     expect(restored.view).toEqual({ yaw: 1.25, pitch: -0.2 });
   });
