@@ -71,11 +71,43 @@ $('game').appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xd7ecff,0x64523b,2.0));
 const sun=new THREE.DirectionalLight(0xfff1d6,2.4);sun.position.set(-15,28,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-24;sun.shadow.camera.right=24;sun.shadow.camera.top=24;sun.shadow.camera.bottom=-24;scene.add(sun);
 const worldGroup=new THREE.Group();scene.add(worldGroup);
-const layerMaterials={
-  opaque:new THREE.MeshStandardMaterial({vertexColors:true,roughness:.92,metalness:0}),
-  cutout:new THREE.MeshStandardMaterial({vertexColors:true,roughness:.92,metalness:0}),
-  translucent:new THREE.MeshStandardMaterial({vertexColors:true,roughness:.22,metalness:0,transparent:true,opacity:.48,depthWrite:false,side:THREE.DoubleSide})
+const textureLoader=new THREE.TextureLoader();
+const textureCache=new Map();
+const materialCache=new Map();
+const textureByBlock={
+  'minecraft:stone':'stone.png','minecraft:dirt':'dirt.png','minecraft:grass_block':'grass_side_carried.png',
+  'minecraft:cobblestone':'cobblestone.png','minecraft:oak_planks':'planks_oak.png','minecraft:bedrock':'bedrock.png',
+  'minecraft:sand':'sand.png','minecraft:gravel':'gravel.png','minecraft:glass':'glass.png',
+  'minecraft:lapis_ore':'lapis_ore.png','minecraft:sandstone':'sandstone.png','minecraft:bricks':'brick.png',
+  'minecraft:oak_log':'log_oak.png','minecraft:oak_leaves':'leaves_oak_opaque.png'
 };
+function textureFileFor(definition,ny){
+  if(!definition)return null;
+  if(definition.key==='minecraft:grass_block')return ny>0?'grass_top.png':ny<0?'dirt.png':'grass_side_carried.png';
+  if(definition.key==='minecraft:oak_log')return Math.abs(ny)>.5?'log_oak_top.png':'log_oak.png';
+  return textureByBlock[definition.key]??null;
+}
+function getTexture(file){
+  if(!textureCache.has(file)){
+    const texture=textureLoader.load('./VoxelCraft/textures/blocks/'+file,undefined,undefined,()=>console.warn('Texture unavailable:',file));
+    texture.magFilter=THREE.NearestFilter;texture.minFilter=THREE.NearestFilter;
+    texture.colorSpace=THREE.SRGBColorSpace;
+    textureCache.set(file,texture);
+  }
+  return textureCache.get(file);
+}
+function getMaterial(layerName,file,blockId){
+  const key=layerName+':'+(file??'fallback')+':'+blockId;
+  if(materialCache.has(key))return materialCache.get(key);
+  const definition=registry.getById(blockId);
+  const color=blockColors[definition?.key]??0xa0a0a0;
+  const options={color:file?0xffffff:color,roughness:layerName==='translucent'?.25:.92,metalness:0,side:THREE.DoubleSide};
+  if(file)options.map=getTexture(file);
+  if(layerName==='cutout'){options.alphaTest=.38;options.transparent=true}
+  if(layerName==='translucent'){options.transparent=true;options.opacity=.58;options.depthWrite=false}
+  const material=new THREE.MeshStandardMaterial(options);
+  materialCache.set(key,material);return material;
+}
 function clearWorldMeshes(){
   while(worldGroup.children.length){
     const child=worldGroup.children[0];
@@ -90,21 +122,35 @@ function rebuildWorldMeshes(){
     const chunkMesh=meshCache.get(x,z);if(!chunkMesh)continue;
     for(const layerName of ['opaque','cutout','translucent']){
       const layer=chunkMesh.layers[layerName];if(!layer)continue;
-      const geometry=new THREE.BufferGeometry();
-      geometry.setAttribute('position',new THREE.BufferAttribute(layer.positions,3));
-      geometry.setAttribute('normal',new THREE.BufferAttribute(layer.normals,3));
-      const colors=new Float32Array(layer.blockIds.length*3);
-      for(let i=0;i<layer.blockIds.length;i++){
-        const definition=registry.getById(layer.blockIds[i]);
-        const color=new THREE.Color(blockColors[definition?.key]??0xa0a0a0);
-        colors[i*3]=color.r;colors[i*3+1]=color.g;colors[i*3+2]=color.b;
+      const groups=new Map();
+      const faceCount=Math.floor(layer.blockIds.length/4);
+      for(let face=0;face<faceCount;face++){
+        const vertex=face*4;
+        const blockId=layer.blockIds[vertex];
+        const definition=registry.getById(blockId);
+        const ny=layer.normals[vertex*3+1];
+        const file=textureFileFor(definition,ny);
+        const key=layerName+':'+(file??'fallback')+':'+blockId;
+        let group=groups.get(key);
+        if(!group){group={blockId,file,positions:[],normals:[],uvs:[],indices:[]};groups.set(key,group)}
+        for(let corner=0;corner<4;corner++){
+          const offset=(vertex+corner)*3;
+          group.positions.push(layer.positions[offset],layer.positions[offset+1],layer.positions[offset+2]);
+          group.normals.push(layer.normals[offset],layer.normals[offset+1],layer.normals[offset+2]);
+        }
+        group.uvs.push(0,0,1,0,1,1,0,1);
+        const first=group.positions.length/3-4;
+        group.indices.push(first,first+1,first+2,first,first+2,first+3);
       }
-      geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
-      geometry.setIndex(new THREE.BufferAttribute(layer.indices,1));
-      geometry.computeBoundingSphere();
-      const mesh=new THREE.Mesh(geometry,layerMaterials[layerName]);
-      mesh.castShadow=layerName==='opaque';mesh.receiveShadow=true;
-      worldGroup.add(mesh);
+      for(const group of groups.values()){
+        const geometry=new THREE.BufferGeometry();
+        geometry.setAttribute('position',new THREE.Float32BufferAttribute(group.positions,3));
+        geometry.setAttribute('normal',new THREE.Float32BufferAttribute(group.normals,3));
+        geometry.setAttribute('uv',new THREE.Float32BufferAttribute(group.uvs,2));
+        geometry.setIndex(group.indices);geometry.computeBoundingSphere();
+        const mesh=new THREE.Mesh(geometry,getMaterial(layerName,group.file,group.blockId));
+        mesh.castShadow=layerName==='opaque';mesh.receiveShadow=true;worldGroup.add(mesh);
+      }
     }
   }
 }
