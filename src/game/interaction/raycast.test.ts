@@ -52,6 +52,15 @@ describe('raycastVoxels', () => {
     expect(result.distance).toBeCloseTo(0.5);
   });
 
+  test('treats vertical build limits as empty space while preserving loaded-world targeting', () => {
+    const world = makeWorld();
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 1, y: 6, z: 1 }, 1);
+    const result = raycastVoxels(world, { x: 1.5, y: 10.5, z: 1.5 }, { x: 0, y: -1, z: 0 }, 6, id => id !== 0);
+    expect(result.status).toBe('hit');
+    if (result.status === 'hit') expect(result.block).toEqual({ x: 1, y: 6, z: 1 });
+  });
+
   test('returns miss after max distance and validates ray inputs', () => {
     const world = makeWorld();
     world.loadChunk(0, 0);
