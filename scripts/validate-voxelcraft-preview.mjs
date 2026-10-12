@@ -20,6 +20,8 @@ if (!html.includes("sprint:keyDown.has('ShiftLeft')||keyDown.has('ShiftRight')")
 if (!html.includes('leftMouseDown=true') || !html.includes('const nextTarget=currentTarget()') || !html.includes('engine.startMining(nextTarget.block)')) throw new Error('Preview must continue mining the next targeted block while the left mouse button remains held');
 if (!html.includes('leftMouseDown=false;if(miningHeld)')) throw new Error('Preview must cancel continuous mining on pointer release, focus loss or pointer-lock loss');
 if (!html.includes('Shift sprint')) throw new Error('Preview help text must document the sprint control');
+if (!html.includes('id="touch-controls"') || !html.includes("event.pointerType!=='touch'") || !html.includes("yaw-=dx*.004;pitch-=dy*.004")) throw new Error('Preview must provide touch movement/look controls for coarse-pointer devices');
+if (!html.includes('id="touch-mine"') || !html.includes('id="touch-place"') || !html.includes("bindTouchKey(button,button.dataset.key)")) throw new Error('Preview must wire touch mining, placement and movement buttons');
 if (!html.includes('id="inventory-grid"') || !html.includes("event.code==='KeyE'") || !html.includes('engine.inventory.swap(engine.selectedSlot,i)')) throw new Error('Preview must expose the E-key inventory overlay and working hotbar/inventory swaps');
 if (!html.includes("./VoxelCraft/textures/blocks/" ) || !html.includes('new THREE.Float32BufferAttribute(group.uvs,2)')) throw new Error('Preview must map face UVs and load staged block textures');
 if (!existsSync(bundlePath)) throw new Error('Generated engine bundle is missing; run prebuild first');
