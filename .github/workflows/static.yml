@@ -237,6 +237,16 @@ jobs:
           test -f out/VoxelCraft/textures/entity/chicken/chicken.png
           touch out/.nojekyll
 
+      - name: Install headless browser for gameplay smoke tests
+        run: |
+          npm install --prefix /tmp/voxelcraft-browser-smoke --no-save --no-package-lock playwright
+          /tmp/voxelcraft-browser-smoke/node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Smoke-test game runtime in Chromium
+        env:
+          NODE_PATH: /tmp/voxelcraft-browser-smoke/node_modules
+        run: node scripts/browser-smoke.mjs
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
