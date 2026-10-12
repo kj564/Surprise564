@@ -7,6 +7,8 @@ export interface BlockDefinition {
   readonly key: string;
   /** Numeric ID from the inspected MCPE 2013 Tile registry, if established. */
   readonly legacyId?: number;
+  /** Additional historical IDs that normalize to the same modern block/state family. */
+  readonly legacyAliases?: readonly number[];
   readonly displayName: string;
   readonly shape: BlockShape;
   readonly renderLayer: RenderLayer;
@@ -21,7 +23,7 @@ export interface BlockDefinition {
 }
 
 function block(definition: BlockDefinition): BlockDefinition {
-  return Object.freeze({ ...definition, drops: Object.freeze([...definition.drops]) });
+  return Object.freeze({ ...definition, legacyAliases: definition.legacyAliases ? Object.freeze([...definition.legacyAliases]) : undefined, drops: Object.freeze([...definition.drops]) });
 }
 
 const definitions: readonly BlockDefinition[] = [
@@ -64,14 +66,13 @@ const definitions: readonly BlockDefinition[] = [
   block({ key: 'minecraft:cactus', legacyId: 81, displayName: 'Cactus', shape: 'cube', renderLayer: 'opaque', solid: true, selectable: true, replaceable: false, hardness: 0.4, sound: 'cloth', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:cactus'] }),
   block({ key: 'minecraft:reeds', legacyId: 83, displayName: 'Sugar Cane', shape: 'cross', renderLayer: 'cutout', solid: false, selectable: true, replaceable: true, hardness: 0, sound: 'grass', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:reeds'] }),
   block({ key: 'minecraft:oak_fence', legacyId: 85, displayName: 'Oak Fence', shape: 'cube', renderLayer: 'cutout', solid: true, selectable: true, replaceable: false, hardness: 2, sound: 'wood', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:oak_fence'] }),
-  block({ key: 'minecraft:water', legacyId: 8, displayName: 'Water', shape: 'liquid', renderLayer: 'translucent', solid: false, selectable: true, replaceable: true, hardness: 100, sound: 'silent', lightOpacity: 3, lightEmission: 0, drops: [] }),
-  block({ key: 'minecraft:lava', legacyId: 10, displayName: 'Lava', shape: 'liquid', renderLayer: 'translucent', solid: false, selectable: true, replaceable: true, hardness: 100, sound: 'silent', lightOpacity: 15, lightEmission: 15, drops: [] }),
+  block({ key: 'minecraft:water', legacyId: 8, legacyAliases: [9], displayName: 'Water', shape: 'liquid', renderLayer: 'translucent', solid: false, selectable: true, replaceable: true, hardness: 100, sound: 'silent', lightOpacity: 3, lightEmission: 0, drops: [] }),
+  block({ key: 'minecraft:lava', legacyId: 10, legacyAliases: [11], displayName: 'Lava', shape: 'liquid', renderLayer: 'translucent', solid: false, selectable: true, replaceable: true, hardness: 100, sound: 'silent', lightOpacity: 15, lightEmission: 15, drops: [] }),
 ];
 
 /** Immutable registry indexes; unknown IDs never silently become solid cubes. */
 export class BlockRegistry {
   private readonly byKey = new Map<string, BlockDefinition>();
-  private readonly byId = new Map<number, BlockDefinition>();
   private readonly byLegacyId = new Map<number, BlockDefinition>();
 
   constructor(entries: readonly BlockDefinition[] = definitions) {
@@ -81,13 +82,19 @@ export class BlockRegistry {
       }
       if (this.byKey.has(entry.key)) throw new Error('Duplicate block key: ' + entry.key);
       validateDefinition(entry);
-      this.byKey.set(entry.key, Object.freeze({ ...entry, drops: Object.freeze([...entry.drops]) }));
-      if (entry.legacyId !== undefined) {
-        if (!Number.isInteger(entry.legacyId) || entry.legacyId < 0 || entry.legacyId > 255) {
+      const stored = Object.freeze({
+        ...entry,
+        legacyAliases: entry.legacyAliases ? Object.freeze([...entry.legacyAliases]) : undefined,
+        drops: Object.freeze([...entry.drops]),
+      });
+      this.byKey.set(entry.key, stored);
+      const legacyIds = [...(entry.legacyId === undefined ? [] : [entry.legacyId]), ...(entry.legacyAliases ?? [])];
+      for (const legacyId of legacyIds) {
+        if (!Number.isInteger(legacyId) || legacyId < 0 || legacyId > 255) {
           throw new RangeError('Legacy block ID must be an integer from 0 to 255');
         }
-        if (this.byLegacyId.has(entry.legacyId)) throw new Error('Duplicate legacy block ID: ' + entry.legacyId);
-        this.byLegacyId.set(entry.legacyId, this.byKey.get(entry.key)!);
+        if (this.byLegacyId.has(legacyId)) throw new Error('Duplicate legacy block ID: ' + legacyId);
+        this.byLegacyId.set(legacyId, stored);
       }
     }
     const air = this.byKey.get('minecraft:air');
@@ -127,6 +134,7 @@ function validateDefinition(entry: BlockDefinition): void {
   if (!Number.isFinite(entry.hardness) || entry.hardness < -1) throw new RangeError('Block hardness must be -1 or non-negative');
   if (!Number.isInteger(entry.lightOpacity) || entry.lightOpacity < 0 || entry.lightOpacity > 15) throw new RangeError('lightOpacity must be between 0 and 15');
   if (!Number.isInteger(entry.lightEmission) || entry.lightEmission < 0 || entry.lightEmission > 15) throw new RangeError('lightEmission must be between 0 and 15');
+  if (entry.legacyAliases?.some(id => !Number.isInteger(id) || id < 0 || id > 255)) throw new RangeError('Legacy block aliases must be integers from 0 to 255');
   if (entry.drops.some(drop => !drop.includes(':'))) throw new TypeError('Drop item keys must be namespaced');
 }
 
