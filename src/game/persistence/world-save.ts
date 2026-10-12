@@ -14,6 +14,7 @@ export interface PlayerSnapshot {
   readonly position: { readonly x: number; readonly y: number; readonly z: number };
   readonly yaw: number;
   readonly pitch: number;
+  readonly selectedSlot?: number;
 }
 
 export interface RestoredWorld {
@@ -54,6 +55,7 @@ export function createWorldSave(
       position: { ...player.position },
       yaw: player.yaw,
       pitch: player.pitch,
+      selectedSlot: player.selectedSlot ?? 0,
       inventory: inventory.snapshot().map((stack: ItemStack | null) => stack ? { ...stack } : null),
     },
   };
