@@ -31,6 +31,20 @@ const blockSource = section(/const BLOCKS = \{([\s\S]*?)\n    \};/, 'BLOCKS');
 const blockEntries = [...blockSource.matchAll(/^\s*(\d+):\s*(null|\{[^\n]*\})/gm)];
 const blocks = new Map(blockEntries.map(([, id, definition]) => [Number(id), definition]));
 
+const inventoryFilterSource = section(/const inventoryFilterSets = \{([\s\S]*?)\n    \};/, 'inventory category filters');
+const inventoryCategoryIds = {};
+for (const category of ['nature', 'building', 'minerals']) {
+  const match = inventoryFilterSource.match(new RegExp(category + ': new Set\\(\\[([^\\]]*)\\]\\)'));
+  inventoryCategoryIds[category] = match ? match[1].split(',').map((value) => Number(value.trim())).filter(Number.isInteger) : [];
+}
+const listedInventoryIds = Object.values(inventoryCategoryIds).flat();
+if (new Set(listedInventoryIds).size !== listedInventoryIds.length) {
+  fail('Inventory category filters must not list a block in multiple categories');
+} else if (![25, 27, 29, 30, 31, 32, 33].every((id) => inventoryCategoryIds.minerals.includes(id)) ||
+           [25, 27, 29, 32, 33].some((id) => inventoryCategoryIds.building.includes(id))) {
+  fail('Mineral blocks must appear only in the minerals inventory category');
+} else pass('Inventory category filters are exclusive and classify mineral blocks consistently');
+
 if (!source.includes('grid-template-columns: repeat(9, minmax(38px, 52px))') ||
     !source.includes('grid-template-columns: repeat(6, minmax(34px, 1fr))')) {
   fail('Inventory grid must use nine Bedrock-style columns on desktop and a compact six-column layout on mobile');
