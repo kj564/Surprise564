@@ -29,6 +29,8 @@ This is a guide for investigation, not permission to copy historical code or red
 - `src/game/inventory/inventory.ts`: immutable item stacks, slot operations, stack merging, overflow reporting, removal and conservation-focused tests.
 - `src/game/persistence/save-schema.ts` and `world-save.ts`: versioned save validation, corruption/size limits, detached chunk snapshots, and safe world/inventory/player capture and restore. Browser storage integration remains a later step.
 - `src/game/physics/aabb.ts`: immutable AABB bounds, strict intersection, per-axis displacement clipping and swept bounds.
+- `src/game/physics/world-collision.ts`: broad-phase collision queries from world data; unknown IDs and unloaded cells fail closed as solid cubes.
+- `src/game/physics/player-physics.ts`: fixed-step movement, gravity, grounded jump, diagonal speed normalization and collision response; it receives a collision provider and is not yet wired to the live renderer/input.
 - Unit tests run via `bun run test:game-core`.
 
 These primitives are not yet connected to Three.js and do not constitute complete player collision, rendering, generation or persistence.
