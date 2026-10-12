@@ -5,6 +5,7 @@
 - **Original Minecraft assets are authoritative.** Use the exact matching source file when it exists; do not recreate a texture, model, sprite, or font from memory.
 - **Canonical asset source:** `VoxelCraft/` contains the original resource-pack files used by the game.
 - **Code/behavior reference:** `rujukan/` is the first place to consult for original game architecture and behavior.
+- **Future game-logic reference:** `VanillaBehaviorPack/` is a retained submodule that will inform future game logic; do not remove it as unrelated tooling.
 - **Runtime copies:** `public/VoxelCraft/` is a staged subset for browser delivery. It is derived output, not the authoritative source.
 
 ## Rules when adding or changing assets
