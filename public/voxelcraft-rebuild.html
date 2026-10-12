@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VoxelCraft — Engine Rebuild Preview</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#8cc8f0;color:#fff}
+#game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}
+.panel{position:fixed;z-index:2;background:rgba(12,18,27,.68);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(12px);border-radius:12px;box-shadow:0 10px 36px #0002}
+#brand{top:16px;left:16px;padding:12px 15px;max-width:min(440px,calc(100vw - 32px))}
+#brand strong{display:block;font-size:14px;letter-spacing:.12em;text-transform:uppercase}
+#brand small{display:block;color:#c8d4e2;margin-top:4px;line-height:1.45}
+#status{top:16px;right:16px;padding:10px 12px;min-width:160px;text-align:right;font-size:12px;color:#dbeafe;line-height:1.7}
+#crosshair{position:fixed;z-index:2;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:none}
+#crosshair:before,#crosshair:after{content:"";position:absolute;background:#fff;box-shadow:0 0 2px #111}
+#crosshair:before{width:2px;height:18px;left:8px}#crosshair:after{height:2px;width:18px;top:8px}
+#hotbar{position:fixed;z-index:3;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:5px;padding:7px;background:rgba(12,18,27,.72);border:1px solid #ffffff35;border-radius:13px;max-width:calc(100vw - 20px)}
+.slot{position:relative;width:clamp(34px,5.3vw,54px);height:clamp(38px,5.8vw,58px);border:1px solid #ffffff35;border-radius:7px;background:#ffffff0c;color:white;display:grid;place-items:center;cursor:pointer}
+.slot.active{border:2px solid #fff;background:#ffffff25;box-shadow:0 0 0 2px #ffffff26}
+.swatch{width:23px;height:23px;border:1px solid #ffffff66;border-radius:4px;box-shadow:inset 0 3px #ffffff24,inset 0 -4px #0002}
+.slot .key{position:absolute;top:3px;left:5px;font-size:9px;color:#e2e8f0}
+.slot .count{position:absolute;right:4px;bottom:2px;font-size:11px;text-shadow:0 1px 3px #000}
+#help{bottom:96px;left:50%;transform:translateX(-50%);padding:9px 13px;color:#e2e8f0;font-size:11px;text-align:center;white-space:nowrap;max-width:calc(100vw - 24px)}
+#toast{position:fixed;z-index:4;left:50%;top:74px;transform:translateX(-50%);padding:8px 12px;background:#111d;border-radius:8px;font-size:12px;opacity:0;transition:opacity .15s;pointer-events:none}
+#toast.show{opacity:1}
+#loading{position:fixed;inset:0;z-index:10;display:grid;place-items:center;background:#101923;color:#fff;letter-spacing:.05em}
+#loading.hide{display:none}
+@media(max-width:600px){#brand{top:10px;left:10px;padding:9px 11px}#brand small{max-width:230px;font-size:10px}#status{top:10px;right:10px;min-width:0;padding:7px 9px;font-size:10px}#help{bottom:89px;font-size:10px;white-space:normal;width:calc(100vw - 28px)}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}
+</script>
+</head>
+<body>
+<div id="game"></div>
+<div id="brand" class="panel"><strong>VoxelCraft <span style="color:#8be0a5">/ Engine Preview</span></strong><small>Prototype runtime: world data, movement, collision, targeting, mining and placement use the rebuilt TypeScript engine.</small></div>
+<div id="status" class="panel">XYZ <b id="coords">—</b><br>Target <b id="target">none</b><br>Engine <b id="engineStatus">starting</b></div>
+<div id="crosshair"></div><div id="toast"></div>
+<div id="help" class="panel">Klik layar untuk mengunci mouse · WASD bergerak · Space lompat · Klik kiri tahan untuk menambang · Klik kanan untuk memasang blok · 1–9 pilih blok · Esc lepas mouse</div>
+<div id="hotbar" aria-label="Hotbar"></div>
+<div id="loading">Memuat engine voxel…</div>
+<script type="module">
+import * as THREE from 'three';
+import './voxelcraft-engine.bundle.js';
+
+const Engine = window.VoxelCraftEngine;
+const $ = id => document.getElementById(id);
+const loading = $('loading');
+const toastEl = $('toast');
+let toastTimer;
+function toast(message){toastEl.textContent=message;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),1500)}
+if (!Engine) throw new Error('VoxelCraft engine bundle did not expose VoxelCraftEngine');
+
+const engine = new Engine({dimensions:{chunkSizeX:16,height:32,chunkSizeZ:16},spawn:{x:8.5,y:3,z:8.5},inventorySlots:36});
+engine.loadChunk(0,0);
+const registry=engine.registry;
+const idFor=key=>{const id=registry.getIdByKey(key);if(id===undefined)throw new Error('Missing block definition: '+key);return id};
+const blockKeys=['minecraft:stone','minecraft:dirt','minecraft:grass_block','minecraft:cobblestone','minecraft:glass','minecraft:sand','minecraft:oak_planks','minecraft:bricks','minecraft:glowstone'];
+const blockColors={'minecraft:stone':0x888d95,'minecraft:dirt':0x8a5c3c,'minecraft:grass_block':0x65a94c,'minecraft:cobblestone':0x747b82,'minecraft:glass':0xb4e9ef,'minecraft:sand':0xd9c58c,'minecraft:oak_planks':0xb48a54,'minecraft:bricks':0x9e5748,'minecraft:glowstone':0xf7d783};
+blockKeys.forEach(key=>engine.inventory.setSlot(blockKeys.indexOf(key),{itemKey:key,count:key==='minecraft:stone'?64:32,maxStackSize:64}));
+for(let z=0;z<16;z++)for(let x=0;x<16;x++){
+  engine.world.setBlock({x,y:0,z},idFor('minecraft:stone'));
+  engine.world.setBlock({x,y:1,z},idFor('minecraft:dirt'));
+  engine.world.setBlock({x,y:2,z},idFor('minecraft:grass_block'));
+}
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x8cc8f0);scene.fog=new THREE.Fog(0x8cc8f0,22,58);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.08,160);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;
+$('game').appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xd7ecff,0x64523b,2.0));
+const sun=new THREE.DirectionalLight(0xfff1d6,2.4);sun.position.set(-15,28,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-24;sun.shadow.camera.right=24;sun.shadow.camera.top=24;sun.shadow.camera.bottom=-24;scene.add(sun);
+const worldGroup=new THREE.Group();scene.add(worldGroup);
+const cubeGeometry=new THREE.BoxGeometry(1,1,1);
+const materials=new Map();
+function materialFor(key){if(!materials.has(key)){materials.set(key,new THREE.MeshStandardMaterial({color:blockColors[key]??0xa0a0a0,roughness:key==='minecraft:glass'?.22:.92,metalness:0,transparent:key==='minecraft:glass',opacity:key==='minecraft:glass'?.48:1}))}return materials.get(key)}
+const meshByPosition=new Map();
+function rebuildWorldMeshes(){
+  worldGroup.clear();meshByPosition.clear();
+  for(let y=0;y<engine.world.dimensions.height;y++)for(let z=0;z<16;z++)for(let x=0;x<16;x++){
+    const id=engine.world.getBlock(x,y,z);if(id===undefined||id===0)continue;
+    const def=registry.getById(id);if(!def)continue;
+    const key=def.key;const mesh=new THREE.Mesh(cubeGeometry,materialFor(key));mesh.position.set(x+.5,y+.5,z+.5);mesh.castShadow=def.solid;mesh.receiveShadow=true;mesh.userData.block={x,y,z};
+    worldGroup.add(mesh);meshByPosition.set(x+','+y+','+z,mesh);
+  }
+}
+rebuildWorldMeshes();
+const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.006,1.006,1.006)),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.95}));
+outline.visible=false;scene.add(outline);
+const keyDown=new Set();let yaw=0,pitch=0,jumpQueued=false,miningHeld=false,lastTime=performance.now(),frames=0,fps=0,fpsElapsed=0;
+const moveKeys=new Set(['KeyW','KeyA','KeyS','KeyD','Space','ShiftLeft','ShiftRight','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
+function getViewDirection(){return new THREE.Vector3(0,0,-1).applyEuler(camera.rotation).normalize()}
+function currentTarget(){return engine.target({x:camera.position.x,y:camera.position.y,z:camera.position.z},getViewDirection(),6)}
+function updateHotbar(){
+  const root=$('hotbar');root.innerHTML='';
+  for(let i=0;i<9;i++){const stack=engine.inventory.getSlot(i);const key=stack?.itemKey??'';const slot=document.createElement('button');slot.type='button';slot.className='slot'+(i===engine.selectedSlot?' active':'');slot.setAttribute('aria-label','Slot '+(i+1)+' '+(key||'kosong'));slot.innerHTML='<span class="key">'+(i+1)+'</span><span class="swatch" style="background:#'+(blockColors[key]??0x242b34).toString(16).padStart(6,'0')+'"></span><span class="count">'+(stack?.count??'')+'</span>';slot.addEventListener('click',()=>{engine.selectSlot(i);updateHotbar()});root.appendChild(slot)}
+}
+updateHotbar();
+function showPosition(){const p=engine.player.state.position;$('coords').textContent=Math.floor(p.x)+', '+Math.floor(p.y)+', '+Math.floor(p.z)}
+function updateCamera(){const p=engine.player.state.position;camera.position.set(p.x,p.y+1.62,p.z);camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0,'YXZ')}
+function rebuildAfterMutation(){rebuildWorldMeshes();updateHotbar()}
+function onPointerDown(event){
+  if(document.pointerLockElement!==renderer.domElement){renderer.domElement.requestPointerLock?.();return}
+  if(event.button===0){const hit=currentTarget();if(hit.status==='hit'){const result=engine.startMining(hit.block);if(result.status==='started'){miningHeld=true;toast('Menambang '+(registry.getById(hit.blockId)?.displayName??'blok'))}else toast('Blok tidak dapat ditambang')}}
+  else if(event.button===2){const hit=currentTarget();if(hit.status!=='hit'){toast('Tidak ada blok yang ditarget');return}const result=engine.placeSelected(hit);if(result.status==='placed'){rebuildAfterMutation();toast('Blok dipasang')}else toast('Tidak dapat memasang: '+result.status)}
+}
+renderer.domElement.addEventListener('pointerdown',onPointerDown);
+window.addEventListener('pointerup',event=>{if(event.button===0&&miningHeld){miningHeld=false;engine.cancelMining()}});
+renderer.domElement.addEventListener('contextmenu',event=>event.preventDefault());
+document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==renderer.domElement)return;yaw-=event.movementX*.0022;pitch-=event.movementY*.0022;pitch=Math.max(-Math.PI*.49,Math.min(Math.PI*.49,pitch))});
+document.addEventListener('keydown',event=>{
+  if(moveKeys.has(event.code))event.preventDefault();
+  keyDown.add(event.code);
+  if(event.code==='Space'&&!event.repeat)jumpQueued=true;
+  if(/^Digit[1-9]$/.test(event.code)){engine.selectSlot(Number(event.code.slice(5))-1);updateHotbar()}
+});
+document.addEventListener('keyup',event=>keyDown.delete(event.code));
+document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement!==renderer.domElement&&miningHeld){miningHeld=false;engine.cancelMining()}});
+window.addEventListener('blur',()=>{keyDown.clear();if(miningHeld){miningHeld=false;engine.cancelMining()}});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,2))});
+function animate(now){
+  requestAnimationFrame(animate);
+  const dt=Math.min(.25,Math.max(0,(now-lastTime)/1000));lastTime=now;
+  const forward=(keyDown.has('KeyW')||keyDown.has('ArrowUp')?1:0)-(keyDown.has('KeyS')||keyDown.has('ArrowDown')?1:0);
+  const strafe=(keyDown.has('KeyD')||keyDown.has('ArrowRight')?1:0)-(keyDown.has('KeyA')||keyDown.has('ArrowLeft')?1:0);
+  const moveX=(-Math.sin(yaw)*forward+Math.cos(yaw)*strafe);
+  const moveZ=(-Math.cos(yaw)*forward-Math.sin(yaw)*strafe);
+  engine.step(dt,{moveX,moveZ,jump:jumpQueued});jumpQueued=false;updateCamera();
+  const target=currentTarget();$('target').textContent=target.status==='hit'?(registry.getById(target.blockId)?.displayName??'blok'):(target.status==='unloaded'?'chunk unloaded':'none');
+  if(target.status==='hit'){outline.visible=true;outline.position.set(target.block.x+.5,target.block.y+.5,target.block.z+.5)}else outline.visible=false;
+  if(miningHeld){
+    const result=engine.advanceMining(dt,target.status==='hit'?target.block:null);
+    if(result.status==='broken'){miningHeld=false;rebuildAfterMutation();toast('Blok dihancurkan')}
+    else if(result.status==='cancelled'){miningHeld=false;toast('Penambangan dibatalkan')}
+  }
+  frames++;fpsElapsed+=dt;if(fpsElapsed>=.5){fps=Math.round(frames/fpsElapsed);frames=0;fpsElapsed=0}
+  showPosition();$('engineStatus').textContent=fps+' FPS';
+  renderer.render(scene,camera);
+}
+updateCamera();$('engineStatus').textContent='ready';loading.classList.add('hide');toast('Engine aktif — klik layar untuk mulai');requestAnimationFrame(animate);
+</script>
+</body>
+</html>
