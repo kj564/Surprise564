@@ -118,6 +118,29 @@ describe('VoxelCraftEngine composition root', () => {
     if (!restored.ok) expect(restored.errors.length).toBeGreaterThan(0);
   });
 
+
+  test('round-trips authoritative world, inventory and camera view through validated save data', () => {
+    const engine = makeGroundedEngine();
+    engine.world.setBlock({ x: 2, y: 2, z: 2 }, 1);
+    engine.inventory.setSlot(0, { itemKey: 'minecraft:stone', count: 12, maxStackSize: 64 });
+    const save = engine.createSave({
+      name: 'test world', seed: 123, createdAt: '2026-10-12T00:00:00.000Z',
+      updatedAt: '2026-10-12T00:01:00.000Z', generatorVersion: 1,
+    }, { yaw: 1.25, pitch: -0.2 });
+    const restored = VoxelCraftEngine.fromSave(save);
+    expect(restored.ok).toBe(true);
+    if (!restored.ok) return;
+    expect(restored.engine.world.getBlock(2, 2, 2)).toBe(1);
+    expect(restored.engine.inventory.getSlot(0)?.count).toBe(12);
+    expect(restored.engine.player.state.position).toEqual(engine.player.state.position);
+    expect(restored.view).toEqual({ yaw: 1.25, pitch: -0.2 });
+  });
+
+  test('rejects invalid save data without creating a partial engine', () => {
+    const restored = VoxelCraftEngine.fromSave({ format: 'not-a-world' });
+    expect(restored.ok).toBe(false);
+  });
+
   test('validates hotbar selection bounds', () => {
     const engine = makeGroundedEngine();
     engine.selectSlot(8);
