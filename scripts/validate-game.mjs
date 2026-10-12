@@ -61,6 +61,13 @@ if (!source.includes("@font-face") ||
   fail('Browser UI must use the original Bedrock Minecraft Ten font');
 } else pass('Browser UI references the original Bedrock Minecraft Ten font');
 
+if (source.includes("body { cursor: url('./VoxelCraft/textures/ui/cursor_pc.png') 4 4, auto; }") &&
+    source.includes('#game { cursor: none; }')) {
+  pass('Browser pointer uses the original Bedrock cursor outside the 3D viewport');
+} else {
+  fail('Browser pointer must use the staged original Bedrock cursor');
+}
+
 if (source.includes('#overlay .brand {') &&
     source.includes('top: 12px;') &&
     source.includes('left: 50%;') &&
@@ -117,7 +124,7 @@ const vanillaUiTextures = [
   'background_panel', 'background_with_border', 'button_borderless_dark',
   'button_borderless_darkhover', 'button_borderless_darkpressed',
   'dialog_background_opaque', 'highlight_slot', 'hotbar_start_cap', 'hotbar_end_cap', 'cancel', 'inventory_icon',
-  'hud_tip_text_background', 'item_cell',
+  'hud_tip_text_background', 'item_cell', 'cursor_pc',
   'TabTopBack', 'TabTopBackHover', 'TabTopFront', 'TabTopFrontHover',
 ];
 for (const texture of vanillaUiTextures) {
