@@ -1434,10 +1434,32 @@
       ensureChunk(cx, cz) {
         const k = chunkKey(cx, cz);
         let c = this.chunks.get(k);
-        if (!c) { c = new Chunk(cx, cz); this.generate(c); this.chunks.set(k, c); }
+        if (!c) {
+          c = new Chunk(cx, cz);
+          this.generate(c);
+          this.chunks.set(k, c);
+          // A newly loaded neighbor can hide faces that were previously exposed.
+          // Mark only already-loaded neighbors dirty so their meshes are rebuilt.
+          this.invalidateChunk(cx - 1, cz);
+          this.invalidateChunk(cx + 1, cz);
+          this.invalidateChunk(cx, cz - 1);
+          this.invalidateChunk(cx, cz + 1);
+        }
         return c;
       }
       getChunk(cx, cz) { return this.chunks.get(chunkKey(cx, cz)); }
+      getBlockIfLoaded(x, y, z) {
+        if (![x, y, z].every(Number.isFinite)) return 0;
+        x = Math.floor(x); y = Math.floor(y); z = Math.floor(z);
+        if (!Number.isSafeInteger(x) || !Number.isSafeInteger(z)) return 0;
+        if (y < 0) return 11;
+        if (y >= CHUNK_Y) return 0;
+        const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
+        const c = this.getChunk(cx, cz);
+        if (!c) return 0;
+        const lx = x - cx * CHUNK_X, lz = z - cz * CHUNK_Z;
+        return c.get(lx, y, lz);
+      }
       getBlock(x, y, z) {
         if (![x, y, z].every(Number.isFinite)) return 0;
         x = Math.floor(x); y = Math.floor(y); z = Math.floor(z);
@@ -1642,7 +1664,7 @@
             for (let f = 0; f < 6; f++) {
               const face = FACES[f];
               const nx = x + face.dir[0], ny = y + face.dir[1], nz = z + face.dir[2];
-              const nId = world.getBlock(baseX + nx, ny, baseZ + nz);
+              const nId = world.getBlockIfLoaded(baseX + nx, ny, baseZ + nz);
 
               // Draw face if neighbor is air, or neighbor is transparent and different type
               let draw = false;
