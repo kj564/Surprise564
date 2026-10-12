@@ -328,6 +328,18 @@ if (!source.includes('Number.isFinite')) fail('World coordinate APIs must reject
 else pass('World coordinate APIs guard non-finite coordinates');
 if (!source.includes('!Number.isSafeInteger(x) || !Number.isSafeInteger(z)')) fail('World coordinate APIs must reject unsafe integer coordinates');
 else pass('World coordinate APIs reject unsafe integer coordinates');
+
+if (!source.includes('getBlockIfLoaded(x, y, z)') ||
+    !source.includes('world.getBlockIfLoaded(baseX + nx, ny, baseZ + nz)')) {
+  fail('Chunk meshing must inspect loaded neighbors without implicitly generating chunks outside the render window');
+} else pass('Chunk meshing reads loaded neighbors without generating hidden chunks');
+
+if (!source.includes('this.invalidateChunk(cx - 1, cz);') ||
+    !source.includes('this.invalidateChunk(cx + 1, cz);') ||
+    !source.includes('this.invalidateChunk(cx, cz - 1);') ||
+    !source.includes('this.invalidateChunk(cx, cz + 1);')) {
+  fail('Loading a chunk must invalidate loaded neighbors so boundary faces are remeshed');
+} else pass('New chunks invalidate loaded neighbors for correct boundary remeshing');
 if (!source.includes('!Object.prototype.hasOwnProperty.call(BLOCKS, v)')) fail('World.setBlock must reject unknown block IDs');
 else pass('World.setBlock rejects unknown block IDs');
 if (!source.includes('invalidateChunk(cx - 1, cz)') ||
