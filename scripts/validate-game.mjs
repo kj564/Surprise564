@@ -595,6 +595,19 @@ if (source.includes('// Match the reference LevelChunk behavior: identical write
   fail('World.setBlock must skip unchanged values, following the reference LevelChunk no-op behavior');
 }
 
+if (!source.includes('const ATLAS_COLS = 16, ATLAS_ROWS = 9, TILE_PX = 16;') ||
+    !source.includes('for (const id of Object.keys(BLOCKS).map(Number).filter(id => id > 0).sort((a, b) => a - b))')) {
+  fail('Expanded block catalog must fit its atlas and drive inventory enumeration from BLOCKS');
+} else pass('Expanded block catalog uses a capacity-checked atlas and data-driven inventory enumeration');
+
+const expandedBlockNames = ['Cobblestone Berlumut', 'Batu Pasir', 'TNT', 'Melon', 'Blok Kuarsa', 'Prismarine', 'Blok Tembaga', 'Blok Amethyst', 'Deepslate', 'Bata Tuf'];
+for (const name of expandedBlockNames) {
+  if (!blockSource.includes("name:'" + name + "'")) fail('Expanded placeable block is missing: ' + name);
+}
+if (expandedBlockNames.every(name => blockSource.includes("name:'" + name + "'"))) {
+  pass('Expanded placeable block catalog includes representative classic and modern solid cubes');
+}
+
 const oreGenerationSource = source.match(/\/\/ ores in stone layer[\s\S]*?\/\/ === Phase 1C: stone variant patches/)?.[0] || '';
 if (oreGenerationSource.includes('c.set(lx, y, lz, 24);  // lapis ore (deep; BLOCKS[24])') &&
     oreGenerationSource.includes('c.set(lx, y, lz, 28);  // emerald ore (very rare; BLOCKS[28])') &&
