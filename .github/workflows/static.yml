@@ -1,4 +1,4 @@
-name: Deploy Minecraft-only site to GitHub Pages
+name: Build and deploy VoxelCraft browser game to GitHub Pages
 
 on:
   push:
@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Stage vanilla assets used by the browser game
         run: |
@@ -54,7 +56,7 @@ jobs:
             cp "$src" "public/VoxelCraft/textures/blocks/${name}.png"
           done
 
-      - name: Stage vanilla Bedrock UI sprites
+      - name: Stage original UI sprites used by the browser game
         run: |
           mkdir -p public/VoxelCraft/textures/ui
           ui_textures=(
@@ -70,7 +72,7 @@ jobs:
             cp "$src" "public/VoxelCraft/textures/ui/${name}.png"
           done
 
-      - name: Stage original Bedrock newgui button sprites
+      - name: Stage original game menu button sprites
         run: |
           mkdir -p public/VoxelCraft/textures/gui/newgui
           gui_textures=(ButtonWithBorder ButtonWithBorderHover ButtonWithBorderPressed)
@@ -80,7 +82,7 @@ jobs:
             cp "$src" "public/VoxelCraft/textures/gui/newgui/${name}.png"
           done
 
-      - name: Stage Behavior Pack ActionForm icons
+      - name: Stage original item sprites used by browser-game UI
         run: |
           mkdir -p public/VoxelCraft/textures/items
           item_textures=(book_writable apple feather clock_item bed_red compass_item book_normal brick diamond)
@@ -90,7 +92,7 @@ jobs:
             cp "$src" "public/VoxelCraft/textures/items/${name}.png"
           done
 
-      - name: Stage original Bedrock Minecraft Ten font
+      - name: Stage original Minecraft UI font
         run: |
           test -f VoxelCraft/font/minecraft-ten.ttf
           mkdir -p public/VoxelCraft/font
