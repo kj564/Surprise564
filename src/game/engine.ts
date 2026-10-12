@@ -7,7 +7,7 @@ import { raycastVoxels, type RayVector, type VoxelRayHit, type VoxelRayResult } 
 import { Aabb } from './physics/aabb';
 import { PlayerPhysics, type PlayerInput, type PlayerPhysicsState, type PlayerPosition } from './physics/player-physics';
 import { queryCollisionBoxes } from './physics/world-collision';
-import { createWorldSave, type PlayerSnapshot, type SaveMetadataInput } from './persistence/world-save';
+import { createWorldSave, restoreWorldSave, type PlayerSnapshot, type SaveMetadataInput } from './persistence/world-save';
 import { ChunkData } from './world/chunk';
 import { VoxelWorld, type BlockPosition, type WorldDimensions } from './world/world';
 
@@ -27,6 +27,32 @@ export class VoxelCraftEngine {
   readonly clock: FixedStepClock;
   private miningSession: MiningSession | null = null;
   private selectedSlotValue = 0;
+
+  /** Restores a validated save into a fresh engine; corrupt input never partially mutates an existing engine. */
+  static fromSave(input: unknown):
+    | { readonly ok: true; readonly engine: VoxelCraftEngine; readonly view: { readonly yaw: number; readonly pitch: number } }
+    | { readonly ok: false; readonly errors: readonly string[] } {
+    const result = restoreWorldSave(input);
+    if (!result.ok) return result;
+
+    const { save, world, inventory, player } = result.restored;
+    const engine = new VoxelCraftEngine({
+      dimensions: save.dimensions,
+      spawn: player.position,
+      inventorySlots: inventory.size,
+    });
+    for (const chunk of world.exportChunks()) {
+      engine.loadChunk(chunk.x, chunk.z, chunk.blocks);
+    }
+    inventory.snapshot().forEach((stack, index) => {
+      if (stack) engine.inventory.setSlot(index, stack);
+    });
+    return Object.freeze({
+      ok: true,
+      engine,
+      view: Object.freeze({ yaw: player.yaw, pitch: player.pitch }),
+    });
+  }
 
   constructor(options: VoxelCraftEngineOptions = {}) {
     this.registry = options.registry ?? defaultBlockRegistry;
