@@ -61,7 +61,7 @@ jobs:
             menubackground background_panel background_with_border button_borderless_dark
             button_borderless_darkhover button_borderless_darkpressed dialog_background_opaque
             highlight_slot hotbar_start_cap hotbar_end_cap cancel inventory_icon
-            hud_tip_text_background item_cell
+            hud_tip_text_background item_cell cursor_pc
             TabTopBack TabTopBackHover TabTopFront TabTopFrontHover
           )
           for name in "${ui_textures[@]}"; do
@@ -147,6 +147,7 @@ jobs:
           test -f out/VoxelCraft/textures/items/brick.png
           test -f out/VoxelCraft/textures/items/diamond.png
           test -f out/VoxelCraft/textures/ui/item_cell.png
+          test -f out/VoxelCraft/textures/ui/cursor_pc.png
           test -f out/VoxelCraft/textures/ui/TabTopBack.png
           test -f out/VoxelCraft/textures/ui/TabTopBackHover.png
           test -f out/VoxelCraft/textures/ui/TabTopFront.png
