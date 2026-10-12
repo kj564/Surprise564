@@ -334,10 +334,12 @@ if (!source.includes('getBlockIfLoaded(x, y, z)') ||
   fail('Chunk meshing must inspect loaded neighbors without implicitly generating chunks outside the render window');
 } else pass('Chunk meshing reads loaded neighbors without generating hidden chunks');
 
-if (!source.includes('this.invalidateChunk(cx - 1, cz);') ||
-    !source.includes('this.invalidateChunk(cx + 1, cz);') ||
-    !source.includes('this.invalidateChunk(cx, cz - 1);') ||
-    !source.includes('this.invalidateChunk(cx, cz + 1);')) {
+const ensureChunkBody = source.match(/ensureChunk\(cx, cz\)\s*\{([\s\S]*?)\n      getChunk\(/)?.[1] || '';
+if (!ensureChunkBody.includes('this.chunks.set(k, c);') ||
+    !ensureChunkBody.includes('this.invalidateChunk(cx - 1, cz);') ||
+    !ensureChunkBody.includes('this.invalidateChunk(cx + 1, cz);') ||
+    !ensureChunkBody.includes('this.invalidateChunk(cx, cz - 1);') ||
+    !ensureChunkBody.includes('this.invalidateChunk(cx, cz + 1);')) {
   fail('Loading a chunk must invalidate loaded neighbors so boundary faces are remeshed');
 } else pass('New chunks invalidate loaded neighbors for correct boundary remeshing');
 if (!source.includes('!Object.prototype.hasOwnProperty.call(BLOCKS, v)')) fail('World.setBlock must reject unknown block IDs');
