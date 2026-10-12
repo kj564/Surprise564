@@ -1,12 +1,14 @@
 import { VoxelCraftEngine } from './engine';
 import { ChunkMeshCache } from './rendering/chunk-mesh-cache';
 import { generateTerrainChunk } from './world/terrain-generator';
+import { ensureTerrainNeighborhood } from './world/terrain-streaming';
 
 declare global {
   interface Window {
     VoxelCraftEngine: typeof VoxelCraftEngine;
     VoxelCraftCreateMeshCache: (engine: VoxelCraftEngine) => ChunkMeshCache;
     VoxelCraftGenerateTerrainChunk: typeof generateTerrainChunk;
+    VoxelCraftEnsureTerrainNeighborhood: typeof ensureTerrainNeighborhood;
   }
 }
 
@@ -15,3 +17,4 @@ declare global {
 window.VoxelCraftEngine = VoxelCraftEngine;
 window.VoxelCraftCreateMeshCache = engine => new ChunkMeshCache(engine.world, engine.registry);
 window.VoxelCraftGenerateTerrainChunk = generateTerrainChunk;
+window.VoxelCraftEnsureTerrainNeighborhood = ensureTerrainNeighborhood;
