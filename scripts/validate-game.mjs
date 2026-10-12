@@ -479,6 +479,18 @@ if (/x < 0 \|\| x >= CHUNK_X/.test(chunkGetSource) &&
   fail('Chunk voxel reads/writes must validate x/y/z bounds and block id range before indexing typed storage');
 }
 
+// Saved voxel edits must be indexed per chunk so chunk generation scales with
+// edits in that chunk rather than scanning the entire world-save map.
+if (source.includes('this.chunkOverrides = new Map()') &&
+    source.includes('this.indexOverride(x, y, z, id)') &&
+    source.includes('this.indexOverride(x, y, z, v)') &&
+    source.includes('const chunkEdits = this.chunkOverrides.get(chunkKey(c.cx, c.cz))') &&
+    !source.includes('for (const [key, id] of this.overrides)')) {
+  pass('Saved voxel edits are indexed by chunk for bounded chunk-generation work');
+} else {
+  fail('Chunk generation must apply only edits indexed for that chunk, not scan every saved world edit');
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
