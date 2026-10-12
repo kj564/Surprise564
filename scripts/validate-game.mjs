@@ -90,6 +90,17 @@ if (!source.includes('const clockMinutes = Math.floor((((worldTime % 1) + 1) % 1
   fail('Browser HUD must show a live HH:mm clock in the browser runtime');
 } else pass('Browser HUD shows a live HH:mm clock in the browser runtime');
 
+if (source.includes('body[data-ui-screen="inventory"] #overlay') &&
+    source.includes('body[data-ui-screen="inventory"] #pauseOverlay') &&
+    source.includes('body[data-ui-screen="inventory"] #vcGuide') &&
+    source.includes('body[data-ui-screen="inventory"] #inventory') &&
+    source.includes('display: none !important;') &&
+    source.includes('z-index: 1000;')) {
+  pass('Inventory screen cannot be covered by title, pause, or guide overlays');
+} else {
+  fail('Inventory screen must hide competing overlays and remain on top while active');
+}
+
 if (source.includes('id="pauseOverlay"') && source.includes('id="resumeGameButton"') &&
     source.includes('function syncMenuVisibility()') && source.includes("function getActiveUiScreen()") &&
     source.includes("document.body.dataset.uiScreen = activeScreen") &&
