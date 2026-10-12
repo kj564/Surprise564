@@ -47,6 +47,7 @@ import './voxelcraft-engine.bundle.js';
 
 const Engine = window.VoxelCraftEngine;
 const generateTerrainChunk = window.VoxelCraftGenerateTerrainChunk;
+const ensureTerrainNeighborhood = window.VoxelCraftEnsureTerrainNeighborhood;
 const $ = id => document.getElementById(id);
 const loading = $('loading');
 const toastEl = $('toast');
@@ -55,8 +56,9 @@ function toast(message){toastEl.textContent=message;toastEl.classList.add('show'
 if (!Engine) throw new Error('VoxelCraft engine bundle did not expose VoxelCraftEngine');
 
 let engine = new Engine({dimensions:{chunkSizeX:16,height:32,chunkSizeZ:16},spawn:{x:8.5,y:24,z:8.5},inventorySlots:36});
-if(!generateTerrainChunk)throw new Error('Seeded terrain generator bundle is missing');
+if(!generateTerrainChunk||!ensureTerrainNeighborhood)throw new Error('Seeded terrain streaming bundle is missing');
 for(let cz=-1;cz<=1;cz++)for(let cx=-1;cx<=1;cx++)generateTerrainChunk(engine.world,cx,cz,{seed:564});
+let lastChunkX=Math.floor(engine.player.state.position.x/16),lastChunkZ=Math.floor(engine.player.state.position.z/16);
 const registry=engine.registry;
 let meshCache=window.VoxelCraftCreateMeshCache(engine);
 const idFor=key=>{const id=registry.getIdByKey(key);if(id===undefined)throw new Error('Missing block definition: '+key);return id};
@@ -217,7 +219,7 @@ function animate(now){
   const strafe=(keyDown.has('KeyD')||keyDown.has('ArrowRight')?1:0)-(keyDown.has('KeyA')||keyDown.has('ArrowLeft')?1:0);
   const moveX=(-Math.sin(yaw)*forward+Math.cos(yaw)*strafe);
   const moveZ=(-Math.cos(yaw)*forward-Math.sin(yaw)*strafe);
-  const simulation=engine.step(dt,{moveX,moveZ,jump:jumpQueued});if(simulation.clock.steps>0)jumpQueued=false;updateCamera();
+  const simulation=engine.step(dt,{moveX,moveZ,jump:jumpQueued});if(simulation.clock.steps>0)jumpQueued=false;\n  const playerPosition=simulation.player.position;const chunkX=Math.floor(playerPosition.x/engine.world.dimensions.chunkSizeX),chunkZ=Math.floor(playerPosition.z/engine.world.dimensions.chunkSizeZ);\n  if(chunkX!==lastChunkX||chunkZ!==lastChunkZ){lastChunkX=chunkX;lastChunkZ=chunkZ;const streamed=ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:564,radius:1});if(streamed.generated.length){rebuildWorldMeshes();toast('Area baru dimuat')}}\n  updateCamera();
   const target=currentTarget();$('target').textContent=target.status==='hit'?(registry.getById(target.blockId)?.displayName??'blok'):(target.status==='unloaded'?'chunk unloaded':'none');
   if(target.status==='hit'){outline.visible=true;outline.position.set(target.block.x+.5,target.block.y+.5,target.block.z+.5)}else outline.visible=false;
   if(miningHeld){
