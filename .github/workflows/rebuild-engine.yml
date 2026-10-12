@@ -45,3 +45,4 @@ jobs:
           grep -q 'VoxelCraftEngine' public/voxelcraft-engine.bundle.js
           test -s out/voxelcraft-engine.bundle.js
           test -s out/voxelcraft-rebuild.html
+          bun run validate:voxel-preview
