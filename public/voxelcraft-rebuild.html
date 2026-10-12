@@ -58,7 +58,8 @@ if (!Engine) throw new Error('VoxelCraft engine bundle did not expose VoxelCraft
 let engine = new Engine({dimensions:{chunkSizeX:16,height:32,chunkSizeZ:16},spawn:{x:8.5,y:24,z:8.5},inventorySlots:36});
 if(!generateTerrainChunk||!ensureTerrainNeighborhood)throw new Error('Seeded terrain streaming bundle is missing');
 for(let cz=-1;cz<=1;cz++)for(let cx=-1;cx<=1;cx++)generateTerrainChunk(engine.world,cx,cz,{seed:564});
-let lastChunkX=Math.floor(engine.player.state.position.x/16),lastChunkZ=Math.floor(engine.player.state.position.z/16);\nlet worldCreatedAt=new Date().toISOString();
+let lastChunkX=Math.floor(engine.player.state.position.x/16),lastChunkZ=Math.floor(engine.player.state.position.z/16);
+let worldCreatedAt=new Date().toISOString();
 const registry=engine.registry;
 let meshCache=window.VoxelCraftCreateMeshCache(engine);
 const idFor=key=>{const id=registry.getIdByKey(key);if(id===undefined)throw new Error('Missing block definition: '+key);return id};
@@ -192,9 +193,13 @@ function loadWorld(){
   try{
     const raw=localStorage.getItem('voxelcraft.rebuild.save.v1');
     if(!raw){toast('Belum ada simpanan dunia');return}
-    const result=Engine.fromSave(JSON.parse(raw));
+    const parsedSave=JSON.parse(raw);
+    const result=Engine.fromSave(parsedSave);
     if(!result.ok){toast('Simpanan tidak valid: '+result.errors[0]);return}
     engine=result.engine;yaw=result.view.yaw;pitch=result.view.pitch;
+    worldCreatedAt=parsedSave.metadata.createdAt;
+    const restoredPosition=engine.player.state.position;
+    ensureTerrainNeighborhood(engine.world,restoredPosition.x,restoredPosition.z,{seed:parsedSave.metadata.seed,radius:1});
     meshCache=window.VoxelCraftCreateMeshCache(engine);
     rebuildWorldMeshes();updateHotbar();updateCamera();
     toast('Dunia berhasil dimuat');
