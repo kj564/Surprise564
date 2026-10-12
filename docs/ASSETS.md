@@ -3,7 +3,7 @@
 ## Source of truth
 
 - **Original Minecraft assets are authoritative.** Use the exact matching source file when it exists; do not recreate a texture, model, sprite, or font from memory.
-- **Canonical asset source:** `VoxelCraft/` contains the original resource-pack files used by the game.
+- **Resource Pack upstream:** [ZtechNetwork/MCBVanillaResourcePack](https://github.com/ZtechNetwork/MCBVanillaResourcePack). `VoxelCraft/` is the checked-in mirror/snapshot used by local setup and CI.
 - **Code/behavior reference:** `rujukan/` is the first place to consult for original game architecture and behavior.
 - **Future game-logic reference:** `VanillaBehaviorPack/` is a retained submodule that will inform future game logic; do not remove it as unrelated tooling.
 - **Runtime copies:** `public/VoxelCraft/` is a staged subset for browser delivery. It is derived output, not the authoritative source.
@@ -22,7 +22,7 @@
 ## Current asset flow
 
 ```text
-VoxelCraft/ (canonical original resource-pack files)
+MCBVanillaResourcePack (upstream) → VoxelCraft/ (checked-in mirror)
         │
         ├── scripts/setup.sh
         └── .github/workflows/static.yml
