@@ -1,25 +1,23 @@
-# Rujukan: Minecraft Pocket Edition 2013
+# Rujukan: Pocket Edition 2013
 
-Referensi metadata untuk arsip **Minecraft Pocket Edition 0.6.1 (8 Februari 2013)**. Kode sumber tidak disalin ke repositori ini karena sumber mengidentifikasikannya sebagai kode bocor dan lisensi redistribusinya tidak jelas.
+Folder ini mencatat sumber referensi **Minecraft Pocket Edition 0.6.1 (8 Februari 2013)** dan memuat proyek belajar C++ yang ditulis mandiri.
 
-## Sumber
+## Struktur
 
-- [Direktori upstream](https://github.com/M2noa/MCLCE-Archive/tree/master/pocket-edition-2013)
+- pocket-edition-2013/README.md — batasan dan cara membangun proyek clean-room.
+- pocket-edition-2013/mcpe-source/ — implementasi orisinal untuk mempelajari arsitektur game voxel, bukan source Minecraft.
+- [Sumber referensi upstream](https://github.com/M2noa/MCLCE-Archive/tree/master/pocket-edition-2013)
 - [README upstream](https://github.com/M2noa/MCLCE-Archive/blob/master/pocket-edition-2013/README.md)
-- [Konteks dan atribusi](https://github.com/M2noa/MCLCE-Archive/blob/master/WIKI_Credits.md)
 
-## Metadata
+## Kenapa source upstream tidak disalin?
 
-- Versi: `0.6.1`
-- Bahasa: C++
-- Platform yang disebut upstream: Android, iOS, Raspberry Pi, Windows x86
+Repositori upstream tidak menyatakan lisensi redistribusi yang jelas untuk source tersebut dan mengidentifikasikannya sebagai kode bocor. Karena itu, folder ini tidak menyalin source atau aset proprietary. Struktur proyek yang ditambahkan di sini merupakan implementasi mandiri untuk belajar, bukan salinan arsip upstream.
 
-Untuk mengambil direktori referensi dari upstream, jalankan:
+## Build proyek belajar
 
-```bash
-git clone --depth 1 --filter=blob:none --sparse https://github.com/M2noa/MCLCE-Archive.git
-cd MCLCE-Archive
-git sparse-checkout set pocket-edition-2013
-```
+    cd pocket-edition-2013/mcpe-source
+    cmake -S . -B build
+    cmake --build build
+    ctest --test-dir build --output-on-failure
 
-Periksa izin dan lisensi sebelum menggunakan atau mendistribusikan materi dari sumber eksternal.
+Untuk instruksi lengkap dan perintah prototipe, baca [README proyek](pocket-edition-2013/mcpe-source/README.md).
