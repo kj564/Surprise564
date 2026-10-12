@@ -1,16 +1,20 @@
-# Rujukan: MCLCE Archive
+# Rujukan: Minecraft Pocket Edition 2013
 
-Folder ini menjadi indeks rujukan untuk proyek **MCLCE-Archive**.
+Referensi metadata untuk arsip **Minecraft Pocket Edition 0.6.1 (8 Februari 2013)**. Kode sumber tidak disalin ke repositori ini karena sumber mengidentifikasikannya sebagai kode bocor dan lisensi redistribusinya tidak jelas.
 
-## Sumber utama
+## Sumber
 
-- Repository upstream: https://github.com/M2noa/MCLCE-Archive
-- Dokumentasi Console Edition: https://github.com/M2noa/MCLCE-Archive/blob/master/WIKI_Console_Edition.md
-- Dokumentasi dan atribusi: https://github.com/M2noa/MCLCE-Archive/blob/master/WIKI_Credits.md
+- [Direktori upstream](https://github.com/M2noa/MCLCE-Archive/tree/master/pocket-edition-2013)
+- [README upstream](https://github.com/M2noa/MCLCE-Archive/blob/master/pocket-edition-2013/README.md)
+- [Konteks dan atribusi](https://github.com/M2noa/MCLCE-Archive/blob/master/WIKI_Credits.md)
 
-## Mengambil direktori `pocket-edition-2013`
+## Metadata
 
-Jalankan perintah berikut secara berurutan di terminal Git yang mendukung sparse checkout:
+- Versi: `0.6.1`
+- Bahasa: C++
+- Platform yang disebut upstream: Android, iOS, Raspberry Pi, Windows x86
+
+Untuk mengambil direktori referensi dari upstream, jalankan:
 
 ```bash
 git clone --depth 1 --filter=blob:none --sparse https://github.com/M2noa/MCLCE-Archive.git
@@ -18,18 +22,4 @@ cd MCLCE-Archive
 git sparse-checkout set pocket-edition-2013
 ```
 
-Perintah tersebut mengkloning riwayat secara dangkal, menunda pengambilan blob yang tidak diperlukan, lalu memilih direktori `pocket-edition-2013` saja untuk checkout.
-
-## Struktur rujukan
-
-Arsip upstream mencakup beberapa koleksi besar. Buka repository sumber untuk melihat struktur folder, dokumentasi, dan petunjuk pengambilan tiap bagian. Gunakan indeks ini sebagai titik masuk dan catat ringkasan atau catatan teknis yang memang diperlukan di sini.
-
-## Catatan penggunaan
-
-Periksa hak penggunaan, lisensi, dan status setiap komponen sebelum mengunduh, menyalin, atau mengintegrasikannya ke proyek lain. Hindari mendistribusikan ulang materi yang tidak memiliki izin atau hak penggunaan yang jelas.
-
-## Tata letak yang disarankan
-
-- `README.md` — indeks sumber dan panduan navigasi.
-- `notes/` — catatan analisis yang ditulis sendiri, jika diperlukan.
-- `references/` — tautan dan metadata rujukan tambahan, jika diperlukan.
+Periksa izin dan lisensi sebelum menggunakan atau mendistribusikan materi dari sumber eksternal.
