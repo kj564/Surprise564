@@ -58,7 +58,7 @@ if (!Engine) throw new Error('VoxelCraft engine bundle did not expose VoxelCraft
 let engine = new Engine({dimensions:{chunkSizeX:16,height:32,chunkSizeZ:16},spawn:{x:8.5,y:24,z:8.5},inventorySlots:36});
 if(!generateTerrainChunk||!ensureTerrainNeighborhood)throw new Error('Seeded terrain streaming bundle is missing');
 for(let cz=-1;cz<=1;cz++)for(let cx=-1;cx<=1;cx++)generateTerrainChunk(engine.world,cx,cz,{seed:564});
-let lastChunkX=Math.floor(engine.player.state.position.x/16),lastChunkZ=Math.floor(engine.player.state.position.z/16);
+let lastChunkX=Math.floor(engine.player.state.position.x/16),lastChunkZ=Math.floor(engine.player.state.position.z/16);\nlet worldCreatedAt=new Date().toISOString();
 const registry=engine.registry;
 let meshCache=window.VoxelCraftCreateMeshCache(engine);
 const idFor=key=>{const id=registry.getIdByKey(key);if(id===undefined)throw new Error('Missing block definition: '+key);return id};
@@ -183,7 +183,7 @@ document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==r
 function saveWorld(){
   try{
     const now=new Date().toISOString();
-    const save=engine.createSave({name:'VoxelCraft World',seed:564,createdAt:now,updatedAt:now,generatorVersion:1},{yaw,pitch});
+    const save=engine.createSave({name:'VoxelCraft World',seed:564,createdAt:worldCreatedAt,updatedAt:now,generatorVersion:1},{yaw,pitch});
     localStorage.setItem('voxelcraft.rebuild.save.v1',JSON.stringify(save));
     toast('Dunia tersimpan di browser');
   }catch(error){console.error(error);toast('Gagal menyimpan dunia')}
