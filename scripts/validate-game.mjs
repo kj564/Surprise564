@@ -14,6 +14,13 @@ function section(pattern, label) {
   return match[1];
 }
 
+const uiPanelSource = section(/\/\* === UI pass: consistent Bedrock-style layout, readable hierarchy, responsive sizing === \*\/[\s\S]*?<\/style>/, 'final UI layer');
+if (!uiPanelSource.includes("background-size: 16px 16px;") ||
+    !uiPanelSource.includes("background-repeat: repeat;") ||
+    !uiPanelSource.includes("border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;")) {
+  fail('Main menu panel must preserve original Resource Pack pixel tiling and 1px nine-slice border');
+} else pass('Main menu panel uses original Resource Pack tile scale and nine-slice border');
+
 const tileSource = section(/const TILE = \{([\s\S]*?)\n    \};/, 'TILE');
 const tileEntries = [...tileSource.matchAll(/\b([A-Z][A-Z0-9_]*):\s*(\d+)/g)];
 const tiles = new Map(tileEntries.map(([, name, index]) => [name, Number(index)]));
