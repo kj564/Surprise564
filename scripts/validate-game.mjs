@@ -61,6 +61,16 @@ if (!source.includes("@font-face") ||
   fail('Browser UI must use the original Bedrock Minecraft Ten font');
 } else pass('Browser UI references the original Bedrock Minecraft Ten font');
 
+if (source.includes('#overlay .brand {') &&
+    source.includes('top: 12px;') &&
+    source.includes('left: 50%;') &&
+    source.includes('transform: translateX(-50%);') &&
+    source.includes('#overlay .menu-subtitle { display: none; }')) {
+  pass('Browser title branding follows the original Resource Pack top-middle anchor');
+} else {
+  fail('Browser title branding should follow the original Resource Pack top-middle anchor');
+}
+
 if (!source.includes('const clockMinutes = Math.floor((((worldTime % 1) + 1) % 1) * 1440);') ||
     !source.includes("padStart(2, '0')")) {
   fail('Browser HUD must show a live HH:mm clock like the Behavior Pack action bar');
