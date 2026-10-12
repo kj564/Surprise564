@@ -130,6 +130,16 @@ export class VoxelWorld {
     return this.chunks.size;
   }
 
+  /** Lightweight coordinate listing for render-cache invalidation; does not copy block arrays. */
+  getLoadedChunkCoordinates(): readonly { readonly x: number; readonly z: number }[] {
+    const coordinates = [...this.chunks.keys()].map(key => {
+      const [xText, zText] = key.split(',');
+      return Object.freeze({ x: Number(xText), z: Number(zText) });
+    });
+    coordinates.sort((a, b) => a.x - b.x || a.z - b.z);
+    return Object.freeze(coordinates);
+  }
+
   /** Stable, detached snapshots for persistence; edits to returned arrays never affect the live world. */
   exportChunks(): readonly { readonly x: number; readonly z: number; readonly blocks: Uint16Array }[] {
     const chunks = [...this.chunks.entries()].map(([key, chunk]) => {
