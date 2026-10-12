@@ -22,7 +22,7 @@ export class BlockRegistry {
       if (typeof input.solid !== "boolean" || typeof input.transparent !== "boolean") {
         throw new TypeError("solid and transparent must be booleans");
       }
-      if (typeof input.hardness !== "number" || Number.isNaN(input.hardness) || input.hardness < -1) {
+      if (typeof input.hardness !== "number" || !Number.isFinite(input.hardness) || input.hardness < -1) {
         throw new RangeError("hardness must be a number >= -1; -1 means unbreakable");
       }
       if (this.#byId.has(input.id)) throw new Error(`duplicate block id: ${input.id}`);
