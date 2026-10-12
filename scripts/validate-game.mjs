@@ -57,9 +57,9 @@ if (source.includes('const BROWSER_STATS_KEY') &&
   fail('Browser stats should safely persist visits, coins, and block activity');
 }
 if (source.includes('const coinRewards = { 20: 2, 21: 3, 22: 5, 23: 15, 24: 4, 26: 3, 28: 20, 31: 2 }')) {
-  pass('Browser ore coin rewards use the browser game's local reward table');
+  pass("Browser ore coin rewards use the browser game's local reward table");
 } else {
-  fail('Browser ore coin rewards must use the browser game's local reward table');
+  fail("Browser ore coin rewards must use the browser game's local reward table");
 }
 
 if (!source.includes("@font-face") ||
