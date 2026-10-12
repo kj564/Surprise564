@@ -200,7 +200,7 @@ function updateInventory(){
 function toggleInventory(force){
   inventoryOpen=typeof force==='boolean'?force:!inventoryOpen;
   $('inventory').classList.toggle('open',inventoryOpen);
-  if(inventoryOpen){keyDown.clear();updateInventory()}
+  if(inventoryOpen){keyDown.clear();if(document.pointerLockElement===renderer.domElement)document.exitPointerLock();updateInventory()}
 }
 function showPosition(){const p=engine.player.state.position;$('coords').textContent=Math.floor(p.x)+', '+Math.floor(p.y)+', '+Math.floor(p.z)}
 function updateCamera(){const p=engine.player.state.position;camera.position.set(p.x,p.y+1.62,p.z);camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0,'YXZ')}
