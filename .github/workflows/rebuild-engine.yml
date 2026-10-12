@@ -24,8 +24,8 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Install locked dependencies
-        run: bun install --frozen-lockfile
+      - name: Stage required runtime assets and install locked dependencies
+        run: bash scripts/setup.sh
 
       - name: Test game-core mechanics
         run: bun run test:game-core
