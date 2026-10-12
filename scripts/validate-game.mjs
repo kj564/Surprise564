@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const gamePath = resolve('public/minecraft.html');
@@ -106,6 +106,58 @@ for (const texture of vanillaUiTextures) {
 }
 if (vanillaUiTextures.every(texture => source.includes(`./VoxelCraft/textures/ui/${texture}.png`))) {
   pass(`Browser UI references all ${vanillaUiTextures.length} original Bedrock UI textures`);
+}
+
+// The browser game is an adapter: stage exact original pack assets, never redraw substitutes.
+const stagedAssetGroups = [
+  {
+    label: 'vanilla Bedrock UI sprites',
+    files: [
+      ...['menubackground', 'background_panel', 'background_with_border', 'button_borderless_dark',
+        'button_borderless_darkhover', 'button_borderless_darkpressed', 'dialog_background_opaque',
+        'highlight_slot', 'hotbar_start_cap', 'hotbar_end_cap', 'cancel', 'inventory_icon',
+        'hud_tip_text_background', 'item_cell', 'TabTopBack', 'TabTopBackHover', 'TabTopFront', 'TabTopFrontHover']
+        .map(name => [`VoxelCraft/textures/ui/${name}.png`, `public/VoxelCraft/textures/ui/${name}.png`]),
+    ],
+  },
+  {
+    label: 'vanilla Bedrock newgui button states',
+    files: ['ButtonWithBorder', 'ButtonWithBorderHover', 'ButtonWithBorderPressed'].map(name => [
+      `VoxelCraft/textures/gui/newgui/${name}.png`, `public/VoxelCraft/textures/gui/newgui/${name}.png`,
+    ]),
+  },
+  {
+    label: 'Behavior Pack menu item icons',
+    files: ['book_writable', 'apple', 'feather', 'clock_item', 'bed_red', 'compass_item', 'book_normal', 'brick', 'diamond'].map(name => [
+      `VoxelCraft/textures/items/${name}.png`, `public/VoxelCraft/textures/items/${name}.png`,
+    ]),
+  },
+  {
+    label: 'original Bedrock UI font',
+    files: [['VoxelCraft/font/minecraft-ten.ttf', 'public/VoxelCraft/font/minecraft-ten.ttf']],
+  },
+];
+for (const group of stagedAssetGroups) {
+  let groupValid = true;
+  for (const [sourcePath, stagedPath] of group.files) {
+    const sourceFile = resolve(sourcePath);
+    const stagedFile = resolve(stagedPath);
+    if (!existsSync(sourceFile)) {
+      fail(`Missing original asset (${group.label}): ${sourcePath}`);
+      groupValid = false;
+      continue;
+    }
+    if (!existsSync(stagedFile)) {
+      fail(`Missing staged asset (${group.label}): ${stagedPath}; run scripts/setup.sh first`);
+      groupValid = false;
+      continue;
+    }
+    if (!readFileSync(sourceFile).equals(readFileSync(stagedFile))) {
+      fail(`Staged asset differs from original pack (${group.label}): ${stagedPath}`);
+      groupValid = false;
+    }
+  }
+  if (groupValid) pass(`Staged files are byte-identical to source: ${group.label}`);
 }
 
 const vanillaMenuTextures = ['ButtonWithBorder', 'ButtonWithBorderHover', 'ButtonWithBorderPressed'];
