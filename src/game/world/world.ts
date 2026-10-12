@@ -60,6 +60,9 @@ export class VoxelWorld {
     }, initialBlocks);
     this.chunks.set(key, chunk);
     this.dirty.add(key);
+    for (const neighbor of this.neighborKeys(chunkX, chunkZ)) {
+      if (this.chunks.has(neighbor)) this.dirty.add(neighbor);
+    }
     return chunk;
   }
 
