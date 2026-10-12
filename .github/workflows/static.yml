@@ -92,6 +92,9 @@ jobs:
             cp "$src" "public/VoxelCraft/textures/items/${name}.png"
           done
 
+      - name: Stage complete original item icon catalog
+        run: node scripts/stage-item-catalog.mjs
+
       - name: Stage original Minecraft UI font
         run: |
           test -f VoxelCraft/font/minecraft-ten.ttf
