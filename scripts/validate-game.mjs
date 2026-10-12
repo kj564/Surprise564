@@ -327,6 +327,90 @@ if (!source.includes('function clearPressedKeys()') ||
   fail('Pressed keys and the Space double-tap timer must reset when focus or pointer lock is lost');
 } else pass('Input state resets on focus loss and pointer-lock exit');
 
+// Validate the vanilla chicken assets as a matched source/staged pair.
+// This catches broken deployments before the browser silently falls back to the placeholder model.
+const chickenAssetPairs = [
+  ['VoxelCraft/models/entity/chicken.geo.json', 'public/VoxelCraft/models/entity/chicken.geo.json'],
+  ['VoxelCraft/textures/entity/chicken/chicken.png', 'public/VoxelCraft/textures/entity/chicken/chicken.png'],
+];
+let chickenAssetsMatch = true;
+for (const [sourcePath, stagedPath] of chickenAssetPairs) {
+  if (!existsSync(resolve(sourcePath))) {
+    fail(`Missing original chicken asset: ${sourcePath}`);
+    chickenAssetsMatch = false;
+  } else if (!existsSync(resolve(stagedPath))) {
+    fail(`Missing staged chicken asset: ${stagedPath}; run scripts/setup.sh first`);
+    chickenAssetsMatch = false;
+  } else if (!readFileSync(resolve(sourcePath)).equals(readFileSync(resolve(stagedPath)))) {
+    fail(`Staged chicken asset differs from original Resource Pack: ${stagedPath}`);
+    chickenAssetsMatch = false;
+  }
+}
+if (chickenAssetsMatch) pass('Vanilla chicken geometry and texture are staged byte-identically from the original Resource Pack');
+
+if (!source.includes("./VoxelCraft/models/entity/chicken.geo.json") ||
+    !source.includes("./VoxelCraft/textures/entity/chicken/chicken.png") ||
+    !source.includes('function setBedrockCubeUV(') ||
+    !source.includes('function makeVanillaChickenModel()') ||
+    !source.includes('window.__getChickenState')) {
+  fail('Browser chicken renderer must load the original Bedrock model/texture and expose load diagnostics');
+} else pass('Browser chicken renderer references vanilla assets and exposes diagnostic state');
+
+const chickenGeometryPath = resolve('VoxelCraft/models/entity/chicken.geo.json');
+if (existsSync(chickenGeometryPath)) {
+  try {
+    const chickenData = JSON.parse(readFileSync(chickenGeometryPath, 'utf8'));
+    const geometries = chickenData['minecraft:geometry'];
+    if (!Array.isArray(geometries) || geometries.length === 0) {
+      fail('Vanilla chicken geometry JSON must contain a non-empty minecraft:geometry array');
+    } else {
+      const chickenModel = geometries.find(g => g.description?.identifier === 'geometry.chicken.v1.12') || geometries[0];
+      const description = chickenModel.description || {};
+      if (description.texture_width !== 64 || description.texture_height !== 32) {
+        fail('Vanilla chicken model must declare its expected 64x32 texture atlas');
+      } else pass('Vanilla chicken geometry declares the expected 64x32 texture atlas');
+      const boneNames = new Set((chickenModel.bones || []).map(b => b.name));
+      for (const bone of ['body', 'head', 'leg0', 'leg1', 'wing0', 'wing1']) {
+        if (!boneNames.has(bone)) fail(`Vanilla chicken model is missing required bone: ${bone}`);
+      }
+      if (['body', 'head', 'leg0', 'leg1', 'wing0', 'wing1'].every(bone => boneNames.has(bone))) {
+        pass('Vanilla chicken model includes body, head, both legs, and both wings');
+      }
+      let invalidCube = false;
+      for (const bone of chickenModel.bones || []) {
+        for (const cube of bone.cubes || []) {
+          const size = cube.size;
+          if (!Array.isArray(size) || size.length !== 3 || size.some(n => !Number.isFinite(n) || n <= 0)) {
+            fail(`Chicken bone ${bone.name} contains a cube with invalid dimensions`);
+            invalidCube = true;
+          }
+          if (Array.isArray(cube.uv)) {
+            const [u, v] = cube.uv;
+            if (!Number.isFinite(u) || !Number.isFinite(v) || u < 0 || v < 0 ||
+                u + 2 * size[0] + 2 * size[2] > 64 || v + size[1] + size[2] > 32) {
+              fail(`Chicken bone ${bone.name} has classic cube UV coordinates outside the 64x32 atlas`);
+              invalidCube = true;
+            }
+          }
+        }
+      }
+      if (!invalidCube) pass('Vanilla chicken cubes have positive dimensions and classic UV rectangles fit the atlas');
+    }
+  } catch (error) {
+    fail('Vanilla chicken geometry JSON is invalid: ' + error.message);
+  }
+}
+
+const chickenTexturePath = resolve('VoxelCraft/textures/entity/chicken/chicken.png');
+if (existsSync(chickenTexturePath)) {
+  const png = readFileSync(chickenTexturePath);
+  const isPng = png.length >= 24 && png.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  if (!isPng) fail('Vanilla chicken texture must be a valid PNG file');
+  else if (png.readUInt32BE(16) !== 64 || png.readUInt32BE(20) !== 32) {
+    fail(`Vanilla chicken texture dimensions must be 64x32 (found ${png.readUInt32BE(16)}x${png.readUInt32BE(20)})`);
+  } else pass('Vanilla chicken texture is a valid 64x32 PNG atlas');
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
