@@ -147,6 +147,7 @@ jobs:
           test -f out/VoxelCraft/textures/items/brick.png
           test -f out/VoxelCraft/textures/items/diamond.png
           test -f out/VoxelCraft/textures/ui/item_cell.png
+          test -f out/VoxelCraft/textures/ui/cursor_pc.png
           test -f out/VoxelCraft/textures/ui/TabTopBack.png
           test -f out/VoxelCraft/textures/ui/TabTopBackHover.png
           test -f out/VoxelCraft/textures/ui/TabTopFront.png
