@@ -31,6 +31,20 @@ Two separate, parallel projects share this repository:
 
 The Bedrock packs **do not** run inside the browser game. The browser game reads textures from `public/VoxelCraft/textures/blocks/`, not from the Bedrock packs.
 
+## Source-of-truth rules (read before changing the game)
+
+This repository has an explicit authority order. **Do not write gameplay or UI code from guesswork before checking the reference sources.**
+
+1. **Code and behavior reference — `rujukan/` first.** Read the relevant original Minecraft/Pocket Edition source and reference notes before implementing or changing a system. Start with [the Foundation Reference Map](docs/FOUNDATION-REFERENCE-MAP.md). The checked-in Pocket Edition source is historical (2013), so use it to understand architecture and behavior; do not assume its APIs or every detail match modern Bedrock.
+2. **Original Minecraft files are authoritative for assets.** Use the matching original files in `VoxelCraft/` (and any applicable original Minecraft source files in `rujukan/`) as the source of truth for models, textures, UI sprites, fonts, and other assets. Do not replace them with approximations without an explicit technical reason.
+3. **Runtime files are derived copies/adapters.** `public/VoxelCraft/` is a staged subset for the browser. Update its staging logic in both `scripts/setup.sh` and `.github/workflows/static.yml` whenever a new asset is introduced. Do not edit a staged copy as if it were the canonical original.
+4. **Adapt, do not misrepresent.** Browser code in `public/minecraft.html` is a Three.js/HTML/CSS implementation, not the Minecraft engine. Port the relevant behavior to the browser where feasible, document unavoidable differences, and never claim native Bedrock JSON UI or scripts execute in the browser.
+5. **Verify before declaring completion.** Run `bun run validate:game` and `bun run build`; test the affected interaction in a real browser when possible. Static checks do not prove visual correctness or gameplay behavior.
+
+If a proposed change conflicts with the reference, stop and explain the conflict before inventing a replacement. See [Development Rules](docs/DEVELOPMENT-RULES.md), [Repository Structure](docs/STRUCTURE.md), and [Asset Rules](docs/ASSETS.md).
+
+---
+ 
 ## Quick start
 
 ```bash
@@ -103,10 +117,12 @@ The packaging workflow validates both manifests, checks the RP UI registrations,
 
 ## Repository structure
 
-See [`docs/STRUCTURE.md`](docs/STRUCTURE.md) for the full annotated tree. TL;DR:
+See [`docs/STRUCTURE.md`](docs/STRUCTURE.md) for the full annotated tree. The `rujukan/` directory is the primary code/architecture reference; `VoxelCraft/` contains the original resource-pack assets. TL;DR:
 
 ```
 Surprise564/
+├── rujukan/                      # ★ Primary code/architecture reference (read first)
+│   └── pocket-edition-2013/mcpe-source/ # Historical Minecraft PE source
 ├── public/minecraft.html         # ★ Browser voxel game
 ├── public/VoxelCraft/textures/   #     Browser-game textures staged from vanilla RP
 ├── src/app/                      #     Next.js host page
@@ -115,12 +131,15 @@ Surprise564/
 ├── BedrockAddon/                  # ★ Our custom Script API behavior pack
 ├── VoxelCraftResourcePack/        #     Experimental JSON UI resource pack
 ├── scripts/setup.sh              #     Repo bootstrap
-├── docs/                         #     STRUCTURE.md + ASSETS.md
+├── docs/                         #     Structure, source map, asset + development rules
 ├── .github/workflows/static.yml  #     GitHub Pages build pipeline
 └── README.md                     #     You are here
 ```
 
 ## Developing the browser game
+
+Before coding, follow the source hierarchy above and consult [the Foundation Reference Map](docs/FOUNDATION-REFERENCE-MAP.md). Keep gameplay changes in `public/minecraft.html`; keep canonical original assets unchanged and stage runtime copies through the setup/build scripts.
+
 
 Requirements: [Bun](https://bun.sh) and a modern Node.js runtime.
 
