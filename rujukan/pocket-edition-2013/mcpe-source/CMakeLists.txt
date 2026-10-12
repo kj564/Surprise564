@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(pocket_core
     handheld/src/world.cpp
+    handheld/src/world_io.cpp
     handheld/src/game.cpp
 )
 target_include_directories(pocket_core PUBLIC handheld/src)
