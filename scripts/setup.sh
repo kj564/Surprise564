@@ -42,6 +42,57 @@ REQUIRED=(
   wool_colored_blue wool_colored_green
   log_spruce_top log_jungle_top log_acacia_top log_big_oak_top
   furnace_top pumpkin_face_off
+  cobblestone_mossy
+  sandstone_top
+  sandstone_bottom
+  sandstone_normal
+  sandstone_smooth
+  sandstone_carved
+  clay
+  tnt_top
+  tnt_bottom
+  tnt_side
+  melon_top
+  melon_side
+  nether_brick
+  quartz_block_top
+  quartz_block_bottom
+  quartz_block_side
+  quartz_block_chiseled
+  prismarine_rough
+  prismarine_bricks
+  prismarine_dark
+  sea_lantern
+  red_sandstone_top
+  red_sandstone_bottom
+  red_sandstone_normal
+  end_stone
+  end_bricks
+  purpur_block
+  hay_block_top
+  hay_block_side
+  basalt_top
+  basalt_side
+  polished_basalt_top
+  polished_basalt_side
+  blackstone
+  calcite
+  dripstone_block
+  deepslate/deepslate_top
+  deepslate/deepslate
+  deepslate/polished_deepslate
+  deepslate/deepslate_bricks
+  deepslate/deepslate_tiles
+  copper_block
+  amethyst_block
+  mud
+  packed_mud
+  moss_block
+  mud_bricks
+  tuff
+  polished_tuff
+  tuff_bricks
+  red_nether_brick
 )
 
 mkdir -p "$GAME_TEX_DIR"
@@ -52,6 +103,7 @@ for name in "${REQUIRED[@]}"; do
   if [ -f "$dst" ]; then continue; fi
   src="$SRC_TEX_DIR/$name.png"
   if [ -f "$src" ]; then
+    mkdir -p "$(dirname "$dst")"
     cp "$src" "$dst"
     echo "    copied $name.png -> public/VoxelCraft/textures/blocks/"
   else
