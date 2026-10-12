@@ -462,6 +462,16 @@ if (source.includes('for (let wx = baseX - 2; wx < baseX + CHUNK_X + 2; wx++)') 
   fail('Tree generation must use world-space origins and write neighboring tree portions into each chunk');
 }
 
+// Chunk-local storage uses a flat typed array, so x/z bounds must be checked
+// before indexing to avoid out-of-range coordinates aliasing adjacent voxel rows.
+if (source.includes('x < 0 || x >= CHUNK_X || y < 0 || y >= CHUNK_Y || z < 0 || z >= CHUNK_Z') &&
+    source.includes('if (!Number.isInteger(v) || v < 0 || v > 255) return false;') &&
+    source.includes('return this.data[this.idx(x, y, z)];')) {
+  pass('Chunk voxel reads/writes guard local coordinates and byte-sized block ids');
+} else {
+  fail('Chunk voxel reads/writes must validate x/y/z bounds and block id range before indexing typed storage');
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
