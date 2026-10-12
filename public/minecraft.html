@@ -880,10 +880,14 @@
     padding: 22px 20px 14px;
     gap: 0;
     background-color: rgba(20, 20, 20, .86);
+    /* Preserve the original 16x16 Resource Pack tile scale in the menu panel. */
     background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 100% 100%;
-    border: 4px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
+    background-size: 16px 16px;
+    background-repeat: repeat;
+    image-rendering: pixelated;
+    border: 3px solid transparent;
+    /* The source border is a 3x3 texture with a 1px nine-slice. */
+    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;
     box-shadow: 0 8px 0 rgba(0,0,0,.42);
   }
   #overlay .brand {
