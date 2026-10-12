@@ -9,7 +9,6 @@ import { PlayerPhysics, type PlayerInput, type PlayerPhysicsState, type PlayerPo
 import { queryCollisionBoxes } from './physics/world-collision';
 import { createWorldSave, restoreWorldSave, type PlayerSnapshot, type SaveMetadataInput } from './persistence/world-save';
 import { ChunkData } from './world/chunk';
-import { createWorldSave, restoreWorldSave, type PlayerSnapshot, type SaveMetadataInput } from './persistence/world-save';
 import type { WorldSaveV1 } from './persistence/save-schema';
 import { VoxelWorld, type BlockPosition, type WorldDimensions } from './world/world';
 
