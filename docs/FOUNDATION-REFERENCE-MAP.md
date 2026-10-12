@@ -71,4 +71,4 @@ When the source pack provides separate hover, pressed, selected, disabled, or fo
 - Verify staged files against originals (byte comparison where appropriate), dimensions and model structure when relevant.
 - Static checks establish file and wiring integrity, not visual fidelity. A real browser test remains necessary for rendering and input behavior.
 
-See [Development Rules](DEVELOPMENT-RULES.md), [Asset Rules](ASSETS.md), and [Repository Structure](STRUCTURE.md).
+See the detailed [Reference Source Audit](REFERENCE-SOURCE-AUDIT.md) for findings from reading the historical C++ files. Also see [Development Rules](DEVELOPMENT-RULES.md), [Asset Rules](ASSETS.md), and [Repository Structure](STRUCTURE.md).
