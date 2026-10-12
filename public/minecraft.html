@@ -1213,6 +1213,58 @@
       // Missing log end-grain textures, appended to preserve existing tile indices.
       LOG_SPRUCE_TOP: 73, LOG_JUNGLE_TOP: 74, LOG_ACACIA_TOP: 75, LOG_DARK_OAK_TOP: 76,
       FURNACE_TOP: 77, PUMPKIN_FACE: 78,
+      // Expanded solid-block catalog from the original Resource Pack.
+      MOSSY_COBBLESTONE: 79,
+      SANDSTONE_TOP: 80,
+      SANDSTONE_BOTTOM: 81,
+      SANDSTONE_SIDE: 82,
+      SANDSTONE_SMOOTH: 83,
+      SANDSTONE_CARVED: 84,
+      CLAY: 85,
+      TNT_TOP: 86,
+      TNT_BOTTOM: 87,
+      TNT_SIDE: 88,
+      MELON_TOP: 89,
+      MELON_SIDE: 90,
+      NETHER_BRICK: 91,
+      QUARTZ_TOP: 92,
+      QUARTZ_BOTTOM: 93,
+      QUARTZ_SIDE: 94,
+      QUARTZ_CHISELED: 95,
+      PRISMARINE: 96,
+      PRISMARINE_BRICKS: 97,
+      PRISMARINE_DARK: 98,
+      SEA_LANTERN: 99,
+      RED_SANDSTONE_TOP: 100,
+      RED_SANDSTONE_BOTTOM: 101,
+      RED_SANDSTONE_SIDE: 102,
+      END_STONE: 103,
+      END_BRICKS: 104,
+      PURPUR: 105,
+      HAY_TOP: 106,
+      HAY_SIDE: 107,
+      BASALT_TOP: 108,
+      BASALT_SIDE: 109,
+      POLISHED_BASALT_TOP: 110,
+      POLISHED_BASALT_SIDE: 111,
+      BLACKSTONE: 112,
+      CALCITE: 113,
+      DRIPSTONE_BLOCK: 114,
+      DEEPSLATE_TOP: 115,
+      DEEPSLATE_SIDE: 116,
+      POLISHED_DEEPSLATE: 117,
+      DEEPSLATE_BRICKS: 118,
+      DEEPSLATE_TILES: 119,
+      COPPER_BLOCK: 120,
+      AMETHYST_BLOCK: 121,
+      MUD: 122,
+      PACKED_MUD: 123,
+      MOSS_BLOCK: 124,
+      MUD_BRICKS: 125,
+      TUFF: 126,
+      POLISHED_TUFF: 127,
+      TUFF_BRICKS: 128,
+      RED_NETHER_BRICK: 129,
     };
     const TEXTURE_FILES = [
       // 0-23: original 24 textures
@@ -1245,6 +1297,58 @@
       'log_spruce_top','log_jungle_top','log_acacia_top','log_big_oak_top',
       // Correct face textures verified against VoxelCraft/blocks.json + terrain_texture.json.
       'furnace_top','pumpkin_face_off',
+      // Expanded placeable cube textures (kept in TILE index order).
+      'cobblestone_mossy',
+      'sandstone_top',
+      'sandstone_bottom',
+      'sandstone_normal',
+      'sandstone_smooth',
+      'sandstone_carved',
+      'clay',
+      'tnt_top',
+      'tnt_bottom',
+      'tnt_side',
+      'melon_top',
+      'melon_side',
+      'nether_brick',
+      'quartz_block_top',
+      'quartz_block_bottom',
+      'quartz_block_side',
+      'quartz_block_chiseled',
+      'prismarine_rough',
+      'prismarine_bricks',
+      'prismarine_dark',
+      'sea_lantern',
+      'red_sandstone_top',
+      'red_sandstone_bottom',
+      'red_sandstone_normal',
+      'end_stone',
+      'end_bricks',
+      'purpur_block',
+      'hay_block_top',
+      'hay_block_side',
+      'basalt_top',
+      'basalt_side',
+      'polished_basalt_top',
+      'polished_basalt_side',
+      'blackstone',
+      'calcite',
+      'dripstone_block',
+      'deepslate/deepslate_top',
+      'deepslate/deepslate',
+      'deepslate/polished_deepslate',
+      'deepslate/deepslate_bricks',
+      'deepslate/deepslate_tiles',
+      'copper_block',
+      'amethyst_block',
+      'mud',
+      'packed_mud',
+      'moss_block',
+      'mud_bricks',
+      'tuff',
+      'polished_tuff',
+      'tuff_bricks',
+      'red_nether_brick',
     ];
     const TEXTURE_DIR = './VoxelCraft/textures/blocks/';
 
@@ -1322,6 +1426,45 @@
       64: { name:'Wol Merah',     top:TILE.WOOL_RED, bottom:TILE.WOOL_RED, side:TILE.WOOL_RED, solid:true },
       65: { name:'Wol Biru',      top:TILE.WOOL_BLUE, bottom:TILE.WOOL_BLUE, side:TILE.WOOL_BLUE, solid:true },
       66: { name:'Wol Hijau',     top:TILE.WOOL_GREEN, bottom:TILE.WOOL_GREEN, side:TILE.WOOL_GREEN, solid:true },
+      // === Phase 2: additional solid cubes from the Resource Pack (67-104) ===
+      67: { name:'Cobblestone Berlumut', top:TILE.MOSSY_COBBLESTONE, bottom:TILE.MOSSY_COBBLESTONE, side:TILE.MOSSY_COBBLESTONE, solid:true },
+      68: { name:'Batu Pasir', top:TILE.SANDSTONE_TOP, bottom:TILE.SANDSTONE_BOTTOM, side:TILE.SANDSTONE_SIDE, solid:true },
+      69: { name:'Batu Pasir Halus', top:TILE.SANDSTONE_SMOOTH, bottom:TILE.SANDSTONE_SMOOTH, side:TILE.SANDSTONE_SMOOTH, solid:true },
+      70: { name:'Batu Pasir Pahat', top:TILE.SANDSTONE_TOP, bottom:TILE.SANDSTONE_TOP, side:TILE.SANDSTONE_CARVED, solid:true },
+      71: { name:'Tanah Liat', top:TILE.CLAY, bottom:TILE.CLAY, side:TILE.CLAY, solid:true },
+      72: { name:'TNT', top:TILE.TNT_TOP, bottom:TILE.TNT_BOTTOM, side:TILE.TNT_SIDE, solid:true },
+      73: { name:'Melon', top:TILE.MELON_TOP, bottom:TILE.MELON_TOP, side:TILE.MELON_SIDE, solid:true },
+      74: { name:'Batu Bata Nether', top:TILE.NETHER_BRICK, bottom:TILE.NETHER_BRICK, side:TILE.NETHER_BRICK, solid:true },
+      75: { name:'Blok Kuarsa', top:TILE.QUARTZ_TOP, bottom:TILE.QUARTZ_BOTTOM, side:TILE.QUARTZ_SIDE, solid:true },
+      76: { name:'Kuarsa Pahat', top:TILE.QUARTZ_CHISELED, bottom:TILE.QUARTZ_CHISELED, side:TILE.QUARTZ_CHISELED, solid:true },
+      77: { name:'Prismarine', top:TILE.PRISMARINE, bottom:TILE.PRISMARINE, side:TILE.PRISMARINE, solid:true },
+      78: { name:'Bata Prismarine', top:TILE.PRISMARINE_BRICKS, bottom:TILE.PRISMARINE_BRICKS, side:TILE.PRISMARINE_BRICKS, solid:true },
+      79: { name:'Prismarine Gelap', top:TILE.PRISMARINE_DARK, bottom:TILE.PRISMARINE_DARK, side:TILE.PRISMARINE_DARK, solid:true },
+      80: { name:'Sea Lantern', top:TILE.SEA_LANTERN, bottom:TILE.SEA_LANTERN, side:TILE.SEA_LANTERN, solid:true },
+      81: { name:'Batu Pasir Merah', top:TILE.RED_SANDSTONE_TOP, bottom:TILE.RED_SANDSTONE_BOTTOM, side:TILE.RED_SANDSTONE_SIDE, solid:true },
+      82: { name:'End Stone', top:TILE.END_STONE, bottom:TILE.END_STONE, side:TILE.END_STONE, solid:true },
+      83: { name:'Bata End Stone', top:TILE.END_BRICKS, bottom:TILE.END_BRICKS, side:TILE.END_BRICKS, solid:true },
+      84: { name:'Blok Purpur', top:TILE.PURPUR, bottom:TILE.PURPUR, side:TILE.PURPUR, solid:true },
+      85: { name:'Bal Jerami', top:TILE.HAY_TOP, bottom:TILE.HAY_TOP, side:TILE.HAY_SIDE, solid:true },
+      86: { name:'Basalt', top:TILE.BASALT_TOP, bottom:TILE.BASALT_TOP, side:TILE.BASALT_SIDE, solid:true },
+      87: { name:'Basalt Poles', top:TILE.POLISHED_BASALT_TOP, bottom:TILE.POLISHED_BASALT_TOP, side:TILE.POLISHED_BASALT_SIDE, solid:true },
+      88: { name:'Blackstone', top:TILE.BLACKSTONE, bottom:TILE.BLACKSTONE, side:TILE.BLACKSTONE, solid:true },
+      89: { name:'Kalsit', top:TILE.CALCITE, bottom:TILE.CALCITE, side:TILE.CALCITE, solid:true },
+      90: { name:'Blok Dripstone', top:TILE.DRIPSTONE_BLOCK, bottom:TILE.DRIPSTONE_BLOCK, side:TILE.DRIPSTONE_BLOCK, solid:true },
+      91: { name:'Deepslate', top:TILE.DEEPSLATE_TOP, bottom:TILE.DEEPSLATE_TOP, side:TILE.DEEPSLATE_SIDE, solid:true },
+      92: { name:'Deepslate Poles', top:TILE.POLISHED_DEEPSLATE, bottom:TILE.POLISHED_DEEPSLATE, side:TILE.POLISHED_DEEPSLATE, solid:true },
+      93: { name:'Bata Deepslate', top:TILE.DEEPSLATE_BRICKS, bottom:TILE.DEEPSLATE_BRICKS, side:TILE.DEEPSLATE_BRICKS, solid:true },
+      94: { name:'Ubin Deepslate', top:TILE.DEEPSLATE_TILES, bottom:TILE.DEEPSLATE_TILES, side:TILE.DEEPSLATE_TILES, solid:true },
+      95: { name:'Blok Tembaga', top:TILE.COPPER_BLOCK, bottom:TILE.COPPER_BLOCK, side:TILE.COPPER_BLOCK, solid:true },
+      96: { name:'Blok Amethyst', top:TILE.AMETHYST_BLOCK, bottom:TILE.AMETHYST_BLOCK, side:TILE.AMETHYST_BLOCK, solid:true },
+      97: { name:'Lumpur', top:TILE.MUD, bottom:TILE.MUD, side:TILE.MUD, solid:true },
+      98: { name:'Lumpur Padat', top:TILE.PACKED_MUD, bottom:TILE.PACKED_MUD, side:TILE.PACKED_MUD, solid:true },
+      99: { name:'Blok Lumut', top:TILE.MOSS_BLOCK, bottom:TILE.MOSS_BLOCK, side:TILE.MOSS_BLOCK, solid:true },
+      100: { name:'Bata Lumpur', top:TILE.MUD_BRICKS, bottom:TILE.MUD_BRICKS, side:TILE.MUD_BRICKS, solid:true },
+      101: { name:'Tuf', top:TILE.TUFF, bottom:TILE.TUFF, side:TILE.TUFF, solid:true },
+      102: { name:'Tuf Poles', top:TILE.POLISHED_TUFF, bottom:TILE.POLISHED_TUFF, side:TILE.POLISHED_TUFF, solid:true },
+      103: { name:'Bata Tuf', top:TILE.TUFF_BRICKS, bottom:TILE.TUFF_BRICKS, side:TILE.TUFF_BRICKS, solid:true },
+      104: { name:'Bata Nether Merah', top:TILE.RED_NETHER_BRICK, bottom:TILE.RED_NETHER_BRICK, side:TILE.RED_NETHER_BRICK, solid:true },
     };
 
     // Hotbar block ids (9 slots) — Phase 1: more variety
@@ -1606,7 +1749,7 @@
     // ============================================================
     //  MESHING
     // ============================================================
-    const ATLAS_COLS = 16, ATLAS_ROWS = 6, TILE_PX = 16;
+    const ATLAS_COLS = 16, ATLAS_ROWS = 9, TILE_PX = 16;
     const ATLAS_W = ATLAS_COLS * TILE_PX, ATLAS_H = ATLAS_ROWS * TILE_PX;
 
     // Fail fast if a future edit adds a tile without its matching atlas image,
@@ -2216,9 +2359,9 @@
     let browserBlocksPlaced = browserStats.blocksPlaced;
     const inventoryFilterSets = {
       all: null,
-      nature: new Set([1, 2, 3, 4, 5, 7, 8, 9, 11, 19, 34, 36, 37, 39, 40, 42, 43, 45, 46, 48, 49, 50, 51, 52, 53, 55, 56, 57, 58, 60, 61]),
-      building: new Set([6, 10, 12, 17, 18, 35, 38, 41, 44, 47, 54, 59, 62, 63, 64, 65, 66]),
-      minerals: new Set([13, 14, 15, 16, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]),
+      nature: new Set([1, 2, 3, 4, 5, 7, 8, 9, 11, 19, 34, 36, 37, 39, 40, 42, 43, 45, 46, 48, 49, 50, 51, 52, 53, 55, 56, 57, 58, 60, 61, 71, 73, 82, 85, 89, 90, 97, 99, 101]),
+      building: new Set([6, 10, 12, 17, 18, 35, 38, 41, 44, 47, 54, 59, 62, 63, 64, 65, 66, 67, 68, 69, 70, 72, 74, 81, 83, 84, 93, 94, 98, 100, 102, 103, 104]),
+      minerals: new Set([13, 14, 15, 16, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 75, 76, 77, 78, 79, 80, 86, 87, 88, 91, 92, 95, 96]),
       items: null,
     };
     let activeInventoryFilter = 'all';
@@ -2311,7 +2454,7 @@
         return;
       }
       const allowedIds = inventoryFilterSets[filter];
-      for (let id = 1; id <= 66; id++) {
+      for (const id of Object.keys(BLOCKS).map(Number).filter(id => id > 0).sort((a, b) => a - b)) {
         const def = BLOCKS[id];
         if (!def || (allowedIds && !allowedIds.has(id))) continue;
         const slot = document.createElement('div');
