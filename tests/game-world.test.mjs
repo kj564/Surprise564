@@ -29,7 +29,7 @@ test("block registry enforces stable unique ids and air at id zero", () => {
   assert.equal(registry.getByKey("stone").id, 1);
   assert.equal(registry.getByKey("missing"), null);
   assert.throws(() => new BlockRegistry([
-    CORE_BLOCKS[0], { ...CORE_BLOCKS[1], id: 1, key: "duplicate_id" },
+    CORE_BLOCKS[0], { ...CORE_BLOCKS[1], id: 0, key: "duplicate_id" },
   ]), /duplicate block id/);
   assert.throws(() => new BlockRegistry([
     { ...CORE_BLOCKS[0], id: 1 }, { ...CORE_BLOCKS[1], id: 2 },
