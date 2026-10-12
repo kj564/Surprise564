@@ -2535,6 +2535,12 @@
       const imgs = new Array(TEXTURE_FILES.length);
 
       await Promise.all(TEXTURE_FILES.map((name, i) => new Promise((resolve) => {
+        // Ore tiles are generated below from stone + mineral textures. Do not
+        // request PNG files that intentionally do not exist in the resource pack.
+        if (/^(coal|iron|gold|diamond)_ore$/.test(name)) {
+          resolve();
+          return;
+        }
         const img = new Image();
         img.onload = () => {
           const col = i % ATLAS_COLS, row = Math.floor(i / ATLAS_COLS);
