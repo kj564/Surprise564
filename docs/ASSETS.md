@@ -3,8 +3,8 @@
 ## Source of truth
 
 - **Original Minecraft assets are authoritative.** Use the exact matching source file when it exists; do not recreate a texture, model, sprite, or font from memory.
-- **Canonical modern Resource Pack:** `VoxelCraft/` is the source for the modern vanilla Bedrock assets used by the browser game.
-- **Reference source:** `rujukan/` is the first place to consult for original code architecture and behavior; if it contains the exact original asset or source file relevant to the task, inspect it as well.
+- **Canonical asset source:** `VoxelCraft/` contains the original resource-pack files used by the game.
+- **Code/behavior reference:** `rujukan/` is the first place to consult for original game architecture and behavior.
 - **Runtime copies:** `public/VoxelCraft/` is a staged subset for browser delivery. It is derived output, not the authoritative source.
 
 ## Rules when adding or changing assets
@@ -21,7 +21,7 @@
 ## Current asset flow
 
 ```text
-VoxelCraft/ (canonical original Resource Pack)
+VoxelCraft/ (canonical original resource-pack files)
         │
         ├── scripts/setup.sh
         └── .github/workflows/static.yml
@@ -33,6 +33,6 @@ VoxelCraft/ (canonical original Resource Pack)
         public/minecraft.html (browser renderer)
 ```
 
-## Game music
+## Audio
 
-The upstream pack README notes that game music is intentionally omitted. The browser game currently uses Web Audio synthesized sound effects; do not assume music assets are available.
+The browser game currently uses Web Audio synthesized sound effects. Do not assume original music files are available unless verified in the source assets.
