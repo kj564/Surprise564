@@ -40,7 +40,18 @@
 .inv-slot .count{position:absolute;right:4px;bottom:2px;font-size:11px;text-shadow:0 1px 3px #000}
 .inv-slot .key{position:absolute;top:3px;left:4px;font-size:9px;color:#cbd5e1}
 #inventory-note{margin-top:12px;color:#aebdd0;font-size:11px;line-height:1.5}
-@media(max-width:600px){#inventory{padding:12px}#inventory-grid{gap:4px}.inv-slot .count{font-size:9px}.inv-slot .key{font-size:8px}}
+
+#touch-controls{display:none;position:fixed;z-index:4;inset:auto 12px 112px 12px;pointer-events:none;align-items:end;justify-content:space-between;gap:12px;touch-action:none}
+.touch-pad,.touch-actions{display:grid;gap:7px;pointer-events:auto}
+.touch-pad{grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,42px)}
+.touch-actions{grid-template-columns:repeat(2,minmax(48px,64px));align-items:end}
+.touch-btn{border:1px solid #ffffff55;border-radius:12px;background:#101827aa;color:#fff;font:600 12px system-ui;box-shadow:0 3px 12px #0003;touch-action:none;user-select:none;-webkit-user-select:none}
+.touch-btn:active,.touch-btn.held{background:#8be0a566;border-color:#b9f6ca}
+.touch-pad [data-key="KeyW"]{grid-column:2;grid-row:1}.touch-pad [data-key="KeyA"]{grid-column:1;grid-row:2}.touch-pad [data-key="KeyS"]{grid-column:2;grid-row:2}.touch-pad [data-key="KeyD"]{grid-column:3;grid-row:2}
+.touch-actions .touch-btn{min-height:52px}
+@media (pointer:coarse){#touch-controls{display:flex}#help{bottom:198px}#hotbar{bottom:12px}.panel{backdrop-filter:blur(5px)}}
+@media(max-width:600px){#touch-controls{bottom:104px;inset-inline:9px}.touch-pad{grid-template-columns:repeat(3,38px);grid-template-rows:repeat(2,38px)}.touch-actions{grid-template-columns:repeat(2,52px)}.touch-actions .touch-btn{min-height:48px;font-size:10px}}
+\n@media(max-width:600px){#inventory{padding:12px}#inventory-grid{gap:4px}.inv-slot .count{font-size:9px}.inv-slot .key{font-size:8px}}
 @media(max-width:600px){#brand{top:10px;left:10px;padding:9px 11px}#brand small{max-width:230px;font-size:10px}#status{top:10px;right:10px;min-width:0;padding:7px 9px;font-size:10px}#help{bottom:89px;font-size:10px;white-space:normal;width:calc(100vw - 28px)}}
 </style>
 <script type="importmap">
@@ -53,7 +64,7 @@
 <div id="status" class="panel">XYZ <b id="coords">—</b><br>Target <b id="target">none</b><br>Engine <b id="engineStatus">starting</b></div>
 <div id="crosshair"></div><div id="toast"></div>
 <div id="help" class="panel">Klik layar untuk mengunci mouse · WASD bergerak · Shift sprint · Space lompat · Klik kiri tahan untuk menambang · Klik kanan untuk memasang blok · 1–9 pilih blok · E inventaris · Ctrl+S simpan · Ctrl+O muat · Esc lepas mouse</div>
-<div id="hotbar" aria-label="Hotbar"></div>
+<div id="hotbar" aria-label="Hotbar"></div>\n<div id="touch-controls" aria-label="Kontrol layar sentuh"><div class="touch-pad"><button class="touch-btn" data-key="KeyW" aria-label="Maju">▲</button><button class="touch-btn" data-key="KeyA" aria-label="Kiri">◀</button><button class="touch-btn" data-key="KeyS" aria-label="Mundur">▼</button><button class="touch-btn" data-key="KeyD" aria-label="Kanan">▶</button></div><div class="touch-actions"><button class="touch-btn" id="touch-jump">LOMPAT</button><button class="touch-btn" id="touch-sprint" data-key="ShiftLeft">LARI</button><button class="touch-btn" id="touch-mine">TAMBANG</button><button class="touch-btn" id="touch-place">PASANG</button></div></div>
 <div id="inventory" role="dialog" aria-modal="true" aria-label="Inventaris"><div class="inventory-head"><strong>Inventaris</strong><span>E / Esc untuk menutup</span></div><div id="inventory-grid"></div><div id="inventory-note">Klik slot untuk menukar isinya dengan slot hotbar yang sedang dipilih. Slot 1–9 adalah hotbar.</div></div>
 <div id="loading">Memuat engine voxel…</div>
 <script type="module">
@@ -206,11 +217,47 @@ function showPosition(){const p=engine.player.state.position;$('coords').textCon
 function updateCamera(){const p=engine.player.state.position;camera.position.set(p.x,p.y+1.62,p.z);camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0,'YXZ')}
 function rebuildAfterMutation(){rebuildWorldMeshes();updateHotbar()}
 function onPointerDown(event){
+  if(event.pointerType==='touch')return;
   if(document.pointerLockElement!==renderer.domElement){renderer.domElement.requestPointerLock?.();return}
   if(event.button===0){leftMouseDown=true;const hit=currentTarget();if(hit.status==='hit'){const result=engine.startMining(hit.block);if(result.status==='started'){miningHeld=true;toast('Menambang '+(registry.getById(hit.blockId)?.displayName??'blok'))}else toast('Blok tidak dapat ditambang')}}
   else if(event.button===2){const hit=currentTarget();if(hit.status!=='hit'){toast('Tidak ada blok yang ditarget');return}const result=engine.placeSelected(hit);if(result.status==='placed'){rebuildAfterMutation();toast('Blok dipasang')}else toast('Tidak dapat memasang: '+result.status)}
 }
 renderer.domElement.addEventListener('pointerdown',onPointerDown);
+
+const touchLook={pointerId:null,x:0,y:0};
+renderer.domElement.style.touchAction='none';
+renderer.domElement.addEventListener('pointerdown',event=>{
+  if(event.pointerType!=='touch'||inventoryOpen)return;
+  touchLook.pointerId=event.pointerId;touchLook.x=event.clientX;touchLook.y=event.clientY;
+  renderer.domElement.setPointerCapture?.(event.pointerId);
+});
+renderer.domElement.addEventListener('pointermove',event=>{
+  if(event.pointerType!=='touch'||touchLook.pointerId!==event.pointerId)return;
+  const dx=event.clientX-touchLook.x,dy=event.clientY-touchLook.y;touchLook.x=event.clientX;touchLook.y=event.clientY;
+  yaw-=dx*.004;pitch-=dy*.004;pitch=Math.max(-Math.PI*.49,Math.min(Math.PI*.49,pitch));
+});
+function endTouchLook(event){if(touchLook.pointerId===event.pointerId)touchLook.pointerId=null}
+renderer.domElement.addEventListener('pointerup',endTouchLook);
+renderer.domElement.addEventListener('pointercancel',endTouchLook);
+function bindTouchKey(button,key){
+  const press=event=>{event.preventDefault();keyDown.add(key);button.classList.add('held');button.setPointerCapture?.(event.pointerId)};
+  const release=event=>{event.preventDefault();keyDown.delete(key);button.classList.remove('held')};
+  button.addEventListener('pointerdown',press);button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);
+}
+document.querySelectorAll('#touch-controls [data-key]').forEach(button=>bindTouchKey(button,button.dataset.key));
+$('touch-jump').addEventListener('pointerdown',event=>{event.preventDefault();jumpQueued=true});
+$('touch-mine').addEventListener('pointerdown',event=>{
+  event.preventDefault();if(miningHeld)return;leftMouseDown=true;const hit=currentTarget();
+  if(hit.status==='hit'&&engine.startMining(hit.block).status==='started'){miningHeld=true;$('touch-mine').classList.add('held')}
+  else toast('Tidak ada blok yang dapat ditambang');
+});
+function releaseTouchMine(){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}$('touch-mine').classList.remove('held')}
+$('touch-mine').addEventListener('pointerup',releaseTouchMine);$('touch-mine').addEventListener('pointercancel',releaseTouchMine);$('touch-mine').addEventListener('lostpointercapture',releaseTouchMine);
+$('touch-place').addEventListener('pointerdown',event=>{
+  event.preventDefault();const hit=currentTarget();if(hit.status!=='hit'){toast('Tidak ada blok yang ditarget');return}
+  const result=engine.placeSelected(hit);if(result.status==='placed'){rebuildAfterMutation();toast('Blok dipasang')}else toast('Tidak dapat memasang: '+result.status);
+});
+
 window.addEventListener('pointerup',event=>{if(event.button===0){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}}});
 renderer.domElement.addEventListener('contextmenu',event=>event.preventDefault());
 document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==renderer.domElement)return;yaw-=event.movementX*.0022;pitch-=event.movementY*.0022;pitch=Math.max(-Math.PI*.49,Math.min(Math.PI*.49,pitch))});
