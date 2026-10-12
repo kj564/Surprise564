@@ -25,6 +25,7 @@ This is a guide for investigation, not permission to copy historical code or red
 - `src/game/interaction/raycast.ts`: deterministic grid-DDA targeting with defined axis tie-breaking and explicit stop on unloaded chunks.
 - `src/game/interaction/placement.ts`: resolves the adjacent cell and validates known IDs, replaceability and loaded-chunk status without mutating world or inventory.
 - `src/game/blocks/registry.ts`: immutable data-driven block definitions with namespaced keys, MCPE legacy ID mappings, shape/render traits, hardness, sound, light and drop metadata. The initial catalog is intentionally a subset, not a claim of full block parity.
+- `src/game/inventory/inventory.ts`: immutable item stacks, slot operations, stack merging, overflow reporting, removal and conservation-focused tests.
 - `src/game/physics/aabb.ts`: immutable AABB bounds, strict intersection, per-axis displacement clipping and swept bounds.
 - Unit tests run via `bun run test:game-core`.
 
