@@ -19,6 +19,7 @@ This is a guide for investigation, not permission to copy historical code or red
 ## Initial modules on this branch
 
 - `src/game/core/coordinates.ts`: world/chunk/local coordinates with correct negative-coordinate semantics and flat indexing.
+- `src/game/core/fixed-step.ts`: bounded fixed-step simulation clock with catch-up limits, dropped-time reporting and interpolation alpha.
 - `src/game/world/chunk.ts`: renderer-independent `Uint16Array` storage, input validation, revision tracking and defensive snapshots.
 - `src/game/world/world.ts`: loaded-chunk-only world reads/writes, explicit distinction between air and unloaded data, and dirty-chunk tracking across boundaries.
 - `src/game/interaction/raycast.ts`: deterministic grid-DDA targeting with defined axis tie-breaking and explicit stop on unloaded chunks.
