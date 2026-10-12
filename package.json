@@ -16,7 +16,8 @@
     "db:reset": "prisma migrate reset",
     "validate:foundation": "node scripts/validate-foundation.mjs",
     "test:game-core": "bun test src/game",
-    "build:voxel-engine": "bun build src/game/browser-entry.ts --target browser --outfile public/voxelcraft-engine.bundle.js"
+    "build:voxel-engine": "bun build src/game/browser-entry.ts --target browser --outfile public/voxelcraft-engine.bundle.js",
+    "validate:voxel-preview": "node scripts/validate-voxelcraft-preview.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
