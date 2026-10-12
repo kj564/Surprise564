@@ -29,8 +29,7 @@ try {
   writeFileSync(tempFile, modules[0][1], 'utf8');
   const result = spawnSync(process.execPath, ['--check', tempFile], { encoding: 'utf8' });
   if (result.status !== 0) {
-    throw new Error('Preview module syntax check failed:
-' + (result.stderr || result.stdout || 'unknown syntax error'));
+    throw new Error('Preview module syntax check failed:\n' + (result.stderr || result.stdout || 'unknown syntax error'));
   }
 } finally {
   rmSync(tempDir, { recursive: true, force: true });
