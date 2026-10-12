@@ -63,6 +63,22 @@ describe('world save schema', () => {
     expect(validateWorldSave(invalidBlock).ok).toBe(false);
   });
 
+  test('defaults older saves to hotbar slot zero and rejects out-of-range selections', () => {
+    const legacy = validateWorldSave(validSave());
+    expect(legacy.ok).toBe(true);
+    if (legacy.ok) expect(legacy.value.player.selectedSlot).toBe(0);
+
+    const invalid = validSave();
+    invalid.player.selectedSlot = 2;
+    expect(validateWorldSave(invalid).ok).toBe(false);
+
+    const valid = validSave();
+    valid.player.selectedSlot = 1;
+    const normalized = validateWorldSave(valid);
+    expect(normalized.ok).toBe(true);
+    if (normalized.ok) expect(normalized.value.player.selectedSlot).toBe(1);
+  });
+
   test('rejects invalid inventory stacks and out-of-range pitch', () => {
     const invalidStack = validSave();
     invalidStack.player.inventory[0] = { itemKey: 'stone', count: 1, maxStackSize: 64 };
