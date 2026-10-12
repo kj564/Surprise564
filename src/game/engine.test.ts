@@ -92,6 +92,32 @@ describe('VoxelCraftEngine composition root', () => {
     expect(save.chunks[0].blocks[1 + 4 * (1 + 4 * 1)]).toBe(0);
   });
 
+  test('restores saved chunks, inventory and camera pose into a fresh engine', () => {
+    const source = makeGroundedEngine();
+    source.inventory.insert('minecraft:oak_planks', 12);
+    const save = source.createSave({
+      name: 'Round Trip',
+      seed: 42,
+      createdAt: '2026-10-12T00:00:00.000Z',
+      updatedAt: '2026-10-12T00:01:00.000Z',
+      generatorVersion: 1,
+    }, { yaw: 2, pitch: 0.3 });
+
+    const restored = VoxelCraftEngine.fromSave(save);
+    expect(restored.ok).toBe(true);
+    if (!restored.ok) return;
+    expect(restored.engine.world.getBlock(1, 0, 1)).toBe(1);
+    expect(restored.engine.inventory.snapshot().some(stack => stack?.itemKey === 'minecraft:oak_planks' && stack.count === 12)).toBe(true);
+    expect(restored.engine.player.state.position).toEqual(source.player.state.position);
+    expect(restored.view).toEqual({ yaw: 2, pitch: 0.3 });
+  });
+
+  test('rejects corrupt save data without creating a partial engine', () => {
+    const restored = VoxelCraftEngine.fromSave({ format: 'voxelcraft-world', schemaVersion: 999 });
+    expect(restored.ok).toBe(false);
+    if (!restored.ok) expect(restored.errors.length).toBeGreaterThan(0);
+  });
+
   test('validates hotbar selection bounds', () => {
     const engine = makeGroundedEngine();
     engine.selectSlot(8);
