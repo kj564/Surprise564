@@ -40,6 +40,21 @@ describe('PlayerPhysics', () => {
     expect(Math.hypot(state.position.x, state.position.z)).toBeCloseTo(0.4);
   });
 
+  test('sprint increases horizontal speed without changing vertical physics', () => {
+    const walking = new PlayerPhysics({ x: 0, y: 5, z: 0 }, { moveSpeed: 4, sprintMultiplier: 1.5 });
+    const sprinting = new PlayerPhysics({ x: 0, y: 5, z: 0 }, { moveSpeed: 4, sprintMultiplier: 1.5 });
+    const normalState = walking.step(0.1, { moveX: 1, moveZ: 0, jump: false }, emptyObstacles);
+    const sprintState = sprinting.step(0.1, { moveX: 1, moveZ: 0, jump: false, sprint: true }, emptyObstacles);
+    expect(normalState.position.x).toBeCloseTo(0.4);
+    expect(sprintState.position.x).toBeCloseTo(0.6);
+    expect(sprintState.position.y).toBeCloseTo(normalState.position.y);
+  });
+
+  test('rejects non-boolean sprint input when supplied', () => {
+    const player = new PlayerPhysics({ x: 0, y: 2, z: 0 });
+    expect(() => player.step(0.01, { moveX: 0, moveZ: 0, jump: false, sprint: 1 as unknown as boolean }, emptyObstacles)).toThrow(TypeError);
+  });
+
   test('teleport resets velocity and collision flags', () => {
     const player = new PlayerPhysics({ x: 0.5, y: 1, z: 0.5 });
     player.step(1 / 60, { moveX: 0, moveZ: 0, jump: false }, () => [floor]);
