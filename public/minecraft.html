@@ -1976,11 +1976,11 @@
       }
     }
     function toggleInventory() {
+      if (!inventoryOpen && vcGuideOpen) return;
       const opening = !inventoryOpen;
       if (opening) inventoryReturnToGame = locked || inventoryReturnToGame;
       inventoryOpen = opening;
-      inventoryEl.classList.toggle('hidden', !inventoryOpen);
-      // Update both overlays immediately; do not wait for pointerlockchange.
+      // Derive all overlay visibility from one screen state; don't wait for pointerlockchange.
       syncMenuVisibility();
 
       if (inventoryOpen) {
@@ -2410,10 +2410,22 @@
     const saveWorldButton = document.getElementById('saveWorldButton');
     const returnTitleButton = document.getElementById('returnTitleButton');
 
+    // One screen state drives every blocking overlay, following the screen lifecycle
+    // pattern in rujukan/.../client/gui/Screen.cpp. Presentation never owns game state.
+    function getActiveUiScreen() {
+      if (inventoryOpen) return 'inventory';
+      if (vcGuideOpen) return 'guide';
+      if (!gameStarted) return 'title';
+      if (locked) return 'playing';
+      return 'pause';
+    }
     function syncMenuVisibility() {
-      const blockingUi = inventoryOpen || vcGuideOpen;
-      overlay.classList.toggle('hidden', locked || blockingUi || gameStarted);
-      pauseOverlay.classList.toggle('hidden', !gameStarted || locked || blockingUi);
+      const activeScreen = getActiveUiScreen();
+      document.body.dataset.uiScreen = activeScreen;
+      overlay.classList.toggle('hidden', activeScreen !== 'title');
+      pauseOverlay.classList.toggle('hidden', activeScreen !== 'pause');
+      inventoryEl.classList.toggle('hidden', activeScreen !== 'inventory');
+      vcGuide.classList.toggle('hidden', activeScreen !== 'guide');
     }
     function resumeGame() {
       if (settingsPanel) settingsPanel.classList.remove('open');
@@ -2465,14 +2477,12 @@
       if (vcGuideOpen || inventoryOpen) return;
       vcGuideReturnToGame = locked;
       vcGuideOpen = true;
-      vcGuide.classList.remove('hidden');
       syncMenuVisibility();
       updateVcGuideBody(false);
       if (locked) document.exitPointerLock();
     }
     function closeVcGuide(resume = true) {
       vcGuideOpen = false;
-      vcGuide.classList.add('hidden');
       const shouldResume = resume && vcGuideReturnToGame;
       syncMenuVisibility();
       vcGuideReturnToGame = false;
@@ -2627,10 +2637,10 @@
       if (!initialGenerated && pending === 0) {
         initialGenerated = true;
         loadingEl.classList.add('hidden');
-        overlay.classList.remove('hidden');
+        syncMenuVisibility();
       }
 
-      const gameplayActive = gameStarted && locked && !inventoryOpen && !vcGuideOpen;
+      const gameplayActive = getActiveUiScreen() === 'playing';
       if (gameplayActive) movePlayer(dt);
 
       // Pause gameplay systems while the title, pause, inventory, or guide UI is open.

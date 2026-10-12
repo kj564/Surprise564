@@ -77,10 +77,21 @@ if (!source.includes('const clockMinutes = Math.floor((((worldTime % 1) + 1) % 1
 } else pass('Browser HUD shows a live HH:mm clock like the Behavior Pack action bar');
 
 if (source.includes('id="pauseOverlay"') && source.includes('id="resumeGameButton"') &&
-    source.includes('function syncMenuVisibility()') && source.includes('gameStarted && locked && !inventoryOpen && !vcGuideOpen')) {
-  pass('Bedrock-style pause screen is distinct from the title menu and pauses gameplay systems');
+    source.includes('function syncMenuVisibility()') && source.includes("function getActiveUiScreen()") &&
+    source.includes("document.body.dataset.uiScreen = activeScreen") &&
+    source.includes("const gameplayActive = getActiveUiScreen() === 'playing'")) {
+  pass('One screen state controls title, gameplay, pause, inventory, and guide visibility');
 } else {
-  fail('Pause screen must be separate from the title menu and pause gameplay systems');
+  fail('UI screens and gameplay activation must be derived from one screen state');
+}
+
+if (!source.includes("inventoryEl.classList.toggle('hidden', !inventoryOpen)") &&
+    !source.includes("vcGuide.classList.remove('hidden')") &&
+    !source.includes("vcGuide.classList.add('hidden')") &&
+    source.includes("if (!inventoryOpen && vcGuideOpen) return;")) {
+  pass('Inventory and guide transitions use the central screen-state controller');
+} else {
+  fail('Inventory and guide visibility must be controlled centrally, with mutually exclusive screens');
 }
 
 if (source.includes('data-inv-filter="all"') && source.includes('data-inv-filter="nature"') &&
