@@ -111,6 +111,16 @@ if (!source.includes("inventoryEl.classList.toggle('hidden', !inventoryOpen)") &
   fail('Inventory and guide visibility must be controlled centrally, with mutually exclusive screens');
 }
 
+if (source.includes("event.key === 'ArrowRight'") && source.includes("event.key === 'ArrowLeft'") &&
+    source.includes("event.key === 'Home'") && source.includes("event.key === 'End'") &&
+    source.includes('tab.tabIndex = selected ? 0 : -1') &&
+    source.includes('role="tabpanel" aria-labelledby="inventoryTabAll"') &&
+    source.includes('aria-controls="invGrid"')) {
+  pass('Inventory category tabs support arrow/Home/End navigation and roving keyboard focus');
+} else {
+  fail('Inventory category tabs must follow accessible keyboard tab-navigation behavior');
+}
+
 if (source.includes('data-inv-filter="all"') && source.includes('data-inv-filter="nature"') &&
     source.includes('data-inv-filter="building"') && source.includes('data-inv-filter="minerals"') &&
     source.includes('function buildInventory(filter = activeInventoryFilter)')) {

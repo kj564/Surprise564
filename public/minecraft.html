@@ -862,12 +862,12 @@
   <div id="inventory" class="hidden" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
     <h2 id="inventoryTitle">Inventaris — pilih blok untuk slot hotbar aktif</h2>
     <div class="inv-tabs" role="tablist" aria-label="Kategori inventaris">
-      <button type="button" role="tab" aria-selected="true" class="active" data-inv-filter="all">Semua</button>
-      <button type="button" role="tab" aria-selected="false" data-inv-filter="nature">Alam</button>
-      <button type="button" role="tab" aria-selected="false" data-inv-filter="building">Bangunan</button>
-      <button type="button" role="tab" aria-selected="false" data-inv-filter="minerals">Mineral</button>
+      <button type="button" id="inventoryTabAll" role="tab" aria-selected="true" aria-controls="invGrid" class="active" data-inv-filter="all">Semua</button>
+      <button type="button" id="inventoryTabNature" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="nature">Alam</button>
+      <button type="button" id="inventoryTabBuilding" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="building">Bangunan</button>
+      <button type="button" id="inventoryTabMinerals" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="minerals">Mineral</button>
     </div>
-    <div class="inv-grid" id="invGrid"></div>
+    <div class="inv-grid" id="invGrid" role="tabpanel" aria-labelledby="inventoryTabAll" tabindex="0"></div>
     <p class="inv-hint">Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di bawah.</p>
     <button id="invClose">Tutup (E)</button>
   </div>
@@ -1944,15 +1944,35 @@
       minerals: new Set([13, 14, 15, 16, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]),
     };
     let activeInventoryFilter = 'all';
-    document.querySelectorAll('[data-inv-filter]').forEach((tab) => {
-      tab.addEventListener('click', () => {
-        activeInventoryFilter = tab.dataset.invFilter;
-        document.querySelectorAll('[data-inv-filter]').forEach((item) => {
-          const selected = item.dataset.invFilter === activeInventoryFilter;
-          item.classList.toggle('active', selected);
-          item.setAttribute('aria-selected', String(selected));
-        });
-        buildInventory(activeInventoryFilter);
+    const inventoryTabs = [...document.querySelectorAll('#inventory [data-inv-filter]')];
+    function setInventoryFilter(filter, focusSelected = false) {
+      if (!inventoryFilterSets.hasOwnProperty(filter) && filter !== 'all') return;
+      activeInventoryFilter = filter;
+      let selectedTab = null;
+      inventoryTabs.forEach((tab) => {
+        const selected = tab.dataset.invFilter === activeInventoryFilter;
+        tab.classList.toggle('active', selected);
+        tab.setAttribute('aria-selected', String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+        if (selected) selectedTab = tab;
+      });
+      if (selectedTab) {
+        invGridEl.setAttribute('aria-labelledby', selectedTab.id);
+        if (focusSelected) selectedTab.focus();
+      }
+      buildInventory(activeInventoryFilter);
+    }
+    inventoryTabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => setInventoryFilter(tab.dataset.invFilter));
+      tab.addEventListener('keydown', (event) => {
+        let nextIndex = null;
+        if (event.key === 'ArrowRight') nextIndex = (index + 1) % inventoryTabs.length;
+        else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + inventoryTabs.length) % inventoryTabs.length;
+        else if (event.key === 'Home') nextIndex = 0;
+        else if (event.key === 'End') nextIndex = inventoryTabs.length - 1;
+        if (nextIndex === null) return;
+        event.preventDefault();
+        setInventoryFilter(inventoryTabs[nextIndex].dataset.invFilter, true);
       });
     });
 
