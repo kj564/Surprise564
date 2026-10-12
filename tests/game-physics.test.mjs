@@ -37,13 +37,15 @@ test("voxel DDA returns first hit, entered face and distance", () => {
 
 test("voxel DDA handles negative coordinates, max reach and inside-origin", () => {
   const world = new WorldStore();
-  world.setBlock({ x: -2, y: 0, z: 0 }, 2);
+  world.setBlock({ x: -3, y: 0, z: 0 }, 2);
   assert.equal(castBlocks(world, { x: 0.5, y: 0.5, z: 0.5 }, { x: -1, y: 0, z: 0 }, 2), null);
   const hit = castBlocks(world, { x: 0.5, y: 0.5, z: 0.5 }, { x: -1, y: 0, z: 0 }, 3);
-  assert.deepEqual(hit.block, { x: -2, y: 0, z: 0 });
+  assert.deepEqual(hit.block, { x: -3, y: 0, z: 0 });
   assert.equal(hit.face, "east");
   assert.equal(hit.distance, 2.5);
-  assert.equal(castBlocks(world, { x: -1.5, y: 0.5, z: 0.5 }, { x: 1, y: 0, z: 0 }, 1).face, "inside");
+  const insideWorld = new WorldStore();
+  insideWorld.setBlock({ x: -2, y: 0, z: 0 }, 2);
+  assert.equal(castBlocks(insideWorld, { x: -1.5, y: 0.5, z: 0.5 }, { x: 1, y: 0, z: 0 }, 1).face, "inside");
   assert.throws(() => castBlocks(world, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, 2), RangeError);
 });
 
