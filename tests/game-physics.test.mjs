@@ -15,11 +15,11 @@ test("AABB uses strict overlap and returns new boxes for movement", () => {
 
 test("axis clipping stops movement at the obstacle without crossing it", () => {
   const moving = new Box(0, 0, 0, 0.8, 1.8, 0.8);
-  assert.equal(clipX(moving, new Box(1, 0, 0, 2, 2, 1), 1), 0.2);
+  assert.ok(Math.abs(clipX(moving, new Box(1, 0, 0, 2, 2, 1), 1) - 0.2) < 1e-9);
   assert.equal(clipX(moving, new Box(-2, 0, 0, -1, 2, 1), -1), -1);
-  assert.equal(clipY(moving, new Box(0, 2, 0, 1, 3, 1), 1), 0.2);
+  assert.ok(Math.abs(clipY(moving, new Box(0, 2, 0, 1, 3, 1), 1) - 0.2) < 1e-9);
   assert.equal(clipY(moving, new Box(0, -2, 0, 1, -1, 1), -1), -1);
-  assert.equal(clipZ(moving, new Box(0, 0, 1, 1, 2, 2), 1), 0.2);
+  assert.ok(Math.abs(clipZ(moving, new Box(0, 0, 1, 1, 2, 2), 1) - 0.2) < 1e-9);
   assert.equal(clipZ(moving, new Box(0, 0, -2, 1, 2, -1), -1), -1);
   assert.equal(clipX(moving, new Box(1, 3, 0, 2, 4, 1), 1), 1, "no vertical overlap means no collision");
 });
