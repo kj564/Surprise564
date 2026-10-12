@@ -97,6 +97,7 @@ const vanillaUiTextures = [
   'button_borderless_darkhover', 'button_borderless_darkpressed',
   'dialog_background_opaque', 'highlight_slot', 'hotbar_start_cap', 'hotbar_end_cap', 'cancel', 'inventory_icon',
   'hud_tip_text_background', 'item_cell',
+  'TabTopBack', 'TabTopBackHover', 'TabTopFront', 'TabTopFrontHover',
 ];
 for (const texture of vanillaUiTextures) {
   if (!source.includes(`./VoxelCraft/textures/ui/${texture}.png`)) {
