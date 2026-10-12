@@ -7,27 +7,25 @@ An original, clean-room C++17 learning project inspired by the broad engineering
 - Bounds-checked 3D block storage
 - Flat terrain generation with grass, dirt, stone, and air
 - Player position and bounded movement
+- Versioned text-based world save/load API with validation
+- Failed loads leave the in-memory world unchanged
 - Console-based interactive prototype
-- Unit-style regression checks with CTest
-- CMake build and GitHub Actions CI
+- Regression checks for terrain, movement, and persistence
+- CMake build and GitHub Actions CI workflow
 
 ## Build
 
 Requirements: CMake 3.16+ and a C++17 compiler.
 
-```bash
-cmake -S . -B build
-cmake --build build --config Release
-ctest --test-dir build --output-on-failure
-```
+    cmake -S . -B build
+    cmake --build build --config Release
+    ctest --test-dir build --output-on-failure
 
 Run the prototype:
 
-```bash
-./build/pocket_engine_study
-```
+    ./build/pocket_engine_study
 
-On Windows multi-configuration generators, the executable may be under `build/Release/`.
+On Windows multi-configuration generators, the executable may be under build/Release/.
 
 ## Console commands
 
@@ -37,8 +35,10 @@ On Windows multi-configuration generators, the executable may be under `build/Re
 - `help` — list commands
 - `quit` — exit
 
+The save/load API is available to C++ callers through `world_io.hpp`; interactive save/load commands are not wired into the console yet.
+
 ## Scope and next milestones
 
-This is an educational prototype, not a playable Minecraft-compatible game. It currently has no renderer, texture pipeline, networking, mobs, inventory, or save format. Those should be added incrementally and tested independently.
+This is an educational prototype, not a playable Minecraft-compatible game. It currently has no renderer, texture pipeline, networking, mobs, inventory, physics/collision, or mobile input. Those should be added incrementally and tested independently.
 
 Do not add assets or code from unauthorized leaks. Only incorporate third-party materials when their license and provenance are documented.
