@@ -841,6 +841,19 @@
     transform: translateY(1px);
   }
 
+
+  /* Final guard: the active screen owns overlay visibility, even if a pointer-lock
+     event races with opening/closing inventory. Keep this after all UI skin rules. */
+  body[data-ui-screen="inventory"] #overlay,
+  body[data-ui-screen="inventory"] #pauseOverlay,
+  body[data-ui-screen="inventory"] #vcGuide {
+    display: none !important;
+  }
+  body[data-ui-screen="inventory"] #inventory {
+    display: flex !important;
+    z-index: 1000;
+  }
+
 </style>
 </head>
 <body>
