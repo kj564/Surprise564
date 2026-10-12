@@ -1,0 +1,40 @@
+name: VoxelCraft Engine Core Tests
+
+on:
+  push:
+    branches:
+      - "rebuild/**"
+    paths:
+      - "src/game/world/**"
+      - "tests/game-world.test.mjs"
+      - "package.json"
+      - ".github/workflows/engine-core-ci.yml"
+  pull_request:
+    paths:
+      - "src/game/world/**"
+      - "tests/game-world.test.mjs"
+      - "package.json"
+      - ".github/workflows/engine-core-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  engine-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Verify runtime
+        run: node --version && bun --version
+      - name: Test world-core contracts
+        run: bun run test:engine
+      - name: Validate existing game foundations
+        run: bun run validate:foundation
+      - name: Validate existing browser game
+        run: bun run validate:game
+      - name: Build existing application
+        run: bun install --frozen-lockfile && bun run build
