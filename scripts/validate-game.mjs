@@ -358,8 +358,10 @@ for (const [name, index] of tiles) {
   if (index >= textures.length) fail(`Tile ${name} points outside TEXTURE_FILES (index ${index})`);
   if (textures[index] === undefined) fail(`Missing texture entry for tile ${name}`);
 }
-if (textures.length <= 16 * 6) pass(`Atlas capacity valid (${textures.length}/96 tiles)`);
-else fail(`Atlas capacity exceeded (${textures.length}/96 tiles)`);
+const atlasDimensions = source.match(/const ATLAS_COLS = (\d+), ATLAS_ROWS = (\d+), TILE_PX = (\d+);/);
+const atlasCapacity = atlasDimensions ? Number(atlasDimensions[1]) * Number(atlasDimensions[2]) : 0;
+if (atlasCapacity > 0 && textures.length <= atlasCapacity) pass(`Atlas capacity valid (${textures.length}/${atlasCapacity} tiles)`);
+else fail(`Atlas capacity exceeded or dimensions missing (${textures.length}/${atlasCapacity || 'unknown'} tiles)`);
 
 if (blocks.size < 2 || blocks.get(0) !== 'null') fail('Block ID 0 must be null (air)');
 else pass(`Parsed ${blocks.size} block IDs; ID 0 is air`);
