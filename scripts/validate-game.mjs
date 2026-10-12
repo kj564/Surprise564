@@ -38,7 +38,8 @@ for (const category of ['nature', 'building', 'minerals']) {
   inventoryCategoryIds[category] = match ? match[1].split(',').map((value) => Number(value.trim())).filter(Number.isInteger) : [];
 }
 const listedInventoryIds = Object.values(inventoryCategoryIds).flat();
-// Air (ID 0) is a world-state sentinel, not a placeable inventory block.\nconst knownBlockIds = [...blocks.keys()].filter((id) => id !== 0);
+// Air (ID 0) is a world-state sentinel, not a placeable inventory block.
+const knownBlockIds = [...blocks.keys()].filter((id) => id !== 0);
 const uncategorizedBlockIds = knownBlockIds.filter((id) => !listedInventoryIds.includes(id));
 const unknownCategoryBlockIds = listedInventoryIds.filter((id) => !blocks.has(id));
 if (new Set(listedInventoryIds).size !== listedInventoryIds.length) {
