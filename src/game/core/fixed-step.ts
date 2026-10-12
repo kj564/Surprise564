@@ -47,9 +47,9 @@ export class FixedStepClock {
     }
 
     if (this.accumulator >= this.stepSeconds) {
-      const wholeStepsDropped = Math.floor(this.accumulator / this.stepSeconds);
+      const wholeStepsDropped = Math.floor((this.accumulator + this.stepSeconds * 1e-10) / this.stepSeconds);
       const timeDropped = wholeStepsDropped * this.stepSeconds;
-      this.accumulator -= timeDropped;
+      this.accumulator = Math.max(0, this.accumulator - timeDropped);
       droppedSeconds += timeDropped;
     }
 
