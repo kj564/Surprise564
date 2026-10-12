@@ -37,6 +37,9 @@ test("block registry enforces stable unique ids and air at id zero", () => {
   assert.throws(() => new BlockRegistry([
     CORE_BLOCKS[0], { ...CORE_BLOCKS[1], hardness: -2 },
   ]), /hardness/);
+  assert.throws(() => new BlockRegistry([
+    CORE_BLOCKS[0], { ...CORE_BLOCKS[1], hardness: Infinity },
+  ]), /hardness/);
 });
 
 test("chunk edits are revisioned and no-op edits do not dirty state", () => {
@@ -65,6 +68,9 @@ test("world store handles negative coordinates and edits across chunk boundaries
   assert.equal(world.getBlock({ x: 0, y: 0, z: 0 }), 2);
   assert.equal(world.chunkCount, 2);
   assert.equal(world.setBlock({ x: 5, y: 5, z: 5 }, 0).changed, false);
+  const countBeforeInvalidWrite = world.chunkCount;
+  assert.throws(() => world.setBlock({ x: 50, y: 0, z: 0 }, 70000), RangeError);
+  assert.equal(world.chunkCount, countBeforeInvalidWrite, "invalid writes must not allocate chunks");
 });
 
 test("chunk constructor and block writes reject invalid data", () => {
