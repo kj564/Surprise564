@@ -121,6 +121,7 @@ describe('VoxelCraftEngine composition root', () => {
 
   test('round-trips authoritative world, inventory and camera view through validated save data', () => {
     const engine = makeGroundedEngine();
+    engine.selectSlot(3);
     engine.world.setBlock({ x: 2, y: 2, z: 2 }, 1);
     engine.inventory.setSlot(0, { itemKey: 'minecraft:stone', count: 12, maxStackSize: 64 });
     const save = engine.createSave({
@@ -132,6 +133,8 @@ describe('VoxelCraftEngine composition root', () => {
     if (!restored.ok) return;
     expect(restored.engine.world.getBlock(2, 2, 2)).toBe(1);
     expect(restored.engine.inventory.getSlot(0)?.count).toBe(12);
+    expect(restored.engine.selectedSlot).toBe(3);
+    expect(restored.engine.selectedSlot).toBe(3);
     expect(restored.engine.player.state.position).toEqual(engine.player.state.position);
     expect(restored.view).toEqual({ yaw: 1.25, pitch: -0.2 });
   });
