@@ -1281,16 +1281,18 @@
             if (hf >= WATER_LEVEL + 10) {
               c.set(lx, hf, lz, 55); // snow on top of mountains
             }
-            // trees on grass — Phase 1: random wood type per tree
-            if (!beachy && hf > WATER_LEVEL + 1) {
-              const th = hash2(wx * 7 + 13, wz * 11 + 5);
-              if (th > 0.985) {
-                const woodType = hash2(wx * 91, wz * 83) ;
-                // pick a wood type: 0=oak (default), 1=birch, 2=spruce, 3=jungle, 4=acacia, 5=dark_oak
-                const wt = Math.floor(woodType * 6);
-                this.plantTree(c, lx, hf + 1, lz, wt);
-              }
-            }
+          }
+        }
+        // Generate trees from world coordinates, not chunk-local coordinates.
+        // Each chunk independently writes the portions of nearby trees it owns, so
+        // trunks/canopies remain continuous when a tree crosses a chunk boundary.
+        for (let wx = baseX - 2; wx < baseX + CHUNK_X + 2; wx++) {
+          for (let wz = baseZ - 2; wz < baseZ + CHUNK_Z + 2; wz++) {
+            const hf = Math.floor(terrainHeight(wx, wz));
+            if (hf <= WATER_LEVEL + 1) continue;
+            if (hash2(wx * 7 + 13, wz * 11 + 5) <= 0.985) continue;
+            const wt = Math.floor(hash2(wx * 91, wz * 83) * 6);
+            this.plantTree(c, wx, hf + 1, wz, wt);
           }
         }
         for (const [key, id] of this.overrides) {
@@ -1301,15 +1303,20 @@
         }
         c.dirty = true;
       }
-      plantTree(c, lx, ly, lz, woodType = 0) {
-        // woodType: 0=oak, 1=birch, 2=spruce, 3=jungle, 4=acacia, 5=dark_oak
+      plantTree(c, worldX, ly, worldZ, woodType = 0) {
+        // A tree is a world-space feature. Clip writes to this chunk, not the
+        // tree itself; adjacent chunks generate the remaining trunk/canopy voxels.
         const logIds = [5, 34, 37, 40, 43, 46];
-        const leavesIds = [7, 36, 39, 42, 45, 45]; // dark oak uses oak-like (we don't have dark_oak leaves tile, use acacia)
-        const logId = logIds[woodType] || 5;
-        const leavesId = leavesIds[woodType] || 7;
-        const h = 4 + Math.floor(hash2(lx * 31, lz * 17) * 3);
-        for (let i = 0; i < h; i++) {
-          if (ly + i < CHUNK_Y) c.set(lx, ly + i, lz, logId);
+        const leavesIds = [7, 36, 39, 42, 45, 45]; // dark oak currently reuses the acacia leaf texture
+        const logId = logIds[woodType] ?? 5;
+        const leavesId = leavesIds[woodType] ?? 7;
+        const h = 4 + Math.floor(hash2(worldX * 31, worldZ * 17) * 3);
+        const baseX = c.cx * CHUNK_X, baseZ = c.cz * CHUNK_Z;
+        const localX = worldX - baseX, localZ = worldZ - baseZ;
+        if (localX >= 0 && localX < CHUNK_X && localZ >= 0 && localZ < CHUNK_Z) {
+          for (let i = 0; i < h; i++) {
+            if (ly + i < CHUNK_Y) c.set(localX, ly + i, localZ, logId);
+          }
         }
         const topY = ly + h - 1;
         for (let dy = -2; dy <= 1; dy++) {
@@ -1317,7 +1324,8 @@
           for (let dx = -r; dx <= r; dx++) {
             for (let dz = -r; dz <= r; dz++) {
               if (dx === 0 && dz === 0 && dy < 1) continue;
-              const x = lx + dx, y = topY + dy, z = lz + dz;
+              const wx = worldX + dx, y = topY + dy, wz = worldZ + dz;
+              const x = wx - baseX, z = wz - baseZ;
               if (x < 0 || x >= CHUNK_X || z < 0 || z >= CHUNK_Z || y < 0 || y >= CHUNK_Y) continue;
               if (c.get(x, y, z) === 0) c.set(x, y, z, leavesId);
             }

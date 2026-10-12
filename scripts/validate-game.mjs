@@ -449,6 +449,19 @@ if (existsSync(chickenTexturePath)) {
   } else pass('Vanilla chicken texture is a valid 64x32 PNG atlas');
 }
 
+// Tree features must be generated from world coordinates and clipped per chunk.
+// This prevents crowns and trunks from being cut off at 16x16 chunk boundaries.
+if (source.includes('for (let wx = baseX - 2; wx < baseX + CHUNK_X + 2; wx++)') &&
+    source.includes('for (let wz = baseZ - 2; wz < baseZ + CHUNK_Z + 2; wz++)') &&
+    source.includes('plantTree(c, wx, hf + 1, wz, wt)') &&
+    source.includes('plantTree(c, worldX, ly, worldZ, woodType = 0)') &&
+    source.includes('const h = 4 + Math.floor(hash2(worldX * 31, worldZ * 17) * 3)') &&
+    source.includes('const x = wx - baseX, z = wz - baseZ;')) {
+  pass('Tree generation is deterministic in world coordinates and preserves canopy voxels across chunk boundaries');
+} else {
+  fail('Tree generation must use world-space origins and write neighboring tree portions into each chunk');
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} validation failure(s):`);
   for (const message of failures) console.error('✗ ' + message);
