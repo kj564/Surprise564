@@ -17,7 +17,7 @@ The upstream README explicitly states that this data is a template and that they
 
 ## Original code in this repo
 
-The following folders are original work for VoxelCraft and are licensed under the repository's license (see `LICENSE` if present, otherwise MIT-style permissive):
+The following folders contain VoxelCraft project code. Their license status is not established by a root license file in the checked-in tree; do not assume permissive rights until repository owners explicitly license the original work:
 
 - `public/minecraft.html` — the browser voxel game (Three.js)
 - `src/` — Next.js app that hosts the browser game
@@ -25,6 +25,8 @@ The following folders are original work for VoxelCraft and are licensed under th
 - `VoxelCraftResourcePack/` — experimental JSON UI resource pack work
 - `scripts/setup.sh` — development setup helper
 - `.github/workflows/` — CI/CD pipelines
+
+**License status warning:** no root `LICENSE` file was found in the checked-in tree at the time of the rebuild audit. Do not assume these files are MIT-licensed or otherwise permissively licensed until repository owners add an explicit license. The MCPE source snapshot and vanilla assets are separate materials and are not covered by a future license for newly authored VoxelCraft code. See [`docs/rebuild/SOURCE-LICENSE-AUDIT.md`](docs/rebuild/SOURCE-LICENSE-AUDIT.md).
 
 ## Game music
 
