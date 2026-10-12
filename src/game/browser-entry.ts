@@ -1,11 +1,14 @@
 import { VoxelCraftEngine } from './engine';
+import { ChunkMeshCache } from './rendering/chunk-mesh-cache';
 
 declare global {
   interface Window {
     VoxelCraftEngine: typeof VoxelCraftEngine;
+    VoxelCraftCreateMeshCache: (engine: VoxelCraftEngine) => ChunkMeshCache;
   }
 }
 
-// Deliberately expose only the composition root. The static browser demo owns rendering/input,
-// while all world, collision, targeting, mining, placement and inventory rules stay in this engine.
+// Browser UI/input stays outside the simulation. The preview gets a small adapter to the
+// renderer-independent chunk mesher/cache; it never mutates authoritative world data via meshes.
 window.VoxelCraftEngine = VoxelCraftEngine;
+window.VoxelCraftCreateMeshCache = engine => new ChunkMeshCache(engine.world, engine.registry);
