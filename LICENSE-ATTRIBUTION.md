@@ -7,35 +7,32 @@ This repository is a fan project. **VoxelCraft is not affiliated with, endorsed 
 All vanilla Minecraft Bedrock assets (textures, sounds, models, animations, entity definitions, recipe JSON, etc.) located in:
 
 - `VoxelCraft/` — checked-in mirror/snapshot of the upstream [ZtechNetwork/MCBVanillaResourcePack](https://github.com/ZtechNetwork/MCBVanillaResourcePack)
-- `VanillaBehaviorPack/` — full vanilla behavior pack template (git submodule of [ZtechNetwork/MCBVanillaBehaviorPack](https://github.com/ZtechNetwork/MCBVanillaBehaviorPack))
+- `VanillaBehaviorPack/` — vanilla behavior pack template (git submodule of [ZtechNetwork/MCBVanillaBehaviorPack](https://github.com/ZtechNetwork/MCBVanillaBehaviorPack))
 
-…are the property of **Mojang Studios / Microsoft**. They are included here solely as reference data and runtime assets for the browser game, consistent with how the upstream repositories distribute them.
+are identified by the upstream material as property of **Mojang Studios / Microsoft**. They are not made open-source or cleared for unrestricted redistribution by being present in this repository. Verify rights before redistributing or deploying them.
 
-> All assets belong to Mojang & Microsoft.
+## Historical MCPE source archive
 
-The upstream README explicitly states that this data is a template and that they don't own these assets — see [`VoxelCraft/README.md`](VoxelCraft/README.md).
+The historical C++ snapshot under `rujukan/pocket-edition-2013/mcpe-source/` has no explicit license file identified in the repository tree audit. Its public archive describes the source as originating from a 2026 source-code leak. Do not assume the code is licensed for reuse. See `docs/rebuild/LICENSING-AND-SOURCE-AUDIT.md`; direct porting and redistribution remain on hold pending a documented legal basis.
 
-## Original code in this repo
+## Original VoxelCraft code
 
-The following folders are original work for VoxelCraft and are licensed under the repository's license (see `LICENSE` if present, otherwise MIT-style permissive):
+There is currently **no root `LICENSE` file** in this repository. Therefore, the repository does not currently provide an explicit project-level open-source license for original VoxelCraft code. Do not describe this code as MIT-licensed or MIT-style permissive unless the repository owner adds an actual license with appropriate authority and third-party exclusions. GitHub's [licensing guidance](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository) explains that absent a license, default copyright applies.
 
-- `public/minecraft.html` — the browser voxel game (Three.js)
-- `src/` — Next.js app that hosts the browser game
-- `BedrockAddon/` — custom Script API behavior pack starter (commands, ActionForm UI, dynamic-property stats)
-- `VoxelCraftResourcePack/` — experimental JSON UI resource pack work
-- `scripts/setup.sh` — development setup helper
-- `.github/workflows/` — CI/CD pipelines
+Any future license for original VoxelCraft-authored code must not purport to license Mojang/Microsoft assets or other third-party material, and must be reviewed for compatibility with all included components.
 
 ## Game music
 
-Per the upstream resource pack README: **game music is not included** for copyright reasons. If you need music references, use `sound_definitions.json` in `VoxelCraft/sounds/` as a lookup table only.
+The upstream resource pack README says game music is not included for copyright reasons. Treat sound definition files as reference data, not permission to redistribute music.
 
-## Reporting issues with vanilla assets
+## Required practice for new assets and dependencies
 
-As of March 22nd, 2025, the upstream repositories are templates. Issues with vanilla assets themselves should be reported to the official [Mojang/bedrock-samples](https://github.com/Mojang/bedrock-samples/issues) repository, not to this project.
+Every new asset or dependency must have a provenance record: source URL, author/rightsholder, license or permission basis, modification status, and whether it is approved for public deployment. Do not copy unlicensed Minecraft textures, sounds, fonts, models, logos, or other protected materials into new runtime output.
 
-## TL;DR for contributors
+## Reporting asset issues
 
-- Do not redistribute the contents of `VoxelCraft/` or `VanillaBehaviorPack/` outside this repository without verifying your rights to do so.
-- Prefer writing your own assets, or pull from the user's installed game at runtime as the upstream README recommends.
-- Keep VoxelCraft a personal, non-commercial project unless you have explicit written permission from Mojang/Microsoft.
+Issues with vanilla assets should be reported to the relevant rights holder or upstream project as appropriate. Do not imply the VoxelCraft project owns those assets.
+
+## Disclaimer
+
+This document is an engineering provenance record, not legal advice. Resolve unclear rights with the relevant rights holder or a qualified lawyer before distributing a derivative or deploying disputed material.
