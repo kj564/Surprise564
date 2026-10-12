@@ -5,6 +5,8 @@ describe('BlockRegistry', () => {
   test('provides stable namespaced definitions and legacy mappings', () => {
     expect(defaultBlockRegistry.getById(0)?.key).toBe('minecraft:air');
     expect(defaultBlockRegistry.getByLegacyId(1)?.key).toBe('minecraft:stone');
+    expect(defaultBlockRegistry.getByLegacyId(8)?.key).toBe('minecraft:water');
+    expect(defaultBlockRegistry.getByLegacyId(10)?.lightEmission).toBe(15);
     expect(defaultBlockRegistry.getById(2)?.key).toBe('minecraft:grass_block');
     expect(defaultBlockRegistry.getByKey('minecraft:oak_stairs')?.shape).toBe('stairs');
     expect(defaultBlockRegistry.getByKey('minecraft:glass')?.renderLayer).toBe('translucent');
