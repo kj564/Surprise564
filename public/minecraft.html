@@ -841,6 +841,15 @@
     transform: translateY(1px);
   }
 
+
+
+  /* Use the original Resource Pack pointer outside the locked 3D viewport. */
+  body { cursor: url('./VoxelCraft/textures/ui/cursor_pc.png') 4 4, auto; }
+  #game { cursor: none; }
+  #overlay button, .slot, .inv-slot, #invClose {
+    cursor: url('./VoxelCraft/textures/ui/cursor_pc.png') 4 4, pointer;
+  }
+
 </style>
 </head>
 <body>
