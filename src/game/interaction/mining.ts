@@ -20,7 +20,8 @@ export class MiningSession {
   readonly blockId: number;
   readonly totalSeconds: number;
   private elapsedSeconds = 0;
-  private finished = false;
+  private completed = false;
+  private cancelled = false;
 
   constructor(target: BlockPosition, blockId: number, totalSeconds: number) {
     if (!Number.isSafeInteger(target.x) || !Number.isSafeInteger(target.y) || !Number.isSafeInteger(target.z)) {
@@ -31,25 +32,34 @@ export class MiningSession {
     this.target = Object.freeze({ ...target });
     this.blockId = blockId;
     this.totalSeconds = totalSeconds;
-    this.finished = totalSeconds === 0;
+    this.completed = totalSeconds === 0;
+  }
+
+  get isComplete(): boolean {
+    return this.completed;
+  }
+
+  get isCancelled(): boolean {
+    return this.cancelled;
   }
 
   get progress(): number {
-    if (this.finished) return 1;
+    if (this.completed) return 1;
     if (this.totalSeconds === 0) return 1;
     return Math.min(1, this.elapsedSeconds / this.totalSeconds);
   }
 
   advance(deltaSeconds: number, currentTarget: BlockPosition | null, currentBlockId: number | undefined): MiningProgressResult {
     if (!Number.isFinite(deltaSeconds) || deltaSeconds < 0) throw new RangeError('deltaSeconds must be finite and non-negative');
-    if (this.finished) return { status: 'completed', progress: 1 };
+    if (this.cancelled) return { status: 'cancelled' };
     if (!samePosition(this.target, currentTarget) || currentBlockId !== this.blockId) {
-      this.finished = true;
+      this.cancelled = true;
       return { status: 'cancelled' };
     }
+    if (this.completed) return { status: 'completed', progress: 1 };
     this.elapsedSeconds = Math.min(this.totalSeconds, this.elapsedSeconds + deltaSeconds);
     if (this.elapsedSeconds >= this.totalSeconds) {
-      this.finished = true;
+      this.completed = true;
       return { status: 'completed', progress: 1 };
     }
     return {
@@ -80,6 +90,7 @@ export function beginMining(
 }
 
 export type BreakBlockResult =
+  | { readonly status: 'not-ready'; readonly progress: number }
   | { readonly status: 'broken'; readonly blockId: number; readonly dropsInserted: readonly ItemStack[]; readonly dropsRemaining: readonly ItemStack[] }
   | { readonly status: 'target-changed' }
   | { readonly status: 'unloaded' }
@@ -88,14 +99,16 @@ export type BreakBlockResult =
 /** Completes an already-finished mining session. Any inventory overflow is returned, never lost. */
 export function finishBlockBreak(
   world: VoxelWorld,
-  target: BlockPosition,
-  expectedBlockId: number,
+  session: MiningSession,
   registry: BlockRegistry,
   inventory: Inventory,
 ): BreakBlockResult {
+  if (session.isCancelled) return { status: 'target-changed' };
+  if (!session.isComplete) return { status: 'not-ready', progress: session.progress };
+  const target = session.target;
   const currentId = world.getBlock(target.x, target.y, target.z);
   if (currentId === undefined) return { status: 'unloaded' };
-  if (currentId !== expectedBlockId || currentId === 0) return { status: 'target-changed' };
+  if (currentId !== session.blockId || currentId === 0) return { status: 'target-changed' };
   const definition = registry.getById(currentId);
   if (!definition) return { status: 'target-changed' };
   if (definition.hardness < 0) return { status: 'unbreakable' };
