@@ -6,7 +6,9 @@ on:
       - "rebuild/**"
     paths:
       - "src/game/world/**"
+      - "src/game/physics/**"
       - "tests/game-world.test.mjs"
+      - "tests/game-physics.test.mjs"
       - "package.json"
       - ".github/workflows/engine-core-ci.yml"
   pull_request:
