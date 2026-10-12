@@ -221,6 +221,13 @@ jobs:
           test -f out/VoxelCraft/textures/gui/newgui/ButtonWithBorderHover.png
           test -f out/VoxelCraft/textures/gui/newgui/ButtonWithBorderPressed.png
           test -f out/VoxelCraft/textures/blocks/pumpkin_face_off.png
+          test -f out/VoxelCraft/textures/blocks/cobblestone_mossy.png
+          test -f out/VoxelCraft/textures/blocks/sandstone_top.png
+          test -f out/VoxelCraft/textures/blocks/tnt_side.png
+          test -f out/VoxelCraft/textures/blocks/prismarine_rough.png
+          test -f out/VoxelCraft/textures/blocks/deepslate/deepslate.png
+          test -f out/VoxelCraft/textures/blocks/deepslate/deepslate_bricks.png
+          test -f out/VoxelCraft/textures/blocks/mud_bricks.png
           test -f out/VoxelCraft/textures/blocks/log_spruce_top.png
           test -f out/VoxelCraft/textures/blocks/log_jungle_top.png
           test -f out/VoxelCraft/textures/blocks/log_acacia_top.png
