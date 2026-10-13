@@ -23,6 +23,8 @@ const BROWSER_BLOCK_KEY: Readonly<Record<number, string>> = Object.freeze({
   13: 'minecraft:gold_block',
   14: 'minecraft:diamond_block',
   15: 'minecraft:iron_block',
+  17: 'minecraft:crafting_table',
+  18: 'minecraft:furnace',
   19: 'minecraft:water',
   20: 'minecraft:coal_ore',
   21: 'minecraft:iron_ore',
@@ -30,6 +32,7 @@ const BROWSER_BLOCK_KEY: Readonly<Record<number, string>> = Object.freeze({
   23: 'minecraft:diamond_ore',
   24: 'minecraft:lapis_ore',
   32: 'minecraft:obsidian',
+  56: 'minecraft:ice',
 });
 
 export interface BlockIdTranslation {
