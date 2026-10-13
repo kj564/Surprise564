@@ -37,3 +37,31 @@ describe('world collision provider integration', () => {
     expect(player.bounds.maxX).toBeCloseTo(4);
   });
 });
+
+
+  // Regression: a legacy bottom slab is half a block high, not a full cube.
+  test('player stands on the top of a half-height slab', () => {
+    const world = new VoxelWorld({ chunkSizeX: 4, height: 8, chunkSizeZ: 4 });
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 1, y: 0, z: 1 }, 44);
+    const collision = createWorldCollisionProvider(world, defaultBlockRegistry);
+    const player = new PlayerPhysics({ x: 1.5, y: 0.5, z: 1.5 });
+
+    const state = player.step(1 / 60, { moveX: 0, moveZ: 0, jump: false }, collision);
+    expect(state.onGround).toBe(true);
+    expect(state.position.y).toBeCloseTo(0.5);
+  });
+
+  test('player can pass above a bottom slab but is blocked by a full block', () => {
+    const world = new VoxelWorld({ chunkSizeX: 4, height: 8, chunkSizeZ: 4 });
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 1, y: 0, z: 1 }, 44);
+    world.setBlock({ x: 2, y: 0, z: 1 }, 1);
+    const collision = createWorldCollisionProvider(world, defaultBlockRegistry);
+    const player = new PlayerPhysics({ x: 0.5, y: 0.6, z: 1.5 }, { height: 0.4, width: 0.4 });
+
+    const state = player.step(0.1, { moveX: 1, moveZ: 0, jump: false }, collision);
+    expect(state.horizontalCollision).toBe(true);
+    expect(player.bounds.maxX).toBeCloseTo(2);
+  });
+});
