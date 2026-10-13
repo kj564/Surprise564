@@ -3592,8 +3592,8 @@
       this.bHost = new Button(2, 'Start Game', 0, 0, 220, 24);
       this.bJoin = new Button(3, 'Join Game',  0, 0, 220, 24);
       this.bOptions = new Button(4, 'Options', 0, 0, 220, 24);
-      this.bSurvival = new Button(5, 'Mode: Creative', 0, 0, 220, 24);
-      this.buttons = [this.bHost, this.bJoin, this.bOptions, this.bSurvival];
+      // The 2013 StartMenuScreen has Host, Join, and Options; no mode-toggle button.
+      this.buttons = [this.bHost, this.bJoin, this.bOptions];
       this.tabButtons = this.buttons.slice();
       this.creativeMode = true;
     }
@@ -3603,11 +3603,12 @@
     buttonClicked(button) {
       if (button === this.bHost) {
         this.minecraft.selectLevel(this.creativeMode);
-      } else if (button === this.bSurvival) {
-        this.creativeMode = !this.creativeMode;
-        button.msg = 'Mode: ' + (this.creativeMode ? 'Creative' : 'Survival');
-        // Re-render the button label
-        if (button._el) button._el.textContent = button.msg;
+      } else if (button === this.bJoin) {
+        // rujukan's JoinGameScreen depends on native multiplayer services.
+        // Do not leave the original menu action silently inert in a browser port.
+        window.alert('Join Game: multiplayer networking is not implemented in this browser port.');
+      } else if (button === this.bOptions) {
+        window.alert('Options: native MCPE settings are not yet ported to this browser screen.');
       }
     }
     handleBackEvent() {
