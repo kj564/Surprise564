@@ -12,7 +12,8 @@
 #brand{top:16px;left:16px;padding:12px 15px;max-width:min(440px,calc(100vw - 32px))}
 #brand strong{display:block;font-size:14px;letter-spacing:.12em;text-transform:uppercase}
 #brand small{display:block;color:#c8d4e2;margin-top:4px;line-height:1.45}
-#status{top:16px;right:16px;padding:10px 12px;min-width:160px;text-align:right;font-size:12px;color:#dbeafe;line-height:1.7}\n#mine-status{margin-top:5px;text-align:left;color:#f8fafc;font-size:11px}#mine-status[hidden]{display:none}#mine-progress-track{height:5px;margin-top:4px;overflow:hidden;border-radius:5px;background:#ffffff30}#mine-progress-fill{display:block;width:0;height:100%;background:linear-gradient(90deg,#fbbf24,#fb7185);transition:width .08s linear}
+#status{top:16px;right:16px;padding:10px 12px;min-width:160px;text-align:right;font-size:12px;color:#dbeafe;line-height:1.7}
+#mine-status{margin-top:5px;text-align:left;color:#f8fafc;font-size:11px}#mine-status[hidden]{display:none}#mine-progress-track{height:5px;margin-top:4px;overflow:hidden;border-radius:5px;background:#ffffff30}#mine-progress-fill{display:block;width:0;height:100%;background:linear-gradient(90deg,#fbbf24,#fb7185);transition:width .08s linear}
 #crosshair{position:fixed;z-index:2;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:none}
 #crosshair:before,#crosshair:after{content:"";position:absolute;background:#fff;box-shadow:0 0 2px #111}
 #crosshair:before{width:2px;height:18px;left:8px}#crosshair:after{height:2px;width:18px;top:8px}
@@ -233,7 +234,9 @@ function toggleInventory(force){
 }
 function showPosition(){const p=engine.player.state.position;$('coords').textContent=Math.floor(p.x)+', '+Math.floor(p.y)+', '+Math.floor(p.z)}
 function updateCamera(){const p=engine.player.state.position;camera.position.set(p.x,p.y+1.62,p.z);camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0,'YXZ')}
-function rebuildAfterMutation(){rebuildWorldMeshes();updateHotbar()}\nfunction setMiningProgress(progress){const value=Math.max(0,Math.min(1,Number.isFinite(progress)?progress:0));$('mine-status').hidden=false;$('mine-label').textContent='Menambang… '+Math.floor(value*100)+'%';$('mine-progress-fill').style.width=(value*100)+'%'}\nfunction hideMiningProgress(){$('mine-status').hidden=true;$('mine-progress-fill').style.width='0%'}
+function rebuildAfterMutation(){rebuildWorldMeshes();updateHotbar()}
+function setMiningProgress(progress){const value=Math.max(0,Math.min(1,Number.isFinite(progress)?progress:0));$('mine-status').hidden=false;$('mine-label').textContent='Menambang… '+Math.floor(value*100)+'%';$('mine-progress-fill').style.width=(value*100)+'%'}
+function hideMiningProgress(){$('mine-status').hidden=true;$('mine-progress-fill').style.width='0%'}
 function onPointerDown(event){
   if(event.pointerType==='touch')return;
   if(document.pointerLockElement!==renderer.domElement){renderer.domElement.requestPointerLock?.();return}
@@ -316,8 +319,8 @@ document.addEventListener('keydown',event=>{
   if(/^Digit[1-9]$/.test(event.code)){engine.selectSlot(Number(event.code.slice(5))-1);updateHotbar()}
 });
 document.addEventListener('keyup',event=>keyDown.delete(event.code));
-document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement!==renderer.domElement){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}}});
-window.addEventListener('blur',()=>{keyDown.clear();leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}});
+document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement!==renderer.domElement){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}hideMiningProgress()}});
+window.addEventListener('blur',()=>{keyDown.clear();leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}hideMiningProgress()});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,2))});
 function animate(now){
   requestAnimationFrame(animate);
