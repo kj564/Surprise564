@@ -1,6 +1,7 @@
 import type { BlockRegistry } from '../blocks/registry';
 import { defaultBlockRegistry } from '../blocks/registry';
-import { VoxelWorld, type WorldDimensions } from './world';
+import { ChunkData } from './chunk';
+import { VoxelWorld } from './world';
 
 export interface TerrainOptions {
   readonly seed?: number;
@@ -20,6 +21,15 @@ export function generateTerrainChunk(
   const baseHeight = options.baseHeight ?? 9;
   const amplitude = options.amplitude ?? 5;
   if (!Number.isSafeInteger(seed)) throw new RangeError('seed must be a safe integer');
+  const dims = world.dimensions;
+  if (dims.height < 3) throw new RangeError('terrain generation requires world height of at least 3');
+  const minWorldX = chunkX * dims.chunkSizeX;
+  const maxWorldX = minWorldX + dims.chunkSizeX - 1;
+  const minWorldZ = chunkZ * dims.chunkSizeZ;
+  const maxWorldZ = minWorldZ + dims.chunkSizeZ - 1;
+  if (![minWorldX, maxWorldX, minWorldZ, maxWorldZ].every(Number.isSafeInteger)) {
+    throw new RangeError('chunk coordinates exceed safe world-coordinate limits');
+  }
   if (!Number.isSafeInteger(seaLevel) || seaLevel < 0 || seaLevel >= world.dimensions.height) throw new RangeError('seaLevel is outside world height');
   if (!Number.isFinite(baseHeight) || !Number.isFinite(amplitude) || amplitude < 0) throw new RangeError('terrain height settings must be finite and amplitude non-negative');
   if (world.hasChunk(chunkX, chunkZ)) throw new Error('Cannot generate an already loaded chunk');
@@ -31,8 +41,8 @@ export function generateTerrainChunk(
     grass: requireId(registry, 'minecraft:grass_block'),
     sand: requireId(registry, 'minecraft:sand'),
   };
-  const dims = world.dimensions;
-  const chunk = world.loadChunk(chunkX, chunkZ);
+  // Generate off-world first: invalid dimensions or future generation errors must not leave a partial chunk loaded.
+  const chunk = new ChunkData({ sizeX: dims.chunkSizeX, height: dims.height, sizeZ: dims.chunkSizeZ });
   let minHeight = dims.height - 1, maxHeight = 0;
   for (let localX = 0; localX < dims.chunkSizeX; localX += 1) {
     for (let localZ = 0; localZ < dims.chunkSizeZ; localZ += 1) {
@@ -50,6 +60,7 @@ export function generateTerrainChunk(
       }
     }
   }
+  world.loadChunk(chunkX, chunkZ, chunk.toArray());
   return Object.freeze({ chunkX, chunkZ, minHeight, maxHeight });
 }
 
