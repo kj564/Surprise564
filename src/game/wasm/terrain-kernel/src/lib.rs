@@ -1,5 +1,3 @@
-#[no_std]
-
 /// Deterministic height sample shared with the TypeScript fallback.
 /// Coordinates and seeds use the same 32-bit wrapping rules as JavaScript Math.imul/bitwise ops.
 #[no_mangle]
