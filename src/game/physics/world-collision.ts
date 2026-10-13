@@ -52,7 +52,8 @@ export function queryCollisionBoxes(
         }
         if (!definition.solid) continue;
         if (definition.shape === 'slab') {
-          boxes.push(new Aabb(x, y, z, x + 1, y + 0.5, z + 1));
+          const shapeHeight = definition.shapeHeight ?? 0.5;
+          boxes.push(new Aabb(x, y, z, x + 1, y + shapeHeight, z + 1));
         } else {
           // Unimplemented solid shapes remain conservative until their shape-specific
           // collision contracts and orientation/state data are implemented.
