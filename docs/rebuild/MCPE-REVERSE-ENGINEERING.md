@@ -22,6 +22,9 @@ Primary files inspected:
 - `handheld/src/world/level/Level.cpp`
 - `handheld/src/world/level/chunk/LevelChunk.cpp`
 - `handheld/src/world/level/chunk/ChunkCache.h`
+- `handheld/src/world/level/levelgen/RandomLevelSource.cpp`
+- `handheld/src/world/level/levelgen/synth/PerlinNoise.cpp`
+- `handheld/src/world/level/levelgen/synth/ImprovedNoise.cpp`
 - `handheld/src/world/level/tile/Tile.cpp`
 - `handheld/src/world/entity/Entity.cpp`
 - `handheld/src/world/entity/player/Player.cpp`
@@ -33,6 +36,8 @@ Current browser-side comparison points:
 - `public/minecraft.html`: existing legacy browser runtime
 - `public/voxelcraft-rebuild.html`: separate playable rebuild preview
 - `src/game/engine.ts`, `src/game/world/*`, `src/game/interaction/*`, `src/game/physics/*`, `src/game/inventory/*`, `src/game/persistence/*`, `src/game/rendering/*`: renderer-independent rebuild systems
+
+Terrain generation is audited separately in [Terrain Generation Reverse-Engineering Audit](TERRAIN-GENERATION-AUDIT.md), including the source pipeline, current browser approximation, and parity gaps.
 
 ## 1. Runtime ownership and subsystem boundaries
 

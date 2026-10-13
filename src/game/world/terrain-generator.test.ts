@@ -17,6 +17,14 @@ describe('seeded terrain generation', () => {
     expect(Array.from(a.exportChunks()[0].blocks)).toEqual(Array.from(b.exportChunks()[0].blocks));
     expect(summaryA).toEqual(summaryB);
   });
+
+  test('different seeds produce different surface patterns', () => {
+    const a = new VoxelWorld(dimensions), b = new VoxelWorld(dimensions);
+    generateTerrainChunk(a, -1, -1, { seed: 564 });
+    generateTerrainChunk(b, -1, -1, { seed: 565 });
+    expect(Array.from(a.exportChunks()[0].blocks)).not.toEqual(Array.from(b.exportChunks()[0].blocks));
+  });
+
   test('uses valid terrain layers and varies the surface height', () => {
     const world = new VoxelWorld(dimensions);
     const summary = generateTerrainChunk(world, 0, 0, { seed: 42 });
@@ -27,7 +35,8 @@ describe('seeded terrain generation', () => {
     expect(summary.maxHeight).toBeLessThan(dimensions.height - 1);
     expect(world.getBlock(0, 0, 0)).toBe(defaultBlockRegistry.getIdByKey('minecraft:bedrock'));
   });
-  test('keeps height samples continuous at chunk edges', () => {
+
+  test('keeps height samples continuous at positive X chunk edges', () => {
     const world = new VoxelWorld(dimensions);
     generateTerrainChunk(world, 0, 0, { seed: 564 });
     generateTerrainChunk(world, 1, 0, { seed: 564 });
@@ -35,6 +44,21 @@ describe('seeded terrain generation', () => {
       expect(Math.abs(surface(world, 7, z) - surface(world, 8, z))).toBeLessThanOrEqual(2);
     }
   });
+
+  test('keeps height samples continuous across negative X and Z chunk edges', () => {
+    const world = new VoxelWorld(dimensions);
+    generateTerrainChunk(world, -1, -1, { seed: 564 });
+    generateTerrainChunk(world, 0, -1, { seed: 564 });
+    generateTerrainChunk(world, -1, 0, { seed: 564 });
+
+    for (let z = -8; z < 0; z += 1) {
+      expect(Math.abs(surface(world, -1, z) - surface(world, 0, z))).toBeLessThanOrEqual(2);
+    }
+    for (let x = -8; x < 0; x += 1) {
+      expect(Math.abs(surface(world, x, -1) - surface(world, x, 0))).toBeLessThanOrEqual(2);
+    }
+  });
+
   test('rejects duplicate generation and invalid seeds', () => {
     const world = new VoxelWorld(dimensions);
     generateTerrainChunk(world, 0, 0);
