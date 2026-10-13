@@ -343,13 +343,14 @@ function animate(now){
   }
   if(miningHeld){
     const result=engine.advanceMining(dt,target.status==='hit'?target.block:null);
-    if(result.status==='broken'){
-      miningHeld=false;rebuildAfterMutation();
+    if(result.status==='mining'){setMiningProgress(result.progress)}
+    else if(result.status==='broken'){
+      miningHeld=false;hideMiningProgress();rebuildAfterMutation();
       if(leftMouseDown){
         const nextTarget=currentTarget();
         if(nextTarget.status==='hit'){
           const nextMining=engine.startMining(nextTarget.block);
-          if(nextMining.status==='started'){miningHeld=true;toast('Menambang '+(registry.getById(nextTarget.blockId)?.displayName??'blok'))}
+          if(nextMining.status==='started'){miningHeld=true;setMiningProgress(0);toast('Menambang '+(registry.getById(nextTarget.blockId)?.displayName??'blok'))}
         }
       }
       if(!miningHeld)toast(result.dropsRemaining.length?'Blok dihancurkan · drop berlebih belum didukung':'Blok dihancurkan');
