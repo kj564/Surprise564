@@ -15,6 +15,15 @@ describe('queryCollisionBoxes', () => {
     expect(result.unloadedCells).toHaveLength(0);
   });
 
+
+  test('uses source-derived half-height collision bounds for stone slabs', () => {
+    const world = new VoxelWorld({ chunkSizeX: 4, height: 4, chunkSizeZ: 4 });
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 1, y: 1, z: 1 }, 44);
+    const result = queryCollisionBoxes(world, new Aabb(1, 1, 1, 2, 2, 2), defaultBlockRegistry);
+    expect(result.boxes).toEqual([new Aabb(1, 1, 1, 2, 1.5, 2)]);
+  });
+
   test('fails closed for unknown IDs and unloaded chunk cells', () => {
     const world = new VoxelWorld({ chunkSizeX: 4, height: 4, chunkSizeZ: 4 });
     world.loadChunk(0, 0);
