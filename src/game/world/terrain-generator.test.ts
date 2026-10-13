@@ -41,4 +41,16 @@ describe('seeded terrain generation', () => {
     expect(() => generateTerrainChunk(world, 0, 0)).toThrow('already loaded');
     expect(() => generateTerrainChunk(new VoxelWorld(dimensions), 0, 0, { seed: 1.5 })).toThrow('safe integer');
   });
+
+  test('rejects undersized worlds without leaving a partially loaded chunk', () => {
+    const world = new VoxelWorld({ chunkSizeX: 8, height: 2, chunkSizeZ: 8 });
+    expect(() => generateTerrainChunk(world, 0, 0, { seaLevel: 1 })).toThrow('height of at least 3');
+    expect(world.hasChunk(0, 0)).toBe(false);
+  });
+
+  test('rejects chunk coordinates that cannot map to safe world coordinates atomically', () => {
+    const world = new VoxelWorld(dimensions);
+    expect(() => generateTerrainChunk(world, Number.MAX_SAFE_INTEGER, 0)).toThrow('safe world-coordinate limits');
+    expect(world.hasChunk(Number.MAX_SAFE_INTEGER, 0)).toBe(false);
+  });
 });
