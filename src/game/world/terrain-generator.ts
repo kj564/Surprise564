@@ -20,6 +20,7 @@ export function generateTerrainChunk(
   const baseHeight = options.baseHeight ?? 9;
   const amplitude = options.amplitude ?? 5;
   if (!Number.isSafeInteger(seed)) throw new RangeError('seed must be a safe integer');
+  if (world.dimensions.height < 3) throw new RangeError('world height must be at least 3 blocks for terrain generation');
   if (!Number.isSafeInteger(seaLevel) || seaLevel < 0 || seaLevel >= world.dimensions.height) throw new RangeError('seaLevel is outside world height');
   if (!Number.isFinite(baseHeight) || !Number.isFinite(amplitude) || amplitude < 0) throw new RangeError('terrain height settings must be finite and amplitude non-negative');
   if (world.hasChunk(chunkX, chunkZ)) throw new Error('Cannot generate an already loaded chunk');
@@ -32,7 +33,9 @@ export function generateTerrainChunk(
     sand: requireId(registry, 'minecraft:sand'),
   };
   const dims = world.dimensions;
-  const chunk = world.loadChunk(chunkX, chunkZ);
+  // Precompute and validate the complete heightmap before creating a chunk, so a future
+  // terrain-kernel regression cannot leave partially generated world state behind.
+  const heights = new Uint16Array(dims.chunkSizeX * dims.chunkSizeZ);
   let minHeight = dims.height - 1, maxHeight = 0;
   for (let localX = 0; localX < dims.chunkSizeX; localX += 1) {
     for (let localZ = 0; localZ < dims.chunkSizeZ; localZ += 1) {
@@ -41,8 +44,18 @@ export function generateTerrainChunk(
       const broad = valueNoise(x / 28, z / 28, seed);
       const detail = valueNoise(x / 9, z / 9, seed ^ 0x5f356495);
       const height = Math.max(1, Math.min(dims.height - 2, Math.round(baseHeight + broad * amplitude + detail * amplitude * 0.35)));
+      if (!Number.isSafeInteger(height) || height < 1 || height > dims.height - 2) {
+        throw new RangeError('terrain height must be an integer from 1 to world height - 2');
+      }
+      heights[localX * dims.chunkSizeZ + localZ] = height;
       minHeight = Math.min(minHeight, height);
       maxHeight = Math.max(maxHeight, height);
+    }
+  }
+  const chunk = world.loadChunk(chunkX, chunkZ);
+  for (let localX = 0; localX < dims.chunkSizeX; localX += 1) {
+    for (let localZ = 0; localZ < dims.chunkSizeZ; localZ += 1) {
+      const height = heights[localX * dims.chunkSizeZ + localZ];
       const surface = height <= seaLevel + 1 ? ids.sand : ids.grass;
       for (let y = 0; y <= height; y += 1) {
         const id = y === 0 ? ids.bedrock : y === height ? surface : y >= height - 3 ? ids.dirt : ids.stone;
