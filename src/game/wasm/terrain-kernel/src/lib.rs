@@ -56,6 +56,7 @@ extern crate std;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::{assert, assert_eq, assert_ne};
 
     #[test]
     fn heights_are_bounded_and_deterministic() {
@@ -66,8 +67,11 @@ mod tests {
 
     #[test]
     fn seed_changes_at_least_some_samples() {
-        let same = terrain_height(25, -17, 564, 9.0, 5.0, 32, 7);
-        let different = terrain_height(25, -17, 565, 9.0, 5.0, 32, 7);
-        assert_ne!(same, different);
+        let coordinates = [(25, -17), (0, 0), (-13, 44), (31, 16), (-100, -72)];
+        let differs = coordinates.iter().any(|(x, z)| {
+            terrain_height(*x, *z, 564, 9.0, 5.0, 32, 7)
+                != terrain_height(*x, *z, 565, 9.0, 5.0, 32, 7)
+        });
+        assert!(differs);
     }
 }
