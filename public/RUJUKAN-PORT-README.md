@@ -1,8 +1,8 @@
 # VoxelCraft — Rujukan Faithful Port
 
-A **100% faithful browser port** of the historical Minecraft Pocket Edition 2013 C++ source code, located in `rujukan/pocket-edition-2013/mcpe-source/`.
+An **in-progress browser port** based on the historical Minecraft Pocket Edition 2013 C++ source code in `rujukan/pocket-edition-2013/mcpe-source/`. It is not yet behavior-complete or 100% faithful; see the known gaps below.
 
-This file (`public/voxelcraft-rujukan-port.html`) is a single self-contained HTML file that translates the C++ class structure, constants, tick flow, and screen lifecycle into JavaScript/Three.js — **without any additions** beyond what the original rujukan source defines.
+This file (`public/voxelcraft-rujukan-port.html`) is a single self-contained HTML file that translates the C++ class structure, constants, tick flow, and screen lifecycle into JavaScript/Three.js — **while documenting browser-specific substitutions and unported native systems** beyond what the original rujukan source defines.
 
 ## Faithful translation policy
 
@@ -20,6 +20,16 @@ Per the user's strict requirement of "100% dedikasi menterjemahkan tanpa tambaha
 - Extra tiles, items, mobs, or blocks beyond what rujukan defines
 - Modern game features (minimaps, quests, skill trees, etc.)
 - Any feature that doesn't exist in the 2013 MCPE C++ source
+
+## Known fidelity gaps
+
+- `LevelGen` currently uses a layered sine-based height function, not the reference `RandomLevelSource` Perlin-noise terrain pipeline. Terrain output is therefore **not reference-faithful**.
+- `SoundEngine` methods are no-ops; the original sound system is not ported.
+- `Options` and the native options screen are not implemented. The menu reports this rather than silently pretending the action works.
+- `Join Game` reports that multiplayer networking is unavailable; the reference `JoinGameScreen` and native multiplayer discovery are not implemented.
+- The original menu has no Creative/Survival toggle; the browser-only toggle has been removed.
+- The original world-generation, lighting, entity, item, and rendering systems are only partial translations. Matching names/constants does not establish behavioral parity.
+- The current automated checks do not prove runtime parity. Test in a browser and compare each subsystem against the cited C++ files before calling this port faithful.
 
 ## Systems covered
 
