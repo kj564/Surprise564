@@ -36,8 +36,6 @@ describe('world collision provider integration', () => {
     expect(state.horizontalCollision).toBe(true);
     expect(player.bounds.maxX).toBeCloseTo(4);
   });
-});
-
 
   // Regression: a legacy bottom slab is half a block high, not a full cube.
   test('player stands on the top of a half-height slab', () => {
