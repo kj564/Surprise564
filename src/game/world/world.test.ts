@@ -61,4 +61,29 @@ describe('VoxelWorld', () => {
     expect(() => world.getBlock(0.5, 0, 0)).toThrow(TypeError);
     expect(() => VoxelWorld.chunkKey(Number.MAX_SAFE_INTEGER + 1, 0)).toThrow(TypeError);
   });
+  test('invalidates the loaded neighbor on each of the four horizontal chunk boundaries', () => {
+    const world = new VoxelWorld({ chunkSizeX: 4, height: 4, chunkSizeZ: 4 });
+    world.loadChunk(0, 0);
+    world.loadChunk(-1, 0);
+    world.loadChunk(1, 0);
+    world.loadChunk(0, -1);
+    world.loadChunk(0, 1);
+    world.consumeDirtyChunks();
+
+    const cases = [
+      { position: { x: 0, y: 1, z: 1 }, blockId: 1, expected: ['-1,0', '0,0'] },
+      { position: { x: 3, y: 1, z: 1 }, blockId: 2, expected: ['0,0', '1,0'] },
+      { position: { x: 1, y: 1, z: 0 }, blockId: 3, expected: ['0,-1', '0,0'] },
+      { position: { x: 1, y: 1, z: 3 }, blockId: 4, expected: ['0,0', '0,1'] },
+    ];
+
+    for (const { position, blockId, expected } of cases) {
+      world.consumeDirtyChunks();
+      const mutation = world.setBlock(position, blockId);
+      expect(mutation.changed).toBe(true);
+      expect([...mutation.dirtyChunks].sort()).toEqual([...expected].sort());
+      expect(world.consumeDirtyChunks().sort()).toEqual([...expected].sort());
+    }
+  });
+
 });
