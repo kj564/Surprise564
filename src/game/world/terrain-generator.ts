@@ -1,6 +1,7 @@
 import type { BlockRegistry } from '../blocks/registry';
 import { defaultBlockRegistry } from '../blocks/registry';
-import { VoxelWorld, type WorldDimensions } from './world';
+import { createGradientNoise2D } from './gradient-noise';
+import { VoxelWorld } from './world';
 
 export interface TerrainOptions {
   readonly seed?: number;
@@ -10,7 +11,14 @@ export interface TerrainOptions {
   readonly registry?: BlockRegistry;
 }
 
-/** Deterministic heightmap terrain for a loaded chunk; every sample depends only on seed and world X/Z. */
+/**
+ * Deterministic 2D heightmap terrain for the rebuild preview.
+ *
+ * The historical MCPE reference uses stacked 3D Perlin density fields and a
+ * biome-aware surface pass. This heightmap uses a seeded improved-gradient
+ * noise primitive as an incremental browser adaptation, not a bit-identical
+ * port of RandomLevelSource.
+ */
 export function generateTerrainChunk(
   world: VoxelWorld, chunkX: number, chunkZ: number, options: TerrainOptions = {},
 ): { readonly chunkX: number; readonly chunkZ: number; readonly minHeight: number; readonly maxHeight: number } {
@@ -31,6 +39,8 @@ export function generateTerrainChunk(
     grass: requireId(registry, 'minecraft:grass_block'),
     sand: requireId(registry, 'minecraft:sand'),
   };
+  const broadNoise = createGradientNoise2D(seed);
+  const detailNoise = createGradientNoise2D(seed ^ 0x5f356495);
   const dims = world.dimensions;
   const chunk = world.loadChunk(chunkX, chunkZ);
   let minHeight = dims.height - 1, maxHeight = 0;
@@ -38,8 +48,8 @@ export function generateTerrainChunk(
     for (let localZ = 0; localZ < dims.chunkSizeZ; localZ += 1) {
       const x = chunkX * dims.chunkSizeX + localX;
       const z = chunkZ * dims.chunkSizeZ + localZ;
-      const broad = valueNoise(x / 28, z / 28, seed);
-      const detail = valueNoise(x / 9, z / 9, seed ^ 0x5f356495);
+      const broad = broadNoise.sample(x / 28, z / 28);
+      const detail = detailNoise.sample(x / 9, z / 9);
       const height = Math.max(1, Math.min(dims.height - 2, Math.round(baseHeight + broad * amplitude + detail * amplitude * 0.35)));
       minHeight = Math.min(minHeight, height);
       maxHeight = Math.max(maxHeight, height);
@@ -58,19 +68,3 @@ function requireId(registry: BlockRegistry, key: string): number {
   if (id === undefined) throw new Error('Terrain requires block definition ' + key);
   return id;
 }
-
-function valueNoise(x: number, z: number, seed: number): number {
-  const x0 = Math.floor(x), z0 = Math.floor(z);
-  const tx = smooth(x - x0), tz = smooth(z - z0);
-  const a = lattice(x0, z0, seed), b = lattice(x0 + 1, z0, seed);
-  const c = lattice(x0, z0 + 1, seed), d = lattice(x0 + 1, z0 + 1, seed);
-  return lerp(lerp(a, b, tx), lerp(c, d, tx), tz);
-}
-function lattice(x: number, z: number, seed: number): number {
-  let n = Math.imul(x, 374761393) + Math.imul(z, 668265263) + Math.imul(seed, 1442695041);
-  n = Math.imul(n ^ (n >>> 13), 1274126177);
-  n = (n ^ (n >>> 16)) >>> 0;
-  return n / 0xffffffff * 2 - 1;
-}
-function smooth(t: number): number { return t * t * (3 - 2 * t); }
-function lerp(a: number, b: number, t: number): number { return a + (b - a) * t; }
