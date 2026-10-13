@@ -51,12 +51,11 @@
 .touch-actions .touch-btn{min-height:52px}
 @media (pointer:coarse){#touch-controls{display:flex}#help{bottom:198px}#hotbar{bottom:12px}.panel{backdrop-filter:blur(5px)}}
 @media(max-width:600px){#touch-controls{bottom:104px;inset-inline:9px}.touch-pad{grid-template-columns:repeat(3,38px);grid-template-rows:repeat(2,38px)}.touch-actions{grid-template-columns:repeat(2,52px)}.touch-actions .touch-btn{min-height:48px;font-size:10px}}
-
-@media(max-width:600px){#inventory{padding:12px}#inventory-grid{gap:4px}.inv-slot .count{font-size:9px}.inv-slot .key{font-size:8px}}
+\n@media(max-width:600px){#inventory{padding:12px}#inventory-grid{gap:4px}.inv-slot .count{font-size:9px}.inv-slot .key{font-size:8px}}
 @media(max-width:600px){#brand{top:10px;left:10px;padding:9px 11px}#brand small{max-width:230px;font-size:10px}#status{top:10px;right:10px;min-width:0;padding:7px 9px;font-size:10px}#help{bottom:89px;font-size:10px;white-space:normal;width:calc(100vw - 28px)}}
 </style>
 <script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/webgpu":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.webgpu.js"}}
 </script>
 </head>
 <body>
@@ -64,9 +63,8 @@
 <div id="brand" class="panel"><strong>VoxelCraft <span style="color:#8be0a5">/ Engine Preview</span></strong><small>Prototype runtime: world data, movement, collision, targeting, mining and placement use the rebuilt TypeScript engine.</small></div>
 <div id="status" class="panel">XYZ <b id="coords">—</b><br>Target <b id="target">none</b><br>Engine <b id="engineStatus">starting</b></div>
 <div id="crosshair"></div><div id="toast"></div>
-<div id="help" class="panel">Desktop: klik layar untuk mengunci mouse · WASD bergerak · Shift sprint · Space lompat · klik kiri tahan untuk menambang · klik kanan memasang. Ponsel: geser layar untuk melihat, gunakan tombol sentuh untuk bergerak, lompat, menambang, dan memasang. 1–9 pilih blok · E inventaris · Ctrl+S simpan · Ctrl+O muat.</div>
-<div id="hotbar" aria-label="Hotbar"></div>
-<div id="touch-controls" aria-label="Kontrol layar sentuh"><div class="touch-pad"><button class="touch-btn" data-key="KeyW" aria-label="Maju">▲</button><button class="touch-btn" data-key="KeyA" aria-label="Kiri">◀</button><button class="touch-btn" data-key="KeyS" aria-label="Mundur">▼</button><button class="touch-btn" data-key="KeyD" aria-label="Kanan">▶</button></div><div class="touch-actions"><button class="touch-btn" id="touch-jump">LOMPAT</button><button class="touch-btn" id="touch-sprint" data-key="ShiftLeft">LARI</button><button class="touch-btn" id="touch-mine">TAMBANG</button><button class="touch-btn" id="touch-place">PASANG</button></div></div>
+<div id="help" class="panel">Desktop: klik layar untuk mengunci mouse · WASD bergerak · Shift sprint · Space lompat · klik kiri tahan untuk menambang · klik kanan memasang. Ponsel: geser layar untuk melihat, gunakan tombol sentuh untuk bergerak, lompat, menambang, dan memasang. 1–9 atau scroll roda mouse pilih blok · E inventaris · Ctrl+S simpan · Ctrl+O muat.</div>
+<div id="hotbar" aria-label="Hotbar"></div>\n<div id="touch-controls" aria-label="Kontrol layar sentuh"><div class="touch-pad"><button class="touch-btn" data-key="KeyW" aria-label="Maju">▲</button><button class="touch-btn" data-key="KeyA" aria-label="Kiri">◀</button><button class="touch-btn" data-key="KeyS" aria-label="Mundur">▼</button><button class="touch-btn" data-key="KeyD" aria-label="Kanan">▶</button></div><div class="touch-actions"><button class="touch-btn" id="touch-jump">LOMPAT</button><button class="touch-btn" id="touch-sprint" data-key="ShiftLeft">LARI</button><button class="touch-btn" id="touch-mine">TAMBANG</button><button class="touch-btn" id="touch-place">PASANG</button></div></div>
 <div id="inventory" role="dialog" aria-modal="true" aria-label="Inventaris"><div class="inventory-head"><strong>Inventaris</strong><span>E / Esc untuk menutup</span></div><div id="inventory-grid"></div><div id="inventory-note">Klik slot untuk menukar isinya dengan slot hotbar yang sedang dipilih. Slot 1–9 adalah hotbar.</div></div>
 <div id="loading">Memuat engine voxel…</div>
 <script type="module">
@@ -83,10 +81,10 @@ let toastTimer;
 function toast(message){toastEl.textContent=message;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),1500)}
 if (!Engine) throw new Error('VoxelCraft engine bundle did not expose VoxelCraftEngine');
 
-let worldSeed=564;
 let engine = new Engine({dimensions:{chunkSizeX:16,height:32,chunkSizeZ:16},spawn:{x:8.5,y:24,z:8.5},inventorySlots:36});
 if(!generateTerrainChunk||!ensureTerrainNeighborhood)throw new Error('Seeded terrain streaming bundle is missing');
-for(let cz=-1;cz<=1;cz++)for(let cx=-1;cx<=1;cx++)generateTerrainChunk(engine.world,cx,cz,{seed:worldSeed});
+const terrainBackend=await window.VoxelCraftWasmReady;
+for(let cz=-1;cz<=1;cz++)for(let cx=-1;cx<=1;cx++)generateTerrainChunk(engine.world,cx,cz,{seed:564});
 let lastChunkX=Math.floor(engine.player.state.position.x/16),lastChunkZ=Math.floor(engine.player.state.position.z/16);
 let worldCreatedAt=new Date().toISOString();
 const registry=engine.registry;
@@ -97,7 +95,21 @@ const blockColors={'minecraft:stone':0x888d95,'minecraft:dirt':0x8a5c3c,'minecra
 blockKeys.forEach(key=>engine.inventory.setSlot(blockKeys.indexOf(key),{itemKey:key,count:key==='minecraft:stone'?64:32,maxStackSize:64}));
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8cc8f0);scene.fog=new THREE.Fog(0x8cc8f0,22,58);
 const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.08,160);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+let renderer;
+let rendererBackend='WebGL';
+if(navigator.gpu){
+  try{
+    const {WebGPURenderer}=await import('three/webgpu');
+    const candidate=new WebGPURenderer({antialias:true,powerPreference:'high-performance'});
+    await candidate.init();
+    renderer=candidate;rendererBackend='WebGPU';
+  }catch(error){
+    console.warn('WebGPU initialization failed; falling back to WebGL.',error);
+    renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+  }
+}else{
+  renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+}
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;
 $('game').appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xd7ecff,0x64523b,2.0));
@@ -193,6 +205,14 @@ const keyDown=new Set();let yaw=0,pitch=0,jumpQueued=false,leftMouseDown=false,m
 const moveKeys=new Set(['KeyW','KeyA','KeyS','KeyD','Space','ShiftLeft','ShiftRight','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
 function getViewDirection(){return new THREE.Vector3(0,0,-1).applyEuler(camera.rotation).normalize()}
 function currentTarget(){return engine.target({x:camera.position.x,y:camera.position.y,z:camera.position.z},getViewDirection(),6)}
+renderer.domElement.addEventListener('wheel',event=>{
+  if(inventoryOpen||document.pointerLockElement!==renderer.domElement)return;
+  event.preventDefault();
+  const direction=Math.sign(event.deltaY);
+  if(direction===0)return;
+  const next=(engine.selectedSlot+direction+9)%9;
+  engine.selectSlot(next);updateHotbar();
+},{passive:false});
 function updateHotbar(){
   const root=$('hotbar');root.innerHTML='';
   for(let i=0;i<9;i++){const stack=engine.inventory.getSlot(i);const key=stack?.itemKey??'';const slot=document.createElement('button');slot.type='button';slot.className='slot'+(i===engine.selectedSlot?' active':'');slot.setAttribute('aria-label','Slot '+(i+1)+' '+(key||'kosong'));slot.innerHTML='<span class="key">'+(i+1)+'</span><span class="swatch" style="background:#'+(blockColors[key]??0x242b34).toString(16).padStart(6,'0')+'"></span><span class="count">'+(stack?.count??'')+'</span>';slot.addEventListener('click',()=>{engine.selectSlot(i);updateHotbar()});root.appendChild(slot)}
@@ -267,7 +287,7 @@ document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==r
 function saveWorld(){
   try{
     const now=new Date().toISOString();
-    const save=engine.createSave({name:'VoxelCraft World',seed:worldSeed,createdAt:worldCreatedAt,updatedAt:now,generatorVersion:1},{yaw,pitch});
+    const save=engine.createSave({name:'VoxelCraft World',seed:564,createdAt:worldCreatedAt,updatedAt:now,generatorVersion:1},{yaw,pitch});
     localStorage.setItem('voxelcraft.rebuild.save.v1',JSON.stringify(save));
     toast('Dunia tersimpan di browser');
   }catch(error){console.error(error);toast('Gagal menyimpan dunia')}
@@ -280,10 +300,9 @@ function loadWorld(){
     const result=Engine.fromSave(parsedSave);
     if(!result.ok){toast('Simpanan tidak valid: '+result.errors[0]);return}
     engine=result.engine;yaw=result.view.yaw;pitch=result.view.pitch;
-    worldSeed=parsedSave.metadata.seed;
     worldCreatedAt=parsedSave.metadata.createdAt;
     const restoredPosition=engine.player.state.position;
-    ensureTerrainNeighborhood(engine.world,restoredPosition.x,restoredPosition.z,{seed:worldSeed,radius:1});
+    ensureTerrainNeighborhood(engine.world,restoredPosition.x,restoredPosition.z,{seed:parsedSave.metadata.seed,radius:1});
     meshCache=window.VoxelCraftCreateMeshCache(engine);
     rebuildWorldMeshes();updateHotbar();updateCamera();
     toast('Dunia berhasil dimuat');
@@ -313,7 +332,7 @@ function animate(now){
   const moveZ=(-Math.cos(yaw)*forward-Math.sin(yaw)*strafe);
   const simulation=engine.step(dt,{moveX,moveZ,jump:jumpQueued,sprint:keyDown.has('ShiftLeft')||keyDown.has('ShiftRight')});if(simulation.clock.steps>0)jumpQueued=false;
   const playerPosition=simulation.player.position;const chunkX=Math.floor(playerPosition.x/engine.world.dimensions.chunkSizeX),chunkZ=Math.floor(playerPosition.z/engine.world.dimensions.chunkSizeZ);
-  if(chunkX!==lastChunkX||chunkZ!==lastChunkZ){lastChunkX=chunkX;lastChunkZ=chunkZ;const streamed=ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:worldSeed,radius:1});if(streamed.generated.length){rebuildWorldMeshes();toast('Area baru dimuat')}}
+  if(chunkX!==lastChunkX||chunkZ!==lastChunkZ){lastChunkX=chunkX;lastChunkZ=chunkZ;const streamed=ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:564,radius:1});if(streamed.generated.length){rebuildWorldMeshes();toast('Area baru dimuat')}}
   updateCamera();
   const target=currentTarget();$('target').textContent=target.status==='hit'?(registry.getById(target.blockId)?.displayName??'blok'):(target.status==='unloaded'?'chunk unloaded':'none');
   if(target.status==='hit'){outline.visible=true;outline.position.set(target.block.x+.5,target.block.y+.5,target.block.z+.5)}else outline.visible=false;
@@ -339,10 +358,10 @@ function animate(now){
     else if(result.status==='cancelled'){miningHeld=false;toast('Penambangan dibatalkan')}
   }
   frames++;fpsElapsed+=dt;if(fpsElapsed>=.5){fps=Math.round(frames/fpsElapsed);frames=0;fpsElapsed=0}
-  showPosition();$('engineStatus').textContent=fps+' FPS';
+  showPosition();$('engineStatus').textContent=rendererBackend+' · '+terrainBackend+' · '+fps+' FPS';
   renderer.render(scene,camera);
 }
-updateCamera();$('engineStatus').textContent='ready';loading.classList.add('hide');toast('Engine aktif — klik layar untuk mulai');requestAnimationFrame(animate);
+updateCamera();$('engineStatus').textContent=rendererBackend+' / '+terrainBackend;loading.classList.add('hide');toast('Engine aktif — klik layar untuk mulai');requestAnimationFrame(animate);
 </script>
 </body>
 </html>
