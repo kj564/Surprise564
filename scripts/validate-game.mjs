@@ -15,11 +15,38 @@ function section(pattern, label) {
 }
 
 const uiPanelSource = section(/(\/\* === UI pass: consistent Bedrock-style layout, readable hierarchy, responsive sizing === \*\/[\s\S]*?<\/style>)/, 'final UI layer');
-if (!uiPanelSource.includes("background-size: 16px 16px;") ||
-    !uiPanelSource.includes("background-repeat: repeat;") ||
-    !uiPanelSource.includes("border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;")) {
+function lastCssRule(selector) {
+  const needle = selector + ' {';
+  let offset = 0;
+  let selectedRule = '';
+  while (offset < uiPanelSource.length) {
+    const ruleStart = uiPanelSource.indexOf(needle, offset);
+    if (ruleStart < 0) break;
+    const bodyStart = ruleStart + needle.length;
+    const bodyEnd = uiPanelSource.indexOf('}', bodyStart);
+    if (bodyEnd < 0) break;
+    const body = uiPanelSource.slice(bodyStart, bodyEnd);
+    if (body.includes('background-size: 16px 16px;')) selectedRule = body;
+    offset = bodyEnd + 1;
+  }
+  return selectedRule;
+}
+
+const menuPanelRule = lastCssRule('#overlay .menu-wrap');
+if (!menuPanelRule.includes("background-size: 16px 16px;") ||
+    !menuPanelRule.includes("background-repeat: repeat;") ||
+    !menuPanelRule.includes("border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;")) {
   fail('Main menu panel must preserve original Resource Pack pixel tiling and 1px nine-slice border');
 } else pass('Main menu panel uses original Resource Pack tile scale and nine-slice border');
+
+for (const selector of ['#hotbar', '#overlay .help-options-panel', '#inventory .inv-grid']) {
+  const rule = lastCssRule(selector);
+  if (!rule.includes("background-size: 16px 16px;") ||
+      !rule.includes("background-repeat: repeat;") ||
+      !rule.includes("border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;")) {
+    fail(selector + ' must preserve original Resource Pack tile scale and nine-slice border');
+  } else pass(selector + ' preserves original Resource Pack tile scale and nine-slice border');
+}
 
 const tileSource = section(/const TILE = \{([\s\S]*?)\n    \};/, 'TILE');
 const tileEntries = [...tileSource.matchAll(/\b([A-Z][A-Z0-9_]*):\s*(\d+)/g)];

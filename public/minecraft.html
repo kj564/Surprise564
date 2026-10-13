@@ -1071,6 +1071,33 @@
     display: flex !important;
     z-index: 1000;
   }
+
+  /* Preserve the Resource Pack's 16x16 tile scale and 1px source nine-slice. */
+  #hotbar {
+    background-size: 16px 16px;
+    background-repeat: repeat;
+    image-rendering: pixelated;
+    border: 3px solid transparent;
+    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;
+    border-radius: 0;
+  }
+  #overlay .help-options-panel {
+    background-size: 16px 16px;
+    background-repeat: repeat;
+    image-rendering: pixelated;
+    border: 3px solid transparent;
+    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;
+    border-radius: 0;
+  }
+  #inventory .inv-grid {
+    background-size: 16px 16px;
+    background-repeat: repeat;
+    image-rendering: pixelated;
+    border: 3px solid transparent;
+    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;
+    border-radius: 0;
+    border-top: 0;
+  }
 </style>
 </head>
 <body>
