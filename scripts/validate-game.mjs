@@ -358,8 +358,10 @@ for (const [name, index] of tiles) {
   if (index >= textures.length) fail(`Tile ${name} points outside TEXTURE_FILES (index ${index})`);
   if (textures[index] === undefined) fail(`Missing texture entry for tile ${name}`);
 }
-if (textures.length <= 16 * 6) pass(`Atlas capacity valid (${textures.length}/96 tiles)`);
-else fail(`Atlas capacity exceeded (${textures.length}/96 tiles)`);
+const atlasDimensions = source.match(/const ATLAS_COLS = (\d+), ATLAS_ROWS = (\d+), TILE_PX = (\d+);/);
+const atlasCapacity = atlasDimensions ? Number(atlasDimensions[1]) * Number(atlasDimensions[2]) : 0;
+if (atlasCapacity > 0 && textures.length <= atlasCapacity) pass(`Atlas capacity valid (${textures.length}/${atlasCapacity} tiles)`);
+else fail(`Atlas capacity exceeded or dimensions missing (${textures.length}/${atlasCapacity || 'unknown'} tiles)`);
 
 if (blocks.size < 2 || blocks.get(0) !== 'null') fail('Block ID 0 must be null (air)');
 else pass(`Parsed ${blocks.size} block IDs; ID 0 is air`);
@@ -593,6 +595,19 @@ if (source.includes('// Match the reference LevelChunk behavior: identical write
   pass('World block writes skip unchanged values before dirtying chunks or saving');
 } else {
   fail('World.setBlock must skip unchanged values, following the reference LevelChunk no-op behavior');
+}
+
+if (!source.includes('const ATLAS_COLS = 16, ATLAS_ROWS = 9, TILE_PX = 16;') ||
+    !source.includes('for (const id of Object.keys(BLOCKS).map(Number).filter(id => id > 0).sort((a, b) => a - b))')) {
+  fail('Expanded block catalog must fit its atlas and drive inventory enumeration from BLOCKS');
+} else pass('Expanded block catalog uses a capacity-checked atlas and data-driven inventory enumeration');
+
+const expandedBlockNames = ['Cobblestone Berlumut', 'Batu Pasir', 'TNT', 'Melon', 'Blok Kuarsa', 'Prismarine', 'Blok Tembaga', 'Blok Amethyst', 'Deepslate', 'Bata Tuf'];
+for (const name of expandedBlockNames) {
+  if (!blockSource.includes("name:'" + name + "'")) fail('Expanded placeable block is missing: ' + name);
+}
+if (expandedBlockNames.every(name => blockSource.includes("name:'" + name + "'"))) {
+  pass('Expanded placeable block catalog includes representative classic and modern solid cubes');
 }
 
 const oreGenerationSource = source.match(/\/\/ ores in stone layer[\s\S]*?\/\/ === Phase 1C: stone variant patches/)?.[0] || '';
