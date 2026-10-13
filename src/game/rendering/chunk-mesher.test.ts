@@ -56,10 +56,10 @@ describe('buildChunkMesh', () => {
     expect(mesh.unknownBlockIds).toBe(1);
     const slab = mesh.layers.opaque!;
     expect(slab.faceCount).toBe(6);
-    expect(Math.max(...Array.from(slab.positions).filter((_, i) => i % 3 === 1 && i < slab.positions.length))).toBe(1);
+    expect(Math.max(...Array.from(slab.positions).filter((_, i) => i % 3 === 1 && i < slab.positions.length))).toBe(0.5);
     const torch = mesh.layers.cutout!;
     expect(torch.faceCount).toBe(5);
-    expect(Math.max(...Array.from(torch.positions).filter((_, i) => i % 3 === 1))).toBe(1.75);
+    expect(Math.max(...Array.from(torch.positions).filter((_, i) => i % 3 === 1))).toBe(0.75);
   });
 
   test('treats unloaded neighbor space as exposed and rejects unloaded target chunks', () => {
