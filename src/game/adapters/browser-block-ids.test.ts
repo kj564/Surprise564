@@ -35,10 +35,10 @@ describe('existing browser runtime block ID adapter', () => {
 
   test('every translated ID still exists in the live browser BLOCKS catalog', () => {
     const source = readFileSync(new URL('../../../public/minecraft.html', import.meta.url), 'utf8');
-    const catalog = source.match(/const BLOCKS\\s*=\\s*\\{([\\s\\S]*?)^\\s*\\};/m);
+    const catalog = source.match(/const BLOCKS\s*=\s*\{([\s\\S]*?)^\s*\\};/m);
     expect(catalog, 'live BLOCKS catalog should be discoverable in public/minecraft.html').not.toBeNull();
     const catalogIds = new Set(
-      [...catalog![1].matchAll(/^\\s*(\\d+)\\s*:/gm)].map(match => Number(match[1])),
+      [...catalog![1].matchAll(/^\s*(\d+)\s*:/gm)].map(match => Number(match[1])),
     );
     for (const mapping of listSupportedBrowserBlockTranslations()) {
       expect(catalogIds.has(mapping.browserId), 'stale browser ID ' + mapping.browserId).toBe(true);
