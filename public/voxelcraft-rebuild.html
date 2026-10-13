@@ -51,7 +51,8 @@
 .touch-actions .touch-btn{min-height:52px}
 @media (pointer:coarse){#touch-controls{display:flex}#help{bottom:198px}#hotbar{bottom:12px}.panel{backdrop-filter:blur(5px)}}
 @media(max-width:600px){#touch-controls{bottom:104px;inset-inline:9px}.touch-pad{grid-template-columns:repeat(3,38px);grid-template-rows:repeat(2,38px)}.touch-actions{grid-template-columns:repeat(2,52px)}.touch-actions .touch-btn{min-height:48px;font-size:10px}}
-\n@media(max-width:600px){#inventory{padding:12px}#inventory-grid{gap:4px}.inv-slot .count{font-size:9px}.inv-slot .key{font-size:8px}}
+
+@media(max-width:600px){#inventory{padding:12px}#inventory-grid{gap:4px}.inv-slot .count{font-size:9px}.inv-slot .key{font-size:8px}}
 @media(max-width:600px){#brand{top:10px;left:10px;padding:9px 11px}#brand small{max-width:230px;font-size:10px}#status{top:10px;right:10px;min-width:0;padding:7px 9px;font-size:10px}#help{bottom:89px;font-size:10px;white-space:normal;width:calc(100vw - 28px)}}
 </style>
 <script type="importmap">
@@ -64,7 +65,8 @@
 <div id="status" class="panel">XYZ <b id="coords">—</b><br>Target <b id="target">none</b><br>Engine <b id="engineStatus">starting</b></div>
 <div id="crosshair"></div><div id="toast"></div>
 <div id="help" class="panel">Desktop: klik layar untuk mengunci mouse · WASD bergerak · Shift sprint · Space lompat · klik kiri tahan untuk menambang · klik kanan memasang. Ponsel: geser layar untuk melihat, gunakan tombol sentuh untuk bergerak, lompat, menambang, dan memasang. 1–9 atau scroll roda mouse pilih blok · E inventaris · Ctrl+S simpan · Ctrl+O muat.</div>
-<div id="hotbar" aria-label="Hotbar"></div>\n<div id="touch-controls" aria-label="Kontrol layar sentuh"><div class="touch-pad"><button class="touch-btn" data-key="KeyW" aria-label="Maju">▲</button><button class="touch-btn" data-key="KeyA" aria-label="Kiri">◀</button><button class="touch-btn" data-key="KeyS" aria-label="Mundur">▼</button><button class="touch-btn" data-key="KeyD" aria-label="Kanan">▶</button></div><div class="touch-actions"><button class="touch-btn" id="touch-jump">LOMPAT</button><button class="touch-btn" id="touch-sprint" data-key="ShiftLeft">LARI</button><button class="touch-btn" id="touch-mine">TAMBANG</button><button class="touch-btn" id="touch-place">PASANG</button></div></div>
+<div id="hotbar" aria-label="Hotbar"></div>
+<div id="touch-controls" aria-label="Kontrol layar sentuh"><div class="touch-pad"><button class="touch-btn" data-key="KeyW" aria-label="Maju">▲</button><button class="touch-btn" data-key="KeyA" aria-label="Kiri">◀</button><button class="touch-btn" data-key="KeyS" aria-label="Mundur">▼</button><button class="touch-btn" data-key="KeyD" aria-label="Kanan">▶</button></div><div class="touch-actions"><button class="touch-btn" id="touch-jump">LOMPAT</button><button class="touch-btn" id="touch-sprint" data-key="ShiftLeft">LARI</button><button class="touch-btn" id="touch-mine">TAMBANG</button><button class="touch-btn" id="touch-place">PASANG</button></div></div>
 <div id="inventory" role="dialog" aria-modal="true" aria-label="Inventaris"><div class="inventory-head"><strong>Inventaris</strong><span>E / Esc untuk menutup</span></div><div id="inventory-grid"></div><div id="inventory-note">Klik slot untuk menukar isinya dengan slot hotbar yang sedang dipilih. Slot 1–9 adalah hotbar.</div></div>
 <div id="loading">Memuat engine voxel…</div>
 <script type="module">
@@ -84,10 +86,10 @@ if (!Engine) throw new Error('VoxelCraft engine bundle did not expose VoxelCraft
 let engine = new Engine({dimensions:{chunkSizeX:16,height:32,chunkSizeZ:16},spawn:{x:8.5,y:24,z:8.5},inventorySlots:36});
 if(!generateTerrainChunk||!ensureTerrainNeighborhood)throw new Error('Seeded terrain streaming bundle is missing');
 const terrainBackend=await window.VoxelCraftWasmReady;
-for(let cz=-1;cz<=1;cz++)for(let cx=-1;cx<=1;cx++)generateTerrainChunk(engine.world,cx,cz,{seed:worldSeed});
-let lastChunkX=Math.floor(engine.player.state.position.x/16),lastChunkZ=Math.floor(engine.player.state.position.z/16);
 let worldCreatedAt=new Date().toISOString();
 let worldSeed=564;
+for(let cz=-1;cz<=1;cz++)for(let cx=-1;cx<=1;cx++)generateTerrainChunk(engine.world,cx,cz,{seed:worldSeed});
+let lastChunkX=Math.floor(engine.player.state.position.x/16),lastChunkZ=Math.floor(engine.player.state.position.z/16);
 const registry=engine.registry;
 let meshCache=window.VoxelCraftCreateMeshCache(engine);
 const idFor=key=>{const id=registry.getIdByKey(key);if(id===undefined)throw new Error('Missing block definition: '+key);return id};
