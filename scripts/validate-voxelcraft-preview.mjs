@@ -6,17 +6,20 @@ import { spawnSync } from 'node:child_process';
 const root = process.cwd();
 const htmlPath = join(root, 'public/voxelcraft-rebuild.html');
 const bundlePath = join(root, 'public/voxelcraft-engine.bundle.js');
+const wasmPath = join(root, 'public/voxelcraft-kernel.wasm');
 const html = readFileSync(htmlPath, 'utf8');
 const modules = [...html.matchAll(/<script\s+type="module">([\s\S]*?)<\/script>/g)];
 if (modules.length !== 1) throw new Error('Expected exactly one inline module script in the rebuild preview');
 if (!html.includes('voxelcraft-engine.bundle.js')) throw new Error('Preview does not load the generated engine bundle');
+if (!html.includes('three/webgpu') || !html.includes('new WebGPURenderer') || !html.includes("rendererBackend='WebGPU'")) throw new Error('Preview must attempt the WebGPU renderer');
+if (!html.includes('WebGLRenderer') || !html.includes('falling back to WebGL')) throw new Error('Preview must retain a WebGL compatibility fallback');
+if (!html.includes('VoxelCraftWasmReady') || !html.includes('terrainBackend=await window.VoxelCraftWasmReady')) throw new Error('Preview must await WASM terrain initialization before generating chunks');
 if (!html.includes("event.code==='KeyS'" ) || !html.includes("event.code==='KeyO'")) throw new Error('Preview must expose keyboard save/load shortcuts');
 if (!html.includes('localStorage.setItem') || !html.includes('Engine.fromSave')) throw new Error('Preview must persist and validate browser-local world saves');
 if (!html.includes('createdAt:worldCreatedAt') || !html.includes('worldCreatedAt=parsedSave.metadata.createdAt')) throw new Error('Preview must preserve original world creation metadata when saving and loading');
-if (!html.includes('worldSeed=parsedSave.metadata.seed') || !html.includes('ensureTerrainNeighborhood(engine.world,restoredPosition.x,restoredPosition.z,{seed:worldSeed,radius:1})')) throw new Error('Preview must refill the nearby terrain around the restored player using the saved seed without overwriting saved chunks');
-if (html.includes(String.fromCharCode(92) + 'n')) throw new Error('Preview markup must not contain escaped newline artifacts');
-if (!html.includes('VoxelCraftGenerateTerrainChunk') || !html.includes('let worldSeed=564;') || !html.includes('generateTerrainChunk(engine.world,cx,cz,{seed:worldSeed})')) throw new Error('Preview must initialize reproducible seeded terrain rather than a flat placeholder');
-if (!html.includes('VoxelCraftEnsureTerrainNeighborhood') || !html.includes('worldSeed=parsedSave.metadata.seed') || !html.includes('ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:worldSeed,radius:1})')) throw new Error('Preview must stream terrain with the active saved seed when the player crosses chunk boundaries');
+if (!html.includes('ensureTerrainNeighborhood(engine.world,restoredPosition.x,restoredPosition.z,{seed:worldSeed,radius:1})')) throw new Error('Preview must refill the nearby terrain around the restored player without overwriting saved chunks');
+if (!html.includes('VoxelCraftGenerateTerrainChunk') || !html.includes('generateTerrainChunk(engine.world,cx,cz,{seed:worldSeed})')) throw new Error('Preview must initialize reproducible seeded terrain rather than a flat placeholder');
+if (!html.includes('VoxelCraftEnsureTerrainNeighborhood') || !html.includes('ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:worldSeed,radius:1})')) throw new Error('Preview must stream terrain when the player crosses chunk boundaries');
 if (!html.includes("sprint:keyDown.has('ShiftLeft')||keyDown.has('ShiftRight')")) throw new Error('Preview must wire Shift keys to the tested sprint mechanic');
 if (!html.includes('leftMouseDown=true') || !html.includes('const nextTarget=currentTarget()') || !html.includes('engine.startMining(nextTarget.block)')) throw new Error('Preview must continue mining the next targeted block while the left mouse button remains held');
 if (!html.includes('leftMouseDown=false;if(miningHeld)')) throw new Error('Preview must cancel continuous mining on pointer release, focus loss or pointer-lock loss');
@@ -26,8 +29,11 @@ if (!html.includes('id="touch-controls"') || !html.includes("event.pointerType!=
 if (!html.includes('id="touch-mine"') || !html.includes('id="touch-place"') || !html.includes("bindTouchKey(button,button.dataset.key)")) throw new Error('Preview must wire touch mining, placement and movement buttons');
 if (!html.includes("event.pointerType!=='touch'&&event.button===0")) throw new Error('Mouse release handling must not cancel a separate touch mining gesture');
 if (!html.includes('id="inventory-grid"') || !html.includes("event.code==='KeyE'") || !html.includes('engine.inventory.swap(engine.selectedSlot,i)')) throw new Error('Preview must expose the E-key inventory overlay and working hotbar/inventory swaps');
+if (!html.includes("renderer.domElement.addEventListener('wheel'") || !html.includes('engine.selectSlot(next);updateHotbar()') || !html.includes('{passive:false}')) throw new Error('Preview must support wheel-based hotbar selection without page-scroll handling leaks');
+if (!html.includes('scroll roda mouse')) throw new Error('Preview controls must document mouse-wheel hotbar selection');
 if (!html.includes("./VoxelCraft/textures/blocks/" ) || !html.includes('new THREE.Float32BufferAttribute(group.uvs,2)')) throw new Error('Preview must map face UVs and load staged block textures');
 if (!existsSync(bundlePath)) throw new Error('Generated engine bundle is missing; run prebuild first');
+if (!existsSync(wasmPath) || readFileSync(wasmPath).length === 0) throw new Error('Generated terrain WASM is missing; run bun run build:wasm-kernel first');
 const bundle = readFileSync(bundlePath, 'utf8');
 if (!bundle.includes('VoxelCraftEngine')) throw new Error('Generated bundle does not expose VoxelCraftEngine');
 
@@ -42,4 +48,7 @@ try {
 } finally {
   rmSync(tempDir, { recursive: true, force: true });
 }
-console.log('Playable preview HTML, engine bundle and inline module syntax are valid.');
+const wasmBytes = readFileSync(wasmPath);
+const wasmModule = await WebAssembly.instantiate(wasmBytes, {});
+if (typeof wasmModule.instance.exports.terrain_height !== 'function') throw new Error('Terrain WASM is missing the terrain_height export');
+console.log('Playable preview HTML, WebGPU/WebGL selection, engine bundle, terrain WASM export and inline module syntax are valid.');

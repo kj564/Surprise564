@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "prebuild": "node scripts/stage-item-catalog.mjs && bun run build:voxel-engine",
+    "prebuild": "node scripts/stage-item-catalog.mjs && bun run build:wasm-kernel && bun run build:voxel-engine",
     "build": "next build",
     "stage:item-catalog": "node scripts/stage-item-catalog.mjs",
     "validate:game": "node scripts/stage-item-catalog.mjs && node scripts/validate-game.mjs",
@@ -18,7 +18,9 @@
     "validate:foundation": "node scripts/validate-foundation.mjs",
     "test:game-core": "bun test src/game",
     "build:voxel-engine": "bun build src/game/browser-entry.ts --target browser --outfile public/voxelcraft-engine.bundle.js",
-    "validate:voxel-preview": "node scripts/validate-voxelcraft-preview.mjs"
+    "validate:voxel-preview": "node scripts/validate-voxelcraft-preview.mjs",
+    "build:wasm-kernel": "node scripts/build-wasm-kernel.mjs",
+    "test:wasm-kernel": "cargo test --manifest-path src/game/wasm/terrain-kernel/Cargo.toml"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
