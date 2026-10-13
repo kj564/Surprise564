@@ -39,7 +39,9 @@ export function importLegacyBlockSave(input: unknown, options: LegacyImportOptio
         !registry.getById(id)) { skipped += 1; continue; }
     const x = Number(match[1]), y = Number(match[2]), z = Number(match[3]);
     if (y < 0 || y >= dimensions.height) { skipped += 1; continue; }
-    parsed.push({ x, y, z, id });
+    // Legacy v1 browser saves use the custom BLOCKS catalog IDs, not MCPE/engine IDs.
+    // Convert by verified block identity; never copy the numeric ID directly.
+    parsed.push({ x, y, z, id: browserBlockIdToEngineId(id, registry)! });
     chunks.add(VoxelWorld.chunkKey(Math.floor(x / dimensions.chunkSizeX), Math.floor(z / dimensions.chunkSizeZ)));
   }
   for (const key of chunks) {
