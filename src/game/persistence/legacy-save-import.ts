@@ -1,5 +1,6 @@
 import type { BlockRegistry } from '../blocks/registry';
 import { defaultBlockRegistry } from '../blocks/registry';
+import { browserBlockIdToEngineId } from '../adapters/browser-block-ids';
 import { VoxelWorld, type WorldDimensions } from '../world/world';
 
 export interface LegacyImportOptions {
