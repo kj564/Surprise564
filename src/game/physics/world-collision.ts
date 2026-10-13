@@ -9,9 +9,9 @@ export interface CollisionQueryResult {
 }
 
 /**
- * Collects conservative full-cube collision shapes intersecting a broad-phase region.
- * Unknown block IDs and unloaded chunks are fail-closed as solid cubes so movement never
- * silently passes through data that has not been resolved.
+ * Collects collision shapes intersecting a broad-phase region. Source-referenced shapes with
+ * implemented geometry (currently cubes and bottom slabs) use matching bounds. Unknown blocks,
+ * unloaded chunks and unimplemented solid shapes fail closed as full cubes.
  */
 export function queryCollisionBoxes(
   world: VoxelWorld,
@@ -46,7 +46,18 @@ export function queryCollisionBoxes(
         }
         if (blockId === 0) continue;
         const definition = registry.getById(blockId);
-        if (!definition || definition.solid) boxes.push(blockCube(x, y, z));
+        if (!definition) {
+          boxes.push(blockCube(x, y, z));
+          continue;
+        }
+        if (!definition.solid) continue;
+        if (definition.shape === 'slab') {
+          boxes.push(new Aabb(x, y, z, x + 1, y + 0.5, z + 1));
+        } else {
+          // Unimplemented solid shapes remain conservative until their shape-specific
+          // collision contracts and orientation/state data are implemented.
+          boxes.push(blockCube(x, y, z));
+        }
       }
     }
   }
