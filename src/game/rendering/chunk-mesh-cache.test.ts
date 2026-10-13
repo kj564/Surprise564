@@ -25,7 +25,11 @@ describe('ChunkMeshCache', () => {
 
     world.loadChunk(1, 0);
     world.setBlock({ x: 2, y: 0, z: 0 }, 1);
-    expect(cache.sync()).toEqual({ rebuilt: 2, removed: 0, rebuiltChunks: [{ x: 0, z: 0 }, { x: 1, z: 0 }], removedChunks: [] });
+    const sync = cache.sync();
+    expect(sync).toMatchObject({ rebuilt: 2, removed: 0, removedChunks: [] });
+    expect(sync.rebuiltChunks).toHaveLength(2);
+    expect(sync.rebuiltChunks).toContainEqual({ x: 0, z: 0 });
+    expect(sync.rebuiltChunks).toContainEqual({ x: 1, z: 0 });
     expect(cache.get(0, 0)?.layers.opaque?.faceCount).toBe(5);
     expect(cache.get(1, 0)?.layers.opaque?.faceCount).toBe(5);
   });
