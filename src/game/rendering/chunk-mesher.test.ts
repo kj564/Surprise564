@@ -44,7 +44,7 @@ describe('buildChunkMesh', () => {
     expect(buildChunkMesh(world, 1, 0, defaultBlockRegistry).layers.opaque?.faceCount).toBe(5);
   });
 
-  test('does not silently render non-cube or unknown blocks as cubes', () => {
+  test('renders source-referenced slab and torch shapes without cube approximation', () => {
     const world = makeWorld();
     world.loadChunk(0, 0);
     world.setBlock({ x: 0, y: 0, z: 0 }, 44); // slab is not a full cube
@@ -52,9 +52,14 @@ describe('buildChunkMesh', () => {
     world.setBlock({ x: 0, y: 1, z: 0 }, 65535); // not registered
 
     const mesh = buildChunkMesh(world, 0, 0, defaultBlockRegistry);
-    expect(mesh.unsupportedShapeBlocks).toBe(2);
+    expect(mesh.unsupportedShapeBlocks).toBe(0);
     expect(mesh.unknownBlockIds).toBe(1);
-    expect(mesh.layers.opaque).toBeUndefined();
+    const slab = mesh.layers.opaque!;
+    expect(slab.faceCount).toBe(6);
+    expect(Math.max(...Array.from(slab.positions).filter((_, i) => i % 3 === 1 && i < slab.positions.length))).toBe(1);
+    const torch = mesh.layers.cutout!;
+    expect(torch.faceCount).toBe(5);
+    expect(Math.max(...Array.from(torch.positions).filter((_, i) => i % 3 === 1))).toBe(1.75);
   });
 
   test('treats unloaded neighbor space as exposed and rejects unloaded target chunks', () => {
