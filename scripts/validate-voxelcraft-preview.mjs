@@ -21,6 +21,8 @@ if (!html.includes("sprint:keyDown.has('ShiftLeft')||keyDown.has('ShiftRight')")
 if (!html.includes('leftMouseDown=true') || !html.includes('const nextTarget=currentTarget()') || !html.includes('engine.startMining(nextTarget.block)')) throw new Error('Preview must continue mining the next targeted block while the left mouse button remains held');
 if (!html.includes('leftMouseDown=false;if(miningHeld)')) throw new Error('Preview must cancel continuous mining on pointer release, focus loss or pointer-lock loss');
 if (!html.includes('if(leftMouseDown&&!miningHeld&&target.status===\'hit\')')) throw new Error('Preview must resume held mining after the player retargets a different block');
+if (!html.includes('id="mining-progress"') || !html.includes('role="progressbar"') || !html.includes('showMiningProgress(result.progress')) throw new Error('Preview must show accessible, live mining progress while a block is being mined');
+if (!html.includes('hideMiningProgress()') || !html.includes("result.status==='cancelled'")) throw new Error('Preview must clear mining progress on cancellation or input release');
 if (!html.includes('Shift sprint')) throw new Error('Preview help text must document the sprint control');
 if (!html.includes('id="touch-controls"') || !html.includes("event.pointerType!=='touch'") || !html.includes("yaw-=dx*.004;pitch-=dy*.004")) throw new Error('Preview must provide touch movement/look controls for coarse-pointer devices');
 if (!html.includes('id="touch-mine"') || !html.includes('id="touch-place"') || !html.includes("bindTouchKey(button,button.dataset.key)")) throw new Error('Preview must wire touch mining, placement and movement buttons');
