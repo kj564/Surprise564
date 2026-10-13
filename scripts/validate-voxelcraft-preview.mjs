@@ -6,10 +6,14 @@ import { spawnSync } from 'node:child_process';
 const root = process.cwd();
 const htmlPath = join(root, 'public/voxelcraft-rebuild.html');
 const bundlePath = join(root, 'public/voxelcraft-engine.bundle.js');
+const wasmPath = join(root, 'public/voxelcraft-kernel.wasm');
 const html = readFileSync(htmlPath, 'utf8');
 const modules = [...html.matchAll(/<script\s+type="module">([\s\S]*?)<\/script>/g)];
 if (modules.length !== 1) throw new Error('Expected exactly one inline module script in the rebuild preview');
 if (!html.includes('voxelcraft-engine.bundle.js')) throw new Error('Preview does not load the generated engine bundle');
+if (!html.includes('three/webgpu') || !html.includes('new WebGPURenderer') || !html.includes("rendererBackend='WebGPU'")) throw new Error('Preview must attempt the WebGPU renderer');
+if (!html.includes('WebGLRenderer') || !html.includes('falling back to WebGL')) throw new Error('Preview must retain a WebGL compatibility fallback');
+if (!html.includes('VoxelCraftWasmReady') || !html.includes('terrainBackend=await window.VoxelCraftWasmReady')) throw new Error('Preview must await WASM terrain initialization before generating chunks');
 if (!html.includes("event.code==='KeyS'" ) || !html.includes("event.code==='KeyO'")) throw new Error('Preview must expose keyboard save/load shortcuts');
 if (!html.includes('localStorage.setItem') || !html.includes('Engine.fromSave')) throw new Error('Preview must persist and validate browser-local world saves');
 if (!html.includes('createdAt:worldCreatedAt') || !html.includes('worldCreatedAt=parsedSave.metadata.createdAt')) throw new Error('Preview must preserve original world creation metadata when saving and loading');
@@ -29,6 +33,7 @@ if (!html.includes("renderer.domElement.addEventListener('wheel'") || !html.incl
 if (!html.includes('scroll roda mouse')) throw new Error('Preview controls must document mouse-wheel hotbar selection');
 if (!html.includes("./VoxelCraft/textures/blocks/" ) || !html.includes('new THREE.Float32BufferAttribute(group.uvs,2)')) throw new Error('Preview must map face UVs and load staged block textures');
 if (!existsSync(bundlePath)) throw new Error('Generated engine bundle is missing; run prebuild first');
+if (!existsSync(wasmPath) || readFileSync(wasmPath).length === 0) throw new Error('Generated terrain WASM is missing; run bun run build:wasm-kernel first');
 const bundle = readFileSync(bundlePath, 'utf8');
 if (!bundle.includes('VoxelCraftEngine')) throw new Error('Generated bundle does not expose VoxelCraftEngine');
 
@@ -43,4 +48,7 @@ try {
 } finally {
   rmSync(tempDir, { recursive: true, force: true });
 }
-console.log('Playable preview HTML, engine bundle and inline module syntax are valid.');
+const wasmBytes = readFileSync(wasmPath);
+const wasmModule = await WebAssembly.instantiate(wasmBytes, {});
+if (typeof wasmModule.instance.exports.terrain_height !== 'function') throw new Error('Terrain WASM is missing the terrain_height export');
+console.log('Playable preview HTML, WebGPU/WebGL selection, engine bundle, terrain WASM export and inline module syntax are valid.');
