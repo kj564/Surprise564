@@ -10,7 +10,7 @@ pub extern "C" fn terrain_height(
     base_height: f64,
     amplitude: f64,
     world_height: i32,
-    sea_level: i32,
+    _sea_level: i32,
 ) -> i32 {
     if world_height < 3 || !base_height.is_finite() || !amplitude.is_finite() || amplitude < 0.0 {
         return 1;
@@ -18,7 +18,7 @@ pub extern "C" fn terrain_height(
     let broad = value_noise(x as f64 / 28.0, z as f64 / 28.0, seed);
     let detail = value_noise(x as f64 / 9.0, z as f64 / 9.0, seed ^ 0x5f35_6495);
     let raw = (base_height + broad * amplitude + detail * amplitude * 0.35).round() as i32;
-    raw.max(1).min(world_height - 2).min((world_height - 2).max(sea_level + 1))
+    raw.max(1).min(world_height - 2)
 }
 
 fn value_noise(x: f64, z: f64, seed: i32) -> f64 {
