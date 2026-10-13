@@ -84,9 +84,10 @@ if (!Engine) throw new Error('VoxelCraft engine bundle did not expose VoxelCraft
 let engine = new Engine({dimensions:{chunkSizeX:16,height:32,chunkSizeZ:16},spawn:{x:8.5,y:24,z:8.5},inventorySlots:36});
 if(!generateTerrainChunk||!ensureTerrainNeighborhood)throw new Error('Seeded terrain streaming bundle is missing');
 const terrainBackend=await window.VoxelCraftWasmReady;
-for(let cz=-1;cz<=1;cz++)for(let cx=-1;cx<=1;cx++)generateTerrainChunk(engine.world,cx,cz,{seed:564});
+for(let cz=-1;cz<=1;cz++)for(let cx=-1;cx<=1;cx++)generateTerrainChunk(engine.world,cx,cz,{seed:worldSeed});
 let lastChunkX=Math.floor(engine.player.state.position.x/16),lastChunkZ=Math.floor(engine.player.state.position.z/16);
 let worldCreatedAt=new Date().toISOString();
+let worldSeed=564;
 const registry=engine.registry;
 let meshCache=window.VoxelCraftCreateMeshCache(engine);
 const idFor=key=>{const id=registry.getIdByKey(key);if(id===undefined)throw new Error('Missing block definition: '+key);return id};
@@ -287,7 +288,7 @@ document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==r
 function saveWorld(){
   try{
     const now=new Date().toISOString();
-    const save=engine.createSave({name:'VoxelCraft World',seed:564,createdAt:worldCreatedAt,updatedAt:now,generatorVersion:1},{yaw,pitch});
+    const save=engine.createSave({name:'VoxelCraft World',seed:worldSeed,createdAt:worldCreatedAt,updatedAt:now,generatorVersion:1},{yaw,pitch});
     localStorage.setItem('voxelcraft.rebuild.save.v1',JSON.stringify(save));
     toast('Dunia tersimpan di browser');
   }catch(error){console.error(error);toast('Gagal menyimpan dunia')}
@@ -301,8 +302,9 @@ function loadWorld(){
     if(!result.ok){toast('Simpanan tidak valid: '+result.errors[0]);return}
     engine=result.engine;yaw=result.view.yaw;pitch=result.view.pitch;
     worldCreatedAt=parsedSave.metadata.createdAt;
+    worldSeed=parsedSave.metadata.seed;
     const restoredPosition=engine.player.state.position;
-    ensureTerrainNeighborhood(engine.world,restoredPosition.x,restoredPosition.z,{seed:parsedSave.metadata.seed,radius:1});
+    ensureTerrainNeighborhood(engine.world,restoredPosition.x,restoredPosition.z,{seed:worldSeed,radius:1});
     meshCache=window.VoxelCraftCreateMeshCache(engine);
     rebuildWorldMeshes();updateHotbar();updateCamera();
     toast('Dunia berhasil dimuat');
@@ -332,7 +334,7 @@ function animate(now){
   const moveZ=(-Math.cos(yaw)*forward-Math.sin(yaw)*strafe);
   const simulation=engine.step(dt,{moveX,moveZ,jump:jumpQueued,sprint:keyDown.has('ShiftLeft')||keyDown.has('ShiftRight')});if(simulation.clock.steps>0)jumpQueued=false;
   const playerPosition=simulation.player.position;const chunkX=Math.floor(playerPosition.x/engine.world.dimensions.chunkSizeX),chunkZ=Math.floor(playerPosition.z/engine.world.dimensions.chunkSizeZ);
-  if(chunkX!==lastChunkX||chunkZ!==lastChunkZ){lastChunkX=chunkX;lastChunkZ=chunkZ;const streamed=ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:564,radius:1});if(streamed.generated.length){rebuildWorldMeshes();toast('Area baru dimuat')}}
+  if(chunkX!==lastChunkX||chunkZ!==lastChunkZ){lastChunkX=chunkX;lastChunkZ=chunkZ;const streamed=ensureTerrainNeighborhood(engine.world,playerPosition.x,playerPosition.z,{seed:worldSeed,radius:1});if(streamed.generated.length){rebuildWorldMeshes();toast('Area baru dimuat')}}
   updateCamera();
   const target=currentTarget();$('target').textContent=target.status==='hit'?(registry.getById(target.blockId)?.displayName??'blok'):(target.status==='unloaded'?'chunk unloaded':'none');
   if(target.status==='hit'){outline.visible=true;outline.position.set(target.block.x+.5,target.block.y+.5,target.block.z+.5)}else outline.visible=false;
