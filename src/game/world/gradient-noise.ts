@@ -35,20 +35,6 @@ export function createGradientNoise2D(seed: number): GradientNoise2D {
     permutation[j] = value;
   }
 
-  const gradientAt = (x: number, z: number): number => {
-    const hash = permutation[(permutation[x & MASK] + (z & MASK)) & MASK] & 7;
-    switch (hash) {
-      case 0: return x;
-      case 1: return -x;
-      case 2: return z;
-      case 3: return -z;
-      case 4: return (x + z) * INV_SQRT_2;
-      case 5: return (x - z) * INV_SQRT_2;
-      case 6: return (-x + z) * INV_SQRT_2;
-      default: return (-x - z) * INV_SQRT_2;
-    }
-  };
-
   return Object.freeze({
     sample(x: number, z: number): number {
       if (!Number.isFinite(x) || !Number.isFinite(z)) {
@@ -96,5 +82,5 @@ function fade(value: number): number {
 }
 
 function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
+  return a + t * (b - a);
 }
