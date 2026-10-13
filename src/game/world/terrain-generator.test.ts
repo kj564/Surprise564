@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { defaultBlockRegistry } from '../blocks/registry';
 import { VoxelWorld } from './world';
-import { generateTerrainChunk } from './terrain-generator';
+import { generateTerrainChunk, setTerrainHeightKernel } from './terrain-generator';
 
 const dimensions = { chunkSizeX: 8, height: 24, chunkSizeZ: 8 };
 function surface(world: VoxelWorld, x: number, z: number): number {
@@ -40,5 +40,22 @@ describe('seeded terrain generation', () => {
     generateTerrainChunk(world, 0, 0);
     expect(() => generateTerrainChunk(world, 0, 0)).toThrow('already loaded');
     expect(() => generateTerrainChunk(new VoxelWorld(dimensions), 0, 0, { seed: 1.5 })).toThrow('safe integer');
+  });
+  test('rejects impossible world heights before creating a chunk', () => {
+    const world = new VoxelWorld({ chunkSizeX: 4, height: 2, chunkSizeZ: 4 });
+    expect(() => generateTerrainChunk(world, 0, 0)).toThrow('at least 3 blocks');
+    expect(world.hasChunk(0, 0)).toBe(false);
+  });
+
+  test('rejects invalid height-kernel output without leaving a partial chunk', () => {
+    const world = new VoxelWorld(dimensions);
+    setTerrainHeightKernel(() => dimensions.height);
+    try {
+      expect(() => generateTerrainChunk(world, 0, 0)).toThrow('terrain height kernel');
+      expect(world.hasChunk(0, 0)).toBe(false);
+      expect(world.getLoadedChunkCount()).toBe(0);
+    } finally {
+      setTerrainHeightKernel(undefined);
+    }
   });
 });
