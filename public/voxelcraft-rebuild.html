@@ -140,50 +140,65 @@ function getMaterial(layerName,file,blockId){
   const material=new THREE.MeshStandardMaterial(options);
   materialCache.set(key,material);return material;
 }
+const chunkGroups=new Map();
+function disposeGroup(group){
+  worldGroup.remove(group);
+  group.traverse(object=>{if(object.geometry)object.geometry.dispose()});
+}
 function clearWorldMeshes(){
-  while(worldGroup.children.length){
-    const child=worldGroup.children[0];
-    worldGroup.remove(child);
-    if(child.geometry)child.geometry.dispose();
+  for(const group of chunkGroups.values())disposeGroup(group);
+  chunkGroups.clear();
+}
+function buildChunkGroup(x,z,chunkMesh){
+  const chunkGroup=new THREE.Group();
+  chunkGroup.name='chunk:'+x+','+z;
+  for(const layerName of ['opaque','cutout','translucent']){
+    const layer=chunkMesh.layers[layerName];if(!layer)continue;
+    const groups=new Map();
+    const faceCount=Math.floor(layer.blockIds.length/4);
+    for(let face=0;face<faceCount;face++){
+      const vertex=face*4;
+      const blockId=layer.blockIds[vertex];
+      const definition=registry.getById(blockId);
+      const ny=layer.normals[vertex*3+1];
+      const file=textureFileFor(definition,ny);
+      const key=layerName+':'+(file??'fallback')+':'+blockId;
+      let group=groups.get(key);
+      if(!group){group={blockId,file,positions:[],normals:[],uvs:[],indices:[]};groups.set(key,group)}
+      for(let corner=0;corner<4;corner++){
+        const offset=(vertex+corner)*3;
+        group.positions.push(layer.positions[offset],layer.positions[offset+1],layer.positions[offset+2]);
+        group.normals.push(layer.normals[offset],layer.normals[offset+1],layer.normals[offset+2]);
+      }
+      group.uvs.push(0,0,1,0,1,1,0,1);
+      const first=group.positions.length/3-4;
+      group.indices.push(first,first+1,first+2,first,first+2,first+3);
+    }
+    for(const group of groups.values()){
+      const geometry=new THREE.BufferGeometry();
+      geometry.setAttribute('position',new THREE.Float32BufferAttribute(group.positions,3));
+      geometry.setAttribute('normal',new THREE.Float32BufferAttribute(group.normals,3));
+      geometry.setAttribute('uv',new THREE.Float32BufferAttribute(group.uvs,2));
+      geometry.setIndex(group.indices);geometry.computeBoundingSphere();
+      const mesh=new THREE.Mesh(geometry,getMaterial(layerName,group.file,group.blockId));
+      mesh.castShadow=layerName==='opaque';mesh.receiveShadow=true;chunkGroup.add(mesh);
+    }
   }
+  return chunkGroup;
 }
 function rebuildWorldMeshes(){
-  meshCache.sync();
-  clearWorldMeshes();
-  for(const {x,z} of engine.world.getLoadedChunkCoordinates()){
-    const chunkMesh=meshCache.get(x,z);if(!chunkMesh)continue;
-    for(const layerName of ['opaque','cutout','translucent']){
-      const layer=chunkMesh.layers[layerName];if(!layer)continue;
-      const groups=new Map();
-      const faceCount=Math.floor(layer.blockIds.length/4);
-      for(let face=0;face<faceCount;face++){
-        const vertex=face*4;
-        const blockId=layer.blockIds[vertex];
-        const definition=registry.getById(blockId);
-        const ny=layer.normals[vertex*3+1];
-        const file=textureFileFor(definition,ny);
-        const key=layerName+':'+(file??'fallback')+':'+blockId;
-        let group=groups.get(key);
-        if(!group){group={blockId,file,positions:[],normals:[],uvs:[],indices:[]};groups.set(key,group)}
-        for(let corner=0;corner<4;corner++){
-          const offset=(vertex+corner)*3;
-          group.positions.push(layer.positions[offset],layer.positions[offset+1],layer.positions[offset+2]);
-          group.normals.push(layer.normals[offset],layer.normals[offset+1],layer.normals[offset+2]);
-        }
-        group.uvs.push(0,0,1,0,1,1,0,1);
-        const first=group.positions.length/3-4;
-        group.indices.push(first,first+1,first+2,first,first+2,first+3);
-      }
-      for(const group of groups.values()){
-        const geometry=new THREE.BufferGeometry();
-        geometry.setAttribute('position',new THREE.Float32BufferAttribute(group.positions,3));
-        geometry.setAttribute('normal',new THREE.Float32BufferAttribute(group.normals,3));
-        geometry.setAttribute('uv',new THREE.Float32BufferAttribute(group.uvs,2));
-        geometry.setIndex(group.indices);geometry.computeBoundingSphere();
-        const mesh=new THREE.Mesh(geometry,getMaterial(layerName,group.file,group.blockId));
-        mesh.castShadow=layerName==='opaque';mesh.receiveShadow=true;worldGroup.add(mesh);
-      }
-    }
+  const sync=meshCache.sync();
+  for(const {x,z} of sync.removedChunks){
+    const key=x+','+z,group=chunkGroups.get(key);
+    if(group){disposeGroup(group);chunkGroups.delete(key)}
+  }
+  for(const {x,z} of sync.rebuiltChunks){
+    const key=x+','+z,oldGroup=chunkGroups.get(key);
+    if(oldGroup)disposeGroup(oldGroup);
+    const chunkMesh=meshCache.get(x,z);
+    if(!chunkMesh){chunkGroups.delete(key);continue}
+    const group=buildChunkGroup(x,z,chunkMesh);
+    chunkGroups.set(key,group);worldGroup.add(group);
   }
 }
 
@@ -279,7 +294,7 @@ function loadWorld(){
     const parsedSave=JSON.parse(raw);
     const result=Engine.fromSave(parsedSave);
     if(!result.ok){toast('Simpanan tidak valid: '+result.errors[0]);return}
-    engine=result.engine;yaw=result.view.yaw;pitch=result.view.pitch;
+    clearWorldMeshes();engine=result.engine;yaw=result.view.yaw;pitch=result.view.pitch;
     worldSeed=parsedSave.metadata.seed;
     worldCreatedAt=parsedSave.metadata.createdAt;
     const restoredPosition=engine.player.state.position;
