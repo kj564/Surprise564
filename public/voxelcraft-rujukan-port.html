@@ -1,0 +1,4278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>VoxelCraft — Rujukan Faithful Port</title>
+  <style>
+    /* ============================================================
+     * GuiComponent drawing primitives — minimal CSS mirroring rujukan's
+     * GuiComponent::blit / fill / drawString. No modern polish.
+     * (rujukan has no clouds, no vignette, no sprint FOV kick.)
+     * ============================================================ */
+    @font-face {
+      font-family: 'Minecraft Ten';
+      src: url('./VoxelCraft/font/minecraft-ten.ttf') format('truetype');
+      font-display: swap;
+    }
+    :root { color-scheme: light; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #88c5ff;
+      font-family: 'Minecraft Ten', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      user-select: none;
+      color: #fff;
+    }
+    #game { position: fixed; inset: 0; display: block; image-rendering: pixelated; }
+
+    /* Crosshair — Gui::renderProgressIndicator crosshair sprite */
+    #crosshair {
+      position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: 22px; height: 22px; pointer-events: none; z-index: 5;
+      mix-blend-mode: difference;
+    }
+    #crosshair::before, #crosshair::after { content: ""; position: absolute; background: #fff; }
+    #crosshair::before { left: 50%; top: 0; width: 2px; height: 100%; transform: translateX(-50%); }
+    #crosshair::after  { top: 50%; left: 0; height: 2px; width: 100%; transform: translateY(-50%); }
+
+    /* Hotbar — Gui::renderToolBar mirrors 9-slot hotbar from Inventory::MAX_SELECTION_SIZE */
+    #hotbar {
+      position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
+      display: flex; gap: 1px; padding: 0; z-index: 5;
+      background: transparent;
+    }
+    .hslot {
+      width: 24px; height: 24px; position: relative; cursor: pointer;
+      background: rgba(20,20,20,0.55);
+      display: flex; align-items: center; justify-content: center;
+      image-rendering: pixelated;
+    }
+    .hslot.sel { background: rgba(255,255,255,0.0); outline: 2px solid #fff; }
+    .hslot canvas { width: 18px; height: 18px; image-rendering: pixelated; }
+    .hslot .ct { position: absolute; bottom: 1px; right: 2px; font-size: 10px;
+      color: #fff; text-shadow: 1px 1px 0 #000; }
+
+    /* HUD: hearts + bubbles + debug text */
+    #hud-top {
+      position: fixed; top: 6px; left: 6px; z-index: 5;
+      font-size: 12px; line-height: 1.4; text-shadow: 1px 1px 0 #000;
+      background: rgba(0,0,0,0.30); padding: 4px 8px; color: #fff;
+      font-variant-numeric: tabular-nums; pointer-events: none;
+    }
+    #hud-top b { color: #ffe082; }
+    #hearts {
+      position: fixed; left: 8px; bottom: 44px; z-index: 5;
+      display: flex; flex-wrap: wrap; width: 132px;
+      pointer-events: none;
+    }
+    #hearts canvas { width: 13px; height: 13px; image-rendering: pixelated; margin: 1px; }
+    #bubbles {
+      position: fixed; right: 8px; bottom: 44px; z-index: 5;
+      display: none; flex-direction: row; align-items: center;
+      pointer-events: none;
+    }
+    #bubbles canvas { width: 13px; height: 13px; image-rendering: pixelated; margin: 1px; }
+
+    /* Break progress overlay (GameMode.render publishes destroyProgress) */
+    #break-progress {
+      position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: 40px; height: 40px; border-radius: 50%; pointer-events: none;
+      background: rgba(0,0,0,0.0); z-index: 4; display: none;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.6) inset;
+    }
+
+    /* Overlay — Screen container (StartMenuScreen / PauseScreen) */
+    #overlay {
+      position: fixed; inset: 0; z-index: 10; cursor: default;
+      background: rgba(0,0,0,0.55);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #fff; text-align: center; padding: 24px; overflow-y: auto;
+    }
+    #overlay.hidden { display: none; }
+    #overlay .panel { width: min(420px, 92vw); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    #overlay h1 {
+      font-family: 'Minecraft Ten', 'Segoe UI', system-ui, sans-serif;
+      font-size: clamp(28px, 5vw, 44px); font-weight: 800; line-height: 1;
+      color: #fff; text-shadow: 2px 2px 0 #222, 4px 4px 0 rgba(0,0,0,0.4);
+      margin: 0; letter-spacing: 1px;
+    }
+    #overlay .sub { font-size: 12px; letter-spacing: 3px; color: #ccc; margin-top: 4px; }
+    .mc-btn {
+      font-family: 'Minecraft Ten', 'Segoe UI', sans-serif;
+      font-size: 14px; padding: 8px 14px; min-width: 220px;
+      color: #fff; background: #6a6a6a; border: 2px solid #000; cursor: pointer;
+      box-shadow: 0 3px 0 #2a2a2a; text-shadow: 1px 1px 0 #222;
+      transition: background .08s;
+      image-rendering: pixelated;
+    }
+    .mc-btn:hover { background: #8a8a8a; }
+    .mc-btn:active { background: #555; box-shadow: 0 1px 0 #2a2a2a; transform: translateY(2px); }
+    .mc-btn.disabled { background: #444; color: #888; cursor: not-allowed; box-shadow: 0 3px 0 #222; }
+
+    /* Loading — Textures loader */
+    #loading {
+      position: fixed; inset: 0; z-index: 30; background: #1a1a2e;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #fff;
+    }
+    #loading.hidden { display: none; }
+    .spinner { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2);
+      border-top-color: #bfff7a; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 14px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading .tip { font-size: 12px; color: #b9b9c9; }
+
+    /* Toast — Gui::addMessage (chat-like) */
+    #toast {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.78); color: #fff; padding: 8px 14px;
+      font-size: 13px; z-index: 8; opacity: 0; transition: opacity .2s; pointer-events: none;
+      text-shadow: 1px 1px 0 #000;
+    }
+    #toast.show { opacity: 1; }
+
+    #splash {
+      position: fixed; bottom: 4px; left: 50%; transform: translateX(-50%);
+      font-size: 11px; color: #888; z-index: 3; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="crosshair"></div>
+  <div id="break-progress"></div>
+  <div id="hearts"></div>
+  <div id="bubbles"></div>
+  <div id="hud-top"></div>
+  <div id="hotbar"></div>
+  <div id="toast"></div>
+  <div id="splash">VoxelCraft — Rujukan Faithful Port · MCPE 2013</div>
+  <div id="overlay" class="hidden"></div>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div>Loading…</div>
+    <div class="tip">VoxelCraft — Rujukan Faithful Port</div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+
+  <script type="module">
+  import * as THREE from 'three';
+
+  /* ============================================================
+   * VoxelCraft — Rujukan Faithful Port
+   * A faithful browser port of historical Minecraft Pocket Edition 2013
+   * C++ source (rujukan/). All class names, constants, tile IDs, tick
+   * flow order, and screen lifecycle mirror the C++ originals.
+   *
+   * Folder layout of this <script> mirrors rujukan/ paths.
+   * ============================================================ */
+
+  /* ============================================================
+   * SECTION: world/phys/Vec3
+   * Mirrors: world/phys/Vec3.h
+   * Pure 3-float struct with add/sub/scale/dot/length/distance.
+   * ============================================================ */
+  class Vec3 {
+    constructor(x = 0, y = 0, z = 0) {
+      // -0.0 → 0.0 normalization (rujukan ctor quirk)
+      this.x = x === -0 ? 0 : x;
+      this.y = y === -0 ? 0 : y;
+      this.z = z === -0 ? 0 : z;
+    }
+    set(x, y, z) { this.x = x; this.y = y; this.z = z; return this; }
+    add(v) { return new Vec3(this.x + v.x, this.y + v.y, this.z + v.z); }
+    subtract(v) { return new Vec3(this.x - v.x, this.y - v.y, this.z - v.z); }
+    scale(s) { return new Vec3(this.x * s, this.y * s, this.z * s); }
+    addSelf(v) { this.x += v.x; this.y += v.y; this.z += v.z; return this; }
+    subSelf(v) { this.x -= v.x; this.y -= v.y; this.z -= v.z; return this; }
+    dot(v) { return this.x * v.x + this.y * v.y + this.z * v.z; }
+    cross(v) {
+      return new Vec3(
+        this.y * v.z - this.z * v.y,
+        this.z * v.x - this.x * v.z,
+        this.x * v.y - this.y * v.x
+      );
+    }
+    length() { return Math.sqrt(this.dot(this)); }
+    distanceTo(v) { return this.subtract(v).length(); }
+    distanceToSqr(v) {
+      const dx = this.x - v.x, dy = this.y - v.y, dz = this.z - v.z;
+      return dx * dx + dy * dy + dz * dz;
+    }
+    normalize() {
+      const l = this.length();
+      if (l < 0.0001) return new Vec3(0, 0, 0);
+      return new Vec3(this.x / l, this.y / l, this.z / l);
+    }
+    lerp(v, a) {
+      return new Vec3(
+        this.x + (v.x - this.x) * a,
+        this.y + (v.y - this.y) * a,
+        this.z + (v.z - this.z) * a
+      );
+    }
+    copy() { return new Vec3(this.x, this.y, this.z); }
+  }
+
+  /* ============================================================
+   * SECTION: world/phys/AABB
+   * Mirrors: world/phys/AABB.h
+   * Axis-aligned box with min/max corners. clip{X,Y,Z}Collide are
+   * the sliding-collision primitives used by Entity::move.
+   * ============================================================ */
+  class AABB {
+    constructor(x0 = 0, y0 = 0, z0 = 0, x1 = 1, y1 = 1, z1 = 1) {
+      this.set(x0, y0, z0, x1, y1, z1);
+    }
+    set(x0, y0, z0, x1, y1, z1) {
+      this.x0 = x0; this.y0 = y0; this.z0 = z0;
+      this.x1 = x1; this.y1 = y1; this.z1 = z1;
+      return this;
+    }
+    setB(b) { return this.set(b.x0, b.y0, b.z0, b.x1, b.y1, b.z1); }
+    copy() { return new AABB(this.x0, this.y0, this.z0, this.x1, this.y1, this.z1); }
+    cloneMove(xa, ya, za) {
+      return new AABB(this.x0 + xa, this.y0 + ya, this.z0 + za,
+                      this.x1 + xa, this.y1 + ya, this.z1 + za);
+    }
+    move(xa, ya, za) {
+      this.x0 += xa; this.y0 += ya; this.z0 += za;
+      this.x1 += xa; this.y1 += ya; this.z1 += za;
+      return this;
+    }
+    // directional expand (extend only on +side if axis>0, else -side)
+    expand(xa, ya, za) {
+      if (xa < 0) this.x0 += xa; else this.x1 += xa;
+      if (ya < 0) this.y0 += ya; else this.y1 += ya;
+      if (za < 0) this.z0 += za; else this.z1 += za;
+      return this;
+    }
+    // symmetric grow (all 6 sides)
+    grow(xa, ya, za) {
+      this.x0 -= xa; this.x1 += xa;
+      this.y0 -= ya; this.y1 += ya;
+      this.z0 -= za; this.z1 += za;
+      return this;
+    }
+    shrink(xa, ya, za) {
+      this.x0 += xa; this.x1 -= xa;
+      this.y0 += ya; this.y1 -= ya;
+      this.z0 += za; this.z1 -= za;
+      return this;
+    }
+    intersects(b) {
+      return this.x1 > b.x0 && this.x0 < b.x1 &&
+             this.y1 > b.y0 && this.y0 < b.y1 &&
+             this.z1 > b.z0 && this.z0 < b.z1;
+    }
+    intersectsBox(x02, y02, z02, x12, y12, z12) {
+      return this.x1 > x02 && this.x0 < x12 &&
+             this.y1 > y02 && this.y0 < y12 &&
+             this.z1 > z02 && this.z0 < z12;
+    }
+    contains(v) {
+      return v.x >= this.x0 && v.x < this.x1 &&
+             v.y >= this.y0 && v.y < this.y1 &&
+             v.z >= this.z0 && v.z < this.z1;
+    }
+    getSize() { return (this.x1 - this.x0 + this.y1 - this.y0 + this.z1 - this.z0) / 3; }
+    // Sliding collision response: largest allowed motion along X axis
+    // such that AABB c does not intersect this AABB.
+    clipXCollide(c, xa) {
+      if (c.y1 > this.y0 && c.y0 < this.y1 && c.z1 > this.z0 && c.z0 < this.z1) {
+        if (xa > 0 && c.x1 <= this.x0) {
+          const d = this.x0 - c.x1;
+          if (d < xa) xa = d;
+        } else if (xa < 0 && c.x0 >= this.x1) {
+          const d = this.x1 - c.x0;
+          if (d > xa) xa = d;
+        }
+      }
+      return xa;
+    }
+    clipYCollide(c, ya) {
+      if (c.x1 > this.x0 && c.x0 < this.x1 && c.z1 > this.z0 && c.z0 < this.z1) {
+        if (ya > 0 && c.y1 <= this.y0) {
+          const d = this.y0 - c.y1;
+          if (d < ya) ya = d;
+        } else if (ya < 0 && c.y0 >= this.y1) {
+          const d = this.y1 - c.y0;
+          if (d > ya) ya = d;
+        }
+      }
+      return ya;
+    }
+    clipZCollide(c, za) {
+      if (c.x1 > this.x0 && c.x0 < this.x1 && c.y1 > this.y0 && c.y0 < this.y1) {
+        if (za > 0 && c.z1 <= this.z0) {
+          const d = this.z0 - c.z1;
+          if (d < za) za = d;
+        } else if (za < 0 && c.z0 >= this.z1) {
+          const d = this.z1 - c.z0;
+          if (d > za) za = d;
+        }
+      }
+      return za;
+    }
+    // Ray-box intersection; returns HitResult(TILE) or NO_HIT.
+    clip(a, b) {
+      let tmin = 0, tmax = 1;
+      let face = -1;
+      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+      const o = [a.x, a.y, a.z];
+      const d = [dx, dy, dz];
+      const lo = [this.x0, this.y0, this.z0];
+      const hi = [this.x1, this.y1, this.z1];
+      for (let i = 0; i < 3; i++) {
+        if (Math.abs(d[i]) < 1e-9) {
+          if (o[i] < lo[i] || o[i] > hi[i]) return HitResult.NO_HIT();
+        } else {
+          const inv = 1 / d[i];
+          let t1 = (lo[i] - o[i]) * inv;
+          let t2 = (hi[i] - o[i]) * inv;
+          let f1 = i === 0 ? (d[i] > 0 ? 4 : 5)
+                  : i === 1 ? (d[i] > 0 ? 0 : 1)
+                            : (d[i] > 0 ? 2 : 3);
+          let f2 = i === 0 ? (d[i] > 0 ? 5 : 4)
+                  : i === 1 ? (d[i] > 0 ? 1 : 0)
+                            : (d[i] > 0 ? 3 : 2);
+          if (t1 > t2) { const t = t1; t1 = t2; t2 = t; const f = f1; f1 = f2; f2 = f; }
+          if (t1 > tmin) { tmin = t1; face = f1; }
+          if (t2 < tmax) tmax = t2;
+          if (tmin > tmax) return HitResult.NO_HIT();
+        }
+      }
+      const hit = new Vec3(a.x + dx * tmin, a.y + dy * tmin, a.z + dz * tmin);
+      return new HitResult(HitResult.TILE, 0, 0, 0, face, hit);
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/phys/HitResult
+   * Mirrors: world/phys/HitResult.h
+   * ============================================================ */
+  class HitResult {
+    static get TILE()    { return 0; }
+    static get ENTITY()  { return 1; }
+    static get NO_HIT()  { return 2; }
+    constructor(type, x = 0, y = 0, z = 0, f = -1, pos = null, entity = null) {
+      this.type = type;
+      this.x = x; this.y = y; this.z = z;
+      this.f = f;            // face 0..5 (0=DOWN,1=UP,2=NORTH,3=SOUTH,4=WEST,5=EAST)
+      this.pos = pos || new Vec3();
+      this.entity = entity;
+      this.indirectHit = false;
+    }
+    static NO_HIT() { return new HitResult(HitResult.NO_HIT); }
+    isHit() { return this.type !== HitResult.NO_HIT; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/LevelConstants
+   * Mirrors: world/level/LevelConstants.h
+   * Bounded world (NOT infinite).
+   * ============================================================ */
+  const LevelConstants = {
+    LEVEL_HEIGHT: 128,
+    CHUNK_WIDTH: 16,
+    CHUNK_DEPTH: 16,
+    CHUNK_CACHE_WIDTH: 16,    // 16x16 chunks = 256x256 world
+    LEVEL_WIDTH: 256,
+    LEVEL_DEPTH: 256,
+    CHUNK_COLUMNS: 256,
+    CHUNK_BLOCK_COUNT: 32768,
+    SEA_LEVEL: 63,             // from Level.cpp DEPTH/2 - 1
+    MAX_BRIGHTNESS: 15,
+    TICKS_PER_DAY: 19200,
+    MIDDLE_OF_NIGHT_TIME: 12000,
+    MAX_TICK_TILES_PER_TICK: 100,
+  };
+
+  /* ============================================================
+   * SECTION: world/level/tile/Material
+   * Mirrors: world/level/material/Material.h
+   * Plain descriptor objects (no behaviour).
+   * ============================================================ */
+  const Material = {
+    air:    { name: 'air',     blocksMotion: false, solid: false, liquid: false, replaceable: true },
+    stone:  { name: 'stone',  blocksMotion: true,  solid: true,  liquid: false, replaceable: false },
+    wood:   { name: 'wood',   blocksMotion: true,  solid: true,  liquid: false, replaceable: false },
+    dirt:   { name: 'dirt',   blocksMotion: true,  solid: true,  liquid: false, replaceable: false },
+    grass:  { name: 'grass',  blocksMotion: true,  solid: true,  liquid: false, replaceable: false },
+    gravel: { name: 'gravel', blocksMotion: true,  solid: true,  liquid: false, replaceable: false },
+    sand:   { name: 'sand',   blocksMotion: true,  solid: true,  liquid: false, replaceable: false },
+    glass:  { name: 'glass',  blocksMotion: true,  solid: true,  liquid: false, replaceable: false, translucent: true },
+    water:  { name: 'water',  blocksMotion: false, solid: false, liquid: true,  replaceable: false, translucent: true },
+    lava:   { name: 'lava',   blocksMotion: false, solid: false, liquid: true,  replaceable: false, translucent: true },
+    metal:  { name: 'metal',  blocksMotion: true,  solid: true,  liquid: false, replaceable: false },
+    leaves: { name: 'leaves', blocksMotion: false, solid: false, liquid: false, replaceable: false, translucent: true },
+    tntMat: { name: 'tnt',    blocksMotion: true,  solid: true,  liquid: false, replaceable: false },
+    wood_bark: { name: 'log', blocksMotion: true,  solid: true,  liquid: false, replaceable: false },
+  };
+
+  /* ============================================================
+   * SECTION: world/level/tile/SoundType
+   * Mirrors: Tile::SoundType in Tile.h (10 singletons).
+   * ============================================================ */
+  class SoundType {
+    constructor(volume, pitch, breakSound, stepSound) {
+      this.volume = volume; this.pitch = pitch;
+      this.breakSound = breakSound; this.stepSound = stepSound;
+    }
+    static get SOUND_NORMAL() { return new SoundType(1.0, 1.0, 'stone', 'stone'); }
+    static get SOUND_WOOD()   { return new SoundType(1.0, 1.0, 'wood',  'wood');  }
+    static get SOUND_GRAVEL() { return new SoundType(1.0, 1.0, 'gravel','gravel'); }
+    static get SOUND_GRASS()  { return new SoundType(1.0, 1.0, 'grass', 'grass'); }
+    static get SOUND_STONE() { return new SoundType(1.0, 1.0, 'stone', 'stone'); }
+    static get SOUND_METAL() { return new SoundType(1.0, 1.0, 'stone', 'stone'); }
+    static get SOUND_GLASS() { return new SoundType(1.0, 1.0, 'glass', 'stone'); }
+    static get SOUND_CLOTH() { return new SoundType(1.0, 1.0, 'cloth', 'stone'); }
+    static get SOUND_SAND()  { return new SoundType(1.0, 1.0, 'sand',  'sand'); }
+    static get SOUND_SILENT(){ return new SoundType(0.0, 0.0, '',     ''); }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/Tile
+   * Mirrors: world/level/tile/Tile.h
+   * Render-shape constants: SHAPE_BLOCK, SHAPE_CROSS_TEXTURE, SHAPE_TORCH, etc.
+   * Builder pattern via setSoundType / setDestroyTime / setLightBlock / setLightEmission.
+   * ============================================================ */
+  class Tile {
+    static get SHAPE_INVISIBLE()     { return -1; }
+    static get SHAPE_BLOCK()         { return 0; }
+    static get SHAPE_CROSS_TEXTURE() { return 1; }
+    static get SHAPE_TORCH()         { return 2; }
+    static get SHAPE_FIRE()          { return 3; }
+    static get SHAPE_WATER()         { return 4; }
+    static get SHAPE_STAIRS()        { return 10; }
+    static get SHAPE_FENCE()         { return 11; }
+    static get SHAPE_CACTUS()        { return 13; }
+    static get SHAPE_ENTITYTILE_ANIMATED() { return 22; }
+    static get NUM_BLOCK_TYPES()    { return 256; }
+
+    // tiles[256] master registry
+    static tiles = new Array(256).fill(null);
+    static sendTileData = new Array(256).fill(false);
+    static shouldTick = new Array(256).fill(false);
+    static solid = new Array(256).fill(false);
+    static isEntityTile = new Array(256).fill(false);
+    static translucent = new Array(256).fill(false);
+    static lightBlock = new Array(256).fill(15);
+    static lightEmission = new Array(256).fill(0);
+
+    constructor(id, tex, material) {
+      if (material === undefined) {
+        // 2-arg form: Tile(id, material) — tex defaults to 0
+        this.id = id; this.tex = 0; this.material = arguments[1];
+      } else {
+        this.id = id; this.tex = tex; this.material = material;
+      }
+      // Per-tile properties (defaults)
+      this.soundType = SoundType.SOUND_STONE;
+      this.destroySpeed = 0;          // destroyTime
+      this.explosionResistance = 0;
+      this.gravity = 1;
+      this.friction = 0.6;
+      this.lightBlock = 15;
+      this.lightEmission = 0;
+      this.category = 0;
+      this.renderShape = Tile.SHAPE_BLOCK;
+      // AABB shape (full cube default)
+      this.xx0 = 0; this.yy0 = 0; this.zz0 = 0;
+      this.xx1 = 1; this.yy1 = 1; this.zz1 = 1;
+      this.descriptionId = 'tile.' + this.id;
+    }
+
+    // Builder pattern (each returns this)
+    init() {
+      Tile.tiles[this.id] = this;
+      Tile.lightBlock[this.id] = this.lightBlock;
+      Tile.lightEmission[this.id] = this.lightEmission;
+      Tile.solid[this.id] = this.isSolidRender();
+      Tile.translucent[this.id] = !!(this.material && this.material.translucent);
+      return this;
+    }
+    setSoundType(s) { this.soundType = s; return this; }
+    setDestroyTime(t) { this.destroySpeed = t; return this; }
+    setLightBlock(b) { this.lightBlock = b; return this; }
+    setLightEmission(e) { this.lightEmission = e; return this; }
+    setExplodeable(r) { this.explosionResistance = r; return this; }
+    setTicking(b) { Tile.shouldTick[this.id] = b; return this; }
+    setCategory(c) { this.category = c; return this; }
+    setDescriptionId(d) { this.descriptionId = d; return this; }
+    setShape(x0, y0, z0, x1, y1, z1) {
+      this.xx0 = x0; this.yy0 = y0; this.zz0 = z0;
+      this.xx1 = x1; this.yy1 = y1; this.zz1 = z1;
+      return this;
+    }
+    setRenderShape(s) { this.renderShape = s; return this; }
+
+    // Geometry / light / texture virtuals (overridable)
+    getRenderShape() { return this.renderShape; }
+    getTexture(face) { return this.tex; }
+    getTextureFor(level, x, y, z, face) { return this.getTexture(face); }
+    isCubeShaped() {
+      return this.xx0 === 0 && this.yy0 === 0 && this.zz0 === 0 &&
+             this.xx1 === 1 && this.yy1 === 1 && this.zz1 === 1;
+    }
+    isSolidRender() {
+      if (!this.material) return false;
+      return this.material.solid && this.isCubeShaped();
+    }
+    isSolid() { return !!(this.material && this.material.blocksMotion); }
+    isReplaceable() { return !!(this.material && this.material.replaceable); }
+    isLiquid() { return !!(this.material && this.material.liquid); }
+
+    // Mining progress for survival: 1 / destroySpeed (rujukan formula).
+    getDestroyProgress(player) {
+      if (this.destroySpeed < 0) return Infinity;  // unbreakable
+      const speed = player ? player.getDestroySpeed(this) : 1;
+      if (speed <= 0) return 0;
+      // rujukan getDestroyProgress: 1 / (destroySpeed * toolMultiplier) approximated.
+      return 1 / Math.max(this.destroySpeed, 0.01) * speed;
+    }
+
+    // Resource drop on destroy (id and count); for tiles = self.
+    getResource(data, random) { return this.id; }
+    getResourceCount(random) { return 1; }
+    spawnResources(level, x, y, z, data) {
+      // Stub: in rujukan this drops an ItemEntity. For port we simply leave it.
+    }
+
+    mayPick(data = 0, liquid = false) {
+      if (this.material === Material.air) return false;
+      if (this.isLiquid() && !liquid) return false;
+      return true;
+    }
+    mayPlace(level, x, y, z, face) { return true; }
+    getAABB(level, x, y, z) {
+      return new AABB(x + this.xx0, y + this.yy0, z + this.zz0,
+                      x + this.xx1, y + this.yy1, z + this.zz1);
+    }
+    getName() { return this.descriptionId; }
+    shouldRenderFace(level, x, y, z, face) {
+      // Cull a face if neighbor is solid-opaque
+      const n = level.getTileNeighbor(x, y, z, face);
+      const t = Tile.tiles[n];
+      if (!t) return true;
+      if (t.material === Material.air) return true;
+      if (t.material === Material.glass && this.material === Material.glass) return false;
+      if (this.material === Material.leaves && t.material === Material.leaves) return false;
+      return !t.isSolidRender();
+    }
+    // Tile tick (overridden by LiquidTile, GrassTile, etc.)
+    tick(level, x, y, z, random) { /* no-op */ }
+    animateTick(level, x, y, z, random) { /* no-op */ }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/StoneTile
+   * Mirrors: world/level/tile/StoneTile.h
+   * Drops stoneBrick (cobblestone) instead of itself.
+   * ============================================================ */
+  class StoneTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_STONE).setDestroyTime(1.5).setExplodeable(10);
+    }
+    getResource(data, random) { return 4; } // stoneBrick (cobblestone) id=4
+    getName() { return 'tile.stone'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/DirtTile
+   * Mirrors: world/level/tile/DirtTile.h
+   * ============================================================ */
+  class DirtTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_GRAVEL).setDestroyTime(0.5).setExplodeable(2.5);
+    }
+    getName() { return 'tile.dirt'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/GrassTile
+   * Mirrors: world/level/tile/GrassTile.h
+   * Top texture = grass, side = dirt-with-grass-overlay.
+   * Tick: spreads to adjacent dirt (shouldTick=true).
+   * ============================================================ */
+  class GrassTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_GRASS).setDestroyTime(0.6).setExplodeable(2.5);
+      this.setTicking(true);
+      this.setLightBlock(15);
+      this.texTop = 'grass_top';
+      this.texSide = 'grass_side';
+      this.texBottom = 'dirt';
+    }
+    getResource(data, random) { return 3; } // drops dirt
+    getTexture(face) {
+      if (face === 1) return this.texTop;     // up
+      if (face === 0) return this.texBottom;  // down
+      return this.texSide;                    // sides
+    }
+    tick(level, x, y, z, random) {
+      // Grass spread to dirt neighbors when sky-lit.
+      if (!level.isSkyLit(x, y + 1, z)) {
+        if (random.nextInt(4) !== 0) return;
+      }
+      for (let i = 0; i < 4; i++) {
+        const nx = x + random.nextInt(3) - 1;
+        const ny = y + random.nextInt(5) - 3;
+        const nz = z + random.nextInt(3) - 1;
+        const tid = level.getTile(nx, ny, nz);
+        if (tid === 3 /* dirt */ && level.isSkyLit(nx, ny + 1, nz)) {
+          level.setTile(nx, ny, nz, 2 /* grass */);
+        }
+      }
+    }
+    getName() { return 'tile.grass'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/LiquidTile
+   * Mirrors: world/level/tile/LiquidTile.h + Dynamic/Static.
+   * SHAPE_WATER render shape, no collision, lightBlock=3.
+   * ============================================================ */
+  class LiquidTile extends Tile {
+    constructor(id, material) {
+      super(id, 0, material);
+      this.setSoundType(SoundType.SOUND_SILENT)
+          .setDestroyTime(100)
+          .setLightBlock(2)
+          .setRenderShape(Tile.SHAPE_WATER);
+      this.setShape(0, 0, 0, 1, 1, 1);
+    }
+    isSolidRender() { return false; }
+    isSolid() { return false; }
+    isCubeShaped() { return false; }
+    mayPick(data = 0, liquid = false) { return liquid; }
+    isLiquid() { return true; }
+    getName() { return this.material === Material.lava ? 'tile.lava' : 'tile.water'; }
+    getTexture(face) { return this.material === Material.lava ? 'lava_still' : 'water_still'; }
+  }
+  class LiquidTileDynamic extends LiquidTile {
+    constructor(id, material) { super(id, material); }
+  }
+  class LiquidTileStatic extends LiquidTile {
+    constructor(id, material) {
+      super(id, material);
+      this.setDestroyTime(100);
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/GlassTile
+   * Mirrors: world/level/tile/GlassTile.h
+   * Transparent (translucent=true), glass sound.
+   * ============================================================ */
+  class GlassTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_GLASS).setDestroyTime(0.3).setExplodeable(0.3);
+    }
+    isSolidRender() { return false; }
+    getName() { return 'tile.glass'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/OreTile
+   * Mirrors: world/level/tile/OreTile.h
+   * Generic ore with stone-like properties.
+   * ============================================================ */
+  class OreTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_STONE).setDestroyTime(3.0).setExplodeable(5.0);
+    }
+    getName() { return 'tile.ore.' + this.id; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/LeafTile
+   * Mirrors: world/level/tile/LeafTile.h
+   * Translucent, lightBlock=1, decays.
+   * ============================================================ */
+  class LeafTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_GRASS).setDestroyTime(0.2).setExplodeable(0.2);
+      this.setLightBlock(1);
+      this.setTicking(true);
+    }
+    isSolidRender() { return false; }
+    getName() { return 'tile.leaves'; }
+    getTexture(face) { return 'leaves_oak_opaque'; }
+    tick(level, x, y, z, random) {
+      // Decay if not adjacent to a log within 4 blocks (rujukan simplified).
+      if (random.nextInt(40) === 0) {
+        // No-op: leaves persist for demo simplicity (no network sync).
+      }
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/TreeTile
+   * Mirrors: world/level/tile/TreeTile.h
+   * Log trunk, bark-on-sides, rings top/bottom.
+   * ============================================================ */
+  class TreeTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_WOOD).setDestroyTime(2.0).setExplodeable(2.0);
+      this.texTop = 'log_oak_top';
+      this.texSide = 'log_oak';
+      this.texBottom = 'log_oak_top';
+    }
+    getTexture(face) {
+      if (face === 1) return this.texTop;
+      if (face === 0) return this.texBottom;
+      return this.texSide;
+    }
+    getName() { return 'tile.log'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/TorchTile
+   * Mirrors: world/level/tile/TorchTile.h
+   * SHAPE_TORCH, lightEmission=15.
+   * ============================================================ */
+  class TorchTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_WOOD).setDestroyTime(0.0).setLightEmission(15);
+      this.setRenderShape(Tile.SHAPE_TORCH);
+      this.setShape(0.2, 0, 0.2, 0.8, 1.0, 0.8);
+      this.setLightBlock(0);
+    }
+    isSolidRender() { return false; }
+    isSolid() { return false; }
+    getName() { return 'tile.torch'; }
+    getTexture(face) { return 'torch_on'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/MetalTile
+   * Mirrors: world/level/tile/MetalTile.h
+   * Gold/iron/diamond blocks.
+   * ============================================================ */
+  class MetalTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_METAL).setDestroyTime(5.0).setExplodeable(10);
+    }
+    getName() { return 'tile.metalblock.' + this.id; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/HeavyTile
+   * Mirrors: world/level/tile/HeavyTile.h
+   * Sand/gravel — falls when no support below.
+   * ============================================================ */
+  class HeavyTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setTicking(true);
+    }
+    tick(level, x, y, z, random) {
+      // rujukan HeavyTile: if below is air/liquid, become FallingTile.
+      const below = level.getTile(x, y - 1, z);
+      if (below === 0 || (Tile.tiles[below] && Tile.tiles[below].isLiquid())) {
+        level.setTile(x, y, z, 0);
+        // Port: simply move the block down one (rujukan spawns a FallingTile entity).
+        let ny = y - 1;
+        while (ny > 0) {
+          const tid = level.getTile(x, ny, z);
+          if (tid === 0 || (Tile.tiles[tid] && Tile.tiles[tid].isLiquid())) {
+            ny--; continue;
+          }
+          break;
+        }
+        level.setTile(x, ny + 1, z, this.id);
+      }
+    }
+  }
+  class SandTile extends HeavyTile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_SAND).setDestroyTime(0.5);
+    }
+    getName() { return 'tile.sand'; }
+  }
+  class GravelTile extends HeavyTile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_GRAVEL).setDestroyTime(0.6);
+    }
+    getName() { return 'tile.gravel'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/TntTile
+   * Mirrors: world/level/tile/TntTile.h
+   * destroyTime=0, ignites → PrimedTnt (port: instant removal + spark).
+   * ============================================================ */
+  class TntTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_GRASS).setDestroyTime(0.0);
+      this.texTop = 'tnt_top';
+      this.texSide = 'tnt_side';
+    }
+    getName() { return 'tile.tnt'; }
+    getTexture(face) {
+      if (face === 0 || face === 1) return this.texTop;
+      return this.texSide;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/BookshelfTile
+   * Mirrors: world/level/tile/BookshelfTile.h
+   * ============================================================ */
+  class BookshelfTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_WOOD).setDestroyTime(1.5).setExplodeable(1.5);
+      this.texTop = 'planks_oak';
+      this.texSide = 'bookshelf';
+      this.texBottom = 'planks_oak';
+    }
+    getTexture(face) {
+      if (face === 1) return this.texTop;
+      if (face === 0) return this.texBottom;
+      return this.texSide;
+    }
+    getName() { return 'tile.bookshelf'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/ObsidianTile
+   * Mirrors: world/level/tile/ObsidianTile.h
+   * ============================================================ */
+  class ObsidianTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_STONE).setDestroyTime(10.0).setExplodeable(120);
+    }
+    getName() { return 'tile.obsidian'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/LightGemTile
+   * Mirrors: world/level/tile/LightGemTile.h
+   * Glowstone; lightEmission=15.
+   * ============================================================ */
+  class LightGemTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_GLASS).setDestroyTime(0.3)
+          .setLightEmission(15);
+    }
+    getName() { return 'tile.lightgem'; }
+    getTexture(face) { return 'glowstone'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/IceTile
+   * Mirrors: world/level/tile/IceTile.h
+   * Translucent (lightBlock=3).
+   * ============================================================ */
+  class IceTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_GLASS).setDestroyTime(0.5).setLightBlock(2);
+    }
+    isSolidRender() { return false; }
+    getName() { return 'tile.ice'; }
+    getTexture(face) { return 'ice'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/EntityTile + Furnace/Chest/Workbench
+   * Mirrors: world/level/tile/EntityTile.h (subclass stubs).
+   * Light behaviour and texture faces only — no container UI.
+   * ============================================================ */
+  class EntityTile extends Tile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      Tile.isEntityTile[id] = true;
+    }
+  }
+  class FurnaceTile extends EntityTile {
+    constructor(id, tex, material) {
+      super(id, tex, material);
+      this.setSoundType(SoundType.SOUND_STONE).setDestroyTime(3.5);
+      this.setLightEmission(0);
+    }
+    getTexture(face) {
+      if (face === 1) return 'furnace_top';
+      if (face === 0) return 'furnace_top';
+      if (face === 3) return 'furnace_front_off'; // south
+      return 'furnace_side';
+    }
+    getName() { return 'tile.furnace'; }
+  }
+  class ChestTile extends EntityTile {
+    constructor(id, material) {
+      super(id, 0, material);
+      this.setSoundType(SoundType.SOUND_WOOD).setDestroyTime(2.5);
+    }
+    getTexture(face) { return 'chest'; }
+    getName() { return 'tile.chest'; }
+  }
+  class WorkbenchTile extends EntityTile {
+    constructor(id, material) {
+      super(id, 0, material);
+      this.setSoundType(SoundType.SOUND_WOOD).setDestroyTime(2.5);
+    }
+    getTexture(face) {
+      if (face === 1) return 'crafting_table_top';
+      if (face === 0) return 'crafting_table_top';
+      if (face === 3) return 'crafting_table_front';
+      return 'crafting_table_side';
+    }
+    getName() { return 'tile.workbench'; }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/tile/TileRegistry
+   * Mirrors: Tile::initTiles() in Tile.cpp
+   * Registers every tile with exact IDs, materials, destroy times,
+   * and sound types as in the original rujukan registry.
+   * ============================================================ */
+  class TileRegistry {
+    static init() {
+      // ID 1: rock / stone
+      new StoneTile(1, 'stone', Material.stone)
+        .init().setDescriptionId('tile.stone');
+      // ID 2: grass
+      new GrassTile(2, 0, Material.grass)
+        .init().setDescriptionId('tile.grass');
+      // ID 3: dirt
+      new DirtTile(3, 'dirt', Material.dirt)
+        .init().setDescriptionId('tile.dirt');
+      // ID 4: stoneBrick / cobblestone
+      new Tile(4, 'cobblestone', Material.stone)
+        .setSoundType(SoundType.SOUND_STONE).setDestroyTime(2.0).init()
+        .setDescriptionId('tile.stonebrick');
+      // ID 5: wood / planks
+      new Tile(5, 'planks_oak', Material.wood)
+        .setSoundType(SoundType.SOUND_WOOD).setDestroyTime(2.0).init()
+        .setDescriptionId('tile.wood');
+      // ID 7: unbreakable / bedrock
+      new Tile(7, 'bedrock', Material.stone)
+        .setSoundType(SoundType.SOUND_STONE).setDestroyTime(-1).setExplodeable(Infinity)
+        .init().setDescriptionId('tile.bedrock');
+      // ID 8: water (dynamic)
+      new LiquidTileDynamic(8, Material.water)
+        .setLightBlock(3).init().setDescriptionId('tile.water');
+      // ID 9: calmWater (static)
+      new LiquidTileStatic(9, Material.water)
+        .setLightBlock(3).init().setDescriptionId('tile.waterStill');
+      // ID 10: lava (dynamic)
+      new LiquidTileDynamic(10, Material.lava)
+        .setLightBlock(3).setLightEmission(15).init().setDescriptionId('tile.lava');
+      // ID 11: calmLava (static)
+      new LiquidTileStatic(11, Material.lava)
+        .setLightBlock(3).setLightEmission(15).init().setDescriptionId('tile.lavaStill');
+      // ID 12: sand
+      new SandTile(12, 'sand', Material.sand)
+        .init().setDescriptionId('tile.sand');
+      // ID 13: gravel
+      new GravelTile(13, 'gravel', Material.gravel)
+        .init().setDescriptionId('tile.gravel');
+      // ID 14: goldOre
+      new OreTile(14, 'gold_ore', Material.stone)
+        .setDestroyTime(3.0).init().setDescriptionId('tile.goldOre');
+      // ID 15: ironOre
+      new OreTile(15, 'iron_ore', Material.stone)
+        .setDestroyTime(3.0).init().setDescriptionId('tile.ironOre');
+      // ID 16: coalOre
+      new OreTile(16, 'coal_ore', Material.stone)
+        .setDestroyTime(3.0).init().setDescriptionId('tile.coalOre');
+      // ID 17: treeTrunk / log
+      new TreeTile(17, 'log_oak', Material.wood_bark)
+        .init().setDescriptionId('tile.log');
+      // ID 18: leaves
+      new LeafTile(18, 'leaves_oak_opaque', Material.leaves)
+        .setLightBlock(1).init().setDescriptionId('tile.leaves');
+      // ID 20: glass
+      new GlassTile(20, 'glass', Material.glass)
+        .init().setDescriptionId('tile.glass');
+      // ID 45: redBrick
+      new Tile(45, 'brick', Material.stone)
+        .setSoundType(SoundType.SOUND_STONE).setDestroyTime(2.0).init()
+        .setDescriptionId('tile.brick');
+      // ID 46: tnt
+      new TntTile(46, 'tnt_side', Material.tntMat)
+        .init().setDescriptionId('tile.tnt');
+      // ID 47: bookshelf
+      new BookshelfTile(47, 'bookshelf', Material.wood)
+        .init().setDescriptionId('tile.bookshelf');
+      // ID 48: mossStone (mossy cobblestone)
+      new Tile(48, 'stonebrick_mossy', Material.stone)
+        .setSoundType(SoundType.SOUND_STONE).setDestroyTime(2.0).init()
+        .setDescriptionId('tile.mossStone');
+      // ID 49: obsidian
+      new ObsidianTile(49, 'obsidian', Material.stone)
+        .init().setDescriptionId('tile.obsidian');
+      // ID 50: torch
+      new TorchTile(50, 'torch_on', Material.wood)
+        .init().setDescriptionId('tile.torch');
+      // ID 54: chest
+      new ChestTile(54, Material.wood)
+        .init().setDescriptionId('tile.chest');
+      // ID 56: diamondOre (emeraldOre in rujukan token)
+      new OreTile(56, 'diamond_ore', Material.stone)
+        .setDestroyTime(3.0).init().setDescriptionId('tile.diamondOre');
+      // ID 57: diamondBlock
+      new MetalTile(57, 'diamond_block', Material.metal)
+        .setDestroyTime(5.0).init().setDescriptionId('tile.diamondBlock');
+      // ID 58: workBench / crafting table
+      new WorkbenchTile(58, Material.wood)
+        .init().setDescriptionId('tile.workbench');
+      // ID 61: furnace
+      new FurnaceTile(61, 'furnace_front_off', Material.stone)
+        .init().setDescriptionId('tile.furnace');
+      // ID 79: ice
+      new IceTile(79, 'ice', Material.glass)
+        .init().setDescriptionId('tile.ice');
+      // ID 87: netherrack
+      new Tile(87, 'netherrack', Material.stone)
+        .setSoundType(SoundType.SOUND_STONE).setDestroyTime(0.4).init()
+        .setDescriptionId('tile.netherrack');
+      // ID 89: lightGem / glowstone
+      new LightGemTile(89, 'glowstone', Material.glass)
+        .init().setDescriptionId('tile.glowstone');
+
+      // Convenience named pointers (mirrors rujukan Tile::rock, Tile::grass, etc.)
+      Tile.rock        = Tile.tiles[1];
+      Tile.grass       = Tile.tiles[2];
+      Tile.dirt        = Tile.tiles[3];
+      Tile.stoneBrick  = Tile.tiles[4];
+      Tile.wood        = Tile.tiles[5];
+      Tile.unbreakable = Tile.tiles[7];
+      Tile.water       = Tile.tiles[8];
+      Tile.calmWater   = Tile.tiles[9];
+      Tile.lava        = Tile.tiles[10];
+      Tile.calmLava    = Tile.tiles[11];
+      Tile.sand        = Tile.tiles[12];
+      Tile.gravel      = Tile.tiles[13];
+      Tile.goldOre     = Tile.tiles[14];
+      Tile.ironOre     = Tile.tiles[15];
+      Tile.coalOre     = Tile.tiles[16];
+      Tile.treeTrunk   = Tile.tiles[17];
+      Tile.leaves      = Tile.tiles[18];
+      Tile.glass       = Tile.tiles[20];
+      Tile.redBrick    = Tile.tiles[45];
+      Tile.tnt         = Tile.tiles[46];
+      Tile.bookshelf   = Tile.tiles[47];
+      Tile.mossStone   = Tile.tiles[48];
+      Tile.obsidian    = Tile.tiles[49];
+      Tile.torch       = Tile.tiles[50];
+      Tile.chest       = Tile.tiles[54];
+      Tile.diamondOre  = Tile.tiles[56];
+      Tile.diamondBlock= Tile.tiles[57];
+      Tile.workBench   = Tile.tiles[58];
+      Tile.furnace     = Tile.tiles[61];
+      Tile.ice         = Tile.tiles[79];
+      Tile.netherrack  = Tile.tiles[87];
+      Tile.lightGem    = Tile.tiles[89];
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/chunk/LevelChunk
+   * Mirrors: world/level/chunk/LevelChunk.h
+   * 16x16x128 = 32768 blocks; indexed by x<<11 | z<<7 | y.
+   * Dirty flag triggers a Chunk mesh rebuild.
+   * ============================================================ */
+  class LevelChunk {
+    static get ChunkBlockCount() { return 32768; }
+    static get UpdateMapBitShift() { return 4; }
+    constructor(level, cx, cz) {
+      this.level = level;
+      this.x = cx; this.z = cz;
+      this.xt = cx * 16; this.zt = cz * 16;
+      // 32768 bytes; one byte per block (tile id)
+      this.blocks = new Uint8Array(LevelChunk.ChunkBlockCount);
+      // 4-bit nibble data layer (block data / skyLight / blockLight)
+      // 16384 bytes each, indexed by (x<<11 | z<<7 | y) >> 1
+      this.data      = new Uint8Array(16384);
+      this.skyLight  = new Uint8Array(16384);
+      this.blockLight = new Uint8Array(16384);
+      this.heightmap = new Uint8Array(256);   // per-column highest non-air
+      this.updateMap = new Uint8Array(256);
+      this.dirty = true;     // mesh rebuild pending
+      this.minHeight = 128;
+      this.terrainPopulated = false;
+      this.unsaved = false;
+    }
+    // Index: y is lowest 7 bits (height=128 fits in 7 bits)
+    _idx(x, y, z) { return (x << 11) | (z << 7) | (y & 0x7f); }
+    getTile(x, y, z) { return this.blocks[this._idx(x, y, z)]; }
+    setTile(x, y, z, v) {
+      const i = this._idx(x, y, z);
+      const old = this.blocks[i];
+      this.blocks[i] = v & 0xff;
+      this.unsaved = true;
+      this.dirty = true;
+      // heightmap update (column max)
+      const col = (x << 4) | z;
+      if (v === 0) {
+        if (col === this.heightmap[col]) {
+          // recompute (slow path — rare)
+          let h = 0;
+          for (let yy = 127; yy >= 0; yy--) {
+            if (this.blocks[this._idx(x, yy, z)] !== 0) { h = yy + 1; break; }
+          }
+          this.heightmap[col] = h;
+        }
+      } else {
+        if (y + 1 > this.heightmap[col]) this.heightmap[col] = y + 1;
+      }
+      if (y < this.minHeight) this.minHeight = y;
+      this.updateMap[col] = 1;
+      return old;
+    }
+    setTileRaw(x, y, z, v) {
+      this.blocks[this._idx(x, y, z)] = v & 0xff;
+      this.unsaved = true;
+    }
+    getData(x, y, z) { return this.data[this._idx(x, y, z) >> 1] >> ((this._idx(x, y, z) & 1) * 4) & 0xf; }
+    setData(x, y, z, v) {
+      const i = this._idx(x, y, z) >> 1;
+      const part = this._idx(x, y, z) & 1;
+      const shift = part * 4;
+      this.data[i] = (this.data[i] & ~(0xf << shift)) | ((v & 0xf) << shift);
+    }
+    getSkyLight(x, y, z) { return this.skyLight[this._idx(x, y, z) >> 1] >> ((this._idx(x, y, z) & 1) * 4) & 0xf; }
+    setSkyLight(x, y, z, v) {
+      const i = this._idx(x, y, z) >> 1, part = this._idx(x, y, z) & 1, shift = part * 4;
+      this.skyLight[i] = (this.skyLight[i] & ~(0xf << shift)) | ((v & 0xf) << shift);
+    }
+    getBlockLight(x, y, z) { return this.blockLight[this._idx(x, y, z) >> 1] >> ((this._idx(x, y, z) & 1) * 4) & 0xf; }
+    setBlockLight(x, y, z, v) {
+      const i = this._idx(x, y, z) >> 1, part = this._idx(x, y, z) & 1, shift = part * 4;
+      this.blockLight[i] = (this.blockLight[i] & ~(0xf << shift)) | ((v & 0xf) << shift);
+    }
+    getRawBrightness(x, y, z, skyDarken) {
+      const sky = this.getSkyLight(x, y, z) - skyDarken;
+      const blk = this.getBlockLight(x, y, z);
+      return Math.max(Math.max(sky, 0), blk);
+    }
+    isSkyLit(x, y, z) {
+      const col = (x << 4) | z;
+      return y >= this.heightmap[col];
+    }
+    recalcHeightmap() {
+      for (let x = 0; x < 16; x++) {
+        for (let z = 0; z < 16; z++) {
+          let h = 0;
+          for (let y = 127; y >= 0; y--) {
+            if (this.blocks[this._idx(x, y, z)] !== 0) { h = y + 1; break; }
+          }
+          this.heightmap[(x << 4) | z] = h;
+        }
+      }
+    }
+    initSkylight() {
+      // rujukan LightLayer init — fill skyLight column down to heightmap.
+      for (let x = 0; x < 16; x++) {
+        for (let z = 0; z < 16; z++) {
+          const h = this.heightmap[(x << 4) | z];
+          for (let y = 127; y > h; y--) this.setSkyLight(x, y, z, 15);
+          // at and below heightmap = 0 (block cuts sky light)
+          for (let y = h; y >= 0; y--) this.setSkyLight(x, y, z, 0);
+        }
+      }
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/Level
+   * Mirrors: world/level/Level.h / .cpp
+   * Bounded 256×256×128 world backed by a 16×16 chunk grid.
+   * ============================================================ */
+  class Level {
+    static get SEA_LEVEL() { return 63; }
+    static get MAX_BRIGHTNESS() { return 15; }
+    static get MAX_LEVEL_SIZE() { return 32000000; }
+    static get TICKS_PER_DAY() { return 19200; }
+    static get MIDDLE_OF_NIGHT_TIME() { return 12000; }
+    static get MAX_TICK_TILES_PER_TICK() { return 100; }
+    constructor(seed, levelName) {
+      this.seed = seed;
+      this.levelName = levelName;
+      this.chunks = new Map();      // key: "cx,cz" → LevelChunk
+      this.entities = [];           // Entity list
+      this.players = [];
+      this.tileEntities = [];
+      this.pendingTileEntities = [];
+      this.time = 0;
+      this.skyDarken = 0;
+      this.isClientSide = false;
+      this.difficulty = 0;          // PEACEFUL
+      this.isGeneratingTerrain = false;
+      this.random = new MthRandom(this.seed);
+      this._tickNextTickSet = [];
+      this._randValue = 42184323;
+      this._addend = 1013904223;    // java.util.Random constants
+      this.spawnMobs = false;
+      this._spawnFriendlies = false;
+      this._spawnEnemies = false;
+      this._nightMode = false;
+      this.allPlayersAreSleeping = false;
+      this.spawnPos = null;
+    }
+
+    chunkKey(cx, cz) { return cx + ',' + cz; }
+    getChunk(cx, cz) {
+      const k = this.chunkKey(cx, cz);
+      let c = this.chunks.get(k);
+      if (!c) {
+        c = new LevelChunk(this, cx, cz);
+        this.chunks.set(k, c);
+      }
+      return c;
+    }
+    hasChunk(cx, cz) { return this.chunks.has(this.chunkKey(cx, cz)); }
+
+    inRange(x, y, z) {
+      return x >= 0 && x < LevelConstants.LEVEL_WIDTH &&
+             y >= 0 && y < LevelConstants.LEVEL_HEIGHT &&
+             z >= 0 && z < LevelConstants.LEVEL_DEPTH;
+    }
+    getTile(x, y, z) {
+      if (!this.inRange(x, y, z)) return 0;
+      const cx = x >> 4, cz = z >> 4;
+      const c = this.getChunk(cx, cz);
+      return c.getTile(x & 15, y, z & 15);
+    }
+    getTileNeighbor(x, y, z, face) {
+      switch (face) {
+        case 0: return this.getTile(x, y - 1, z); // down
+        case 1: return this.getTile(x, y + 1, z); // up
+        case 2: return this.getTile(x, y, z - 1); // north
+        case 3: return this.getTile(x, y, z + 1); // south
+        case 4: return this.getTile(x - 1, y, z); // west
+        case 5: return this.getTile(x + 1, y, z); // east
+      }
+      return 0;
+    }
+    setTile(x, y, z, v) {
+      if (!this.inRange(x, y, z)) return false;
+      const cx = x >> 4, cz = z >> 4;
+      const c = this.getChunk(cx, cz);
+      c.setTile(x & 15, y, z & 15, v);
+      this.tileUpdated(x, y, z, Tile.tiles[v] || null);
+      return true;
+    }
+    setTileNoUpdate(x, y, z, v) {
+      if (!this.inRange(x, y, z)) return false;
+      const c = this.getChunk(x >> 4, z >> 4);
+      c.setTileRaw(x & 15, y, z & 15, v);
+      return true;
+    }
+    getData(x, y, z) {
+      if (!this.inRange(x, y, z)) return 0;
+      return this.getChunk(x >> 4, z >> 4).getData(x & 15, y, z & 15);
+    }
+    setData(x, y, z, v) {
+      if (!this.inRange(x, y, z)) return;
+      this.getChunk(x >> 4, z >> 4).setData(x & 15, y, z & 15, v);
+    }
+    getMaterial(x, y, z) {
+      const t = Tile.tiles[this.getTile(x, y, z)];
+      return t ? t.material : Material.air;
+    }
+    isEmptyTile(x, y, z) { return this.getTile(x, y, z) === 0; }
+    isSolidRenderTile(x, y, z) {
+      const t = Tile.tiles[this.getTile(x, y, z)];
+      return !!t && t.isSolidRender();
+    }
+    isSolidBlockingTile(x, y, z) {
+      const t = Tile.tiles[this.getTile(x, y, z)];
+      return !!t && t.material && t.material.blocksMotion;
+    }
+    isSkyLit(x, y, z) {
+      if (!this.inRange(x, y, z)) return y >= LevelConstants.SEA_LEVEL;
+      const c = this.getChunk(x >> 4, z >> 4);
+      return c.isSkyLit(x & 15, y, z & 15);
+    }
+    getBrightness(x, y, z) {
+      const raw = this.getRawBrightness(x, y, z);
+      // brightness ramp: linear (rujukan gamma is gamma-corrected; we approximate linear)
+      return raw / Level.MAX_BRIGHTNESS;
+    }
+    getRawBrightness(x, y, z) {
+      if (y >= LevelConstants.LEVEL_HEIGHT) return Level.MAX_BRIGHTNESS - this.skyDarken;
+      const c = this.getChunk(x >> 4, z >> 4);
+      return c.getRawBrightness(x & 15, y, z & 15, this.skyDarken);
+    }
+    getSkyDarken() { return this.skyDarken; }
+    updateSkyDarken() {
+      const tod = this.getTimeOfDay();
+      // rujukan: skyDarken from sun angle; we use simple curve
+      const a = Math.sin(tod / 24000 * Math.PI * 2 - Math.PI / 2);
+      this.skyDarken = Math.max(0, Math.min(15, Math.round((1 - (a + 1) / 2) * 15)));
+    }
+    getTime() { return this.time; }
+    setTime(t) { this.time = t; }
+    getTimeOfDay() { return this.time % Level.TICKS_PER_DAY; }
+    getSunAngle(a) {
+      const tod = this.getTimeOfDay();
+      return ((tod / Level.TICKS_PER_DAY) - 0.25) * Math.PI * 2;
+    }
+    getSeaLevel() { return Level.SEA_LEVEL; }
+    canSeeSky(x, y, z) { return this.isSkyLit(x, y, z); }
+
+    // ===== Entity management =====
+    addEntity(e) {
+      e.level = this;
+      if (this.entities.indexOf(e) < 0) this.entities.push(e);
+      if (e.isPlayer && e.isPlayer() && this.players.indexOf(e) < 0) {
+        this.players.push(e);
+      }
+      e.inChunk = true;
+    }
+    removeEntity(e) {
+      const i = this.entities.indexOf(e);
+      if (i >= 0) this.entities.splice(i, 1);
+      const j = this.players.indexOf(e);
+      if (j >= 0) this.players.splice(j, 1);
+      e.inChunk = false;
+    }
+    getEntities(aabb, out = []) {
+      for (const e of this.entities) {
+        if (e.bb && e.bb.intersects(aabb)) out.push(e);
+      }
+      return out;
+    }
+    getNearestPlayer(x, y, z, radius) {
+      let best = null, bd = radius * radius;
+      for (const p of this.players) {
+        const d = (p.x - x) ** 2 + (p.y - y) ** 2 + (p.z - z) ** 2;
+        if (d < bd) { bd = d; best = p; }
+      }
+      return best;
+    }
+
+    // ===== Collision =====
+    getCubes(source, box) {
+      const out = [];
+      const x0 = Math.floor(box.x0), x1 = Math.floor(box.x1);
+      const y0 = Math.floor(box.y0), y1 = Math.floor(box.y1);
+      const z0 = Math.floor(box.z0), z1 = Math.floor(box.z1);
+      for (let x = x0; x <= x1; x++) {
+        for (let y = y0; y <= y1; y++) {
+          for (let z = z0; z <= z1; z++) {
+            const t = Tile.tiles[this.getTile(x, y, z)];
+            if (!t || t.material === Material.air) continue;
+            if (!t.material.blocksMotion && !t.isSolidRender()) continue;
+            out.push(t.getAABB(this, x, y, z));
+          }
+        }
+      }
+      return out;
+    }
+    containsAnyLiquid(box, material) {
+      const x0 = Math.floor(box.x0), x1 = Math.floor(box.x1);
+      const y0 = Math.floor(box.y0), y1 = Math.floor(box.y1);
+      const z0 = Math.floor(box.z0), z1 = Math.floor(box.z1);
+      for (let x = x0; x <= x1; x++)
+        for (let y = y0; y <= y1; y++)
+          for (let z = z0; z <= z1; z++) {
+            const m = this.getMaterial(x, y, z);
+            if (material && m === material) return true;
+            if (!material && m && m.liquid) return true;
+          }
+      return false;
+    }
+
+    // ===== Pick (ray trace) =====
+    clip(a, b, liquid, solidOnly) {
+      // DDA voxel traversal (rujukan Level::clip).
+      let x = Math.floor(a.x), y = Math.floor(a.y), z = Math.floor(a.z);
+      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+      const stepX = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
+      const stepY = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+      const stepZ = dz > 0 ? 1 : (dz < 0 ? -1 : 0);
+      const tDeltaX = stepX !== 0 ? Math.abs(1 / dx) : Infinity;
+      const tDeltaY = stepY !== 0 ? Math.abs(1 / dy) : Infinity;
+      const tDeltaZ = stepZ !== 0 ? Math.abs(1 / dz) : Infinity;
+      let tMaxX = stepX > 0 ? (x + 1 - a.x) / dx
+                : stepX < 0 ? (a.x - x) / -dx : Infinity;
+      let tMaxY = stepY > 0 ? (y + 1 - a.y) / dy
+                : stepY < 0 ? (a.y - y) / -dy : Infinity;
+      let tMaxZ = stepZ > 0 ? (z + 1 - a.z) / dz
+                : stepZ < 0 ? (a.z - z) / -dz : Infinity;
+      let face = -1;
+      for (let i = 0; i < 200; i++) {
+        const t = Tile.tiles[this.getTile(x, y, z)];
+        if (t && t.mayPick(this.getData(x, y, z), liquid) &&
+            (!solidOnly || t.isSolidRender())) {
+          const box = t.getAABB(this, x, y, z);
+          const hr = box.clip(a, b);
+          if (hr.isHit()) { hr.x = x; hr.y = y; hr.z = z; return hr; }
+        }
+        if (tMaxX < tMaxY) {
+          if (tMaxX < tMaxZ) {
+            x += stepX; tMaxX += tDeltaX; face = stepX > 0 ? 4 : 5;
+          } else {
+            z += stepZ; tMaxZ += tDeltaZ; face = stepZ > 0 ? 2 : 3;
+          }
+        } else {
+          if (tMaxY < tMaxZ) {
+            y += stepY; tMaxY += tDeltaY; face = stepY > 0 ? 0 : 1;
+          } else {
+            z += stepZ; tMaxZ += tDeltaZ; face = stepZ > 0 ? 2 : 3;
+          }
+        }
+        if (tMaxX > 1 && tMaxY > 1 && tMaxZ > 1) break;
+      }
+      return HitResult.NO_HIT();
+    }
+
+    tileUpdated(x, y, z, tile) {
+      // Light update (very simplified — set skylight to 15 above heightmap)
+      const cx = x >> 4, cz = z >> 4;
+      const c = this.getChunk(cx, cz);
+      // Mark column dirty
+      c.updateMap[(x & 15) << 4 | (z & 15)] = 1;
+    }
+
+    // ===== Tick flow =====
+    tickEntities() {
+      // Tick each entity (Mob::tick → aiStep → travel + updateAi + baseTick)
+      for (let i = this.entities.length - 1; i >= 0; i--) {
+        const e = this.entities[i];
+        if (e.removed) {
+          this.entities.splice(i, 1);
+          continue;
+        }
+        e.xOld = e.x; e.yOld = e.y; e.zOld = e.z;
+        e.yRotO = e.yRot; e.xRotO = e.xRot;
+        e.tick();
+      }
+      // Tile entities (stub — furnace etc. not implemented in port)
+      for (const te of this.tileEntities) {
+        if (!te.removed) te.tick();
+      }
+    }
+    tick() {
+      // 1. MobSpawner tick — skip (no spawning in port; we manually spawn a chicken)
+      // 2. chunkSource.tick() — skip (in-memory only)
+      // 3. updateSkyDarken
+      this.updateSkyDarken();
+      // 4. Time advance
+      if (this._nightMode) {
+        // accelerate toward midnight
+        const tgt = Level.MIDDLE_OF_NIGHT_TIME;
+        let d = (tgt - this.getTimeOfDay() + Level.TICKS_PER_DAY) % Level.TICKS_PER_DAY;
+        if (d > 0) this.time = (this.time + Math.min(d, 50)) % Level.TICKS_PER_DAY;
+      } else {
+        this.time++;
+      }
+      // 5. tickPendingTicks (scheduled tile ticks) — bounded by MAX_TICK_TILES_PER_TICK
+      this.tickPendingTicks(false);
+      // 6. tickTiles — random block ticks (20 per chunk per tick)
+      this.tickTiles();
+    }
+    tickPendingTicks(force) {
+      let n = 0;
+      const now = this.time;
+      for (let i = this._tickNextTickSet.length - 1; i >= 0; i--) {
+        const tt = this._tickNextTickSet[i];
+        if (force || tt.delay <= now) {
+          const t = Tile.tiles[this.getTile(tt.x, tt.y, tt.z)];
+          if (t && tt.tileId === this.getTile(tt.x, tt.y, tt.z)) {
+            t.tick(this, tt.x, tt.y, tt.z, this.random);
+          }
+          this._tickNextTickSet.splice(i, 1);
+          if (++n >= Level.MAX_TICK_TILES_PER_TICK) break;
+        }
+      }
+    }
+    addToTickNextTick(x, y, z, tileId, delay) {
+      this._tickNextTickSet.push({ x, y, z, tileId, delay: this.time + delay });
+    }
+    tickTiles() {
+      // Poll 49 surrounding chunks for each player (rujukan's pollChunkOffsets spiral).
+      // For each polled chunk, 20 random block ticks (LCG _randValue*3 + _addend).
+      // For port we keep the LCG but skip the per-player radius (use whole 16x16 grid).
+      for (let cxx = 0; cxx < LevelConstants.CHUNK_CACHE_WIDTH; cxx++) {
+        for (let czz = 0; czz < LevelConstants.CHUNK_CACHE_WIDTH; czz++) {
+          const c = this.chunks.get(this.chunkKey(cxx, czz));
+          if (!c) continue;
+          for (let i = 0; i < 20; i++) {
+            this._randValue = (this._randValue * 3 + this._addend) >>> 0;
+            const v = this._randValue;
+            const bx = v & 15;
+            const bz = (v >> 8) & 15;
+            const by = (v >> 16) & 127;
+            const tid = c.getTile(bx, by, bz);
+            if (Tile.shouldTick[tid]) {
+              const t = Tile.tiles[tid];
+              t.tick(this, cxx * 16 + bx, by, czz * 16 + bz, this.random);
+            }
+          }
+        }
+      }
+    }
+
+    // ===== Build helpers =====
+    mayPlace(tileId, x, y, z, ignoreEntities, face) {
+      const t = Tile.tiles[tileId];
+      if (!t) return false;
+      if (!this.inRange(x, y, z)) return false;
+      const existing = Tile.tiles[this.getTile(x, y, z)];
+      if (existing && !existing.isReplaceable()) return false;
+      return true;
+    }
+    setTileAndData(x, y, z, tileId, data) {
+      if (!this.setTile(x, y, z, tileId)) return false;
+      this.setData(x, y, z, data);
+      return true;
+    }
+    updateNeighborsAt(x, y, z, tile) {
+      // Stub: no redstone in port
+    }
+    getTopTileY(x, z) {
+      for (let y = LevelConstants.LEVEL_HEIGHT - 1; y >= 0; y--) {
+        if (this.getTile(x, y, z) !== 0) return y;
+      }
+      return 0;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/MthRandom
+   * Mirrors: java.util.Random — rujukan uses the same constants.
+   * (seed * 0x5DEECE66D + 0xB) & ((1 << 48) - 1); next(bits) etc.
+   * ============================================================ */
+  class MthRandom {
+    constructor(seed = 0) {
+      this.seed = (seed ^ 0x5DEECE66D) & ((1 << 48) - 1);
+    }
+    next(bits) {
+      this.seed = (this.seed * 0x5DEECE66D + 0xB) & ((1 << 48) - 1);
+      return this.seed >>> (48 - bits);
+    }
+    nextInt(bound) {
+      if (bound <= 0) return this.next(32);
+      // rujukan bound handling — simple bound for powers of two and otherwise
+      if ((bound & (bound - 1)) === 0) return (bound * this.next(31)) >> 31;
+      let r, val;
+      do {
+        r = this.next(31);
+        val = r % bound;
+      } while (r - val + (bound - 1) < 0);
+      return val;
+    }
+    nextFloat() { return this.next(24) / (1 << 24); }
+    nextDouble() { return ((this.next(27) << 27) + this.next(27)) / (1 << 54); }
+  }
+
+  /* ============================================================
+   * SECTION: world/level/levelgen/LevelGen
+   * Mirrors: world/level/levelgen/RandomLevelSource
+   * Bounded terrain gen with stone/dirt/grass, ores, water at sea level,
+   * sand near water, and scattered trees.
+   * ============================================================ */
+  class LevelGen {
+    constructor(level) {
+      this.level = level;
+      this.rand = level.random;
+    }
+    // Cheap value-noise heightmap based on layered sine hash.
+    heightAt(x, z) {
+      let h = 60;
+      h += Math.sin(x * 0.07) * Math.cos(z * 0.05) * 6;
+      h += Math.sin(x * 0.13 + 1.7) * Math.cos(z * 0.11 - 0.4) * 4;
+      h += Math.sin(x * 0.21 - 2.3) * Math.cos(z * 0.19 + 0.7) * 2;
+      return Math.floor(h);
+    }
+    generate() {
+      const W = LevelConstants.LEVEL_WIDTH;
+      const D = LevelConstants.LEVEL_DEPTH;
+      const H = LevelConstants.LEVEL_HEIGHT;
+      const SEA = LevelConstants.SEA_LEVEL;
+
+      // Pass 1: terrain column by column.
+      for (let x = 0; x < W; x++) {
+        for (let z = 0; z < D; z++) {
+          const h = this.heightAt(x, z);
+          for (let y = 0; y <= Math.min(h, H - 1); y++) {
+            let id = 1; // stone
+            if (y === 0) id = 7;                // bedrock
+            else if (y < h - 4) id = 1;          // stone
+            else if (y < h) id = 3;              // dirt
+            else if (y === h) {
+              if (h < SEA - 1) id = 12;          // sand near water
+              else if (h < SEA) id = 12;        // sand
+              else id = 2;                       // grass on top
+            }
+            this.level.setTileNoUpdate(x, y, z, id);
+          }
+          // Water fill from h+1 up to sea level
+          if (h < SEA) {
+            for (let y = h + 1; y <= SEA; y++) {
+              this.level.setTileNoUpdate(x, y, z, 8); // water
+            }
+          }
+        }
+      }
+
+      // Pass 2: ores scattered by depth.
+      for (let i = 0; i < 1200; i++) {
+        const x = this.rand.nextInt(W);
+        const z = this.rand.nextInt(D);
+        const yStart = this.rand.nextInt(60);
+        const veinType = this._pickOre(yStart);
+        const veinLen = 3 + this.rand.nextInt(5);
+        for (let k = 0; k < veinLen; k++) {
+          const ox = x + this.rand.nextInt(3) - 1;
+          const oy = yStart + this.rand.nextInt(3) - 1;
+          const oz = z + this.rand.nextInt(3) - 1;
+          if (this.level.getTile(ox, oy, oz) === 1 /* stone */) {
+            this.level.setTileNoUpdate(ox, oy, oz, veinType);
+          }
+        }
+      }
+
+      // Pass 3: trees scattered on grass (only above sea level).
+      for (let i = 0; i < 220; i++) {
+        const x = 4 + this.rand.nextInt(W - 8);
+        const z = 4 + this.rand.nextInt(D - 8);
+        const topY = this.level.getTopTileY(x, z);
+        if (topY < SEA) continue;
+        if (this.level.getTile(x, topY, z) !== 2 /* grass */) continue;
+        this._placeTree(x, topY + 1, z);
+      }
+
+      // Recalc heightmaps and mark all chunks dirty.
+      for (const c of this.level.chunks.values()) {
+        c.recalcHeightmap();
+        c.initSkylight();
+        c.dirty = true;
+      }
+    }
+    _pickOre(depth) {
+      const r = this.rand.nextInt(100);
+      if (depth < 16 && r < 5) return 56; // diamond ore (rare, deep)
+      if (depth < 32 && r < 10) return 14; // gold ore
+      if (depth < 48 && r < 25) return 15; // iron ore
+      if (r < 60) return 16;                // coal ore (common)
+      return 1; // stone (no ore placed)
+    }
+    _placeTree(x, y, z) {
+      const h = 4 + this.rand.nextInt(3);
+      // Trunk
+      for (let i = 0; i < h; i++) {
+        this.level.setTileNoUpdate(x, y + i, z, 17);
+      }
+      // Leaves: two layers of radius-2 + top layer of radius-1
+      const top = y + h;
+      for (let dy = -2; dy <= 1; dy++) {
+        const r = dy <= 0 ? 2 : 1;
+        for (let dx = -r; dx <= r; dx++) {
+          for (let dz = -r; dz <= r; dz++) {
+            if (dx === 0 && dz === 0 && dy < 1) continue; // keep trunk
+            const lx = x + dx, ly = top + dy, lz = z + dz;
+            if (this.level.getTile(lx, ly, lz) === 0) {
+              this.level.setTileNoUpdate(lx, ly, lz, 18);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/food/FoodConstants
+   * Mirrors: world/food/FoodConstants.h
+   * ============================================================ */
+  const FoodConstants = {
+    MAX_FOOD: 20,
+    HEALTH_TICK_COUNT: 80,
+    HEALTH_TICK_COUNT_SIMPLE: 5,
+    HEAL_LEVEL: 18,
+  };
+
+  /* ============================================================
+   * SECTION: world/food/SimpleFoodData
+   * Mirrors: world/food/SimpleFoodData.h / .cpp
+   * foodLevel / tick (regen / starve).
+   * ============================================================ */
+  class SimpleFoodData {
+    constructor(foodLevel = FoodConstants.MAX_FOOD) {
+      this.foodLevel = foodLevel;
+      this.tick = 0;
+    }
+    eat(food) {
+      this.foodLevel = Math.min(FoodConstants.MAX_FOOD, this.foodLevel + food);
+    }
+    tick(player) {
+      if (player.level.isClientSide) return;
+      this.tick++;
+      if (this.tick >= FoodConstants.HEALTH_TICK_COUNT) {
+        this.tick = 0;
+        if (this.foodLevel >= FoodConstants.HEAL_LEVEL && player.health < Player.MAX_HEALTH) {
+          player.heal(1);
+          this.foodLevel -= 1;
+        } else if (this.foodLevel <= 0 && player.health > 0) {
+          player.hurt(null, 1);
+        }
+      }
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/entity/Entity
+   * Mirrors: world/entity/Entity.h / .cpp
+   * Base entity: pos/vel/rot/AABB, baseTick water/fire/fall, move
+   * clip-and-slide.
+   * ============================================================ */
+  class Entity {
+    static TOTAL_AIR_SUPPLY = 300;
+    static entityCounter = 0;
+    constructor(level) {
+      this.level = level;
+      this.entityId = ++Entity.entityCounter;
+      this.x = 0; this.y = 0; this.z = 0;
+      this.xo = 0; this.yo = 0; this.zo = 0;
+      this.xOld = 0; this.yOld = 0; this.zOld = 0;
+      this.xd = 0; this.yd = 0; this.zd = 0;
+      this.yRot = 0; this.xRot = 0;
+      this.yRotO = 0; this.xRotO = 0;
+      this.bb = new AABB(0, 0, 0, 1, 1, 1);
+      this.onGround = false;
+      this.horizontalCollision = false;
+      this.verticalCollision = false;
+      this.collision = false;
+      this.fallDistance = 0;
+      this.inWater = false;
+      this.wasInWater = false;
+      this.noPhysics = false;
+      this.removed = false;
+      this.fireImmune = false;
+      this.onFire = 0;
+      this.airSupply = Entity.TOTAL_AIR_SUPPLY;
+      this.tickCount = 0;
+      this.walkDist = 0;
+      this.walkDistO = 0;
+      this.inChunk = false;
+      this.bbWidth = 0.6;
+      this.bbHeight = 1.8;
+      this.heightOffset = 0;
+      this.firstTick = true;
+      this.makeStepSound = true;
+      this.nextStep = 0;
+      this.viewScale = 1.0;
+    }
+    setSize(w, h) {
+      this.bbWidth = w; this.bbHeight = h;
+    }
+    setPos(x, y, z) {
+      this.x = x; this.y = y; this.z = z;
+      const hw = this.bbWidth / 2;
+      this.bb.set(x - hw, y + this.heightOffset, z - hw,
+                  x + hw, y + this.heightOffset + this.bbHeight, z + hw);
+    }
+    moveTo(x, y, z, yRot, xRot) {
+      this.yRot = yRot; this.xRot = xRot;
+      this.setPos(x, y, z);
+    }
+    lerpTo(x, y, z) {
+      this.x = x; this.y = y; this.z = z;
+      this.setPos(x, y, z);
+    }
+    turn(yo, xo) {
+      this.yRot += yo * 0.15;
+      this.xRot += xo * 0.15;
+      this.xRot = Math.max(-90, Math.min(90, this.xRot));
+    }
+    // Clip-and-slide move (rujukan Entity::move)
+    move(xa, ya, za) {
+      if (this.noPhysics) {
+        this.setPos(this.x + xa, this.y + ya, this.z + za);
+        return;
+      }
+      // Compute clipped motion along each axis in order Y, X, Z (rujukan order)
+      const cubes = this.level.getCubes(this, this.bb.cloneMove(xa, ya, za));
+      let dx = xa, dy = ya, dz = za;
+      // Y first
+      for (const c of cubes) dy = c.clipYCollide(this.bb, dy);
+      this.setPos(this.x, this.y + dy, this.z);
+      // X
+      for (const c of cubes) dx = c.clipXCollide(this.bb, dx);
+      this.setPos(this.x + dx, this.y, this.z);
+      // Z
+      for (const c of cubes) dz = c.clipZCollide(this.bb, dz);
+      this.setPos(this.x, this.y, this.z + dz);
+
+      this.horizontalCollision = (dx !== xa) || (dz !== za);
+      this.verticalCollision = (dy !== ya);
+      this.onGround = this.verticalCollision && ya < 0;
+      this.collision = this.horizontalCollision || this.verticalCollision;
+      if (dx !== xa) this.xd = 0;
+      if (dy !== ya) this.yd = 0;
+      if (dz !== za) this.zd = 0;
+      // walk distance accumulator
+      const dd = Math.sqrt(dx * dx + dz * dz);
+      this.walkDistO = this.walkDist;
+      this.walkDist += dd * 0.6;
+    }
+    isFree(xa, ya, za) {
+      const box = this.bb.cloneMove(xa, ya, za);
+      const cubes = this.level.getCubes(this, box);
+      for (const c of cubes) if (box.intersects(c)) return false;
+      return true;
+    }
+    isInWater() {
+      return this.level.containsAnyLiquid(this.bb, Material.water);
+    }
+    isInLava() {
+      return this.level.containsAnyLiquid(this.bb, Material.lava);
+    }
+    isInsideWater() { return this.isInWater(); }
+    hurt(source, dmg) { return false; }
+    remove() { this.removed = true; }
+    isAlive() { return !this.removed; }
+    isPlayer() { return false; }
+    isMob() { return false; }
+    isPushable() { return false; }
+    isPickable() { return false; }
+    baseTick() {
+      this.tickCount++;
+      // Fire / lava damage (rujukan Entity::baseTick)
+      if (this.isInLava()) {
+        if (!this.fireImmune) this.hurt(null, 4);
+      }
+      // Fall damage tracking
+      if (this.onGround && this.fallDistance > 0) {
+        this.causeFallDamage(this.fallDistance);
+        this.fallDistance = 0;
+      } else if (!this.onGround && this.yd < 0) {
+        this.fallDistance -= this.yd;
+      }
+      // Water detection
+      this.wasInWater = this.inWater;
+      this.inWater = this.isInWater();
+      if (this.onFire > 0) this.onFire--;
+    }
+    causeFallDamage(d) { /* default: no damage */ }
+    tick() { this.baseTick(); }
+    getLookAngle() {
+      const rad = this.yRot * Math.PI / 180;
+      const radx = this.xRot * Math.PI / 180;
+      const cosx = Math.cos(-radx - Math.PI / 2);
+      const sinx = Math.sin(-radx - Math.PI / 2);
+      const cosy = Math.cos(-rad);
+      const siny = Math.sin(-rad);
+      return new Vec3(siny * cosx, sinx, cosy * cosx);
+    }
+    getViewVector(a) {
+      // a = partial tick — interpolation (we use 0 for port simplicity)
+      return this.getLookAngle();
+    }
+    pick(range) {
+      const a = new Vec3(this.x, this.y + this.getEyeHeight(), this.z);
+      const look = this.getLookAngle();
+      const b = new Vec3(a.x + look.x * range, a.y + look.y * range, a.z + look.z * range);
+      return this.level.clip(a, b, false, true);
+    }
+    getEyeHeight() { return this.bbHeight * 0.9; }
+  }
+
+  /* ============================================================
+   * SECTION: world/entity/Mob
+   * Mirrors: world/entity/Mob.h / .cpp
+   * Adds: health, hurtTime, attackTime, swing, AI step (aiStep →
+   * updateAi + travel + jumpFromGround).
+   * ============================================================ */
+  class Mob extends Entity {
+    static get ATTACK_DURATION() { return 5; }
+    static get SWING_DURATION() { return 8; }
+    constructor(level) {
+      super(level);
+      this.health = 10;
+      this.lastHealth = 10;
+      this.hurtTime = 0;
+      this.hurtDuration = 0;
+      this.deathTime = 0;
+      this.attackTime = 0;
+      this.invulnerableTime = 0;
+      this.xxa = 0; this.yya = 0;     // strafe / forward input
+      this.yRotA = 0;
+      this.jumping = false;
+      this.swinging = false;
+      this.swingTime = 0;
+      this.noActionTime = 0;
+      this.runSpeed = 1;
+      this.walkingSpeed = 0.7;
+      this.flyingSpeed = 0.02;
+      this.speed = 0;
+      this.attackAnim = 0;
+      this.oAttackAnim = 0;
+      this.tilt = 0;
+      this.oTilt = 0;
+      this.walkAnimSpeed = 0;
+      this.walkAnimPos = 0;
+      this.aimDirection = new Vec3(0, 0, 1);
+      this.lookTime = 0;
+    }
+    getMaxHealth() { return 10; }
+    heal(h) { this.health = Math.min(this.getMaxHealth(), this.health + h); }
+    hurt(source, dmg) {
+      if (this.removed) return false;
+      if (this.invulnerableTime > 0) return false;
+      this.health -= dmg;
+      this.hurtTime = 10;
+      this.hurtDuration = 10;
+      this.invulnerableTime = 20;
+      if (this.health <= 0) this.die(source);
+      return true;
+    }
+    die(source) { this.remove(); }
+    knockback(source, dmg, xd, zd) {
+      this.xd += xd * 0.3;
+      this.zd += zd * 0.3;
+    }
+    swing() { this.swinging = true; this.swingTime = 0; }
+    isMob() { return true; }
+    isPushable() { return true; }
+    aiStep() {
+      // Decrease hurt timers
+      if (this.hurtTime > 0) this.hurtTime--;
+      if (this.attackTime > 0) this.attackTime--;
+      if (this.invulnerableTime > 0) this.invulnerableTime--;
+      if (this.swinging) {
+        this.swingTime++;
+        if (this.swingTime >= Mob.SWING_DURATION) this.swinging = false;
+      }
+      this.noActionTime++;
+      // AI fills xxa/yya, sets jumping
+      this.updateAi();
+      // travel applies physics
+      this.travel(this.xxa, this.yya);
+      // post-step animation
+      this.updateWalkAnim();
+    }
+    updateAi() { /* override per-subclass */ }
+    travel(xa, ya) {
+      // Simplified rujukan Mob::travel: forward = ya, strafe = xa.
+      const speed = this.speed > 0 ? this.speed : this.walkingSpeed;
+      let mx = -Math.sin(this.yRot * Math.PI / 180) * ya * speed;
+      let mz =  Math.cos(this.yRot * Math.PI / 180) * ya * speed;
+      mx += Math.cos(this.yRot * Math.PI / 180) * xa * speed * 0.5;
+      mz += Math.sin(this.yRot * Math.PI / 180) * xa * speed * 0.5;
+      // Apply friction + gravity
+      this.xd += mx * 0.5;
+      this.zd += mz * 0.5;
+      this.yd -= 0.08;            // gravity
+      this.xd *= 0.91; this.zd *= 0.91; this.yd *= 0.98;
+      // Jump if requested and on ground
+      if (this.jumping && this.onGround) {
+        this.jumpFromGround();
+      }
+      // Move
+      this.move(this.xd, this.yd, this.zd);
+    }
+    jumpFromGround() {
+      this.yd = 0.42;
+    }
+    updateWalkAnim() {
+      this.walkAnimSpeedO = this.walkAnimSpeed;
+      const dd = Math.sqrt(this.xd * this.xd + this.zd * this.zd);
+      let f = dd * 0.6;
+      this.walkAnimPos += (f - this.walkAnimPos) * 0.4;
+      this.walkAnimSpeed = f;
+    }
+    tick() {
+      super.tick();          // baseTick
+      this.aiStep();
+    }
+    causeFallDamage(d) {
+      if (d > 2) this.hurt(null, Math.floor(d - 2));
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/entity/Animal
+   * Mirrors: world/entity/animal/Animal.h
+   * Passive mob with wandering AI.
+   * ============================================================ */
+  class Animal extends Mob {
+    constructor(level) {
+      super(level);
+      this.inLove = 0;
+      this.age = 0;
+      this.wanderTimer = 0;
+      this.wanderDir = 0;
+    }
+    getMaxHealth() { return 10; }
+    getCreatureBaseType() { return 2; /* BaseCreature */ }
+    isPushable() { return true; }
+    updateAi() {
+      // Wander: pick a random heading every N ticks; small chance to hop.
+      this.wanderTimer--;
+      if (this.wanderTimer <= 0) {
+        this.wanderTimer = 40 + (Math.random() * 60) | 0;
+        this.wanderDir = Math.random() * Math.PI * 2;
+        // 30% chance idle (don't move)
+        if (Math.random() < 0.3) this.wanderDir = -1;
+      }
+      if (this.wanderDir < 0) {
+        this.xxa = 0; this.yya = 0;
+      } else {
+        this.yRot = this.wanderDir * 180 / Math.PI;
+        this.xxa = 0;
+        this.yya = 0.5;
+        this.speed = 0.5;
+      }
+      // Random hopping (Animal whim)
+      if (this.onGround && Math.random() < 0.02) this.jumping = true;
+      else this.jumping = false;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/entity/animal/Chicken
+   * Mirrors: world/entity/animal/Chicken.h
+   * Wandering, hopping, flapWings, layEgg timer.
+   * AABB width 0.4, height 0.7.
+   * ============================================================ */
+  class Chicken extends Animal {
+    constructor(level) {
+      super(level);
+      this.setSize(0.4, 0.7);
+      this.health = 4;
+      this.flap = 0;
+      this.oFlap = 0;
+      this.flapSpeed = 0;
+      this.oFlapSpeed = 0;
+      this.flapping = 0;
+      this.eggTime = Math.random() * 6000 | 0;
+      this.wingRotation = 0;
+    }
+    getEntityTypeId() { return 10; /* MobTypes::Chicken */ }
+    getMaxHealth() { return 4; }
+    aiStep() {
+      this.oFlap = this.flap;
+      this.oFlapSpeed = this.flapSpeed;
+      this.flapSpeed = (Math.random() - 0.5) * 0.4 + this.flapSpeed * 0.9;
+      this.flap += this.flapSpeed;
+      if (this.flap < -Math.PI) this.flap += Math.PI * 2;
+      if (this.flap > Math.PI) this.flap -= Math.PI * 2;
+      // layEgg timer — every ~6000 ticks (300 seconds). Port: simple counter, no egg drop.
+      this.eggTime--;
+      if (this.eggTime <= 0) {
+        this.eggTime = 6000;
+      }
+      // Call Mob::aiStep (which calls our updateAi + travel).
+      super.aiStep();
+    }
+    updateAi() {
+      super.updateAi();
+      // Chicken hops more often than other animals
+      if (this.onGround && this.flapping <= 0 && Math.random() < 0.08) {
+        this.jumping = true;
+        this.flapping = 8;
+      }
+      if (this.flapping > 0) this.flapping--;
+    }
+    causeFallDamage(d) {
+      // Chickens take no fall damage (flapping).
+    }
+    getCarriedItem() { return null; }
+  }
+
+  /* ============================================================
+   * SECTION: world/entity/player/Abilities
+   * Mirrors: world/entity/player/Abilities.h
+   * Plain struct of bool flags.
+   * ============================================================ */
+  class Abilities {
+    constructor() {
+      this.invulnerable = false;
+      this.flying = false;
+      this.mayfly = false;
+      this.instabuild = false;
+      this.walkingSpeed = 0.1;
+      this.flyingSpeed = 0.02;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/inventory/Item + TileItem
+   * Mirrors: world/item/Item.h, world/item/TileItem.h
+   * Tile items are auto-registered (id 256+tileId). We only need
+   * TileItem behaviour for placing blocks.
+   * ============================================================ */
+  class Item {
+    static MAX_STACK_SIZE = 64;
+    static MAX_ITEMS = 512;
+    static items = new Array(Item.MAX_ITEMS).fill(null);
+    static initItems() {
+      // Auto-register TileItems for every tile id in the registry.
+      for (let tid = 1; tid < 256; tid++) {
+        if (Tile.tiles[tid]) {
+          const item = new TileItem(tid);
+          Item.items[tid] = item;  // shares id space with tiles (TileItem uses id-256 offset)
+        }
+      }
+    }
+    constructor(id) {
+      this.id = id;
+      this.maxStackSize = Item.MAX_STACK_SIZE;
+      this.category = 0;
+      this.maxDamage = 0;
+      this.icon = 0;
+    }
+    setIcon(i) { this.icon = i; return this; }
+    setMaxStackSize(n) { this.maxStackSize = n; return this; }
+    getMaxStackSize() { return this.maxStackSize; }
+    isStackable() { return this.maxStackSize > 1; }
+    useOn(itemInstance, player, level, x, y, z, face, clickX, clickY, clickZ) {
+      return null;
+    }
+    use(itemInstance, level, player) { return null; }
+    getName() { return 'item.' + this.id; }
+  }
+  class TileItem extends Item {
+    constructor(tileId) {
+      super(tileId);
+      this.tileId = tileId;
+    }
+    useOn(stack, player, level, x, y, z, face, clickX, clickY, clickZ) {
+      // Adjust neighbor coords per Facing (rujukan TileItem::useOn).
+      const facing = [
+        [0, -1, 0], // 0 down
+        [0,  1, 0], // 1 up
+        [0, 0, -1], // 2 north
+        [0, 0,  1], // 3 south
+        [-1, 0, 0], // 4 west
+        [1, 0, 0],  // 5 east
+      ][face];
+      x += facing[0]; y += facing[1]; z += facing[2];
+      if (!level.mayPlace(this.tileId, x, y, z, false, face)) return null;
+      level.setTileAndData(x, y, z, this.tileId, 0);
+      // Decrement count (creative doesn't consume)
+      if (!player || !player.abilities || !player.abilities.instabuild) {
+        stack.count--;
+      }
+      return stack;
+    }
+    getName() {
+      const t = Tile.tiles[this.tileId];
+      return t ? t.getName() : 'item.' + this.tileId;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/item/ItemInstance
+   * Mirrors: world/item/ItemInstance.h
+   * A stack: count, id, auxValue.
+   * ============================================================ */
+  class ItemInstance {
+    constructor(id = 0, count = 0, auxValue = 0) {
+      this.count = count;
+      this.id = id;
+      this._auxValue = auxValue;
+    }
+    static fromTile(tile, count = 1, aux = 0) {
+      return new ItemInstance(tile.id, count, aux);
+    }
+    isNull() { return this.count <= 0 || this.id === 0; }
+    setNull() { this.count = 0; this.id = 0; this._auxValue = 0; }
+    getItem() { return Item.items[this.id]; }
+    getIcon() { return this.id; }
+    getAuxValue() { return this._auxValue; }
+    setAuxValue(v) { this._auxValue = v; }
+    isStackable() {
+      const it = this.getItem();
+      if (!it) return false;
+      return it.getMaxStackSize() > 1 && this.count < it.getMaxStackSize();
+    }
+    copy() { return new ItemInstance(this.id, this.count, this._auxValue); }
+    static matches(a, b) {
+      if (!a || !b) return false;
+      return a.id === b.id && a._auxValue === b._auxValue;
+    }
+    static isStackable(a, b) {
+      return ItemInstance.matches(a, b) &&
+        (a.count + b.count) <= (a.getItem() ? a.getItem().getMaxStackSize() : 64);
+    }
+    useOn(player, level, x, y, z, face, clickX, clickY, clickZ) {
+      const it = this.getItem();
+      if (!it) return false;
+      const r = it.useOn(this, player, level, x, y, z, face, clickX, clickY, clickZ);
+      return r !== null;
+    }
+    getName() {
+      const it = this.getItem();
+      return it ? it.getName() : 'item.empty';
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/inventory/Container
+   * Mirrors: world/Container.h
+   * ============================================================ */
+  class Container {
+    static get LARGE_MAX_STACK_SIZE() { return 64; }
+    static get CONTAINER_NONE()    { return -9; }
+    static get CONTAINER_INVENTORY(){ return -1; }
+    static get CONTAINER_GENERIC() { return 0; }
+    static get CONTAINER_WORKBENCH() { return 1; }
+    static get CONTAINER_FURNACE() { return 2; }
+    constructor() { this.containerId = 0; this.containerType = Container.CONTAINER_GENERIC; }
+    getItem(slot) {}
+    setItem(slot, item) {}
+    removeItem(slot, count) {}
+    getContainerSize() { return 0; }
+    getMaxStackSize() { return Container.LARGE_MAX_STACK_SIZE; }
+    stillValid(player) { return true; }
+    startOpen() {}
+    stopOpen() {}
+  }
+
+  /* ============================================================
+   * SECTION: world/inventory/FillingContainer
+   * Mirrors: world/inventory/FillingContainer.h
+   * ============================================================ */
+  class FillingContainer extends Container {
+    static get MAX_INVENTORY_STACK_SIZE() { return 254; }
+    constructor(numTotalSlots, numLinkedSlots, containerType, isCreative) {
+      super();
+      this.numTotalSlots = numTotalSlots;
+      this.numLinkedSlots = numLinkedSlots || 0;
+      this.containerType = containerType;
+      this._isCreative = isCreative;
+      this.items = new Array(numTotalSlots).fill(null);
+    }
+    getContainerSize() { return this.numTotalSlots; }
+    getItem(slot) { return this.items[slot]; }
+    setItem(slot, item) { this.items[slot] = item; this.setContainerChanged(); }
+    removeItem(slot, count) {
+      const it = this.items[slot];
+      if (!it) return null;
+      const taken = Math.min(count, it.count);
+      const out = it.copy(); out.count = taken;
+      it.count -= taken;
+      if (it.count <= 0) this.items[slot] = null;
+      this.setContainerChanged();
+      return out;
+    }
+    clearSlot(slot) { this.items[slot] = null; this.setContainerChanged(); }
+    clearInventory() { for (let i = 0; i < this.numTotalSlots; i++) this.items[i] = null; }
+    getNumEmptySlots() {
+      let n = 0; for (let i = 0; i < this.numTotalSlots; i++) if (!this.items[i]) n++;
+      return n;
+    }
+    getNonEmptySlot(start = 0) {
+      for (let i = start; i < this.numTotalSlots; i++) if (this.items[i]) return i;
+      return -1;
+    }
+    // Smart add: stacks onto existing matching slots first, then empty.
+    add(item) {
+      if (this._isCreative) { return true; }
+      // Stack onto existing
+      for (let i = 0; i < this.numTotalSlots; i++) {
+        const t = this.items[i];
+        if (t && ItemInstance.matches(t, item) &&
+            t.count + item.count <= t.getItem().getMaxStackSize()) {
+          t.count += item.count;
+          item.count = 0;
+          this.setContainerChanged();
+          return true;
+        }
+      }
+      // Empty slot
+      for (let i = 0; i < this.numTotalSlots; i++) {
+        if (!this.items[i]) {
+          this.items[i] = item;
+          item.count = 0;
+          this.setContainerChanged();
+          return true;
+        }
+      }
+      return false;
+    }
+    contains(item) {
+      for (let i = 0; i < this.numTotalSlots; i++) {
+        const t = this.items[i];
+        if (t && ItemInstance.matches(t, item)) return true;
+      }
+      return false;
+    }
+    setContainerChanged() {}
+    swapSlots(a, b) {
+      const t = this.items[a]; this.items[a] = this.items[b]; this.items[b] = t;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/entity/player/Inventory
+   * Mirrors: world/entity/player/Inventory.h
+   * 9 hotbar + 27 storage = 36 slots. selected is hotbar index.
+   * ============================================================ */
+  class Inventory extends FillingContainer {
+    static get INVENTORY_SIZE_DEMO() { return 27; }
+    static get MAX_SELECTION_SIZE() { return 9; }
+    static get POP_TIME_DURATION() { return 5; }
+    constructor(player, creativeMode) {
+      super(Inventory.MAX_SELECTION_SIZE + Inventory.INVENTORY_SIZE_DEMO,
+            Inventory.MAX_SELECTION_SIZE,
+            Container.CONTAINER_INVENTORY, creativeMode);
+      this.player = player;
+      this.selected = 0;
+      this.popTime = 0;
+    }
+    static getSelectionSize() { return Inventory.MAX_SELECTION_SIZE; }
+    selectSlot(i) {
+      this.selected = Math.max(0, Math.min(Inventory.MAX_SELECTION_SIZE - 1, i));
+    }
+    getSelected() { return this.items[this.selected]; }
+    setSelected(item) { this.items[this.selected] = item; this.setContainerChanged(); }
+    // Hotbar slot is the first 9 indices.
+    getHotbarItem(slot) { return this.items[slot]; }
+    setHotbarItem(slot, item) { this.items[slot] = item; this.setContainerChanged(); }
+    add(item) { return super.add(item); }
+    doDrop(item, randomly) {
+      // Drop item into world (port: just decrement count)
+      if (this._isCreative) return;
+    }
+    clearInventoryWithDefault() {
+      for (let i = 0; i < this.numTotalSlots; i++) this.items[i] = null;
+      if (this._isCreative) {
+        // Default creative inventory: a sample of placeable blocks.
+        const fill = [1, 4, 5, 17, 18, 20, 45, 46, 47, 48, 49, 50, 54, 57, 58, 61, 79, 87, 89, 12, 13, 3, 2];
+        for (let i = 0; i < Math.min(Inventory.MAX_SELECTION_SIZE, fill.length); i++) {
+          this.items[i] = new ItemInstance(fill[i], 64, 0);
+        }
+      }
+    }
+  }
+
+  /* ============================================================
+   * SECTION: world/entity/player/Player
+   * Mirrors: world/entity/player/Player.h
+   * MAX_HEALTH = 20, DEFAULT_WALK_SPEED = 0.1, DEFAULT_FLY_SPEED = 0.02,
+   * NUM_ARMOR = 4. AABB width 0.6, height 1.8, eye 1.62.
+   * ============================================================ */
+  class Player extends Mob {
+    static get MAX_HEALTH() { return 20; }
+    static get MAX_NAME_LENGTH() { return 16; }
+    static get SLEEP_DURATION() { return 100; }
+    static get WAKE_UP_DURATION() { return 10; }
+    static get DATA_PLAYER_FLAGS_ID() { return 16; }
+    static get DATA_BED_POSITION_ID() { return 17; }
+    static get PLAYER_SLEEP_FLAG() { return 1; }
+    static get NUM_ARMOR() { return 4; }
+    static get DEFAULT_WALK_SPEED() { return 0.1; }
+    static get DEFAULT_FLY_SPEED() { return 0.02; }
+    constructor(level, isCreative = true) {
+      super(level);
+      this.setSize(0.6, 1.8);
+      this.health = Player.MAX_HEALTH;
+      this.lastHealth = Player.MAX_HEALTH;
+      this.userType = isCreative ? 1 : 0;
+      this.score = 0;
+      this.name = 'Player';
+      this.dimension = 0;
+      this.abilities = new Abilities();
+      this.foodData = new SimpleFoodData(FoodConstants.MAX_FOOD);
+      this.inventory = new Inventory(this, isCreative);
+      this.bedPosition = null;
+      this.sleepCounter = 0;
+      this.useItem = null;
+      this.useItemDuration = 0;
+      this.armor = new Array(Player.NUM_ARMOR).fill(null);
+      this.oBob = 0; this.bob = 0;
+      this.respawnPosition = null;
+      this.inventory.clearInventoryWithDefault();
+      this.initAbilities(isCreative);
+    }
+    initAbilities(isCreative) {
+      this.abilities.mayfly = isCreative;
+      this.abilities.instabuild = isCreative;
+      this.abilities.invulnerable = isCreative;
+    }
+    getMaxHealth() { return Player.MAX_HEALTH; }
+    isPlayer() { return true; }
+    isCreativeModeAllowed() { return true; }
+    getEyeHeight() { return 1.62; }
+    getHeadHeight() { return 1.62; }
+    getDestroySpeed(tile) {
+      // No tools in port — base destroy speed of 1.0.
+      return 1.0;
+    }
+    getSelectedItem() { return this.inventory.getSelected(); }
+    attack(entity) {
+      if (!entity) return;
+      if (entity.hurt(this, 4)) {
+        this.swing();
+      }
+    }
+    interact(entity) { return false; }
+    drop(stack) { /* Port: drops removed from inventory only */ }
+    useItem() {
+      const stack = this.inventory.getSelected();
+      if (!stack) return;
+      // Use item in air (eat / use). Port: no item actions beyond place.
+    }
+    aiStep() {
+      // Player-specific updates: bob, sleep counter, use item
+      this.oBob = this.bob;
+      const spd = Math.sqrt(this.xd * this.xd + this.zd * this.zd);
+      const flyBob = Math.sqrt(this.xxa * this.xxa + this.yya * this.yya);
+      let f = (spd * 0.1 - this.bob) * 0.8;
+      this.bob += f;
+      if (this.bob < -0.2) this.bob = -0.2;
+      if (this.bob >  0.2) this.bob =  0.2;
+      // Call Mob::aiStep (input → travel + AI + jumpFromGround)
+      super.aiStep();
+    }
+    travel(xa, ya) {
+      if (this.abilities.flying) {
+        // Flying mode: y velocity decayed, no gravity.
+        this.xd += (-Math.sin(this.yRot * Math.PI / 180) * ya * this.abilities.flyingSpeed) * 0.5;
+        this.zd += ( Math.cos(this.yRot * Math.PI / 180) * ya * this.abilities.flyingSpeed) * 0.5;
+        this.xd += ( Math.cos(this.yRot * Math.PI / 180) * xa * this.abilities.flyingSpeed) * 0.5;
+        this.zd += ( Math.sin(this.yRot * Math.PI / 180) * xa * this.abilities.flyingSpeed) * 0.5;
+        this.xd *= 0.6; this.zd *= 0.6; this.yd *= 0.6;
+        this.move(this.xd, this.yd, this.zd);
+      } else {
+        // Walking — rujukan speed 0.1.
+        const speed = this.abilities.walkingSpeed;
+        let mx = -Math.sin(this.yRot * Math.PI / 180) * ya * speed;
+        let mz =  Math.cos(this.yRot * Math.PI / 180) * ya * speed;
+        mx += Math.cos(this.yRot * Math.PI / 180) * xa * speed * 0.5;
+        mz += Math.sin(this.yRot * Math.PI / 180) * xa * speed * 0.5;
+        this.xd += mx; this.zd += mz;
+        this.yd -= 0.08;
+        // In water: extra friction
+        if (this.isInWater()) {
+          this.yd += 0.04; // buoyancy
+          this.xd *= 0.8; this.zd *= 0.8; this.yd *= 0.8;
+        }
+        this.xd *= 0.91; this.zd *= 0.91; this.yd *= 0.98;
+        if (this.jumping && this.onGround) this.jumpFromGround();
+        this.move(this.xd, this.yd, this.zd);
+      }
+    }
+    tick() {
+      super.tick();
+      // Food tick (survival only). For port, run client-side for survival mode.
+      if (this.userType === 0) {
+        this.foodData.tick(this);
+      }
+    }
+    die(source) {
+      // Player respawn (port: instant respawn at spawn point)
+      this.health = Player.MAX_HEALTH;
+      this.foodData = new SimpleFoodData(FoodConstants.MAX_FOOD);
+      if (this.respawnPosition) {
+        this.setPos(this.respawnPosition.x, this.respawnPosition.y, this.respawnPosition.z);
+      } else {
+        this.setPos(this.level.spawnPos ? this.level.spawnPos.x : 128,
+                    LevelConstants.SEA_LEVEL + 4,
+                    this.level.spawnPos ? this.level.spawnPos.z : 128);
+      }
+      this.xd = 0; this.yd = 0; this.zd = 0;
+      this.removed = false;
+    }
+    respawn() { this.die(null); }
+    getCarriedItem() { return this.inventory.getSelected(); }
+  }
+
+  /* ============================================================
+   * SECTION: client/player/LocalPlayer
+   * Mirrors: client/player/LocalPlayer.h / .cpp
+   * Reads IMoveInput, drives autoJump, double-tap-to-fly,
+   * calculates flight in move when options.isFlying.
+   * ============================================================ */
+  class LocalPlayer extends Player {
+    constructor(minecraft, level, isCreative) {
+      super(level, isCreative);
+      this.minecraft = minecraft;
+      this.input = null;       // IMoveInput
+      this.buildInput = null;  // MouseBuildInput
+      this.autoJumpTime = 0;
+      this.lastJumpPress = -1000;
+      this._init = false;
+      this.xxa = 0; this.yya = 0;
+    }
+    setInput(input) { this.input = input; }
+    aiStep() {
+      // Read input → xxa, yya, jumping
+      this.input.tick(this);
+      // Double-tap jump toggles flight when abilities.mayfly
+      const now = performance.now();
+      if (this.input.jumping && this.abilities.mayfly) {
+        if (now - this.lastJumpPress < 300) {
+          this.abilities.flying = !this.abilities.flying;
+        }
+        this.lastJumpPress = now;
+      }
+      this.xxa = this.input.xa;
+      this.yya = this.input.ya;
+      this.jumping = this.input.jumping || this.autoJumpTime > 0;
+      // AutoJump heuristic: jump when solid block 1 tile ahead and 2 tiles headroom.
+      if (this.minecraft.options.autoJump && this.onGround && this.yya > 0.1) {
+        const fx = Math.floor(this.x + (-Math.sin(this.yRot * Math.PI / 180)) * 1.0);
+        const fz = Math.floor(this.z + ( Math.cos(this.yRot * Math.PI / 180)) * 1.0);
+        const fy = Math.floor(this.y);
+        const headBlock = this.level.getTile(fx, fy + 2, fz);
+        if (Tile.tiles[headBlock] && !Tile.tiles[headBlock].isSolidRender()) {
+          const frontBlock = this.level.getTile(fx, fy + 1, fz);
+          if (Tile.tiles[frontBlock] && Tile.tiles[frontBlock].isSolidRender()) {
+            this.autoJumpTime = 5;
+          }
+        }
+      }
+      if (this.autoJumpTime > 0) this.autoJumpTime--;
+      // Call Mob.aiStep → travel + AI + jump
+      Mob.prototype.aiStep.call(this);
+    }
+    move(xa, ya, za) {
+      if (this.minecraft.options.isFlying && this === this.minecraft.player) {
+        this.noPhysics = true;
+        this.calculateFlight();
+        return;
+      }
+      super.move(xa, ya, za);
+    }
+    calculateFlight() {
+      // rujukan LocalPlayer::calculateFlight — applies yd for vertical input.
+      if (this.input.wantUp) this.yd += 0.4;
+      if (this.input.wantDown) this.yd -= 0.4;
+      // Apply normal horizontal move + vertical
+      super.move(this.xd, this.yd, this.zd);
+    }
+    getFieldOfViewModifier() {
+      // rujukan LocalPlayer: no FOV change (we mirror — no sprint FOV kick).
+      return 1.0;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/gamemode/GameMode
+   * Mirrors: client/gamemode/GameMode.h / .cpp
+   * PICK_RANGE = 5.0. startDestroyBlock / continueDestroyBlock /
+   * stopDestroyBlock / tick / render.
+   * ============================================================ */
+  class GameMode {
+    static get PICK_RANGE() { return 5.0; }
+    constructor(minecraft) {
+      this.minecraft = minecraft;
+      this.destroyProgress = 0;
+      this.destroyPos = null;
+      this.lastDestroyPos = null;
+      this.destroyDelay = 0;
+      this.lastHit = null;
+    }
+    createPlayer(level) { return new LocalPlayer(this.minecraft, level, false); }
+    initAbilities(player) {}
+    canHurtPlayer() { return false; }
+    getPickRange() { return GameMode.PICK_RANGE; }
+    startDestroyBlock(x, y, z, face) {
+      this.destroyPos = { x, y, z };
+      this.destroyProgress = 0;
+    }
+    continueDestroyBlock(x, y, z, face, dt) {}
+    stopDestroyBlock(x, y, z) {
+      this.destroyPos = null;
+      this.destroyProgress = 0;
+    }
+    destroyBlock(x, y, z) {
+      const id = this.minecraft.level.getTile(x, y, z);
+      const tile = Tile.tiles[id];
+      if (!tile || tile.destroySpeed < 0) return false;
+      this.minecraft.level.setTile(x, y, z, 0);
+      this.minecraft.particleEngine.destroy(x, y, z, tile);
+      return true;
+    }
+    tick() {
+      // rujukan GameMode.tick: increment destroy delay, advance break.
+    }
+    render(a) {
+      // publish destroyProgress to gui (rujukan).
+      this.minecraft.gui.destroyProgress = this.destroyProgress;
+    }
+    useItem(stack) {
+      if (!stack || stack.isNull()) return false;
+      // Use item in air (no-op for port).
+      return false;
+    }
+    useItemOn(stack, x, y, z, face, clickX, clickY, clickZ) {
+      if (!stack || stack.isNull()) return false;
+      const before = stack.count;
+      const r = stack.useOn(this.minecraft.player, this.minecraft.level, x, y, z, face, clickX, clickY, clickZ);
+      if (r && stack.count !== before) {
+        // Item placed / consumed.
+        return true;
+      }
+      return false;
+    }
+    attack(entity) {
+      this.minecraft.player.attack(entity);
+    }
+    interact(entity) {
+      return this.minecraft.player.interact(entity);
+    }
+    isCreativeType() { return false; }
+    isSurvivalType() { return false; }
+  }
+
+  /* ============================================================
+   * SECTION: client/gamemode/CreativeMode
+   * Mirrors: client/gamemode/CreativeMode.h / .cpp
+   * DestructionTickDelay = 10. Instant break. mayfly=true,
+   * instabuild=true, invulnerable=true.
+   * ============================================================ */
+  class CreativeMode extends GameMode {
+    static get DestructionTickDelay() { return 10; }
+    createPlayer(level) { return new LocalPlayer(this.minecraft, level, true); }
+    initAbilities(player) {
+      player.abilities.mayfly = true;
+      player.abilities.instabuild = true;
+      player.abilities.invulnerable = true;
+      player.abilities.walkingSpeed = Player.DEFAULT_WALK_SPEED;
+      player.abilities.flyingSpeed = Player.DEFAULT_FLY_SPEED;
+    }
+    canHurtPlayer() { return false; }
+    isCreativeType() { return true; }
+    startDestroyBlock(x, y, z, face) {
+      // Instant break (creative) — repeated every DestructionTickDelay ticks while held.
+      this.destroyBlock(x, y, z);
+      this.destroyDelay = CreativeMode.DestructionTickDelay;
+      this.destroyPos = { x, y, z };
+      return true;
+    }
+    continueDestroyBlock(x, y, z, face, dt) {
+      // Repeat break while held.
+      if (this.destroyDelay > 0) { this.destroyDelay--; return; }
+      if (this.destroyPos && this.destroyPos.x === x && this.destroyPos.y === y && this.destroyPos.z === z) {
+        this.startDestroyBlock(x, y, z, face);
+      }
+    }
+    stopDestroyBlock(x, y, z) {
+      this.destroyPos = null;
+      this.destroyDelay = 0;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/gamemode/SurvivalMode
+   * Mirrors: client/gamemode/SurvivalMode.h / .cpp
+   * Progress-based break. mayfly=false, instabuild=false,
+   * invulnerable=false, canHurtPlayer=true.
+   * ============================================================ */
+  class SurvivalMode extends GameMode {
+    constructor(minecraft) {
+      super(minecraft);
+      this.destroyDelay = 5;
+    }
+    createPlayer(level) { return new LocalPlayer(this.minecraft, level, false); }
+    initAbilities(player) {
+      player.abilities.mayfly = false;
+      player.abilities.instabuild = false;
+      player.abilities.invulnerable = false;
+      player.abilities.walkingSpeed = Player.DEFAULT_WALK_SPEED;
+      player.abilities.flyingSpeed = Player.DEFAULT_FLY_SPEED;
+    }
+    canHurtPlayer() { return true; }
+    isSurvivalType() { return true; }
+    startDestroyBlock(x, y, z, face) {
+      this.destroyPos = { x, y, z };
+      this.destroyProgress = 0;
+      this.lastHit = { x, y, z };
+    }
+    continueDestroyBlock(x, y, z, face, dt) {
+      // Progress toward breaking this block.
+      if (!this.destroyPos || this.destroyPos.x !== x || this.destroyPos.y !== y || this.destroyPos.z !== z) {
+        this.startDestroyBlock(x, y, z, face);
+        return;
+      }
+      const id = this.minecraft.level.getTile(x, y, z);
+      const tile = Tile.tiles[id];
+      if (!tile || tile.destroySpeed < 0) return;
+      const prog = tile.getDestroyProgress(this.minecraft.player);
+      if (prog === Infinity) return;
+      this.destroyProgress += prog * dt;
+      if (this.destroyProgress >= 1) {
+        this.destroyBlock(x, y, z);
+        this.destroyPos = null;
+        this.destroyProgress = 0;
+      }
+    }
+    stopDestroyBlock(x, y, z) {
+      this.destroyPos = null;
+      this.destroyProgress = 0;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/KeyMapping
+   * Mirrors: client/KeyMapping.h
+   * Stores KeyboardEvent.code; pressed state is read from a global.
+   * ============================================================ */
+  class KeyMapping {
+    constructor(name, code) {
+      this.name = name;
+      this.code = code;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/Options
+   * Mirrors: client/Options.h
+   * Music / sound / sensitivity / fov / viewDistance / isFlying /
+   * key bindings.
+   * ============================================================ */
+  class Options {
+    constructor() {
+      this.musicVol = 1.0;
+      this.soundVol = 1.0;
+      this.sensitivity = 1.0;
+      this.fov = 70;
+      this.viewDistance = 2;     // far
+      this.isFlying = false;
+      this.autoJump = false;
+      // KeyMapping defaults (KeyMapping.h):
+      this.keyForward  = new KeyMapping('forward',  'KeyW');
+      this.keyBack     = new KeyMapping('back',     'KeyS');
+      this.keyLeft     = new KeyMapping('left',     'KeyA');
+      this.keyRight    = new KeyMapping('right',    'KeyD');
+      this.keyJump     = new KeyMapping('jump',     'Space');
+      this.keySneak    = new KeyMapping('sneak',    'ShiftLeft');
+      this.keyInventory= new KeyMapping('inventory','KeyE');
+      this.keyDrop     = new KeyMapping('drop',     'KeyQ');
+      this.keyMenuNext  = new KeyMapping('menuNext', 'Tab');
+      this.keyMenuPrev  = new KeyMapping('menuPrev', '');
+      this.keyMenuOk    = new KeyMapping('menuOk',   'Enter');
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/Timer
+   * Mirrors: client/Timer.h
+   * TICKS_PER_SECOND = 20, MAX_TICKS_PER_UPDATE = 10. advanceTime()
+   * returns number of ticks to run and partial render fraction (a).
+   * ============================================================ */
+  class Timer {
+    static get TICKS_PER_SECOND() { return 20; }
+    static get MAX_TICKS_PER_UPDATE() { return 10; }
+    constructor(ticksPerSecond = Timer.TICKS_PER_SECOND) {
+      this.ticksPerSecond = ticksPerSecond;
+      this.a = 0;                 // partial tick fraction for render interpolation
+      this.passedTime = 0;
+      this.ticks = 0;
+      this.lastTime = performance.now();
+      this.timeScale = 1.0;
+    }
+    advanceTime() {
+      const now = performance.now();
+      let elapsedNanos = now - this.lastTime;
+      this.lastTime = now;
+      if (elapsedNanos > 1000) elapsedNanos = 1000;     // clamp huge frame skips
+      if (elapsedNanos < 0)   elapsedNanos = 0;
+      this.passedTime += elapsedNanos * this.timeScale;
+      // rujukan: a = (passedTime / 1000) * tps, ticks = floor(a), a -= ticks, clamp to MAX.
+      this.a = this.passedTime / (1000 / this.ticksPerSecond);
+      this.ticks = Math.floor(this.a);
+      this.a -= this.ticks;
+      if (this.ticks > Timer.MAX_TICKS_PER_UPDATE) this.ticks = Timer.MAX_TICKS_PER_UPDATE;
+      this.passedTime -= this.ticks * (1000 / this.ticksPerSecond);
+      return this.ticks;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/MouseHandler
+   * Mirrors: client/MouseHandler.h
+   * Accumulates mouse motion delta. Consumed by MouseTurnInput /
+   * MouseBuildInput.
+   * ============================================================ */
+  class MouseHandler {
+    constructor() {
+      this.dx = 0; this.dy = 0;
+      this.accumulatedDX = 0; this.accumulatedDY = 0;
+      this.locked = false;
+      this.sensitivity = 1.0;
+    }
+    onMouseMove(e) {
+      if (!this.locked) return;
+      this.accumulatedDX += e.movementX || 0;
+      this.accumulatedDY += e.movementY || 0;
+    }
+    onLockChange(locked) { this.locked = locked; }
+    consume() {
+      const dx = this.accumulatedDX, dy = this.accumulatedDY;
+      this.accumulatedDX = 0; this.accumulatedDY = 0;
+      return [dx * this.sensitivity, dy * this.sensitivity];
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/player/input/IMoveInput
+   * Mirrors: client/player/input/IMoveInput.h
+   * Interface: xa, ya, jumping, sneaking, wantUp, wantDown.
+   * ============================================================ */
+  class IMoveInput {
+    constructor() {
+      this.xa = 0; this.ya = 0;
+      this.jumping = false; this.sneaking = false;
+      this.wantUp = false; this.wantDown = false;
+    }
+    tick(player) {}
+  }
+
+  /* ============================================================
+   * SECTION: client/player/input/KeyboardInput
+   * Mirrors: client/player/input/KeyboardInput.h
+   * Reads key state → xa, ya. ya = forward (W=+1, S=-1),
+   * xa = strafe (D=+1, A=-1).
+   * ============================================================ */
+  class KeyboardInput extends IMoveInput {
+    constructor(options, keys) {
+      super();
+      this.options = options;
+      this.keys = keys;
+    }
+    tick(player) {
+      const opts = this.options;
+      this.ya = 0; this.xa = 0;
+      if (this.keys[opts.keyForward.code]) this.ya += 1;
+      if (this.keys[opts.keyBack.code])    this.ya -= 1;
+      if (this.keys[opts.keyLeft.code])    this.xa -= 1;
+      if (this.keys[opts.keyRight.code])   this.xa += 1;
+      this.jumping = !!this.keys[opts.keyJump.code];
+      this.sneaking = !!this.keys[opts.keySneak.code];
+      this.wantUp = this.jumping && this.options.isFlying;
+      this.wantDown = this.sneaking && this.options.isFlying;
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/player/input/MouseTurnInput
+   * Mirrors: client/player/input/MouseTurnInput.h
+   * Reads MouseHandler delta → player.turn().
+   * ============================================================ */
+  class MouseTurnInput {
+    constructor(mouseHandler, options) {
+      this.mouseHandler = mouseHandler;
+      this.options = options;
+    }
+    tick(player) {
+      const [dx, dy] = this.mouseHandler.consume();
+      const s = this.options.sensitivity * 0.5;
+      player.turn(dx * s, dy * s);
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/player/input/MouseBuildInput
+   * Mirrors: client/player/input/MouseBuildInput.h
+   * Left = destroy, Right = place. Held state exposed for GameMode.
+   * ============================================================ */
+  class MouseBuildInput {
+    constructor() {
+      this.leftDown = false;
+      this.rightDown = false;
+      this.leftClicked = false;
+      this.rightClicked = false;
+    }
+    onMouseDown(button) {
+      if (button === 0) { this.leftDown = true; this.leftClicked = true; }
+      if (button === 2) { this.rightDown = true; this.rightClicked = true; }
+    }
+    onMouseUp(button) {
+      if (button === 0) this.leftDown = false;
+      if (button === 2) this.rightDown = false;
+    }
+    tickBuild(minecraft) {
+      // Called from Minecraft.tickInput — handles build actions.
+      if (this.leftDown && minecraft.hitResult && minecraft.hitResult.isHit()) {
+        const hr = minecraft.hitResult;
+        minecraft.gameMode.continueDestroyBlock(hr.x, hr.y, hr.z, hr.f, 1);
+      } else if (minecraft.gameMode.destroyPos) {
+        minecraft.gameMode.stopDestroyBlock(minecraft.gameMode.destroyPos.x,
+                                            minecraft.gameMode.destroyPos.y,
+                                            minecraft.gameMode.destroyPos.z);
+      }
+      if (this.leftClicked) {
+        this.leftClicked = false;
+        if (minecraft.hitResult && minecraft.hitResult.isHit()) {
+          const hr = minecraft.hitResult;
+          minecraft.gameMode.startDestroyBlock(hr.x, hr.y, hr.z, hr.f);
+        }
+      }
+      if (this.rightClicked) {
+        this.rightClicked = false;
+        const hr = minecraft.hitResult;
+        if (hr && hr.isHit()) {
+          const stack = minecraft.player.inventory.getSelected();
+          if (stack) {
+            minecraft.gameMode.useItemOn(stack, hr.x, hr.y, hr.z, hr.f, 0, 0, 0);
+          }
+        }
+      }
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/renderer/Textures
+   * Mirrors: client/renderer/Textures.h
+   * Loads block textures from ./VoxelCraft/textures/blocks/ into
+   * an atlas (canvas) used by chunk meshes.
+   * ============================================================ */
+  class Textures {
+    constructor() {
+      this.cache = new Map();    // name → HTMLCanvasElement (16x16)
+      this.atlas = null;          // THREE.Texture (canvas atlas)
+      this.atlasCanvas = null;
+      this.tileSize = 16;
+      this.cols = 16;
+      this.rows = 16;
+      this.names = [];
+      this._loadCount = 0;
+      this._expected = 0;
+      this._onReady = null;
+    }
+    load(names, onReady) {
+      this._onReady = onReady;
+      this.names = names.slice();
+      this._expected = names.length;
+      this.atlasCanvas = document.createElement('canvas');
+      this.atlasCanvas.width = this.tileSize * this.cols;
+      this.atlasCanvas.height = this.tileSize * this.rows;
+      const ctx = this.atlasCanvas.getContext('2d');
+      ctx.fillStyle = '#ff00ff';
+      ctx.fillRect(0, 0, this.atlasCanvas.width, this.atlasCanvas.height);
+      let loaded = 0;
+      names.forEach((name, i) => {
+        const img = new Image();
+        img.onload = () => {
+          const cx = (i % this.cols) * this.tileSize;
+          const cy = ((i / this.cols) | 0) * this.tileSize;
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(img, cx, cy, this.tileSize, this.tileSize);
+          // cache canvas snapshot for HUD
+          const cacheCanvas = document.createElement('canvas');
+          cacheCanvas.width = this.tileSize; cacheCanvas.height = this.tileSize;
+          cacheCanvas.getContext('2d').drawImage(img, 0, 0);
+          this.cache.set(name, cacheCanvas);
+          loaded++;
+          if (loaded === this._expected) this._finish();
+        };
+        img.onerror = () => {
+          // magenta fallback
+          const cx = (i % this.cols) * this.tileSize;
+          const cy = ((i / this.cols) | 0) * this.tileSize;
+          ctx.fillStyle = '#ff00ff';
+          ctx.fillRect(cx, cy, this.tileSize, this.tileSize);
+          const cacheCanvas = document.createElement('canvas');
+          cacheCanvas.width = this.tileSize; cacheCanvas.height = this.tileSize;
+          this.cache.set(name, cacheCanvas);
+          loaded++;
+          if (loaded === this._expected) this._finish();
+        };
+        img.src = './VoxelCraft/textures/blocks/' + name + '.png';
+      });
+    }
+    _finish() {
+      this.atlas = new THREE.CanvasTexture(this.atlasCanvas);
+      this.atlas.magFilter = THREE.NearestFilter;
+      this.atlas.minFilter = THREE.NearestFilter;
+      this.atlas.generateMipmaps = false;
+      this.atlas.wrapS = THREE.ClampToEdgeWrapping;
+      this.atlas.wrapT = THREE.ClampToEdgeWrapping;
+      this.atlas.needsUpdate = true;
+      if (this._onReady) this._onReady();
+    }
+    uvOf(name) {
+      // Returns { u0, v0, u1, v1 } in atlas coordinates (0..1).
+      const idx = this.names.indexOf(name);
+      if (idx < 0) return { u0: 0, v0: 0, u1: 1 / this.cols, v1: 1 / this.rows };
+      const cx = idx % this.cols;
+      const cy = (idx / this.cols) | 0;
+      const u0 = cx / this.cols;
+      const v0 = 1 - (cy + 1) / this.rows;
+      const u1 = (cx + 1) / this.cols;
+      const v1 = 1 - cy / this.rows;
+      return { u0, v0, u1, v1 };
+    }
+    canvasFor(name) { return this.cache.get(name); }
+    tick() { /* no animation tick for port */ }
+  }
+
+  /* ============================================================
+   * SECTION: client/renderer/Tesselator
+   * Mirrors: client/renderer/Tesselator.h
+   * Vertex accumulator wrapping a THREE.BufferGeometry builder.
+   * ============================================================ */
+  class Tesselator {
+    constructor() {
+      this.positions = [];
+      this.normals = [];
+      this.uvs = [];
+      this.indices = [];
+      this._idx = 0;
+    }
+    clear() {
+      this.positions.length = 0;
+      this.normals.length = 0;
+      this.uvs.length = 0;
+      this.indices.length = 0;
+      this._idx = 0;
+    }
+    vertex(x, y, z) {
+      this.positions.push(x, y, z);
+      this._idx++;
+      return this;
+    }
+    normal(x, y, z) { this.normals.push(x, y, z); return this; }
+    uv(u, v) { this.uvs.push(u, v); return this; }
+    tri(a, b, c) {
+      this.indices.push(this._idx - 3 + a, this._idx - 3 + b, this._idx - 3 + c);
+    }
+    finish() {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(this.positions, 3));
+      if (this.normals.length) g.setAttribute('normal', new THREE.Float32BufferAttribute(this.normals, 3));
+      if (this.uvs.length) g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uvs, 2));
+      if (this.indices.length) g.setIndex(this.indices);
+      return g;
+    }
+    empty() { return this._idx === 0; }
+  }
+
+  /* ============================================================
+   * SECTION: client/renderer/Chunk
+   * Mirrors: client/renderer/LevelRenderer::Chunk
+   * One BufferGeometry mesh per chunk (port simplification).
+   * ============================================================ */
+  class Chunk {
+    constructor(levelRenderer, level, cx, cz) {
+      this.levelRenderer = levelRenderer;
+      this.level = level;
+      this.cx = cx; this.cz = cz;
+      this.mesh = null;            // opaque mesh
+      this.transparentMesh = null; // leaves/glass/water (alpha-tested)
+      this.waterMesh = null;
+      this.dirty = true;
+    }
+    rebuild() {
+      this.dirty = false;
+      const opaque = new Tesselator();
+      const transparent = new Tesselator();
+      const water = new Tesselator();
+      const textures = this.levelRenderer.textures;
+      const baseX = this.cx * 16, baseZ = this.cz * 16;
+      const level = this.level;
+      // Iterate blocks
+      for (let x = 0; x < 16; x++) {
+        for (let z = 0; z < 16; z++) {
+          for (let y = 0; y < LevelConstants.LEVEL_HEIGHT; y++) {
+            const id = level.getTile(baseX + x, y, baseZ + z);
+            if (id === 0) continue;
+            const tile = Tile.tiles[id];
+            if (!tile) continue;
+            const wx = baseX + x, wy = y, wz = baseZ + z;
+            const renderShape = tile.getRenderShape();
+            if (renderShape === Tile.SHAPE_BLOCK) {
+              this._emitCube(opaque, transparent, water, tile, level, wx, wy, wz, textures);
+            } else if (renderShape === Tile.SHAPE_TORCH) {
+              this._emitCross(transparent, tile, level, wx, wy, wz, textures, 0.6);
+            } else if (renderShape === Tile.SHAPE_WATER) {
+              this._emitWater(water, tile, level, wx, wy, wz, textures);
+            } else if (renderShape === Tile.SHAPE_CROSS_TEXTURE) {
+              this._emitCross(transparent, tile, level, wx, wy, wz, textures, 1.0);
+            } else {
+              // Fall back to cube shape.
+              this._emitCube(opaque, transparent, water, tile, level, wx, wy, wz, textures);
+            }
+          }
+        }
+      }
+      // Replace meshes
+      this._replaceMesh('mesh', opaque, false);
+      this._replaceMesh('transparentMesh', transparent, true);
+      this._replaceMesh('waterMesh', water, true);
+    }
+    _replaceMesh(field, tess, alphaTest) {
+      const scene = this.levelRenderer.scene;
+      if (this[field]) {
+        scene.remove(this[field]);
+        this[field].geometry.dispose();
+      }
+      if (tess.empty()) { this[field] = null; return; }
+      const geom = tess.finish();
+      geom.computeVertexNormals();
+      const mat = alphaTest
+        ? new THREE.MeshLambertMaterial({
+            map: this.levelRenderer.textures.atlas,
+            transparent: true,
+            alphaTest: 0.5,
+            side: THREE.DoubleSide,
+          })
+        : new THREE.MeshLambertMaterial({ map: this.levelRenderer.textures.atlas });
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.frustumCulled = true;
+      scene.add(mesh);
+      this[field] = mesh;
+    }
+    _emitCube(opaque, transparent, water, tile, level, x, y, z, textures) {
+      // Standard 6-face cube. Cull faces hidden by solid neighbours.
+      const translucent = tile.material && tile.material.translucent;
+      const isWater = tile.material === Material.water || tile.material === Material.lava;
+      const target = isWater ? water : (translucent ? transparent : opaque);
+      const faces = [
+        // dir, normal, [x0,y0,z0, x1,y1,z1, x2,y2,z2, x3,y3,z3], faceIndex
+        { dir: [0, -1, 0], n: [0, -1, 0], face: 0,
+          q: [[x, y, z + 1], [x, y, z], [x + 1, y, z], [x + 1, y, z + 1]] },
+        { dir: [0, 1, 0], n: [0, 1, 0], face: 1,
+          q: [[x, y + 1, z], [x, y + 1, z + 1], [x + 1, y + 1, z + 1], [x + 1, y + 1, z]] },
+        { dir: [0, 0, -1], n: [0, 0, -1], face: 2,
+          q: [[x, y, z], [x, y + 1, z], [x + 1, y + 1, z], [x + 1, y, z]] },
+        { dir: [0, 0, 1], n: [0, 0, 1], face: 3,
+          q: [[x + 1, y, z + 1], [x + 1, y + 1, z + 1], [x, y + 1, z + 1], [x, y, z + 1]] },
+        { dir: [-1, 0, 0], n: [-1, 0, 0], face: 4,
+          q: [[x, y, z + 1], [x, y + 1, z + 1], [x, y + 1, z], [x, y, z]] },
+        { dir: [1, 0, 0], n: [1, 0, 0], face: 5,
+          q: [[x + 1, y, z], [x + 1, y + 1, z], [x + 1, y + 1, z + 1], [x + 1, y, z + 1]] },
+      ];
+      for (const f of faces) {
+        const visible = tile.shouldRenderFace(level, x + f.dir[0], y + f.dir[1], z + f.dir[2], f.face);
+        if (!visible) continue;
+        // Texture name override per face (e.g., grass top/bottom)
+        let tname;
+        if (typeof tile.getTexture === 'function') tname = tile.getTexture(f.face);
+        else tname = tile.tex;
+        const uv = textures.uvOf(tname);
+        // Quad winding (CCW)
+        const q = f.q;
+        target.vertex(q[0][0], q[0][1], q[0][2]).normal(f.n[0], f.n[1], f.n[2]).uv(uv.u0, uv.v1);
+        target.vertex(q[1][0], q[1][1], q[1][2]).normal(f.n[0], f.n[1], f.n[2]).uv(uv.u0, uv.v0);
+        target.vertex(q[2][0], q[2][1], q[2][2]).normal(f.n[0], f.n[1], f.n[2]).uv(uv.u1, uv.v0);
+        target.vertex(q[3][0], q[3][1], q[3][2]).normal(f.n[0], f.n[1], f.n[2]).uv(uv.u1, uv.v1);
+        // Two triangles (0,1,2) and (0,2,3)
+        target.tri(0, 1, 2);
+        target.tri(0, 2, 3);
+      }
+    }
+    _emitCross(target, tile, level, x, y, z, textures, scale) {
+      const texName = tile.getTexture ? tile.getTexture(2) : tile.tex;
+      const uv = textures.uvOf(texName);
+      // Two intersecting quads (X-shape)
+      const x0 = x + (1 - scale) / 2;
+      const x1 = x + (1 + scale) / 2;
+      const z0 = z + (1 - scale) / 2;
+      const z1 = z + (1 + scale) / 2;
+      // Quad 1: from (x0,y,z0) to (x1,y+1,z1) — diagonal X+Z+
+      target.vertex(x0, y + 1, z0).normal(1, 0, 0).uv(uv.u0, uv.v0);
+      target.vertex(x1, y + 1, z1).normal(1, 0, 0).uv(uv.u1, uv.v0);
+      target.vertex(x1, y,     z1).normal(1, 0, 0).uv(uv.u1, uv.v1);
+      target.vertex(x0, y,     z0).normal(1, 0, 0).uv(uv.u0, uv.v1);
+      target.tri(0, 1, 2); target.tri(0, 2, 3);
+      // Quad 2: from (x0,y,z1) to (x1,y+1,z0)
+      target.vertex(x0, y + 1, z1).normal(-1, 0, 0).uv(uv.u0, uv.v0);
+      target.vertex(x1, y + 1, z0).normal(-1, 0, 0).uv(uv.u1, uv.v0);
+      target.vertex(x1, y,     z0).normal(-1, 0, 0).uv(uv.u1, uv.v1);
+      target.vertex(x0, y,     z1).normal(-1, 0, 0).uv(uv.u0, uv.v1);
+      target.tri(0, 1, 2); target.tri(0, 2, 3);
+    }
+    _emitWater(target, tile, level, x, y, z, textures) {
+      const texName = tile.getTexture ? tile.getTexture(0) : tile.tex;
+      const uv = textures.uvOf(texName);
+      // Render only top face and sides where neighbor is air/non-water.
+      const height = 1.0;
+      const faces = [
+        { n: [0, -1, 0], face: 0,
+          q: [[x, y, z + 1], [x, y, z], [x + 1, y, z], [x + 1, y, z + 1]] },
+        { n: [0, 1, 0], face: 1,
+          q: [[x, y + height, z], [x, y + height, z + 1], [x + 1, y + height, z + 1], [x + 1, y + height, z]] },
+        { n: [0, 0, -1], face: 2,
+          q: [[x, y, z], [x, y + height, z], [x + 1, y + height, z], [x + 1, y, z]] },
+        { n: [0, 0, 1], face: 3,
+          q: [[x + 1, y, z + 1], [x + 1, y + height, z + 1], [x, y + height, z + 1], [x, y, z + 1]] },
+        { n: [-1, 0, 0], face: 4,
+          q: [[x, y, z + 1], [x, y + height, z + 1], [x, y + height, z], [x, y, z]] },
+        { n: [1, 0, 0], face: 5,
+          q: [[x + 1, y, z], [x + 1, y + height, z], [x + 1, y + height, z + 1], [x + 1, y, z + 1]] },
+      ];
+      for (const f of faces) {
+        const nx = x + (f.face === 4 ? -1 : f.face === 5 ? 1 : 0);
+        const ny = y + (f.face === 0 ? -1 : f.face === 1 ? 1 : 0);
+        const nz = z + (f.face === 2 ? -1 : f.face === 3 ? 1 : 0);
+        const nt = Tile.tiles[level.getTile(nx, ny, nz)];
+        if (nt && nt.material === tile.material) continue;
+        if (nt && nt.isSolidRender()) continue;
+        const q = f.q;
+        target.vertex(q[0][0], q[0][1], q[0][2]).normal(f.n[0], f.n[1], f.n[2]).uv(uv.u0, uv.v1);
+        target.vertex(q[1][0], q[1][1], q[1][2]).normal(f.n[0], f.n[1], f.n[2]).uv(uv.u0, uv.v0);
+        target.vertex(q[2][0], q[2][1], q[2][2]).normal(f.n[0], f.n[1], f.n[2]).uv(uv.u1, uv.v0);
+        target.vertex(q[3][0], q[3][1], q[3][2]).normal(f.n[0], f.n[1], f.n[2]).uv(uv.u1, uv.v1);
+        target.tri(0, 1, 2); target.tri(0, 2, 3);
+      }
+    }
+    dispose() {
+      const scene = this.levelRenderer.scene;
+      if (this.mesh) { scene.remove(this.mesh); this.mesh.geometry.dispose(); this.mesh = null; }
+      if (this.transparentMesh) { scene.remove(this.transparentMesh); this.transparentMesh.geometry.dispose(); this.transparentMesh = null; }
+      if (this.waterMesh) { scene.remove(this.waterMesh); this.waterMesh.geometry.dispose(); this.waterMesh = null; }
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/renderer/LevelRenderer
+   * Mirrors: client/renderer/LevelRenderer.h
+   * Manages Map<chunkKey, Chunk>, dirty-chunk queue, render.
+   * ============================================================ */
+  class LevelRenderer {
+    static get MAX_VISIBLE_REBUILDS_PER_FRAME() { return 3; }
+    static get MAX_INVISIBLE_REBUILDS_PER_FRAME() { return 1; }
+    constructor(minecraft, scene, textures) {
+      this.minecraft = minecraft;
+      this.scene = scene;
+      this.textures = textures;
+      this.chunks = new Map();
+      this.dirtyQueue = [];
+      this.highlightMesh = null;
+    }
+    setLevel(level) {
+      // Clear existing chunk meshes.
+      for (const c of this.chunks.values()) c.dispose();
+      this.chunks.clear();
+      this.dirtyQueue.length = 0;
+      this.level = level;
+      // Build chunk objects for the whole 16x16 grid.
+      for (let cx = 0; cx < LevelConstants.CHUNK_CACHE_WIDTH; cx++) {
+        for (let cz = 0; cz < LevelConstants.CHUNK_CACHE_WIDTH; cz++) {
+          const c = new Chunk(this, level, cx, cz);
+          this.chunks.set(cx + ',' + cz, c);
+          this.dirtyQueue.push(c);
+        }
+      }
+      // Highlight box
+      if (!this.highlightMesh) {
+        const geom = new THREE.BoxGeometry(1.002, 1.002, 1.002);
+        const edges = new THREE.EdgesGeometry(geom);
+        const mat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.4 });
+        this.highlightMesh = new THREE.LineSegments(edges, mat);
+        this.highlightMesh.visible = false;
+        this.scene.add(this.highlightMesh);
+      }
+    }
+    scheduleRebuild(cx, cz) {
+      const c = this.chunks.get(cx + ',' + cz);
+      if (c) { c.dirty = true; if (this.dirtyQueue.indexOf(c) < 0) this.dirtyQueue.push(c); }
+    }
+    tick() {
+      // Rebuild a few dirty chunks per tick (rujukan MAX_VISIBLE_REBUILDS_PER_FRAME=3).
+      let n = 0;
+      while (this.dirtyQueue.length && n < LevelRenderer.MAX_VISIBLE_REBUILDS_PER_FRAME) {
+        const c = this.dirtyQueue.shift();
+        if (c.dirty) { c.rebuild(); n++; }
+      }
+    }
+    render(a) {
+      // Update highlight box position from current hitResult.
+      const hr = this.minecraft.hitResult;
+      if (hr && hr.isHit() && hr.type === HitResult.TILE) {
+        this.highlightMesh.visible = true;
+        this.highlightMesh.position.set(hr.x + 0.5, hr.y + 0.5, hr.z + 0.5);
+      } else {
+        this.highlightMesh.visible = false;
+      }
+    }
+    allDirty() {
+      for (const c of this.chunks.values()) c.dirty = true;
+      this.dirtyQueue.length = 0;
+      for (const c of this.chunks.values()) this.dirtyQueue.push(c);
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/renderer/GameRenderer
+   * Mirrors: client/renderer/GameRenderer.h / .cpp
+   * Positions camera at player eye, renders level + gui overlay.
+   * ============================================================ */
+  class GameRenderer {
+    constructor(minecraft, camera) {
+      this.minecraft = minecraft;
+      this.camera = camera;
+    }
+    tick() {
+      // rujukan: interpolation prep; no-op for port.
+    }
+    setupCamera(a) {
+      const p = this.minecraft.player;
+      if (!p) return;
+      const eye = p.getEyeHeight();
+      this.camera.position.set(p.x, p.y + eye, p.z);
+      const yaw = p.yRot * Math.PI / 180;
+      const pitch = p.xRot * Math.PI / 180;
+      this.camera.rotation.order = 'YXZ';
+      this.camera.rotation.y = -yaw;
+      this.camera.rotation.x = pitch;
+    }
+    pick(a) {
+      // rujukan GameRenderer::pick: ray-trace from player eye to PICK_RANGE.
+      const p = this.minecraft.player;
+      if (!p) { this.minecraft.hitResult = HitResult.NO_HIT(); return; }
+      const eye = new Vec3(p.x, p.y + p.getEyeHeight(), p.z);
+      const look = p.getLookAngle();
+      const r = this.minecraft.gameMode.getPickRange();
+      const end = new Vec3(eye.x + look.x * r, eye.y + look.y * r, eye.z + look.z * r);
+      this.minecraft.hitResult = this.minecraft.level.clip(eye, end, false, true);
+    }
+    render(a) {
+      this.setupCamera(a);
+      this.pick(a);
+      this.minecraft.levelRenderer.render(a);
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/particle/ParticleEngine
+   * Mirrors: client/particle/ParticleEngine.h / .cpp
+   * Particle pool + tick + render. destroy(x,y,z,tile) spawns
+   * TerrainParticle set on block break.
+   * ============================================================ */
+  class ParticleEngine {
+    constructor(levelRenderer) {
+      this.levelRenderer = levelRenderer;
+      this.particles = [];
+      this.scene = levelRenderer.scene;
+    }
+    destroy(x, y, z, tile) {
+      // rujukan ParticleEngine::destroy spawns ~27 TerrainParticles.
+      const texName = tile.getTexture ? tile.getTexture(0) : tile.tex;
+      const uv = this.levelRenderer.textures.uvOf(texName);
+      for (let i = 0; i < 16; i++) {
+        const px = x + Math.random();
+        const py = y + Math.random();
+        const pz = z + Math.random();
+        const size = 0.1 + Math.random() * 0.05;
+        const geom = new THREE.PlaneGeometry(size, size);
+        const mat = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          map: this.levelRenderer.textures.atlas,
+          transparent: true, alphaTest: 0.5,
+        });
+        // UV per particle: use the atlas offset for this texture
+        geom.setAttribute('uv', new THREE.Float32BufferAttribute([
+          uv.u0, uv.v0, uv.u1, uv.v0, uv.u0, uv.v1, uv.u1, uv.v1
+        ], 2));
+        const m = new THREE.Mesh(geom, mat);
+        m.position.set(px, py, pz);
+        this.scene.add(m);
+        this.particles.push({
+          mesh: m, life: 30 + Math.random() * 20,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: 0.1 + Math.random() * 0.3,
+          vz: (Math.random() - 0.5) * 0.3,
+        });
+      }
+    }
+    tick() {
+      for (let i = this.particles.length - 1; i >= 0; i--) {
+        const p = this.particles[i];
+        p.life--;
+        if (p.life <= 0) {
+          this.scene.remove(p.mesh);
+          p.mesh.geometry.dispose();
+          this.particles.splice(i, 1);
+          continue;
+        }
+        p.vy -= 0.04;
+        p.mesh.position.x += p.vx;
+        p.mesh.position.y += p.vy;
+        p.mesh.position.z += p.vz;
+        p.mesh.rotation.x += 0.1;
+        p.mesh.rotation.y += 0.1;
+      }
+    }
+    render(player, a) { /* particles are scene meshes */ }
+    crack(x, y, z, face) { /* stub */ }
+  }
+
+  /* ============================================================
+   * SECTION: client/SoundEngine
+   * Mirrors: client/SoundEngine.h
+   * Stub — no audio in port. Calls are no-ops.
+   * ============================================================ */
+  class SoundEngine {
+    constructor() {
+      this.listenerPos = new Vec3();
+    }
+    play(name, x, y, z) { /* no-op for port */ }
+    playUI(name) { /* no-op */ }
+    update(player, a) {
+      if (player) this.listenerPos.set(player.x, player.y, player.z);
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/gui/GuiComponent
+   * Mirrors: client/gui/GuiComponent.h
+   * Drawing primitives: blit, fill, drawString, drawCenteredString.
+   * For the port these render to CSS / DOM rather than pixels.
+   * ============================================================ */
+  class GuiComponent {
+    static drawString(font, text, x, y, color) { /* DOM-driven for port */ }
+    static drawCenteredString(font, text, x, y, color) { /* DOM-driven */ }
+    static blit(ctx, tex, dx, dy, u, v, w, h) { /* canvas blit */ }
+    static fill(ctx, x1, y1, x2, y2, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/gui/Font
+   * Mirrors: client/gui/Font.h
+   * Uses the VoxelCraft font (Minecraft Ten) loaded via CSS @font-face.
+   * ============================================================ */
+  class Font {
+    constructor() {
+      this.family = 'Minecraft Ten, monospace';
+      this.size = 12;
+    }
+    width(text) { return text.length * 7; }
+    draw(ctx, text, x, y, color) {
+      ctx.font = this.size + 'px ' + this.family;
+      ctx.fillStyle = '#000';
+      ctx.fillText(text, x + 1, y + 1);
+      ctx.fillStyle = color || '#fff';
+      ctx.fillText(text, x, y);
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/gui/Button
+   * Mirrors: client/gui/components/Button.h
+   * id, msg, x, y, w, h, active, visible, selected.
+   * For port we render DOM buttons inside #overlay.
+   * ============================================================ */
+  class Button {
+    constructor(id, msg, x, y, w, h) {
+      this.id = id;
+      this.msg = msg;
+      this.x = x; this.y = y; this.w = w; this.h = h;
+      this.active = true;
+      this.visible = true;
+      this.selected = false;
+      this.pressed = false;
+      this._el = null;
+    }
+    render(parent) {
+      if (!this._el) {
+        const el = document.createElement('button');
+        el.className = 'mc-btn' + (this.active ? '' : ' disabled');
+        el.textContent = this.msg;
+        parent.appendChild(el);
+        this._el = el;
+      }
+      this._el.textContent = this.msg;
+      this._el.style.display = this.visible ? 'block' : 'none';
+      this._el.disabled = !this.active;
+    }
+    isInside(x, y) {
+      return x >= this.x && x <= this.x + this.w &&
+             y >= this.y && y <= this.y + this.h;
+    }
+    setPressed() { this.pressed = true; }
+    released() { /* hook */ }
+    getYImage() { return !this.active ? 0 : (this.selected ? 2 : 1); }
+  }
+
+  /* ============================================================
+   * SECTION: client/gui/Screen
+   * Mirrors: client/gui/Screen.h / .cpp
+   * Lifecycle: init → init() → setupPositions() → updateTabButtonSelection()
+   * Render: renderBackground() → render buttons → subclass render.
+   * Mouse: mouseClicked → hit-test buttons → press. mouseReleased → buttonClicked.
+   * Key: ESC → minecraft.setScreen(null).
+   * ============================================================ */
+  class Screen {
+    constructor() {
+      this.buttons = [];
+      this.tabButtons = [];
+      this.textBoxes = [];
+      this.minecraft = null;
+      this.font = null;
+      this.width = 0; this.height = 0;
+      this.clickedButton = null;
+      this.passEvents = false;
+      this.isInGameScreen = false;
+    }
+    init(minecraft, w, h) {
+      this.minecraft = minecraft;
+      this.font = minecraft.font;
+      this.width = w;
+      this.height = h;
+      this.buttons.length = 0;
+      this.tabButtons.length = 0;
+      this.textBoxes.length = 0;
+      this.initScreen();  // virtual (rujukan calls this `init()` but JS has no overloading)
+      this.setupPositions();
+      this.updateTabButtonSelection();
+    }
+    initScreen() {}                 // virtual — rujukan names this `init()`; renamed to avoid JS collision with lifecycle init(minecraft,w,h)
+    setupPositions() {}             // virtual
+    updateTabButtonSelection() {
+      for (const b of this.tabButtons) b.selected = false;
+      if (this.tabButtons.length) this.tabButtons[0].selected = true;
+    }
+    render(xm, ym, a) {
+      this.renderBackground();
+      // DOM button render happens in subclasses via renderDOM.
+    }
+    renderBackground() { /* default: dim overlay */ }
+    renderDirtBackground() { /* dirt-bg override */ }
+    tick() {}
+    removed() {}
+    mouseEvent(x, y) {}
+    keyboardEvent(key) {}
+    mouseClicked(x, y, button) {
+      for (const b of this.buttons) {
+        if (b.isInside(x, y)) {
+          this.clickedButton = b;
+          b.setPressed();
+          break;
+        }
+      }
+    }
+    mouseReleased(x, y, button) {
+      if (this.clickedButton && this.clickedButton.isInside(x, y)) {
+        this.buttonClicked(this.clickedButton);
+        // play click sound (SoundEngine::playUI random.click)
+        if (this.minecraft.soundEngine) this.minecraft.soundEngine.playUI('random.click');
+      }
+      this.clickedButton = null;
+    }
+    keyPressed(key) {
+      if (key === 'Escape') {
+        this.minecraft.setScreen(null);
+        return true;
+      }
+      // Tab navigation via options.keyMenuNext/Previous/Ok
+      return false;
+    }
+    buttonClicked(button) { /* virtual */ }
+    handleBackEvent() { return false; }
+  }
+
+  /* ============================================================
+   * SECTION: client/gui/screens/StartMenuScreen
+   * Mirrors: client/gui/screens/StartMenuScreen.h / .cpp
+   * Buttons: bHost (Start Game id=2), bJoin (Join Game id=3),
+   *          bOptions (Options id=4).
+   * Render: title + dirt bg. handleBackEvent → quit.
+   * ============================================================ */
+  class StartMenuScreen extends Screen {
+    initScreen() {
+      this.bHost = new Button(2, 'Start Game', 0, 0, 220, 24);
+      this.bJoin = new Button(3, 'Join Game',  0, 0, 220, 24);
+      this.bOptions = new Button(4, 'Options', 0, 0, 220, 24);
+      this.bSurvival = new Button(5, 'Mode: Creative', 0, 0, 220, 24);
+      this.buttons = [this.bHost, this.bJoin, this.bOptions, this.bSurvival];
+      this.tabButtons = this.buttons.slice();
+      this.creativeMode = true;
+    }
+    setupPositions() {
+      // DOM layout: handled by renderDOM.
+    }
+    buttonClicked(button) {
+      if (button === this.bHost) {
+        this.minecraft.selectLevel(this.creativeMode);
+      } else if (button === this.bSurvival) {
+        this.creativeMode = !this.creativeMode;
+        button.msg = 'Mode: ' + (this.creativeMode ? 'Creative' : 'Survival');
+        // Re-render the button label
+        if (button._el) button._el.textContent = button.msg;
+      }
+    }
+    handleBackEvent() {
+      // rujukan: quit the app — for port we just stay.
+      return true;
+    }
+    render(xm, ym, a) {
+      // Subclass render on top of background.
+    }
+    renderDOM(parent) {
+      parent.innerHTML = '';
+      const panel = document.createElement('div');
+      panel.className = 'panel';
+      const h = document.createElement('h1');
+      h.textContent = 'VoxelCraft';
+      panel.appendChild(h);
+      const sub = document.createElement('div');
+      sub.className = 'sub';
+      sub.textContent = 'Rujukan Faithful Port · MCPE 2013';
+      panel.appendChild(sub);
+      parent.appendChild(panel);
+      const btns = document.createElement('div');
+      btns.style.display = 'flex'; btns.style.flexDirection = 'column';
+      btns.style.alignItems = 'center'; btns.style.gap = '8px';
+      btns.style.marginTop = '14px'; btns.style.width = '100%';
+      panel.appendChild(btns);
+      for (const b of this.buttons) {
+        b.render(btns);
+        // hook click → buttonClicked
+        b._el.onclick = () => this.buttonClicked(b);
+      }
+      // Help text
+      const help = document.createElement('div');
+      help.style.cssText = 'margin-top:18px;font-size:12px;color:#bbb;line-height:1.7;max-width:420px;';
+      help.innerHTML = `
+        <div style="margin-bottom:8px;color:#fff;">Controls</div>
+        <div>WASD = move · Mouse = look · Space = jump (double-tap = toggle fly in Creative)</div>
+        <div>Left-click = destroy · Right-click = place · 1–9 = hotbar slot</div>
+        <div>Shift = sneak · E = inventory · ESC = pause</div>
+      `;
+      panel.appendChild(help);
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/gui/screens/PauseScreen
+   * Mirrors: client/gui/screens/PauseScreen.h / .cpp
+   * Buttons: Resume, Quit. isInGameScreen=true.
+   * ============================================================ */
+  class PauseScreen extends Screen {
+    initScreen() {
+      this.bResume = new Button(0, 'Resume', 0, 0, 220, 24);
+      this.bQuit   = new Button(1, 'Quit to Title', 0, 0, 220, 24);
+      this.buttons = [this.bResume, this.bQuit];
+      this.tabButtons = this.buttons.slice();
+      this.isInGameScreen = true;
+    }
+    buttonClicked(button) {
+      if (button === this.bResume) this.minecraft.setScreen(null);
+      else if (button === this.bQuit) this.minecraft.leaveGame();
+    }
+    renderDOM(parent) {
+      parent.innerHTML = '';
+      const panel = document.createElement('div');
+      panel.className = 'panel';
+      const h = document.createElement('h1');
+      h.textContent = 'Paused';
+      panel.appendChild(h);
+      parent.appendChild(panel);
+      const btns = document.createElement('div');
+      btns.style.cssText = 'margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%';
+      panel.appendChild(btns);
+      for (const b of this.buttons) {
+        b.render(btns);
+        b._el.onclick = () => this.buttonClicked(b);
+      }
+    }
+  }
+
+  /* ============================================================
+   * SECTION: client/gui/Gui (HUD)
+   * Mirrors: client/gui/Gui.h / .cpp
+   * render order: progress indicator → hearts → bubbles → toolbar →
+   * chat → selected-item-name → debug.
+   * ============================================================ */
+  class Gui {
+    constructor(minecraft) {
+      this.minecraft = minecraft;
+      this.messages = [];
+      this.destroyProgress = 0;
+      this.selectedItemNameTime = 0;
+      this.selectedItemName = '';
+      this.chatVisible = false;
+      this.hotbarEl = document.getElementById('hotbar');
+      this.heartsEl = document.getElementById('hearts');
+      this.bubblesEl = document.getElementById('bubbles');
+      this.hudTopEl = document.getElementById('hud-top');
+      this.breakProgressEl = document.getElementById('break-progress');
+      this.toastEl = document.getElementById('toast');
+      this.toastTimer = 0;
+      this._slotEls = [];
+      this._heartEls = [];
+      this._initHotbar();
+      this._initHearts();
+    }
+    _initHotbar() {
+      this.hotbarEl.innerHTML = '';
+      for (let i = 0; i < Inventory.MAX_SELECTION_SIZE; i++) {
+        const s = document.createElement('div');
+        s.className = 'hslot';
+        s.dataset.slot = i;
+        const c = document.createElement('canvas');
+        c.width = 16; c.height = 16;
+        s.appendChild(c);
+        const ct = document.createElement('span');
+        ct.className = 'ct';
+        s.appendChild(ct);
+        s.addEventListener('click', () => {
+          this.minecraft.player.inventory.selectSlot(i);
+          this.renderToolBar();
+        });
+        this.hotbarEl.appendChild(s);
+        this._slotEls.push({ slot: s, canvas: c, count: ct });
+      }
+    }
+    _initHearts() {
+      this.heartsEl.innerHTML = '';
+      this._heartEls = [];
+      for (let i = 0; i < 10; i++) {
+        const c = document.createElement('canvas');
+        c.width = 13; c.height = 13;
+        this.heartsEl.appendChild(c);
+        this._heartEls.push(c);
+      }
+    }
+    addMessage(msg) {
+      this.messages.push({ text: msg, time: 0 });
+      if (this.messages.length > 5) this.messages.shift();
+      this.toastEl.textContent = msg;
+      this.toastEl.classList.add('show');
+      this.toastTimer = 60;
+    }
+    handleClick(x, y, button) { /* hotbar click handled by event listeners */ }
+    handleKeyPressed(key) {
+      // Number keys 1-9 select hotbar slot.
+      const m = /^Digit([1-9])$/.exec(key);
+      if (m) {
+        this.minecraft.player.inventory.selectSlot(parseInt(m[1]) - 1);
+        this.renderToolBar();
+      }
+      if (key === 'KeyE') {
+        // Inventory: port just opens pause-like inventory screen.
+        // For rujukan IngameBlockSelectionScreen — we just show a toast.
+        this.addMessage('Inventory (creative): click hotbar slot to swap');
+      }
+      if (key === 'KeyQ') {
+        // Drop item (Player::drop)
+        const p = this.minecraft.player;
+        const it = p.inventory.getSelected();
+        if (it && !it.isNull()) {
+          it.count--;
+          if (it.count <= 0) p.inventory.setSelected(null);
+          this.addMessage('Dropped 1 ' + it.getName());
+        }
+      }
+    }
+    tick() {
+      // chat fade
+      for (let i = this.messages.length - 1; i >= 0; i--) {
+        this.messages[i].time++;
+        if (this.messages[i].time > 200) this.messages.splice(i, 1);
+      }
+      if (this.toastTimer > 0) {
+        this.toastTimer--;
+        if (this.toastTimer === 0) this.toastEl.classList.remove('show');
+      }
+      // Selected-item name flash
+      if (this.selectedItemNameTime > 0) this.selectedItemNameTime--;
+    }
+    render(a, mouseFree, xMouse, yMouse) {
+      this.renderProgressIndicator();
+      this.renderHearts();
+      this.renderBubbles();
+      this.renderToolBar();
+      this.renderOnSelectItemNameText();
+      this.renderDebug();
+    }
+    renderProgressIndicator() {
+      // Crosshair already in CSS. Break progress overlay only.
+      if (this.destroyProgress > 0 && this.destroyProgress < 1) {
+        this.breakProgressEl.style.display = 'block';
+        const r = this.destroyProgress * 18;
+        this.breakProgressEl.style.boxShadow = `0 0 0 2px rgba(255,255,255,0.6) inset, 0 0 0 ${r|0}px rgba(255,255,255,0.0)`;
+      } else {
+        this.breakProgressEl.style.display = 'none';
+      }
+    }
+    renderHearts() {
+      // rujukan Gui::renderHearts — 10 hearts = MAX_HEALTH / 2.
+      // Creative mode hides hearts (no health).
+      const p = this.minecraft.player;
+      if (!p) return;
+      const creative = p.userType === 1;
+      if (creative) {
+        this.heartsEl.style.display = 'none';
+        return;
+      }
+      this.heartsEl.style.display = 'flex';
+      const full = Math.floor(p.health / 2);
+      const half = (p.health % 2) === 1;
+      for (let i = 0; i < 10; i++) {
+        const c = this._heartEls[i];
+        const ctx = c.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, 13, 13);
+        // background heart
+        this._drawHeart(ctx, 'heart_background', 0, 0, 13, 13);
+        if (i < full) this._drawHeart(ctx, 'heart', 0, 0, 13, 13);
+        else if (i === full && half) this._drawHeart(ctx, 'heart_half', 0, 0, 13, 13);
+      }
+    }
+    _drawHeart(ctx, name, x, y, w, h) {
+      const tex = this.minecraft.textures.cache.get(name);
+      if (!tex) {
+        ctx.fillStyle = name === 'heart_background' ? '#333' : '#cc0000';
+        ctx.fillRect(x, y, w, h);
+        return;
+      }
+      ctx.drawImage(tex, x, y, w, h);
+    }
+    renderBubbles() {
+      const p = this.minecraft.player;
+      if (!p) return;
+      if (p.isInWater()) {
+        this.bubblesEl.style.display = 'flex';
+        this.bubblesEl.innerHTML = '';
+        const air = Math.ceil(p.airSupply / Entity.TOTAL_AIR_SUPPLY * 10);
+        for (let i = 0; i < 10; i++) {
+          const c = document.createElement('canvas');
+          c.width = 13; c.height = 13;
+          this.bubblesEl.appendChild(c);
+          const ctx = c.getContext('2d');
+          ctx.imageSmoothingEnabled = false;
+          const empty = i >= air;
+          const tex = this.minecraft.textures.cache.get(empty ? 'bubbles_empty' : 'bubbles_full');
+          if (tex) ctx.drawImage(tex, 0, 0, 13, 13);
+          else { ctx.fillStyle = empty ? '#888' : '#fff'; ctx.fillRect(0, 0, 13, 13); }
+        }
+      } else {
+        this.bubblesEl.style.display = 'none';
+      }
+    }
+    renderToolBar() {
+      const inv = this.minecraft.player.inventory;
+      for (let i = 0; i < Inventory.MAX_SELECTION_SIZE; i++) {
+        const el = this._slotEls[i];
+        el.slot.classList.toggle('sel', i === inv.selected);
+        const it = inv.getHotbarItem(i);
+        const ctx = el.canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, 16, 16);
+        if (it && !it.isNull()) {
+          const tile = Tile.tiles[it.id];
+          const texName = tile ? (tile.getTexture ? tile.getTexture(0) : tile.tex) : null;
+          const tex = texName ? this.minecraft.textures.cache.get(texName) : null;
+          if (tex) {
+            ctx.drawImage(tex, 0, 0, 16, 16);
+          } else {
+            ctx.fillStyle = '#888'; ctx.fillRect(0, 0, 16, 16);
+          }
+          el.count.textContent = it.count > 1 ? it.count : '';
+        } else {
+          el.count.textContent = '';
+        }
+      }
+    }
+    renderOnSelectItemNameText() {
+      if (this.selectedItemNameTime <= 0) return;
+      // Simple: handled by toast.
+    }
+    renderDebug() {
+      const p = this.minecraft.player;
+      if (!p) return;
+      const lines = [];
+      lines.push('<b>VoxelCraft</b> — rujukan faithful port');
+      lines.push('XYZ: ' + p.x.toFixed(2) + ' / ' + p.y.toFixed(2) + ' / ' + p.z.toFixed(2));
+      lines.push('Mode: ' + (p.userType === 1 ? 'Creative' : 'Survival') +
+                 (p.abilities.flying ? ' (flying)' : ''));
+      lines.push('Health: ' + p.health + ' / ' + Player.MAX_HEALTH);
+      lines.push('Time: ' + this.minecraft.level.getTimeOfDay() + ' / ' + Level.TICKS_PER_DAY);
+      lines.push('FPS: ' + this.minecraft.fps);
+      this.hudTopEl.innerHTML = lines.join('<br/>');
+    }
+    getSlotIdAt(x, y) { return -1; }
+    getSlotPos(slot) { return [0, 0]; }
+  }
+
+  /* ============================================================
+   * SECTION: client/Minecraft
+   * Mirrors: client/Minecraft.h / .cpp
+   * Orchestrator: options, level, player, gameMode, gui, screen,
+   * timer, levelRenderer, gameRenderer, particleEngine, soundEngine,
+   * textures, mouseHandler, hitResult.
+   *
+   * Tick flow (Minecraft::tick):
+   * 1. gameMode.tick()
+   * 2. tickInput()
+   * 3. gui.tick()
+   * 4. level.tickEntities()
+   * 5. level.tick()
+   * 6. levelRenderer.tick()
+   * 7. particleEngine.tick()
+   * 8. screen.tick()
+   *
+   * update(): timer.advanceTime() → for each tick Minecraft.tick() →
+   * gameRenderer.render(a).
+   * ============================================================ */
+  class Minecraft {
+    constructor(canvas) {
+      this.canvas = canvas;
+      this.options = new Options();
+      this.timer = new Timer();
+      this.mouseHandler = new MouseHandler();
+      this.keys = {};              // KeyboardEvent.code → bool
+      this.textures = new Textures();
+      this.soundEngine = new SoundEngine();
+      this.font = new Font();
+      this.hitResult = HitResult.NO_HIT();
+      this.screen = null;
+      this.level = null;
+      this.player = null;
+      this.gameMode = null;
+      this.gui = null;
+      this.levelRenderer = null;
+      this.gameRenderer = null;
+      this.particleEngine = null;
+      this.playerBuildInput = null;
+      this.fps = 0;
+      this._fpsCount = 0;
+      this._fpsLast = performance.now();
+      this._lastTime = performance.now();
+      this.creativeMode = true;
+      this._running = false;
+    }
+    init() {
+      // Renderer setup
+      this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: false });
+      this.renderer.setPixelRatio(window.devicePixelRatio);
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.scene = new THREE.Scene();
+      this.scene.background = new THREE.Color(0x88c5ff);
+      this.scene.fog = new THREE.Fog(0x88c5ff, 32, 96);
+      this.camera = new THREE.PerspectiveCamera(this.options.fov,
+        window.innerWidth / window.innerHeight, 0.1, 1000);
+      // Lighting (no clouds, no vignette — just ambient + directional sun).
+      const hemi = new THREE.HemisphereLight(0xbfdfff, 0x506033, 0.7);
+      this.scene.add(hemi);
+      const sun = new THREE.DirectionalLight(0xfff4e0, 0.95);
+      sun.position.set(40, 80, 20);
+      this.scene.add(sun);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.35);
+      this.scene.add(ambient);
+      // Resize handling
+      window.addEventListener('resize', () => this._onResize());
+      // Input handlers
+      this._installInputListeners();
+      // Initialize registries
+      TileRegistry.init();
+      Item.initItems();
+      // Initialize GUI
+      this.gui = new Gui(this);
+      // Show start menu screen
+      this.setScreen(new StartMenuScreen());
+    }
+    _onResize() {
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.camera.aspect = window.innerWidth / window.innerHeight;
+      this.camera.updateProjectionMatrix();
+      if (this.screen) this.screen.init(this, window.innerWidth, window.innerHeight);
+    }
+    _installInputListeners() {
+      const mc = this;
+      document.addEventListener('keydown', e => {
+        mc.keys[e.code] = true;
+        if (mc.screen) {
+          mc.screen.keyPressed(e.code);
+        } else {
+          mc.gui.handleKeyPressed(e.code);
+        }
+        if (e.code === 'Escape') {
+          if (mc.screen) {
+            mc.setScreen(null);
+          } else if (mc.player) {
+            mc.pauseGame();
+          }
+        }
+        // Prevent spacebar scroll
+        if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+      });
+      document.addEventListener('keyup', e => { mc.keys[e.code] = false; });
+      document.addEventListener('mousemove', e => mc.mouseHandler.onMouseMove(e));
+      // Pointer lock for in-game mouse look
+      this.canvas.addEventListener('click', () => {
+        if (mc.player && !mc.screen) {
+          if (!mc.mouseHandler.locked) this.canvas.requestPointerLock();
+        }
+      });
+      document.addEventListener('pointerlockchange', () => {
+        const locked = document.pointerLockElement === this.canvas;
+        mc.mouseHandler.onLockChange(locked);
+      });
+      // Mouse build
+      this.canvas.addEventListener('mousedown', e => {
+        if (mc.screen) return;
+        if (!mc.player) return;
+        e.preventDefault();
+        if (e.button === 0 && mc.playerBuildInput) mc.playerBuildInput.onMouseDown(0);
+        if (e.button === 2 && mc.playerBuildInput) mc.playerBuildInput.onMouseDown(2);
+      });
+      window.addEventListener('mouseup', e => {
+        if (mc.playerBuildInput) {
+          if (e.button === 0) mc.playerBuildInput.onMouseUp(0);
+          if (e.button === 2) mc.playerBuildInput.onMouseUp(2);
+        }
+      });
+      this.canvas.addEventListener('contextmenu', e => e.preventDefault());
+      // Mouse wheel for hotbar selection (rujukan tickInput polls wheel).
+      window.addEventListener('wheel', e => {
+        if (mc.screen || !mc.player) return;
+        const dir = Math.sign(e.deltaY);
+        let s = mc.player.inventory.selected + dir;
+        if (s < 0) s = Inventory.MAX_SELECTION_SIZE - 1;
+        if (s >= Inventory.MAX_SELECTION_SIZE) s = 0;
+        mc.player.inventory.selectSlot(s);
+        mc.gui.renderToolBar();
+      });
+    }
+    setScreen(screen) {
+      if (this.screen) this.screen.removed();
+      this.screen = screen;
+      const overlay = document.getElementById('overlay');
+      if (screen) {
+        overlay.classList.remove('hidden');
+        screen.init(this, window.innerWidth, window.innerHeight);
+        if (screen.renderDOM) screen.renderDOM(overlay);
+      } else {
+        overlay.classList.add('hidden');
+      }
+      // Exit pointer lock when entering a screen.
+      if (screen && document.pointerLockElement === this.canvas) document.exitPointerLock();
+    }
+    pauseGame() {
+      this.setScreen(new PauseScreen());
+    }
+    leaveGame() {
+      // Quit to title — dispose current level + player.
+      if (this.levelRenderer) {
+        for (const c of this.levelRenderer.chunks.values()) c.dispose();
+        this.levelRenderer.chunks.clear();
+      }
+      this.level = null;
+      this.player = null;
+      this.gameMode = null;
+      this.setScreen(new StartMenuScreen());
+    }
+    selectLevel(creative) {
+      this.creativeMode = creative;
+      // Build level
+      const level = new Level(1337, 'rujukan');
+      const gen = new LevelGen(level);
+      gen.generate();
+      // Find a grass-top spawn near world center, spiraling outward.
+      // rujukan Level::validateSpawn picks a SafeFloat spawnPos; we mirror it.
+      level.spawnPos = this._findSpawn(level, 128, 128);
+      this.setLevel(level, creative);
+    }
+    // Search outward from (cx, cz) for a column whose top tile is grass (id 2),
+    // sand (id 12) or any solid above sea level. Returns {x, y, z}.
+    _findSpawn(level, cx, cz) {
+      for (let r = 0; r < 96; r++) {
+        for (let i = -r; i <= r; i++) {
+          for (let s of [[cx + i, cz - r], [cx + i, cz + r], [cx - r, cz + i], [cx + r, cz + i]]) {
+            const x = s[0], z = s[1];
+            if (x < 1 || x >= LevelConstants.LEVEL_WIDTH - 1 ||
+                z < 1 || z >= LevelConstants.LEVEL_DEPTH - 1) continue;
+            const topY = level.getTopTileY(x, z);
+            const topId = level.getTile(x, topY, z);
+            if (topId === 2 /* grass */ || topId === 12 /* sand */ || topId === 1 /* stone */) {
+              if (topY >= LevelConstants.SEA_LEVEL) {
+                return { x, y: topY + 1, z };
+              }
+            }
+          }
+        }
+      }
+      return { x: cx, y: LevelConstants.SEA_LEVEL + 2, z: cz };
+    }
+    setLevel(level, creative) {
+      this.level = level;
+      // Create game mode
+      this.gameMode = creative ? new CreativeMode(this) : new SurvivalMode(this);
+      // Create player via game mode
+      this.player = this.gameMode.createPlayer(level);
+      this.gameMode.initAbilities(this.player);
+      // Spawn at level spawn
+      const sp = level.spawnPos || { x: 128, y: LevelConstants.SEA_LEVEL + 2, z: 128 };
+      this.player.setPos(sp.x + 0.5, sp.y + 1, sp.z + 0.5);
+      this.player.respawnPosition = { x: sp.x, y: sp.y, z: sp.z };
+      // Add player to level
+      level.addEntity(this.player);
+      // Spawn a chicken for the wandering mob demo (rujukan MobSpawner equivalent).
+      const chicken = new Chicken(level);
+      chicken.setPos(sp.x + 4, sp.y + 1, sp.z + 4);
+      level.addEntity(chicken);
+      // Wire renderer
+      if (!this.levelRenderer) {
+        this.levelRenderer = new LevelRenderer(this, this.scene, this.textures);
+      }
+      this.levelRenderer.setLevel(level);
+      this.gameRenderer = new GameRenderer(this, this.camera);
+      this.particleEngine = new ParticleEngine(this.levelRenderer);
+      // Input wiring
+      this.player.input = new KeyboardInput(this.options, this.keys);
+      this.player.turnInput = new MouseTurnInput(this.mouseHandler, this.options);
+      this.playerBuildInput = new MouseBuildInput();
+      this.player.buildInput = this.playerBuildInput;
+      // Close start menu
+      this.setScreen(null);
+      // Initial render of hotbar
+      this.gui.renderToolBar();
+    }
+    setIsCreativeMode(creative) {
+      // Switch creative / survival at runtime.
+      this.creativeMode = creative;
+      const newGM = creative ? new CreativeMode(this) : new SurvivalMode(this);
+      newGM.initAbilities(this.player);
+      this.gameMode = newGM;
+      this.player.userType = creative ? 1 : 0;
+      this.player.inventory._isCreative = creative;
+      this.player.inventory.clearInventoryWithDefault();
+      this.gui.renderToolBar();
+      this.gui.addMessage('Switched to ' + (creative ? 'Creative' : 'Survival') + ' mode');
+    }
+    respawnPlayer() {
+      this.player.respawn();
+    }
+    tickInput() {
+      // rujukan Minecraft::tickInput: if a screen exists and !passEvents dispatch to it
+      // and bail. Otherwise poll mouse wheel + keys for hotbar / build.
+      if (this.screen) {
+        if (!this.screen.passEvents) return;
+      }
+      // Mouse turn (apply to player)
+      if (this.player && this.player.turnInput) this.player.turnInput.tick(this.player);
+      // Build input tickBuild
+      if (this.playerBuildInput) this.playerBuildInput.tickBuild(this);
+    }
+    handleBuildAction() {
+      // rujukan Minecraft::handleBuildAction (handled in MouseBuildInput.tickBuild).
+    }
+    tick(nTick, maxTick) {
+      // Mirror Minecraft::tick() order
+      for (let i = 0; i < nTick; i++) {
+        this.gameMode.tick();
+        // commandServer.tick() — skip (no multiplayer)
+        this.tickInput();
+        this.gui.tick();
+        // gameRenderer.tick — interpolation prep (no-op for port)
+        if (this.gameRenderer) this.gameRenderer.tick();
+        // levelRenderer.tick — chunk dirty queue
+        if (this.levelRenderer) this.levelRenderer.tick();
+        // level.tickEntities + level.tick
+        this.level.tickEntities();
+        this.level.tick();
+        // level.animateTick — random particle effects (skip for port)
+        // textures.tick — animation (skip for port)
+        // particleEngine.tick
+        if (this.particleEngine) this.particleEngine.tick();
+        // screen.tick
+        if (this.screen) this.screen.tick();
+        // soundEngine.update
+        this.soundEngine.update(this.player, 0);
+      }
+    }
+    update() {
+      const ticks = this.timer.advanceTime();
+      if (this.level && this.player) {
+        this.tick(ticks, Timer.MAX_TICKS_PER_UPDATE);
+      }
+      // FPS counter
+      this._fpsCount++;
+      const now = performance.now();
+      if (now - this._fpsLast > 1000) {
+        this.fps = this._fpsCount;
+        this._fpsCount = 0;
+        this._fpsLast = now;
+      }
+      // Render
+      this.render(this.timer.a);
+    }
+    render(a) {
+      if (this.gameRenderer && this.level && this.player) {
+        this.gameRenderer.render(a);
+        if (this.gameMode) this.gameMode.render(a);
+        if (this.gui) this.gui.render(a, false, 0, 0);
+      }
+      this.renderer.render(this.scene, this.camera);
+    }
+    reloadOptions() {}
+    run() {
+      this._running = true;
+      const loop = () => {
+        if (!this._running) return;
+        this.update();
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    }
+  }
+
+  /* ============================================================
+   * SECTION: Bootstrap
+   * Mirrors: client/Minecraft::init() + main()
+   * Loads textures, inits registries, then starts the loop.
+   * ============================================================ */
+  function bootstrap() {
+    const canvas = document.getElementById('game');
+    const minecraft = new Minecraft(canvas);
+    minecraft.init();
+    // List of all textures needed (block + UI).
+    const blockTextures = [
+      'stone', 'grass_top', 'grass_side', 'dirt', 'cobblestone',
+      'planks_oak', 'bedrock', 'water_still', 'lava_still',
+      'sand', 'gravel', 'gold_ore', 'iron_ore', 'coal_ore',
+      'log_oak', 'log_oak_top', 'leaves_oak_opaque',
+      'glass', 'brick', 'tnt_side', 'tnt_top', 'bookshelf',
+      'stonebrick_mossy', 'obsidian', 'torch_on',
+      'diamond_ore', 'diamond_block', 'crafting_table_top',
+      'crafting_table_front', 'crafting_table_side',
+      'furnace_front_off', 'furnace_side', 'furnace_top',
+      'ice', 'netherrack', 'glowstone', 'chest',
+    ];
+    const uiTextures = [
+      'heart', 'heart_background', 'heart_half', 'heart_flash',
+      'bubbles_full', 'bubbles_empty',
+      'hotbar_start_cap', 'hotbar_end_cap', 'highlight_slot',
+      'hotbar_0', 'hotbar_1', 'hotbar_2', 'hotbar_3', 'hotbar_4',
+      'hotbar_5', 'hotbar_6', 'hotbar_7', 'hotbar_8',
+    ];
+    const all = blockTextures.concat(uiTextures);
+    minecraft.textures.load(all, () => {
+      // Hide loading screen, start loop.
+      document.getElementById('loading').classList.add('hidden');
+      minecraft.run();
+    });
+    // Expose for debugging
+    window.minecraft = minecraft;
+  }
+
+  // Wait for fonts, then bootstrap.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  } else {
+    bootstrap();
+  }
+  </script>
+</body>
+</html>
