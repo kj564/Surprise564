@@ -16,11 +16,20 @@ function section(pattern, label) {
 
 const uiPanelSource = section(/(\/\* === UI pass: consistent Bedrock-style layout, readable hierarchy, responsive sizing === \*\/[\s\S]*?<\/style>)/, 'final UI layer');
 function lastCssRule(selector) {
-  const ruleStart = uiPanelSource.lastIndexOf(selector + ' {');
-  if (ruleStart < 0) return '';
-  const bodyStart = ruleStart + selector.length + 2;
-  const bodyEnd = uiPanelSource.indexOf('}', bodyStart);
-  return bodyEnd < 0 ? '' : uiPanelSource.slice(bodyStart, bodyEnd);
+  const needle = selector + ' {';
+  let offset = 0;
+  let selectedRule = '';
+  while (offset < uiPanelSource.length) {
+    const ruleStart = uiPanelSource.indexOf(needle, offset);
+    if (ruleStart < 0) break;
+    const bodyStart = ruleStart + needle.length;
+    const bodyEnd = uiPanelSource.indexOf('}', bodyStart);
+    if (bodyEnd < 0) break;
+    const body = uiPanelSource.slice(bodyStart, bodyEnd);
+    if (body.includes('background-size: 16px 16px;')) selectedRule = body;
+    offset = bodyEnd + 1;
+  }
+  return selectedRule;
 }
 
 const menuPanelRule = lastCssRule('#overlay .menu-wrap');
