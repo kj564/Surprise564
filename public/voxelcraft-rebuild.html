@@ -190,6 +190,14 @@ const keyDown=new Set();let yaw=0,pitch=0,jumpQueued=false,leftMouseDown=false,m
 const moveKeys=new Set(['KeyW','KeyA','KeyS','KeyD','Space','ShiftLeft','ShiftRight','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
 function getViewDirection(){return new THREE.Vector3(0,0,-1).applyEuler(camera.rotation).normalize()}
 function currentTarget(){return engine.target({x:camera.position.x,y:camera.position.y,z:camera.position.z},getViewDirection(),6)}
+renderer.domElement.addEventListener('wheel',event=>{
+  if(inventoryOpen||document.pointerLockElement!==renderer.domElement)return;
+  event.preventDefault();
+  const direction=Math.sign(event.deltaY);
+  if(direction===0)return;
+  const next=(engine.selectedSlot+direction+9)%9;
+  engine.selectSlot(next);updateHotbar();
+},{passive:false});
 function updateHotbar(){
   const root=$('hotbar');root.innerHTML='';
   for(let i=0;i<9;i++){const stack=engine.inventory.getSlot(i);const key=stack?.itemKey??'';const slot=document.createElement('button');slot.type='button';slot.className='slot'+(i===engine.selectedSlot?' active':'');slot.setAttribute('aria-label','Slot '+(i+1)+' '+(key||'kosong'));slot.innerHTML='<span class="key">'+(i+1)+'</span><span class="swatch" style="background:#'+(blockColors[key]??0x242b34).toString(16).padStart(6,'0')+'"></span><span class="count">'+(stack?.count??'')+'</span>';slot.addEventListener('click',()=>{engine.selectSlot(i);updateHotbar()});root.appendChild(slot)}
