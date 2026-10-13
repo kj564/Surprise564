@@ -143,6 +143,44 @@ describe('VoxelCraftEngine composition root', () => {
     expect(restored.ok).toBe(false);
   });
 
+  test('places the selected block atomically and consumes one inventory item', () => {
+    const engine = makeGroundedEngine();
+    engine.world.setBlock({ x: 3, y: 1, z: 1 }, 1);
+    engine.inventory.setSlot(0, { itemKey: 'minecraft:dirt', count: 3, maxStackSize: 64 });
+    const hit = {
+      status: 'hit' as const,
+      blockId: 1,
+      block: { x: 3, y: 1, z: 1 },
+      face: { x: -1, y: 0, z: 0 },
+      distance: 1.5,
+    };
+    const result = engine.placeSelected(hit);
+    expect(result.status).toBe('placed');
+    expect(engine.world.getBlock(2, 1, 1)).toBe(engine.registry.getIdByKey('minecraft:dirt'));
+    expect(engine.inventory.getSlot(0)?.count).toBe(2);
+  });
+
+  test('round-trips selected hotbar slot, player view and world through a validated save', () => {
+    const engine = makeGroundedEngine();
+    engine.world.setBlock({ x: 2, y: 1, z: 2 }, 1);
+    engine.inventory.setSlot(4, { itemKey: 'minecraft:dirt', count: 7, maxStackSize: 64 });
+    engine.selectSlot(4);
+    const save = engine.createSave({
+      name: 'engine round-trip',
+      seed: 564,
+      createdAt: '2026-10-13T00:00:00.000Z',
+      updatedAt: '2026-10-13T00:01:00.000Z',
+      generatorVersion: 1,
+    }, { yaw: 1.25, pitch: -0.25 });
+    const restored = VoxelCraftEngine.fromSave(JSON.parse(JSON.stringify(save)));
+    expect(restored.ok).toBe(true);
+    if (!restored.ok) return;
+    expect(restored.engine.selectedSlot).toBe(4);
+    expect(restored.engine.inventory.getSlot(4)?.count).toBe(7);
+    expect(restored.engine.world.getBlock(2, 1, 2)).toBe(1);
+    expect(restored.view).toEqual({ yaw: 1.25, pitch: -0.25 });
+  });
+
   test('validates hotbar selection bounds', () => {
     const engine = makeGroundedEngine();
     engine.selectSlot(8);
