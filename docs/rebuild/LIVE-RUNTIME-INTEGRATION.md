@@ -48,3 +48,10 @@ This mismatch is material: e.g. browser ID `1` means grass, while engine ID `1` 
 5. Remove the old live path only after parity tests and browser play tests pass.
 
 The adapter is a first compatibility seam, not a claim that the rebuilt engine already controls the original `public/minecraft.html` runtime. The rebuild is now merged into `main` as a separate playable preview at `public/voxelcraft-rebuild.html`; the original runtime remains intact. Future work should expand identity mappings and parity tests before migrating the original save format or replacing its runtime.
+
+
+## Merged preview safeguards
+
+The playable preview now keeps the active world seed in one runtime variable. Save/load and newly streamed chunks reuse the saved seed instead of silently switching to the default seed after loading.
+
+The GitHub Pages workflow builds the browser engine bundle, checks the preview's inline module syntax, validates touch/mining/inventory/save-load wiring, checks seed continuity and markup integrity, and verifies that both `voxelcraft-rebuild.html` and `voxelcraft-engine.bundle.js` are included in the exported site. These checks reduce regressions but do not replace hands-on browser and mobile-device playtesting.
