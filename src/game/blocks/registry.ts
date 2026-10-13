@@ -11,6 +11,8 @@ export interface BlockDefinition {
   readonly legacyAliases?: readonly number[];
   readonly displayName: string;
   readonly shape: BlockShape;
+  /** Vertical extent for bottom-aligned partial-height blocks such as slabs and snow layers. */
+  readonly shapeHeight?: number;
   readonly renderLayer: RenderLayer;
   readonly solid: boolean;
   readonly selectable: boolean;
@@ -61,7 +63,7 @@ const definitions: readonly BlockDefinition[] = [
   block({ key: 'minecraft:ladder', legacyId: 65, displayName: 'Ladder', shape: 'cross', renderLayer: 'cutout', solid: false, selectable: true, replaceable: true, hardness: 0.4, sound: 'wood', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:ladder'] }),
   block({ key: 'minecraft:stone_stairs', legacyId: 67, displayName: 'Stone Stairs', shape: 'stairs', renderLayer: 'opaque', solid: true, selectable: true, replaceable: false, hardness: 2, sound: 'stone', lightOpacity: 15, lightEmission: 0, drops: ['minecraft:stone_stairs'] }),
   block({ key: 'minecraft:iron_door', legacyId: 71, displayName: 'Iron Door', shape: 'door', renderLayer: 'cutout', solid: true, selectable: true, replaceable: false, hardness: 5, sound: 'metal', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:iron_door'] }),
-  block({ key: 'minecraft:snow_layer', legacyId: 78, displayName: 'Snow Layer', shape: 'slab', renderLayer: 'opaque', solid: false, selectable: true, replaceable: true, hardness: 0.1, sound: 'cloth', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:snow_layer'] }),
+  block({ key: 'minecraft:snow_layer', legacyId: 78, displayName: 'Snow Layer', shape: 'slab', shapeHeight: 0.125, renderLayer: 'opaque', solid: false, selectable: true, replaceable: true, hardness: 0.1, sound: 'cloth', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:snow_layer'] }),
   block({ key: 'minecraft:ice', legacyId: 79, displayName: 'Ice', shape: 'cube', renderLayer: 'translucent', solid: true, selectable: true, replaceable: false, hardness: 0.5, sound: 'glass', lightOpacity: 3, lightEmission: 0, drops: ['minecraft:ice'] }),
   block({ key: 'minecraft:cactus', legacyId: 81, displayName: 'Cactus', shape: 'cube', renderLayer: 'opaque', solid: true, selectable: true, replaceable: false, hardness: 0.4, sound: 'cloth', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:cactus'] }),
   block({ key: 'minecraft:reeds', legacyId: 83, displayName: 'Sugar Cane', shape: 'cross', renderLayer: 'cutout', solid: false, selectable: true, replaceable: true, hardness: 0, sound: 'grass', lightOpacity: 0, lightEmission: 0, drops: ['minecraft:reeds'] }),
@@ -131,6 +133,8 @@ export class BlockRegistry {
 
 function validateDefinition(entry: BlockDefinition): void {
   if (!entry.displayName.trim()) throw new TypeError('Block displayName cannot be empty');
+  if (entry.shapeHeight !== undefined && (!Number.isFinite(entry.shapeHeight) || entry.shapeHeight <= 0 || entry.shapeHeight > 1)) throw new RangeError('shapeHeight must be greater than 0 and at most 1');
+  if (entry.shapeHeight !== undefined && entry.shape !== 'slab') throw new TypeError('shapeHeight is only supported for slab shapes');
   if (!Number.isFinite(entry.hardness) || entry.hardness < -1) throw new RangeError('Block hardness must be -1 or non-negative');
   if (!Number.isInteger(entry.lightOpacity) || entry.lightOpacity < 0 || entry.lightOpacity > 15) throw new RangeError('lightOpacity must be between 0 and 15');
   if (!Number.isInteger(entry.lightEmission) || entry.lightEmission < 0 || entry.lightEmission > 15) throw new RangeError('lightEmission must be between 0 and 15');
