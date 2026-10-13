@@ -106,6 +106,11 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Set up Rust with WebAssembly target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
       - name: Validate repository foundations (rujukan, RP, BP, and asset staging)
         run: bun run validate:foundation
 
@@ -113,7 +118,7 @@ jobs:
         run: bun run validate:game
 
       - name: Build and validate playable rebuild preview
-        run: bun run build:voxel-engine && bun run validate:voxel-preview && bun run validate:rebuild-preview
+        run: bun run build:wasm-kernel && bun run build:voxel-engine && bun run validate:voxel-preview && bun run validate:rebuild-preview
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -130,6 +135,7 @@ jobs:
           test -f out/minecraft.html
           test -f out/voxelcraft-rebuild.html
           test -f out/voxelcraft-engine.bundle.js
+          test -f out/voxelcraft-kernel.wasm
           test -f out/item-catalog.json
           test -f out/VoxelCraft/textures/items/apple.png
           test -f out/VoxelCraft/textures/items/diamond.png
