@@ -10,10 +10,10 @@ describe('ChunkMeshCache', () => {
     world.setBlock({ x: 0, y: 0, z: 0 }, 1);
     const cache = new ChunkMeshCache(world, defaultBlockRegistry);
 
-    expect(cache.sync()).toEqual({ rebuilt: 1, removed: 0 });
+    expect(cache.sync()).toEqual({ rebuilt: 1, removed: 0, rebuiltChunks: [{ x: 0, z: 0 }], removedChunks: [] });
     expect(cache.size).toBe(1);
     expect(cache.get(0, 0)?.layers.opaque?.faceCount).toBe(6);
-    expect(cache.sync()).toEqual({ rebuilt: 0, removed: 0 });
+    expect(cache.sync()).toEqual({ rebuilt: 0, removed: 0, rebuiltChunks: [], removedChunks: [] });
   });
 
   test('rebuilds both chunks when a boundary neighbor is loaded or changed', () => {
@@ -25,7 +25,7 @@ describe('ChunkMeshCache', () => {
 
     world.loadChunk(1, 0);
     world.setBlock({ x: 2, y: 0, z: 0 }, 1);
-    expect(cache.sync()).toEqual({ rebuilt: 2, removed: 0 });
+    expect(cache.sync()).toEqual({ rebuilt: 2, removed: 0, rebuiltChunks: [{ x: 0, z: 0 }, { x: 1, z: 0 }], removedChunks: [] });
     expect(cache.get(0, 0)?.layers.opaque?.faceCount).toBe(5);
     expect(cache.get(1, 0)?.layers.opaque?.faceCount).toBe(5);
   });
@@ -40,7 +40,7 @@ describe('ChunkMeshCache', () => {
     cache.sync();
 
     world.unloadChunk(1, 0);
-    expect(cache.sync()).toEqual({ rebuilt: 1, removed: 1 });
+    expect(cache.sync()).toEqual({ rebuilt: 1, removed: 1, rebuiltChunks: [{ x: 0, z: 0 }], removedChunks: [{ x: 1, z: 0 }] });
     expect(cache.size).toBe(1);
     expect(cache.get(0, 0)?.layers.opaque?.faceCount).toBe(6);
     expect(cache.get(1, 0)).toBeUndefined();
