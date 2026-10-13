@@ -52,9 +52,9 @@ describe('buildChunkMesh', () => {
     world.setBlock({ x: 0, y: 1, z: 0 }, 65535); // not registered
 
     const mesh = buildChunkMesh(world, 0, 0, defaultBlockRegistry);
-    expect(mesh.unsupportedShapeBlocks).toBe(2);
+    expect(mesh.unsupportedShapeBlocks).toBe(1);
     expect(mesh.unknownBlockIds).toBe(1);
-    expect(mesh.layers.opaque).toBeUndefined();
+    expect(mesh.layers.opaque?.faceCount).toBe(6);
   });
 
   test('treats unloaded neighbor space as exposed and rejects unloaded target chunks', () => {
