@@ -24,6 +24,9 @@ Examples verified from the current source:
 | Bedrock | 11 | 7 |
 | Bricks | 12 | 45 |
 | Water | 19 | 8 (flowing-water alias 9) |
+| Crafting table | 17 | 58 |
+| Furnace | 18 | 61 |
+| Ice | 56 | 79 |
 
 This mismatch is material: e.g. browser ID `1` means grass, while engine ID `1` means stone. Any direct copy of block arrays or saved edits would silently corrupt world contents.
 
@@ -55,3 +58,8 @@ The adapter is a first compatibility seam, not a claim that the rebuilt engine a
 The playable preview now keeps the active world seed in one runtime variable. Save/load and newly streamed chunks reuse the saved seed instead of silently switching to the default seed after loading.
 
 The GitHub Pages workflow builds the browser engine bundle, checks the preview's inline module syntax, validates touch/mining/inventory/save-load wiring, checks seed continuity and markup integrity, and verifies that both `voxelcraft-rebuild.html` and `voxelcraft-engine.bundle.js` are included in the exported site. These checks reduce regressions but do not replace hands-on browser and mobile-device playtesting.
+
+
+## Follow-up mapping expansion
+
+The identity adapter now covers the existing browser catalog's crafting table, furnace, and ice because matching engine definitions are available. The adapter and buffer round-trip tests verify these conversions explicitly. Browser-only entries such as the coal block (16), lapis block (25), redstone block (27), and several newer decorative/wood variants remain unsupported until the engine has semantically matching definitions; they are not mapped to merely similar textures or materials.
