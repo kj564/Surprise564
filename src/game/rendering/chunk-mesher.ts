@@ -97,7 +97,7 @@ export function buildChunkMesh(
         }
 
         if (definition.shape === 'slab') {
-          appendSlab(layers[definition.renderLayer], x, y, z, blockId);
+          appendSlab(layers[definition.renderLayer], x, y, z, blockId, definition.shapeHeight ?? 0.5);
           continue;
         }
         if (definition.shape === 'torch') {
@@ -160,8 +160,7 @@ function appendFace(layer: MutableLayer, face: FaceTemplate, x: number, y: numbe
 
 
 /** Half-height slab geometry; orientation/state variants can extend this contract later. */
-function appendSlab(layer: MutableLayer, x: number, y: number, z: number, blockId: number): void {
-  const h = 0.5;
+function appendSlab(layer: MutableLayer, x: number, y: number, z: number, blockId: number, h: number): void {
   const faces: readonly FaceTemplate[] = [
     { face: 'west', normal: [-1, 0, 0], dx: -1, dy: 0, dz: 0, vertices: [[0, 0, 0], [0, 0, 1], [0, h, 1], [0, h, 0]] },
     { face: 'east', normal: [1, 0, 0], dx: 1, dy: 0, dz: 0, vertices: [[1, 0, 1], [1, 0, 0], [1, h, 0], [1, h, 1]] },
