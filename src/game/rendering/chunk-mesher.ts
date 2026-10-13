@@ -53,8 +53,9 @@ type MutableLayer = {
 const VISIBLE_LAYERS = ['opaque', 'cutout', 'translucent'] as const;
 
 /**
- * Builds renderer-independent surface geometry for cube blocks in one loaded chunk.
- * Non-cube shapes are counted, not silently approximated as full cubes. Unloaded
+ * Builds renderer-independent surface geometry for supported legacy block shapes.
+ * Shape categories follow the MCPE Tile shape taxonomy in rujukan/.../Tile.h; unsupported
+ * shapes are counted, not silently approximated as full cubes. Unloaded
  * neighbors are treated as exposed surfaces and will be remeshed when the neighbor loads.
  */
 export function buildChunkMesh(
@@ -84,14 +85,30 @@ export function buildChunkMesh(
         const definition = registry.getById(blockId);
         if (!definition) { unknownBlockIds += 1; continue; }
         if (definition.renderLayer === 'invisible' || definition.shape === 'none') continue;
-        if (definition.shape !== 'cube') { unsupportedShapeBlocks += 1; continue; }
         if (!VISIBLE_LAYERS.includes(definition.renderLayer)) continue;
 
-        for (const face of FACES) {
-          const neighborId = world.getBlock(x + face.dx, y + face.dy, z + face.dz);
-          if (isFaceOccluded(definition, neighborId, registry)) continue;
-          appendFace(layers[definition.renderLayer], face, x, y, z, blockId);
+        if (definition.shape === 'cube') {
+          for (const face of FACES) {
+            const neighborId = world.getBlock(x + face.dx, y + face.dy, z + face.dz);
+            if (isFaceOccluded(definition, neighborId, registry)) continue;
+            appendFace(layers[definition.renderLayer], face, x, y, z, blockId);
+          }
+          continue;
         }
+
+        if (definition.shape === 'slab') {
+          appendSlab(layers[definition.renderLayer], x, y, z, blockId);
+          continue;
+        }
+        if (definition.shape === 'torch') {
+          appendTorch(layers[definition.renderLayer], x, y, z, blockId);
+          continue;
+        }
+        if (definition.shape === 'cross') {
+          appendCross(layers[definition.renderLayer], x, y, z, blockId);
+          continue;
+        }
+        unsupportedShapeBlocks += 1;
       }
     }
   }
@@ -135,6 +152,61 @@ function appendFace(layer: MutableLayer, face: FaceTemplate, x: number, y: numbe
   for (const vertex of face.vertices) {
     layer.positions.push(x + vertex[0], y + vertex[1], z + vertex[2]);
     layer.normals.push(face.normal[0], face.normal[1], face.normal[2]);
+    layer.blockIds.push(blockId);
+  }
+  layer.indices.push(firstVertex, firstVertex + 1, firstVertex + 2, firstVertex, firstVertex + 2, firstVertex + 3);
+  layer.faceCount += 1;
+}
+
+
+/** Half-height slab geometry; orientation/state variants can extend this contract later. */
+function appendSlab(layer: MutableLayer, x: number, y: number, z: number, blockId: number): void {
+  const h = 0.5;
+  const faces: readonly FaceTemplate[] = [
+    { face: 'west', normal: [-1, 0, 0], dx: -1, dy: 0, dz: 0, vertices: [[0, 0, 0], [0, 0, 1], [0, h, 1], [0, h, 0]] },
+    { face: 'east', normal: [1, 0, 0], dx: 1, dy: 0, dz: 0, vertices: [[1, 0, 1], [1, 0, 0], [1, h, 0], [1, h, 1]] },
+    { face: 'down', normal: [0, -1, 0], dx: 0, dy: -1, dz: 0, vertices: [[0, 0, 1], [0, 0, 0], [1, 0, 0], [1, 0, 1]] },
+    { face: 'up', normal: [0, 1, 0], dx: 0, dy: 0, dz: 0, vertices: [[0, h, 0], [0, h, 1], [1, h, 1], [1, h, 0]] },
+    { face: 'north', normal: [0, 0, -1], dx: 0, dy: 0, dz: -1, vertices: [[1, 0, 0], [0, 0, 0], [0, h, 0], [1, h, 0]] },
+    { face: 'south', normal: [0, 0, 1], dx: 0, dy: 0, dz: 1, vertices: [[0, 0, 1], [1, 0, 1], [1, h, 1], [0, h, 1]] },
+  ];
+  for (const face of faces) appendFace(layer, face, x, y, z, blockId);
+}
+
+/** Narrow upright torch prism; lighting emission remains data-driven in the block registry. */
+function appendTorch(layer: MutableLayer, x: number, y: number, z: number, blockId: number): void {
+  const lo = 0.4375, hi = 0.5625, top = 0.75;
+  const quads: readonly { vertices: readonly (readonly [number, number, number])[]; normal: readonly [number, number, number] }[] = [
+    { normal: [-1, 0, 0], vertices: [[lo, 0, lo], [lo, 0, hi], [lo, top, hi], [lo, top, lo]] },
+    { normal: [1, 0, 0], vertices: [[hi, 0, hi], [hi, 0, lo], [hi, top, lo], [hi, top, hi]] },
+    { normal: [0, 0, -1], vertices: [[hi, 0, lo], [lo, 0, lo], [lo, top, lo], [hi, top, lo]] },
+    { normal: [0, 0, 1], vertices: [[lo, 0, hi], [hi, 0, hi], [hi, top, hi], [lo, top, hi]] },
+    { normal: [0, 1, 0], vertices: [[lo, top, lo], [lo, top, hi], [hi, top, hi], [hi, top, lo]] },
+  ];
+  for (const quad of quads) appendQuad(layer, quad.vertices, quad.normal, x, y, z, blockId);
+}
+
+/** Crossed planes for legacy cross-texture blocks such as cobweb/vegetation. */
+function appendCross(layer: MutableLayer, x: number, y: number, z: number, blockId: number): void {
+  const a = [[0, 0, 0], [1, 0, 1], [1, 1, 1], [0, 1, 0]] as const;
+  const b = [[1, 0, 0], [0, 0, 1], [0, 1, 1], [1, 1, 0]] as const;
+  appendQuad(layer, a, [0, 0, 1], x, y, z, blockId);
+  appendQuad(layer, b, [0, 0, -1], x, y, z, blockId);
+}
+
+function appendQuad(
+  layer: MutableLayer,
+  vertices: readonly (readonly [number, number, number])[],
+  normal: readonly [number, number, number],
+  x: number,
+  y: number,
+  z: number,
+  blockId: number,
+): void {
+  const firstVertex = layer.blockIds.length;
+  for (const vertex of vertices) {
+    layer.positions.push(x + vertex[0], y + vertex[1], z + vertex[2]);
+    layer.normals.push(normal[0], normal[1], normal[2]);
     layer.blockIds.push(blockId);
   }
   layer.indices.push(firstVertex, firstVertex + 1, firstVertex + 2, firstVertex, firstVertex + 2, firstVertex + 3);
