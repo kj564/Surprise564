@@ -2,6 +2,15 @@ import type { BlockRegistry } from '../blocks/registry';
 import { defaultBlockRegistry } from '../blocks/registry';
 import { VoxelWorld, type WorldDimensions } from './world';
 
+export type TerrainHeightKernel = (x: number, z: number, seed: number, baseHeight: number, amplitude: number, worldHeight: number, seaLevel: number) => number;
+
+let terrainHeightKernel: TerrainHeightKernel | undefined;
+
+/** Install the optional WASM accelerator. The deterministic TypeScript implementation remains the fallback. */
+export function setTerrainHeightKernel(kernel: TerrainHeightKernel | undefined): void {
+  terrainHeightKernel = kernel;
+}
+
 export interface TerrainOptions {
   readonly seed?: number;
   readonly seaLevel?: number;
@@ -38,9 +47,9 @@ export function generateTerrainChunk(
     for (let localZ = 0; localZ < dims.chunkSizeZ; localZ += 1) {
       const x = chunkX * dims.chunkSizeX + localX;
       const z = chunkZ * dims.chunkSizeZ + localZ;
-      const broad = valueNoise(x / 28, z / 28, seed);
-      const detail = valueNoise(x / 9, z / 9, seed ^ 0x5f356495);
-      const height = Math.max(1, Math.min(dims.height - 2, Math.round(baseHeight + broad * amplitude + detail * amplitude * 0.35)));
+      const height = terrainHeightKernel
+        ? terrainHeightKernel(x, z, seed, baseHeight, amplitude, dims.height, seaLevel)
+        : sampleTerrainHeight(x, z, seed, baseHeight, amplitude, dims.height);
       minHeight = Math.min(minHeight, height);
       maxHeight = Math.max(maxHeight, height);
       const surface = height <= seaLevel + 1 ? ids.sand : ids.grass;
@@ -57,6 +66,12 @@ function requireId(registry: BlockRegistry, key: string): number {
   const id = registry.getIdByKey(key);
   if (id === undefined) throw new Error('Terrain requires block definition ' + key);
   return id;
+}
+
+export function sampleTerrainHeight(x: number, z: number, seed: number, baseHeight: number, amplitude: number, worldHeight: number): number {
+  const broad = valueNoise(x / 28, z / 28, seed);
+  const detail = valueNoise(x / 9, z / 9, seed ^ 0x5f356495);
+  return Math.max(1, Math.min(worldHeight - 2, Math.round(baseHeight + broad * amplitude + detail * amplitude * 0.35)));
 }
 
 function valueNoise(x: number, z: number, seed: number): number {
