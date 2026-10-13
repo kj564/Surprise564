@@ -1071,6 +1071,19 @@
     display: flex !important;
     z-index: 1000;
   }
+
+  /* Match all panel backgrounds to the original Resource Pack's 16x16 tile and 1px nine-slice. */
+  #hotbar,
+  #overlay .help-options-panel,
+  #inventory .inv-grid {
+    background-size: 16px 16px;
+    background-repeat: repeat;
+    image-rendering: pixelated;
+    border: 3px solid transparent;
+    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;
+    border-radius: 0;
+  }
+  #inventory .inv-grid { border-top: 0; }
 </style>
 </head>
 <body>
