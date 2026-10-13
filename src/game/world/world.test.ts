@@ -62,7 +62,7 @@ describe('VoxelWorld', () => {
     expect(() => VoxelWorld.chunkKey(Number.MAX_SAFE_INTEGER + 1, 0)).toThrow(TypeError);
   });
   test('invalidates the loaded neighbor on each of the four horizontal chunk boundaries', () => {
-    const world = new VoxelWorld({ chunkSizeX: 2, height: 4, chunkSizeZ: 2 });
+    const world = new VoxelWorld({ chunkSizeX: 4, height: 4, chunkSizeZ: 4 });
     world.loadChunk(0, 0);
     world.loadChunk(-1, 0);
     world.loadChunk(1, 0);
@@ -71,10 +71,10 @@ describe('VoxelWorld', () => {
     world.consumeDirtyChunks();
 
     const cases = [
-      { position: { x: 0, y: 1, z: 0 }, blockId: 1, expected: ['-1,0', '0,0'] },
-      { position: { x: 1, y: 1, z: 0 }, blockId: 2, expected: ['0,0', '1,0'] },
-      { position: { x: 0, y: 1, z: 1 }, blockId: 3, expected: ['0,0', '0,1'] },
-      { position: { x: 0, y: 2, z: 0 }, blockId: 4, expected: ['0,0', '0,-1'] },
+      { position: { x: 0, y: 1, z: 1 }, blockId: 1, expected: ['-1,0', '0,0'] },
+      { position: { x: 3, y: 1, z: 1 }, blockId: 2, expected: ['0,0', '1,0'] },
+      { position: { x: 1, y: 1, z: 0 }, blockId: 3, expected: ['0,-1', '0,0'] },
+      { position: { x: 1, y: 1, z: 3 }, blockId: 4, expected: ['0,0', '0,1'] },
     ];
 
     for (const { position, blockId, expected } of cases) {
