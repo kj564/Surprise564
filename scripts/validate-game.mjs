@@ -16,9 +16,11 @@ function section(pattern, label) {
 
 const uiPanelSource = section(/(\/\* === UI pass: consistent Bedrock-style layout, readable hierarchy, responsive sizing === \*\/[\s\S]*?<\/style>)/, 'final UI layer');
 function lastCssRule(selector) {
-  const escaped = selector.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
-  const matches = [...uiPanelSource.matchAll(new RegExp(escaped + `\\s*\\{([^}]*)\\}`, 'g'))];
-  return matches.length ? matches[matches.length - 1][1] : '';
+  const ruleStart = uiPanelSource.lastIndexOf(selector + ' {');
+  if (ruleStart < 0) return '';
+  const bodyStart = ruleStart + selector.length + 2;
+  const bodyEnd = uiPanelSource.indexOf('}', bodyStart);
+  return bodyEnd < 0 ? '' : uiPanelSource.slice(bodyStart, bodyEnd);
 }
 
 const menuPanelRule = lastCssRule('#overlay .menu-wrap');
