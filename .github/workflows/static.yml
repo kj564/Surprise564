@@ -113,7 +113,7 @@ jobs:
         run: bun run validate:game
 
       - name: Build and validate playable rebuild preview
-        run: bun run build:voxel-engine && bun run validate:rebuild-preview
+        run: bun run build:voxel-engine && bun run validate:voxel-preview && bun run validate:rebuild-preview
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
