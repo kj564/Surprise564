@@ -55,7 +55,7 @@
 @media(max-width:600px){#brand{top:10px;left:10px;padding:9px 11px}#brand small{max-width:230px;font-size:10px}#status{top:10px;right:10px;min-width:0;padding:7px 9px;font-size:10px}#help{bottom:89px;font-size:10px;white-space:normal;width:calc(100vw - 28px)}}
 </style>
 <script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/webgpu":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.webgpu.js"}}
 </script>
 </head>
 <body>
@@ -83,6 +83,7 @@ if (!Engine) throw new Error('VoxelCraft engine bundle did not expose VoxelCraft
 
 let engine = new Engine({dimensions:{chunkSizeX:16,height:32,chunkSizeZ:16},spawn:{x:8.5,y:24,z:8.5},inventorySlots:36});
 if(!generateTerrainChunk||!ensureTerrainNeighborhood)throw new Error('Seeded terrain streaming bundle is missing');
+const terrainBackend=await window.VoxelCraftWasmReady;
 for(let cz=-1;cz<=1;cz++)for(let cx=-1;cx<=1;cx++)generateTerrainChunk(engine.world,cx,cz,{seed:564});
 let lastChunkX=Math.floor(engine.player.state.position.x/16),lastChunkZ=Math.floor(engine.player.state.position.z/16);
 let worldCreatedAt=new Date().toISOString();
@@ -94,7 +95,21 @@ const blockColors={'minecraft:stone':0x888d95,'minecraft:dirt':0x8a5c3c,'minecra
 blockKeys.forEach(key=>engine.inventory.setSlot(blockKeys.indexOf(key),{itemKey:key,count:key==='minecraft:stone'?64:32,maxStackSize:64}));
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8cc8f0);scene.fog=new THREE.Fog(0x8cc8f0,22,58);
 const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.08,160);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+let renderer;
+let rendererBackend='WebGL';
+if(navigator.gpu){
+  try{
+    const {WebGPURenderer}=await import('three/webgpu');
+    const candidate=new WebGPURenderer({antialias:true,powerPreference:'high-performance'});
+    await candidate.init();
+    renderer=candidate;rendererBackend='WebGPU';
+  }catch(error){
+    console.warn('WebGPU initialization failed; falling back to WebGL.',error);
+    renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+  }
+}else{
+  renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+}
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;
 $('game').appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xd7ecff,0x64523b,2.0));
@@ -343,10 +358,10 @@ function animate(now){
     else if(result.status==='cancelled'){miningHeld=false;toast('Penambangan dibatalkan')}
   }
   frames++;fpsElapsed+=dt;if(fpsElapsed>=.5){fps=Math.round(frames/fpsElapsed);frames=0;fpsElapsed=0}
-  showPosition();$('engineStatus').textContent=fps+' FPS';
+  showPosition();$('engineStatus').textContent=rendererBackend+' · '+terrainBackend+' · '+fps+' FPS';
   renderer.render(scene,camera);
 }
-updateCamera();$('engineStatus').textContent='ready';loading.classList.add('hide');toast('Engine aktif — klik layar untuk mulai');requestAnimationFrame(animate);
+updateCamera();$('engineStatus').textContent=rendererBackend+' / '+terrainBackend;loading.classList.add('hide');toast('Engine aktif — klik layar untuk mulai');requestAnimationFrame(animate);
 </script>
 </body>
 </html>
