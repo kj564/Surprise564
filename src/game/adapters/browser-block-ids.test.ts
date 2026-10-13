@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 import { browserBlockIdToEngineId, engineBlockIdToBrowserId, listSupportedBrowserBlockTranslations } from './browser-block-ids';
 
 describe('existing browser runtime block ID adapter', () => {
@@ -29,6 +30,18 @@ describe('existing browser runtime block ID adapter', () => {
     for (const mapping of listSupportedBrowserBlockTranslations()) {
       expect(browserBlockIdToEngineId(mapping.browserId)).toBe(mapping.engineId);
       expect(engineBlockIdToBrowserId(mapping.engineId)).toBe(mapping.browserId);
+    }
+  });
+
+  test('every translated ID still exists in the live browser BLOCKS catalog', () => {
+    const source = readFileSync(new URL('../../../public/minecraft.html', import.meta.url), 'utf8');
+    const catalog = source.match(/const BLOCKS = \\{([\\s\\S]*?)\\n    \\};/);
+    expect(catalog, 'live BLOCKS catalog should be discoverable in public/minecraft.html').not.toBeNull();
+    const catalogIds = new Set(
+      [...catalog![1].matchAll(/^\\s*(\\d+)\\s*:/gm)].map(match => Number(match[1])),
+    );
+    for (const mapping of listSupportedBrowserBlockTranslations()) {
+      expect(catalogIds.has(mapping.browserId), 'stale browser ID ' + mapping.browserId).toBe(true);
     }
   });
 
