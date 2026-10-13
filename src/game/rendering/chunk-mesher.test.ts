@@ -52,9 +52,9 @@ describe('buildChunkMesh', () => {
     world.setBlock({ x: 0, y: 1, z: 0 }, 65535); // not registered
 
     const mesh = buildChunkMesh(world, 0, 0, defaultBlockRegistry);
-    expect(mesh.unsupportedShapeBlocks).toBe(2);
+    expect(mesh.unsupportedShapeBlocks).toBe(1);
     expect(mesh.unknownBlockIds).toBe(1);
-    expect(mesh.layers.opaque).toBeUndefined();
+    expect(mesh.layers.opaque?.faceCount).toBe(6);
   });
 
   test('treats unloaded neighbor space as exposed and rejects unloaded target chunks', () => {
@@ -64,4 +64,15 @@ describe('buildChunkMesh', () => {
     expect(buildChunkMesh(world, 0, 0, defaultBlockRegistry).layers.opaque?.faceCount).toBe(6);
     expect(() => buildChunkMesh(world, 1, 0, defaultBlockRegistry)).toThrow('unloaded chunk');
   });
+  test('renders snow layers at one-eighth block height', () => {
+    const world = makeWorld();
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 0, y: 0, z: 0 }, 78);
+    const mesh = buildChunkMesh(world, 0, 0, defaultBlockRegistry);
+    const layer = mesh.layers.opaque!;
+    expect(layer.faceCount).toBe(6);
+    expect(Math.max(...Array.from(layer.positions).filter((_, i) => i % 3 === 1))).toBe(0.125);
+    expect(mesh.unsupportedShapeBlocks).toBe(0);
+  });
+
 });

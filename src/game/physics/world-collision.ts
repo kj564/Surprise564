@@ -46,7 +46,16 @@ export function queryCollisionBoxes(
         }
         if (blockId === 0) continue;
         const definition = registry.getById(blockId);
-        if (!definition || definition.solid) boxes.push(blockCube(x, y, z));
+        if (!definition) {
+          boxes.push(blockCube(x, y, z));
+          continue;
+        }
+        if (!definition.solid) continue;
+        if (definition.shape === 'slab') {
+          boxes.push(new Aabb(x, y, z, x + 1, y + (definition.shapeHeight ?? 0.5), z + 1));
+        } else {
+          boxes.push(blockCube(x, y, z));
+        }
       }
     }
   }

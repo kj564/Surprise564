@@ -35,4 +35,12 @@ describe('queryCollisionBoxes', () => {
     expect(below.unloadedCells).toHaveLength(0);
     expect(() => queryCollisionBoxes(world, new Aabb(0, 0, 0, 20, 20, 20), defaultBlockRegistry, 10)).toThrow(RangeError);
   });
+  test('uses one-eighth-height collision bounds for snow layers', () => {
+    const world = new VoxelWorld({ chunkSizeX: 4, height: 4, chunkSizeZ: 4 });
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 1, y: 1, z: 1 }, 78);
+    const result = queryCollisionBoxes(world, new Aabb(1, 1, 1, 2, 2, 2), defaultBlockRegistry);
+    expect(result.boxes).toEqual([new Aabb(1, 1, 1, 2, 1.125, 2)]);
+  });
+
 });

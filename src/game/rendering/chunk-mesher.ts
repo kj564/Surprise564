@@ -84,8 +84,12 @@ export function buildChunkMesh(
         const definition = registry.getById(blockId);
         if (!definition) { unknownBlockIds += 1; continue; }
         if (definition.renderLayer === 'invisible' || definition.shape === 'none') continue;
-        if (definition.shape !== 'cube') { unsupportedShapeBlocks += 1; continue; }
         if (!VISIBLE_LAYERS.includes(definition.renderLayer)) continue;
+        if (definition.shape === 'slab') {
+          appendSlab(layers[definition.renderLayer], x, y, z, blockId, definition.shapeHeight ?? 0.5);
+          continue;
+        }
+        if (definition.shape !== 'cube') { unsupportedShapeBlocks += 1; continue; }
 
         for (const face of FACES) {
           const neighborId = world.getBlock(x + face.dx, y + face.dy, z + face.dz);
@@ -116,6 +120,18 @@ export function buildChunkMesh(
     unsupportedShapeBlocks,
     unknownBlockIds,
   });
+}
+
+function appendSlab(layer: MutableLayer, x: number, y: number, z: number, blockId: number, h: number): void {
+  const faces: readonly FaceTemplate[] = [
+    { face: 'west', normal: [-1, 0, 0], dx: -1, dy: 0, dz: 0, vertices: [[0, 0, 0], [0, 0, 1], [0, h, 1], [0, h, 0]] },
+    { face: 'east', normal: [1, 0, 0], dx: 1, dy: 0, dz: 0, vertices: [[1, 0, 1], [1, 0, 0], [1, h, 0], [1, h, 1]] },
+    { face: 'down', normal: [0, -1, 0], dx: 0, dy: -1, dz: 0, vertices: [[0, 0, 1], [0, 0, 0], [1, 0, 0], [1, 0, 1]] },
+    { face: 'up', normal: [0, 1, 0], dx: 0, dy: 0, dz: 0, vertices: [[0, h, 0], [0, h, 1], [1, h, 1], [1, h, 0]] },
+    { face: 'north', normal: [0, 0, -1], dx: 0, dy: 0, dz: -1, vertices: [[1, 0, 0], [0, 0, 0], [0, h, 0], [1, h, 0]] },
+    { face: 'south', normal: [0, 0, 1], dx: 0, dy: 0, dz: 1, vertices: [[0, 0, 1], [1, 0, 1], [1, h, 1], [0, h, 1]] },
+  ];
+  for (const face of faces) appendFace(layer, face, x, y, z, blockId);
 }
 
 function isFaceOccluded(current: BlockDefinition, neighborId: number | undefined, registry: BlockRegistry): boolean {
