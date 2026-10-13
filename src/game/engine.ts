@@ -9,6 +9,7 @@ import { PlayerPhysics, type PlayerInput, type PlayerPhysicsState, type PlayerPo
 import { queryCollisionBoxes } from './physics/world-collision';
 import { createWorldSave, restoreWorldSave, type PlayerSnapshot, type SaveMetadataInput } from './persistence/world-save';
 import { ChunkData } from './world/chunk';
+import { generateStarterChunk, type TerrainOptions, type GeneratedTerrain } from './world/starter-terrain';
 import { VoxelWorld, type BlockPosition, type WorldDimensions } from './world/world';
 
 export interface VoxelCraftEngineOptions {
@@ -73,6 +74,10 @@ export class VoxelCraftEngine {
       throw new RangeError('Selected slot must be within the hotbar');
     }
     this.selectedSlotValue = index;
+  }
+
+  generateChunk(chunkX: number, chunkZ: number, options: TerrainOptions = {}): GeneratedTerrain {
+    return generateStarterChunk(this.world, chunkX, chunkZ, options);
   }
 
   loadChunk(chunkX: number, chunkZ: number, initialBlocks?: ArrayLike<number>): ChunkData {
