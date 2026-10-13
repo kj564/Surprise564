@@ -7,6 +7,9 @@
 
 **▶ Play now:** https://kj564.github.io/Surprise564/minecraft.html
 
+**Engine rebuild preview:** https://kj564.github.io/Surprise564/voxelcraft-rebuild.html  
+**Reverse-engineering notes:** [`docs/rebuild/MCPE-REVERSE-ENGINEERING.md`](docs/rebuild/MCPE-REVERSE-ENGINEERING.md)
+
 VoxelCraft is **not affiliated with, endorsed by, or sponsored by Mojang Studios or Microsoft.** "Minecraft" is a trademark of Mojang Studios. Original Minecraft assets remain the property of their respective rights holders; see [`LICENSE-ATTRIBUTION.md`](LICENSE-ATTRIBUTION.md).
 
 ---
