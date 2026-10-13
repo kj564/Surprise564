@@ -46,7 +46,7 @@ fn lattice(x: i32, z: i32, seed: i32) -> f64 {
 fn smooth(t: f64) -> f64 { t * t * (3.0 - 2.0 * t) }
 fn lerp(a: f64, b: f64, t: f64) -> f64 { a + (b - a) * t }
 
-# [cfg(not(test))]
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! { loop {} }
 
