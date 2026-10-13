@@ -58,6 +58,7 @@ describe('world collision provider integration', () => {
     const collision = createWorldCollisionProvider(world, defaultBlockRegistry);
     const player = new PlayerPhysics({ x: 0.5, y: 0.6, z: 1.5 }, { height: 0.4, width: 0.4 });
 
+    player.step(0.25, { moveX: 1, moveZ: 0, jump: false }, collision);
     const state = player.step(0.1, { moveX: 1, moveZ: 0, jump: false }, collision);
     expect(state.horizontalCollision).toBe(true);
     expect(player.bounds.maxX).toBeCloseTo(2);
