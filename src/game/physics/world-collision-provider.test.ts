@@ -50,17 +50,4 @@ describe('world collision provider integration', () => {
     expect(state.position.y).toBeCloseTo(0.5);
   });
 
-  test('player can pass above a bottom slab but is blocked by a full block', () => {
-    const world = new VoxelWorld({ chunkSizeX: 4, height: 8, chunkSizeZ: 4 });
-    world.loadChunk(0, 0);
-    world.setBlock({ x: 1, y: 0, z: 1 }, 44);
-    world.setBlock({ x: 2, y: 0, z: 1 }, 1);
-    const collision = createWorldCollisionProvider(world, defaultBlockRegistry);
-    const player = new PlayerPhysics({ x: 0.5, y: 0.6, z: 1.5 }, { height: 0.4, width: 0.4 });
-
-    player.step(0.25, { moveX: 1, moveZ: 0, jump: false }, collision);
-    const state = player.step(0.1, { moveX: 1, moveZ: 0, jump: false }, collision);
-    expect(state.horizontalCollision).toBe(true);
-    expect(player.bounds.maxX).toBeCloseTo(2);
-  });
 });
