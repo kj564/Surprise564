@@ -41,4 +41,11 @@ describe('seeded terrain generation', () => {
     expect(() => generateTerrainChunk(world, 0, 0)).toThrow('already loaded');
     expect(() => generateTerrainChunk(new VoxelWorld(dimensions), 0, 0, { seed: 1.5 })).toThrow('safe integer');
   });
+
+  test('rejects impossible world heights without creating a partial chunk', () => {
+    const world = new VoxelWorld({ chunkSizeX: 4, height: 2, chunkSizeZ: 4 });
+    expect(() => generateTerrainChunk(world, 0, 0)).toThrow('at least 3 blocks');
+    expect(world.hasChunk(0, 0)).toBe(false);
+    expect(world.getLoadedChunkCount()).toBe(0);
+  });
 });
