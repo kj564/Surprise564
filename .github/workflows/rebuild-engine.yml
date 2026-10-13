@@ -24,8 +24,19 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Set up Rust with WebAssembly target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
       - name: Stage required runtime assets and install locked dependencies
         run: bash scripts/setup.sh
+
+      - name: Test WASM kernel
+        run: bun run test:wasm-kernel
+
+      - name: Build browser WASM kernel
+        run: bun run build:wasm-kernel
 
       - name: Test game-core mechanics
         run: bun run test:game-core
@@ -42,7 +53,9 @@ jobs:
       - name: Verify playable rebuild preview is exported
         run: |
           test -s public/voxelcraft-engine.bundle.js
+          test -s public/voxelcraft-kernel.wasm
           grep -q 'VoxelCraftEngine' public/voxelcraft-engine.bundle.js
           test -s out/voxelcraft-engine.bundle.js
+          test -s out/voxelcraft-kernel.wasm
           test -s out/voxelcraft-rebuild.html
           bun run validate:voxel-preview
