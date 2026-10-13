@@ -13,6 +13,7 @@
 #brand strong{display:block;font-size:14px;letter-spacing:.12em;text-transform:uppercase}
 #brand small{display:block;color:#c8d4e2;margin-top:4px;line-height:1.45}
 #status{top:16px;right:16px;padding:10px 12px;min-width:160px;text-align:right;font-size:12px;color:#dbeafe;line-height:1.7}
+#mine-status{margin-top:5px;text-align:left;color:#f8fafc;font-size:11px}#mine-status[hidden]{display:none}#mine-progress-track{height:5px;margin-top:4px;overflow:hidden;border-radius:5px;background:#ffffff30}#mine-progress-fill{display:block;width:0;height:100%;background:linear-gradient(90deg,#fbbf24,#fb7185);transition:width .08s linear}
 #crosshair{position:fixed;z-index:2;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:none}
 #crosshair:before,#crosshair:after{content:"";position:absolute;background:#fff;box-shadow:0 0 2px #111}
 #crosshair:before{width:2px;height:18px;left:8px}#crosshair:after{height:2px;width:18px;top:8px}
@@ -62,7 +63,7 @@
 <body>
 <div id="game"></div>
 <div id="brand" class="panel"><strong>VoxelCraft <span style="color:#8be0a5">/ Engine Preview</span></strong><small>Prototype runtime: world data, movement, collision, targeting, mining and placement use the rebuilt TypeScript engine.</small></div>
-<div id="status" class="panel">XYZ <b id="coords">—</b><br>Target <b id="target">none</b><br>Engine <b id="engineStatus">starting</b></div>
+<div id="status" class="panel">XYZ <b id="coords">—</b><br>Target <b id="target">none</b><br>Engine <b id="engineStatus">starting</b><div id="mine-status" hidden aria-live="polite"><span id="mine-label">Menambang… 0%</span><div id="mine-progress-track"><span id="mine-progress-fill"></span></div></div></div>
 <div id="crosshair"></div><div id="toast"></div>
 <div id="help" class="panel">Desktop: klik layar untuk mengunci mouse · WASD bergerak · Shift sprint · Space lompat · klik kiri tahan untuk menambang · klik kanan memasang. Ponsel: geser layar untuk melihat, gunakan tombol sentuh untuk bergerak, lompat, menambang, dan memasang. 1–9 pilih blok · E inventaris · Ctrl+S simpan · Ctrl+O muat.</div>
 <div id="hotbar" aria-label="Hotbar"></div>
@@ -234,10 +235,12 @@ function toggleInventory(force){
 function showPosition(){const p=engine.player.state.position;$('coords').textContent=Math.floor(p.x)+', '+Math.floor(p.y)+', '+Math.floor(p.z)}
 function updateCamera(){const p=engine.player.state.position;camera.position.set(p.x,p.y+1.62,p.z);camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0,'YXZ')}
 function rebuildAfterMutation(){rebuildWorldMeshes();updateHotbar()}
+function setMiningProgress(progress){const value=Math.max(0,Math.min(1,Number.isFinite(progress)?progress:0));$('mine-status').hidden=false;$('mine-label').textContent='Menambang… '+Math.floor(value*100)+'%';$('mine-progress-fill').style.width=(value*100)+'%'}
+function hideMiningProgress(){$('mine-status').hidden=true;$('mine-progress-fill').style.width='0%'}
 function onPointerDown(event){
   if(event.pointerType==='touch')return;
   if(document.pointerLockElement!==renderer.domElement){renderer.domElement.requestPointerLock?.();return}
-  if(event.button===0){leftMouseDown=true;const hit=currentTarget();if(hit.status==='hit'){const result=engine.startMining(hit.block);if(result.status==='started'){miningHeld=true;toast('Menambang '+(registry.getById(hit.blockId)?.displayName??'blok'))}else toast('Blok tidak dapat ditambang')}}
+  if(event.button===0){leftMouseDown=true;const hit=currentTarget();if(hit.status==='hit'){const result=engine.startMining(hit.block);if(result.status==='started'){miningHeld=true;setMiningProgress(0);toast('Menambang '+(registry.getById(hit.blockId)?.displayName??'blok'))}else toast('Blok tidak dapat ditambang')}}
   else if(event.button===2){const hit=currentTarget();if(hit.status!=='hit'){toast('Tidak ada blok yang ditarget');return}const result=engine.placeSelected(hit);if(result.status==='placed'){rebuildAfterMutation();toast('Blok dipasang')}else toast('Tidak dapat memasang: '+result.status)}
 }
 renderer.domElement.addEventListener('pointerdown',onPointerDown);
@@ -266,17 +269,17 @@ document.querySelectorAll('#touch-controls [data-key]').forEach(button=>bindTouc
 $('touch-jump').addEventListener('pointerdown',event=>{event.preventDefault();jumpQueued=true});
 $('touch-mine').addEventListener('pointerdown',event=>{
   event.preventDefault();if(miningHeld)return;leftMouseDown=true;const hit=currentTarget();
-  if(hit.status==='hit'&&engine.startMining(hit.block).status==='started'){miningHeld=true;$('touch-mine').classList.add('held')}
+  if(hit.status==='hit'&&engine.startMining(hit.block).status==='started'){miningHeld=true;setMiningProgress(0);$('touch-mine').classList.add('held')}
   else toast('Tidak ada blok yang dapat ditambang');
 });
-function releaseTouchMine(){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}$('touch-mine').classList.remove('held')}
+function releaseTouchMine(){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}hideMiningProgress();$('touch-mine').classList.remove('held')}
 $('touch-mine').addEventListener('pointerup',releaseTouchMine);$('touch-mine').addEventListener('pointercancel',releaseTouchMine);$('touch-mine').addEventListener('lostpointercapture',releaseTouchMine);
 $('touch-place').addEventListener('pointerdown',event=>{
   event.preventDefault();const hit=currentTarget();if(hit.status!=='hit'){toast('Tidak ada blok yang ditarget');return}
   const result=engine.placeSelected(hit);if(result.status==='placed'){rebuildAfterMutation();toast('Blok dipasang')}else toast('Tidak dapat memasang: '+result.status);
 });
 
-window.addEventListener('pointerup',event=>{if(event.pointerType!=='touch'&&event.button===0){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}}});
+window.addEventListener('pointerup',event=>{if(event.pointerType!=='touch'&&event.button===0){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}hideMiningProgress()}});
 renderer.domElement.addEventListener('contextmenu',event=>event.preventDefault());
 document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==renderer.domElement)return;yaw-=event.movementX*.0022;pitch-=event.movementY*.0022;pitch=Math.max(-Math.PI*.49,Math.min(Math.PI*.49,pitch))});
 function saveWorld(){
@@ -316,8 +319,8 @@ document.addEventListener('keydown',event=>{
   if(/^Digit[1-9]$/.test(event.code)){engine.selectSlot(Number(event.code.slice(5))-1);updateHotbar()}
 });
 document.addEventListener('keyup',event=>keyDown.delete(event.code));
-document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement!==renderer.domElement){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}}});
-window.addEventListener('blur',()=>{keyDown.clear();leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}});
+document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement!==renderer.domElement){leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}hideMiningProgress()}});
+window.addEventListener('blur',()=>{keyDown.clear();leftMouseDown=false;if(miningHeld){miningHeld=false;engine.cancelMining()}hideMiningProgress()});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,2))});
 function animate(now){
   requestAnimationFrame(animate);
@@ -336,22 +339,23 @@ function animate(now){
   // The current session still cancels when its target changes; this starts the next session on the following frame.
   if(leftMouseDown&&!miningHeld&&target.status==='hit'){
     const nextMining=engine.startMining(target.block);
-    if(nextMining.status==='started')miningHeld=true;
+    if(nextMining.status==='started'){miningHeld=true;setMiningProgress(0)}
   }
   if(miningHeld){
     const result=engine.advanceMining(dt,target.status==='hit'?target.block:null);
-    if(result.status==='broken'){
-      miningHeld=false;rebuildAfterMutation();
+    if(result.status==='mining'){setMiningProgress(result.progress)}
+    else if(result.status==='broken'){
+      miningHeld=false;hideMiningProgress();rebuildAfterMutation();
       if(leftMouseDown){
         const nextTarget=currentTarget();
         if(nextTarget.status==='hit'){
           const nextMining=engine.startMining(nextTarget.block);
-          if(nextMining.status==='started'){miningHeld=true;toast('Menambang '+(registry.getById(nextTarget.blockId)?.displayName??'blok'))}
+          if(nextMining.status==='started'){miningHeld=true;setMiningProgress(0);toast('Menambang '+(registry.getById(nextTarget.blockId)?.displayName??'blok'))}
         }
       }
       if(!miningHeld)toast(result.dropsRemaining.length?'Blok dihancurkan · drop berlebih belum didukung':'Blok dihancurkan');
     }
-    else if(result.status==='cancelled'){miningHeld=false;toast('Penambangan dibatalkan')}
+    else if(result.status==='cancelled'){miningHeld=false;hideMiningProgress();toast('Penambangan dibatalkan')}
   }
   frames++;fpsElapsed+=dt;if(fpsElapsed>=.5){fps=Math.round(frames/fpsElapsed);frames=0;fpsElapsed=0}
   showPosition();$('engineStatus').textContent=fps+' FPS';

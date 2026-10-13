@@ -27,6 +27,9 @@ if (!existsSync(htmlPath)) {
     ['Engine.fromSave(', 'validated world load'],
     ['id="inventory-grid"', 'inventory overlay'],
     ['id="touch-controls"', 'touch controls'],
+    ['id="mine-progress-fill"', 'live mining progress bar'],
+    ["setMiningProgress(result.progress)", 'per-frame mining progress updates'],
+    ["hideMiningProgress()", 'mining progress cleanup on cancellation and release'],
   ]) {
     if (html.includes(snippet)) pass(label + ' is wired in the preview');
     else fail('Preview is missing ' + label);

@@ -2,7 +2,7 @@ name: VoxelCraft rebuild checks
 
 on:
   push:
-    branches: ["rebuild/voxelcraft-modern-engine"]
+    branches: ["rebuild/voxelcraft-modern-engine", "rebuild/voxelcraft-runtime-followup"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
@@ -38,6 +38,9 @@ jobs:
 
       - name: Build application
         run: bun run build
+
+      - name: Validate playable rebuild preview controls and UI
+        run: bun run validate:rebuild-preview
 
       - name: Verify playable rebuild preview is exported
         run: |
