@@ -259,6 +259,7 @@
     image-rendering: pixelated;
   }
   #hud b { color: #fff; }
+  .slot .count { position:absolute; right:3px; bottom:1px; color:#fff; font-size:10px; line-height:1; text-shadow:2px 2px #222; pointer-events:none; }
   #crosshair { width: 16px; height: 16px; mix-blend-mode: difference; }
   #crosshair::before { width: 2px; }
   #crosshair::after { height: 2px; }
@@ -960,6 +961,7 @@
 
   <script type="module">
     import * as THREE from 'three';
+    import './voxelcraft-engine.bundle.js';
 
     // ============================================================
     //  CONFIG
@@ -1115,6 +1117,37 @@
     // Hotbar block ids (9 slots) — Phase 1: more variety
     const HOTBAR = [1, 3, 5, 6, 12, 32, 14, 62, 33]; // grass, stone, oak log, planks, brick, obsidian, diamond, wool white, glowstone
 
+    // The renderer uses custom compact IDs; this registry explicitly preserves that mapping.
+    function runtimeBlockKey(id) { return id === 0 ? 'minecraft:air' : 'minecraft:voxelcraft_block_' + id; }
+    function createRuntimeBlockRegistry() {
+      const entries = [{
+        key: 'minecraft:air', legacyId: 0, displayName: 'Air', shape: 'none',
+        renderLayer: 'invisible', solid: false, selectable: false, replaceable: true,
+        hardness: 0, sound: 'silent', lightOpacity: 0, lightEmission: 0, drops: [],
+      }];
+      for (const id of Object.keys(BLOCKS).map(Number).filter(id => id > 0 && BLOCKS[id]).sort((a,b) => a-b)) {
+        const block = BLOCKS[id], dropId = id === 1 ? 2 : id === 3 ? 4 : id;
+        const sound = id === 19 ? 'silent' : [5,6,7,17,18,34,35,36,37,38,39,40,41,42,43,44,45,46,47,59].includes(id) ? 'wood'
+          : [8,9,58].includes(id) ? 'sand' : id === 10 || id === 56 ? 'glass'
+          : [13,14,15,25,27,29,33].includes(id) ? 'metal' : 'stone';
+        entries.push({
+          key: runtimeBlockKey(id), legacyId: id, displayName: block.name,
+          shape: id === 19 ? 'liquid' : 'cube',
+          renderLayer: id === 19 || block.transparent ? 'translucent' : 'opaque',
+          solid: block.solid === true, selectable: id !== 19 && !block.noCollide,
+          replaceable: id === 19, hardness: id === 11 ? -1 : id === 3 ? 1.5 : id === 1 ? 0.6 : id === 2 ? 0.5 : 1,
+          sound, lightOpacity: id === 19 ? 1 : 15, lightEmission: id === 33 ? 15 : 0,
+          drops: id === 11 ? [] : [runtimeBlockKey(dropId)],
+        });
+      }
+      return new window.VoxelCraftBlockRegistry(entries);
+    }
+    let voxelEngine = null;
+    function syncEngineChunk(chunk) {
+      if (!voxelEngine || voxelEngine.world.hasChunk(chunk.cx, chunk.cz)) return;
+      voxelEngine.loadChunk(chunk.cx, chunk.cz, chunk.data);
+    }
+
     // ============================================================
     //  NOISE
     // ============================================================
@@ -1204,7 +1237,7 @@
       ensureChunk(cx, cz) {
         const k = chunkKey(cx, cz);
         let c = this.chunks.get(k);
-        if (!c) { c = new Chunk(cx, cz); this.generate(c); this.chunks.set(k, c); }
+        if (!c) { c = new Chunk(cx, cz); this.generate(c); this.chunks.set(k, c); syncEngineChunk(c); }
         return c;
       }
       getChunk(cx, cz) { return this.chunks.get(chunkKey(cx, cz)); }
@@ -1230,6 +1263,7 @@
         const c = this.ensureChunk(cx, cz);
         const lx = x - cx * CHUNK_X, lz = z - cz * CHUNK_Z;
         c.set(lx, y, lz, v);
+        if (voxelEngine && voxelEngine.world.hasChunk(cx, cz)) voxelEngine.world.setBlock({ x, y, z }, v);
 
         // A face at a chunk edge may become visible/hidden in both chunks.
         // Rebuild only already-loaded neighbors; unloaded chunks will mesh
@@ -1564,6 +1598,14 @@
     }
 
     const world = new World();
+    voxelEngine = new window.VoxelCraftEngine({
+      dimensions: { chunkSizeX: CHUNK_X, height: CHUNK_Y, chunkSizeZ: CHUNK_Z },
+      spawn: { x: 8, y: WATER_LEVEL + 16, z: 8 }, inventorySlots: 36,
+      registry: createRuntimeBlockRegistry(),
+    });
+    HOTBAR.forEach((id, slot) => voxelEngine.inventory.setSlot(slot, { itemKey: runtimeBlockKey(id), count: 64, maxStackSize: 64 }));
+    let miningHeld = false;
+    let miningTargetKey = null;
     let atlasTexture = null;
     let opaqueMat = null, transparentMat = null;
     const chunkMeshes = new Map(); // key -> {opaque, transparent}
@@ -2083,6 +2125,7 @@
         slot.title = def.name;
         slot.addEventListener('click', () => {
           HOTBAR[selectedSlot] = id;
+          voxelEngine.inventory.setSlot(selectedSlot, { itemKey: runtimeBlockKey(id), count: 64, maxStackSize: 64 });
           buildHotbar();
           selectSlot(selectedSlot);
           toast('Slot ' + (selectedSlot+1) + ' = ' + def.name);
@@ -2249,6 +2292,10 @@
         const nm = document.createElement('div');
         nm.className = 'name'; nm.textContent = def.name;
         slot.appendChild(nm);
+        const count = document.createElement('div');
+        count.className = 'count';
+        count.textContent = String(voxelEngine?.inventory.getSlot(i)?.count ?? 0);
+        slot.appendChild(count);
         slot.addEventListener('click', () => selectSlot(i));
         hotbarEl.appendChild(slot);
       });
@@ -2260,8 +2307,14 @@
     }
     function selectSlot(i) {
       selectedSlot = i;
-      document.querySelectorAll('#hotbar .slot').forEach((s, idx) => {
-        s.classList.toggle('active', idx === i);
+      voxelEngine.selectSlot(i);
+      document.querySelectorAll('#hotbar .slot').forEach((s, idx) => s.classList.toggle('active', idx === i));
+      refreshHotbarCounts();
+    }
+    function refreshHotbarCounts() {
+      document.querySelectorAll('#hotbar .slot').forEach((slot, index) => {
+        const count = slot.querySelector('.count');
+        if (count) count.textContent = String(voxelEngine.inventory.getSlot(index)?.count ?? 0);
       });
     }
 
@@ -2483,84 +2536,83 @@
     }
 
     // ---- Raycast (DDA) ----
-    function raycastVoxel(maxDist) {
-      if (!Number.isFinite(maxDist) || maxDist < 0) return null;
+    function currentEngineHit(maxDist) {
+      if (!voxelEngine || !Number.isFinite(maxDist) || maxDist < 0) return null;
       const origin = new THREE.Vector3(player.pos.x, player.pos.y + player.eye, player.pos.z);
-      const dir = new THREE.Vector3();
-      camera.getWorldDirection(dir);
-      if (![origin.x, origin.y, origin.z, dir.x, dir.y, dir.z].every(Number.isFinite) ||
-          dir.lengthSq() === 0) return null;
-      dir.normalize();
-
-      let x = Math.floor(origin.x), y = Math.floor(origin.y), z = Math.floor(origin.z);
-      const stepX = Math.sign(dir.x), stepY = Math.sign(dir.y), stepZ = Math.sign(dir.z);
-      const tDeltaX = dir.x !== 0 ? Math.abs(1 / dir.x) : Infinity;
-      const tDeltaY = dir.y !== 0 ? Math.abs(1 / dir.y) : Infinity;
-      const tDeltaZ = dir.z !== 0 ? Math.abs(1 / dir.z) : Infinity;
-      let tMaxX = dir.x !== 0 ? ((stepX > 0 ? (x + 1 - origin.x) : (origin.x - x)) * tDeltaX) : Infinity;
-      let tMaxY = dir.y !== 0 ? ((stepY > 0 ? (y + 1 - origin.y) : (origin.y - y)) * tDeltaY) : Infinity;
-      let tMaxZ = dir.z !== 0 ? ((stepZ > 0 ? (z + 1 - origin.z) : (origin.z - z)) * tDeltaZ) : Infinity;
-      let face = null;
-      let dist = 0;
-      while (dist <= maxDist) {
-        const id = world.getBlock(x, y, z);
-        if (id && BLOCKS[id] && !BLOCKS[id].noCollide) {
-          return { x, y, z, face };
-        }
-
-        const nextDist = Math.min(tMaxX, tMaxY, tMaxZ);
-        // Do not inspect a voxel entered beyond the requested reach.
-        if (!Number.isFinite(nextDist) || nextDist > maxDist) return null;
-        if (tMaxX <= tMaxY && tMaxX <= tMaxZ) {
-          x += stepX; dist = tMaxX; tMaxX += tDeltaX; face = [-stepX, 0, 0];
-        } else if (tMaxY <= tMaxZ) {
-          y += stepY; dist = tMaxY; tMaxY += tDeltaY; face = [0, -stepY, 0];
-        } else {
-          z += stepZ; dist = tMaxZ; tMaxZ += tDeltaZ; face = [0, 0, -stepZ];
-        }
-      }
-      return null;
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction);
+      if (![origin.x, origin.y, origin.z, direction.x, direction.y, direction.z].every(Number.isFinite) || direction.lengthSq() === 0) return null;
+      const result = voxelEngine.target({ x: origin.x, y: origin.y, z: origin.z }, { x: direction.x, y: direction.y, z: direction.z }, maxDist);
+      return result.status === 'hit' ? result : null;
     }
-
-    function breakBlock() {
-      const hit = raycastVoxel(6);
+    function raycastVoxel(maxDist) {
+      const hit = currentEngineHit(maxDist);
+      if (!hit) return null;
+      return { x: hit.block.x, y: hit.block.y, z: hit.block.z, face: [hit.face.x, hit.face.y, hit.face.z], blockId: hit.blockId, distance: hit.distance };
+    }
+    function beginMiningTarget(hit) {
       if (!hit) return;
-      const id = world.getBlock(hit.x, hit.y, hit.z);
-      if (id === 11) { toast('Bedrock tidak bisa dihancurkan'); return; }
-      if (!id || !world.setBlock(hit.x, hit.y, hit.z, 0)) return;
+      const result = voxelEngine.startMining(hit.block);
+      if (result.status === 'started') miningTargetKey = hit.block.x + ',' + hit.block.y + ',' + hit.block.z;
+      else if (result.status === 'unbreakable') { miningTargetKey = null; toast('Bedrock tidak bisa dihancurkan'); }
+      else miningTargetKey = null;
+    }
+    function stopMining() {
+      miningHeld = false;
+      miningTargetKey = null;
+      voxelEngine.cancelMining();
+    }
+    function handleBlockBroken(hit, id) {
+      world.setBlock(hit.x, hit.y, hit.z, 0);
       remeshAround(hit.x, hit.y, hit.z);
       browserBlocksBroken++;
       browserStats.blocksBroken = browserBlocksBroken;
       const coinRewards = { 20: 2, 21: 3, 22: 5, 23: 15, 24: 4, 26: 3, 28: 20, 31: 2 };
       const coinsEarned = coinRewards[id] || 0;
-      if (coinsEarned > 0) {
-        browserStats.coins += coinsEarned;
-        toast(`+${coinsEarned} koin`);
-      }
+      if (coinsEarned > 0) { browserStats.coins += coinsEarned; toast('+' + coinsEarned + ' koin'); }
       saveBrowserStats();
       spawnBreakParticles(hit.x, hit.y, hit.z, id);
       playSound('break', id);
+      refreshHotbarCounts();
+    }
+    function breakBlock() {
+      const hit = currentEngineHit(6);
+      if (!hit) return;
+      miningHeld = true;
+      beginMiningTarget(hit);
+    }
+    function tickMining(deltaSeconds) {
+      if (!miningHeld) return;
+      const hit = currentEngineHit(6);
+      if (!hit) { voxelEngine.cancelMining(); miningTargetKey = null; return; }
+      const key = hit.block.x + ',' + hit.block.y + ',' + hit.block.z;
+      if (key !== miningTargetKey) {
+        voxelEngine.cancelMining(); miningTargetKey = null; beginMiningTarget(hit); return;
+      }
+      const blockId = hit.blockId;
+      const result = voxelEngine.advanceMining(deltaSeconds, hit.block);
+      if (result.status === 'broken') {
+        miningTargetKey = null;
+        handleBlockBroken({ x: hit.block.x, y: hit.block.y, z: hit.block.z }, blockId);
+        if (miningHeld) beginMiningTarget(currentEngineHit(6));
+      } else if (result.status === 'cancelled' || result.status === 'no-session') miningTargetKey = null;
     }
     function placeBlock() {
-      const hit = raycastVoxel(6);
-      if (!hit || !hit.face) return;
-      const px = hit.x + hit.face[0], py = hit.y + hit.face[1], pz = hit.z + hit.face[2];
-      // don't place inside player
-      const w = player.width / 2;
-      const overlap = (player.pos.x + w > px && player.pos.x - w < px + 1) &&
-                      (player.pos.y + player.height > py && player.pos.y < py + 1) &&
-                      (player.pos.z + w > pz && player.pos.z - w < pz + 1);
-      if (overlap) return;
-      const id = HOTBAR[selectedSlot];
-      // Placement may replace air or water, but must never overwrite another
-      // solid block if a ray/face edge resolves to an occupied target voxel.
-      const existing = world.getBlock(px, py, pz);
-      if (existing !== 0 && existing !== 19) return;
-      if (!world.setBlock(px, py, pz, id)) return;
+      const hit = currentEngineHit(6);
+      if (!hit || (hit.face.x === 0 && hit.face.y === 0 && hit.face.z === 0)) return;
+      voxelEngine.player.teleport({ x: player.pos.x, y: player.pos.y, z: player.pos.z });
+      const result = voxelEngine.placeSelected(hit);
+      if (result.status !== 'placed') {
+        if (result.status === 'inventory-empty') toast('Slot kosong — pilih blok dari inventaris');
+        return;
+      }
+      const px = result.target.x, py = result.target.y, pz = result.target.z, id = result.blockId;
+      world.setBlock(px, py, pz, id);
       remeshAround(px, py, pz);
       browserBlocksPlaced++;
       browserStats.blocksPlaced = browserBlocksPlaced;
       saveBrowserStats();
+      refreshHotbarCounts();
       playSound('place', id);
     }
     function remeshAround(wx, wy, wz) {
@@ -2725,6 +2777,7 @@
     canvas.addEventListener('click', startGame);
     function clearPressedKeys() {
       for (const code of Object.keys(keys)) keys[code] = false;
+      stopMining();
       // A Space tap before focus loss must not combine with a tap after refocus.
       lastSpaceTime = 0;
     }
@@ -2794,9 +2847,10 @@
     document.addEventListener('mousedown', (e) => {
       if (!locked || inventoryOpen) return;
       const now = performance.now();
-      if (e.button === 0) { if (now - lastBreak > 180) { breakBlock(); lastBreak = now; } }
+      if (e.button === 0) { breakBlock(); lastBreak = now; }
       if (e.button === 2) { if (now - lastPlace > 180) { placeBlock(); lastPlace = now; } }
     });
+    document.addEventListener('mouseup', (e) => { if (e.button === 0) stopMining(); });
     document.addEventListener('contextmenu', (e) => e.preventDefault());
     document.addEventListener('wheel', (e) => {
       if (!locked) return;
@@ -2847,6 +2901,7 @@
 
       // Visual systems stay at 60fps (dt-based) — particles, mobs, day/night.
       if (gameplayActive) {
+        tickMining(dt);
         updateParticles(dt);
         updateMobs(dt);
       }
