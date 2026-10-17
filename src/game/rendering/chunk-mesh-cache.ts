@@ -52,6 +52,9 @@ export class ChunkMeshCache {
     }
 
     const dirtyKeys = new Set(this.world.consumeDirtyChunks());
+    // A cache may be created after another consumer drained the world's dirty queue, or
+    // be cleared after renderer/context loss. Missing cache entries must always be rebuilt.
+    for (const key of loadedKeys) if (!this.meshes.has(key)) dirtyKeys.add(key);
     const rebuiltChunks: Array<Readonly<{ x: number; z: number }>> = [];
     for (const key of dirtyKeys) {
       if (!loadedKeys.has(key)) continue;
