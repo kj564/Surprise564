@@ -1722,6 +1722,7 @@
     const TICK_DT = 1 / TICKS_PER_SECOND;
     const TICK_MS = 1000 / TICKS_PER_SECOND;  // 50ms per tick (integer-safe)
     let physicsAccumMs = 0;
+    let mobPhysicsAccumMs = 0;  // separate accumulator for mob ticks (same 20 tps)
 
     // Player
     // rujukan Player.h: AABB 0.6×1.8, eye 1.62, MAX_HEALTH 20.
@@ -1748,6 +1749,8 @@
     const keys = {};
     let locked = false;
     let gameStarted = false;
+    // Expose closure state for Agent Browser testing (pointer lock fails in headless)
+    window.__setGameState = (l, g) => { locked = l; gameStarted = g; };
     let lastSpaceTime = 0;
     let lastBreak = 0, lastPlace = 0;
     let worldTime = 0.28;
@@ -2341,7 +2344,7 @@
       // hurt/death decay
       if (m.hurtTime > 0) m.hurtTime--;
     }
-    function updateMobs(dt) {
+    function updateMobs(dt) { window.__mobUpdateCount = (window.__mobUpdateCount || 0) + 1;
       // VERIFIED MobSpawner::tick — spawn rules
       // MIN_SPAWN_DISTANCE = 24, cap creature = 15, spawn on grass + brightness > 8
       if (mobs.length < 4 && Math.random() < 0.008) {
@@ -2362,14 +2365,22 @@
           }
         }
       }
-      // tick each mob — 20 tps fixed (matches player physics)
-      const ticksToRun = Math.max(1, Math.round(dt * 20));
+      // tick each mob at FIXED 20 tps using an accumulator (matches player
+      // physics). The previous Math.round(dt*20) ran mobs at 60 tick/s on a
+      // 60 fps display (3x too fast), making chickens sprint and behave
+      // erratically. The accumulator pattern is identical to the player
+      // physics loop (physicsAccumMs + TICK_MS, see animate()).
+      mobPhysicsAccumMs += dt * 1000;
+      let mobTicks = 0;
+      while (mobPhysicsAccumMs >= TICK_MS && mobTicks < MAX_TICKS_PER_UPDATE) {
+        mobPhysicsAccumMs -= TICK_MS;
+        mobTicks++;
+        for (let i = mobs.length - 1; i >= 0; i--) {
+          mobTick(mobs[i]);
+        }
+      }
       for (let i = mobs.length - 1; i >= 0; i--) {
         const m = mobs[i];
-        // run mob ticks at 20 tps (each frame ~1 tick at 60fps, accumulates)
-        for (let t = 0; t < Math.min(ticksToRun, 3); t++) {
-          mobTick(m);
-        }
         // mesh sync (mesh.position is aliased to m.pos)
         m.mesh.rotation.y = m.yRot;
         // VERIFIED ChickenModel::setupAnim — wing flap + leg swing animation
