@@ -96,7 +96,17 @@ export class VoxelCraftEngine {
 
   /** Trace a view ray against authoritative world data; unloaded chunks stop the ray. */
   target(origin: RayVector, direction: RayVector, reach = 6): VoxelRayResult {
-    return raycastVoxels(this.world, origin, direction, reach, id => this.registry.getById(id)?.selectable ?? false);
+    return raycastVoxels(
+      this.world,
+      origin,
+      direction,
+      reach,
+      id => this.registry.getById(id)?.selectable ?? false,
+      id => {
+        const definition = this.registry.getById(id);
+        return definition?.shape === 'slab' ? definition.shapeHeight ?? 0.5 : undefined;
+      },
+    );
   }
 
   startMining(target: BlockPosition, miningSpeed = 1): MiningStartResult {
