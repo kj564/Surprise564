@@ -80,6 +80,20 @@ describe('buildChunkMesh', () => {
     expect(buildChunkMesh(world, 0, 0, defaultBlockRegistry).layers.opaque?.faceCount).toBe(10);
   });
 
+  test('does not cull full cube faces against partial-height blocks with a gap', () => {
+    const world = makeWorld();
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 0, y: 0, z: 0 }, 1);
+    world.setBlock({ x: 0, y: 1, z: 0 }, 44);
+    expect(buildChunkMesh(world, 0, 0, defaultBlockRegistry).layers.opaque?.faceCount).toBe(11);
+
+    const above = makeWorld();
+    above.loadChunk(0, 0);
+    above.setBlock({ x: 0, y: 0, z: 0 }, 44);
+    above.setBlock({ x: 0, y: 1, z: 0 }, 1);
+    expect(buildChunkMesh(above, 0, 0, defaultBlockRegistry).layers.opaque?.faceCount).toBe(12);
+  });
+
   test('renders snow layers at one-eighth block height', () => {
     const world = makeWorld();
     world.loadChunk(0, 0);
