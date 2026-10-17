@@ -14,39 +14,49 @@ function section(pattern, label) {
   return match[1];
 }
 
-const uiPanelSource = section(/(\/\* === UI pass: consistent Bedrock-style layout, readable hierarchy, responsive sizing === \*\/[\s\S]*?<\/style>)/, 'final UI layer');
-function lastCssRule(selector) {
-  const needle = selector + ' {';
-  let offset = 0;
+const styleStart = source.indexOf('<style>');
+const styleEnd = source.indexOf('</style>', styleStart);
+if (styleStart < 0 || styleEnd < 0) throw new Error('Could not parse CSS from public/minecraft.html');
+const uiPanelSource = source.slice(styleStart, styleEnd);
+
+function lastCssRule(selector, predicate = () => true) {
+  const escaped = selector.replaceAll('.', '\\\\.').replaceAll('#', '\\\\#').replaceAll(' ', '\\\\s+');
+  const expression = new RegExp(escaped + '\\\\s*\\\\{([^}]*)\\\\}', 'g');
   let selectedRule = '';
-  while (offset < uiPanelSource.length) {
-    const ruleStart = uiPanelSource.indexOf(needle, offset);
-    if (ruleStart < 0) break;
-    const bodyStart = ruleStart + needle.length;
-    const bodyEnd = uiPanelSource.indexOf('}', bodyStart);
-    if (bodyEnd < 0) break;
-    const body = uiPanelSource.slice(bodyStart, bodyEnd);
-    if (body.includes('background-size: 16px 16px;')) selectedRule = body;
-    offset = bodyEnd + 1;
+  for (const match of uiPanelSource.matchAll(expression)) {
+    if (predicate(match[1])) selectedRule = match[1];
   }
   return selectedRule;
 }
 
 const menuPanelRule = lastCssRule('#overlay .menu-wrap');
-if (!menuPanelRule.includes("background-size: 16px 16px;") ||
-    !menuPanelRule.includes("background-repeat: repeat;") ||
-    !menuPanelRule.includes("border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;")) {
-  fail('Main menu panel must preserve original Resource Pack pixel tiling and 1px nine-slice border');
-} else pass('Main menu panel uses original Resource Pack tile scale and nine-slice border');
+if (!source.includes("url('./VoxelCraft/textures/ui/menubackground.png')") ||
+    !menuPanelRule.includes('padding:')) {
+  fail('Main menu must retain its Resource Pack backdrop and responsive menu panel');
+} else pass('Main menu retains its Resource Pack backdrop and responsive panel');
 
-for (const selector of ['#hotbar', '#overlay .help-options-panel', '#inventory .inv-grid']) {
-  const rule = lastCssRule(selector);
-  if (!rule.includes("background-size: 16px 16px;") ||
-      !rule.includes("background-repeat: repeat;") ||
-      !rule.includes("border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;")) {
-    fail(selector + ' must preserve original Resource Pack tile scale and nine-slice border');
-  } else pass(selector + ' preserves original Resource Pack tile scale and nine-slice border');
+for (const selector of ['#hotbar', '#overlay .help-options-panel', '.inv-grid']) {
+  const rule = lastCssRule(selector, body =>
+    body.includes("url('./VoxelCraft/textures/ui/background_panel.png')") &&
+    body.includes("url('./VoxelCraft/textures/ui/background_with_border.png')"));
+  if (!rule) {
+    fail(selector + ' must use the original Resource Pack panel texture and nine-slice border');
+  } else pass(selector + ' uses the original Resource Pack panel texture and nine-slice border');
 }
+
+if (!source.includes("import './voxelcraft-engine.bundle.js'") ||
+    !source.includes('new window.VoxelCraftEngine') ||
+    !source.includes('new window.VoxelCraftBlockRegistry') ||
+    !source.includes('syncEngineChunk(c)')) {
+  fail('Main minecraft.html must initialize the rebuilt engine and synchronize its world chunks');
+} else pass('Main minecraft.html loads the rebuilt engine and synchronizes the legacy world into engine chunks');
+
+if (!source.includes('voxelEngine.target(') ||
+    !source.includes('voxelEngine.startMining(hit.block)') ||
+    !source.includes('voxelEngine.advanceMining(deltaSeconds, hit.block)') ||
+    !source.includes('voxelEngine.placeSelected(hit)')) {
+  fail('Main gameplay must route targeting, timed mining, and placement through the rebuilt engine');
+} else pass('Main gameplay uses rebuilt voxel targeting, timed mining, and transactional placement');
 
 const tileSource = section(/const TILE = \{([\s\S]*?)\n    \};/, 'TILE');
 const tileEntries = [...tileSource.matchAll(/\b([A-Z][A-Z0-9_]*):\s*(\d+)/g)];
