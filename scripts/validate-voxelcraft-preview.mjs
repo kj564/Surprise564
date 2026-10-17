@@ -26,6 +26,7 @@ if (!html.includes('id="touch-controls"') || !html.includes("event.pointerType!=
 if (!html.includes('id="touch-mine"') || !html.includes('id="touch-place"') || !html.includes("bindTouchKey(button,button.dataset.key)")) throw new Error('Preview must wire touch mining, placement and movement buttons');
 if (!html.includes("event.pointerType!=='touch'&&event.button===0")) throw new Error('Mouse release handling must not cancel a separate touch mining gesture');
 if (!html.includes('id="inventory-grid"') || !html.includes("event.code==='KeyE'") || !html.includes('engine.inventory.swap(engine.selectedSlot,i)')) throw new Error('Preview must expose the E-key inventory overlay and working hotbar/inventory swaps');
+if (!html.includes('id="mining-progress"') || !html.includes('function showMiningProgress(progress,label)') || !html.includes("result.status==='mining'" ) || !html.includes('hideMiningProgress()')) throw new Error('Preview must show timed mining progress and clear it on release, cancellation or completion');
 if (!html.includes("./VoxelCraft/textures/blocks/" ) || !html.includes('new THREE.Float32BufferAttribute(group.uvs,2)')) throw new Error('Preview must map face UVs and load staged block textures');
 if (!existsSync(bundlePath)) throw new Error('Generated engine bundle is missing; run prebuild first');
 const bundle = readFileSync(bundlePath, 'utf8');
