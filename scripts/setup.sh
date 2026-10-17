@@ -124,6 +124,18 @@ if [ ! -f "$FONT_DST" ] || ! cmp -s "$FONT_SRC" "$FONT_DST"; then
   echo "    staged original Minecraft Ten font"
 fi
 
+# Stage the original environment clouds.png used by the cloud layer.
+# minecraft.html loads ./VoxelCraft/textures/environment/clouds.png for
+# the faithful rujukan cloud rendering (LevelRenderer::renderClouds).
+CLOUD_SRC="VoxelCraft/textures/environment/clouds.png"
+CLOUD_DST="public/VoxelCraft/textures/environment/clouds.png"
+if [ ! -f "$CLOUD_SRC" ]; then echo "Missing original clouds texture: $CLOUD_SRC"; exit 1; fi
+mkdir -p "$(dirname "$CLOUD_DST")"
+if [ ! -f "$CLOUD_DST" ] || ! cmp -s "$CLOUD_SRC" "$CLOUD_DST"; then
+  cp "$CLOUD_SRC" "$CLOUD_DST"
+  echo "    staged original environment clouds.png"
+fi
+
 echo "==> [3/3] Installing browser-game dependencies (bun)…"
 if command -v bun >/dev/null 2>&1; then
   bun install --frozen-lockfile
