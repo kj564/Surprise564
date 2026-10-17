@@ -36,6 +36,16 @@ for (const texture of ['gold_block.png','iron_block.png','diamond_block.png','ob
   if (!html.includes("'" + texture + "'")) throw new Error('Preview is missing expected vanilla texture mapping: ' + texture);
 }
 if (!html.includes('textureFileFor(definition,nx,ny,nz)')) throw new Error('Preview must select face-specific textures using the face normal');
+const textureMap = html.match(/const textureByBlock=\{[\s\S]*?\n\};/);
+const faceTextureRules = html.match(/function textureFileFor\([\s\S]*?\n\}/);
+if (!textureMap || !faceTextureRules) throw new Error('Preview block texture mapping contract is missing');
+const mappedTextures = new Set([...textureMap[0].matchAll(/'([a-z0-9_]+\.png)'/g), ...faceTextureRules[0].matchAll(/'([a-z0-9_]+\.png)'/g)].map(match => match[1]));
+for (const texture of mappedTextures) {
+  if (!existsSync(join(root, 'public/VoxelCraft/textures/blocks', texture))) {
+    throw new Error('Mapped block texture asset does not exist: ' + texture);
+  }
+}
+
 
 if (!existsSync(bundlePath)) throw new Error('Generated engine bundle is missing; run prebuild first');
 if (!existsSync(wasmPath) || readFileSync(wasmPath).length === 0) throw new Error('Generated terrain WASM is missing; run bun run build:wasm-kernel first');
