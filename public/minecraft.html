@@ -888,9 +888,7 @@
       <button type="button" id="inventoryTabNature" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="nature">Alam</button>
       <button type="button" id="inventoryTabBuilding" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="building">Bangunan</button>
       <button type="button" id="inventoryTabMinerals" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="minerals">Mineral</button>
-      <button type="button" id="inventoryTabItems" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="items">Katalog Item (776)</button>
     </div>
-    <div id="itemCatalogTools" class="item-catalog-tools hidden"><input id="itemCatalogSearch" type="search" placeholder="Cari ikon item..." aria-label="Cari ikon item" /><select id="itemCatalogCategory" aria-label="Kategori ikon item"><option value="all">Semua kategori</option><option value="tools">Alat &amp; senjata</option><option value="materials">Material</option><option value="food">Makanan</option><option value="utility">Utilitas</option></select></div>
     <div class="inv-grid" id="invGrid" role="tabpanel" aria-labelledby="inventoryTabAll" tabindex="0"></div>
     <p class="inv-hint">Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di bawah.</p>
     <button id="invClose">Tutup (E)</button>
@@ -988,147 +986,92 @@
     const SAVE_KEY = 'voxelcraft-world-v1';
 
     // Texture tile indices (order MUST match TEXTURE_FILES)
+    // Trimmed to the rujukan MCPE 2013 tile set: only oak wood, no stone variants,
+    // no cobblestone/coal block/redstone block/copper ore/quartz ore/emerald ore,
+    // and a single cloth tile replaces the five wool colors. COAL is retained
+    // only as the speck source for the procedural coal_ore atlas tile.
     const TILE = {
-      GRASS_TOP: 0, GRASS_SIDE: 1, DIRT: 2, STONE: 3, COBBLE: 4,
-      LOG_TOP: 5, LOG_SIDE: 6, PLANKS: 7, LEAVES: 8, SAND: 9,
-      GRAVEL: 10, GLASS: 11, BEDROCK: 12, BRICK: 13, GOLD: 14,
-      DIAMOND: 15, IRON: 16, COAL: 17, CRAFT_TOP: 18, CRAFT_SIDE: 19,
-      CRAFT_FRONT: 20, FURNACE_FRONT: 21, FURNACE_SIDE: 22, WATER: 23,
+      GRASS_TOP: 0, GRASS_SIDE: 1, DIRT: 2, STONE: 3,
+      LOG_TOP: 4, LOG_SIDE: 5, PLANKS: 6, LEAVES: 7, SAND: 8,
+      GRAVEL: 9, GLASS: 10, BEDROCK: 11, BRICK: 12, GOLD: 13,
+      DIAMOND: 14, IRON: 15, COAL: 16,
+      CRAFT_TOP: 17, CRAFT_SIDE: 18, CRAFT_FRONT: 19,
+      FURNACE_FRONT: 20, FURNACE_SIDE: 21, FURNACE_TOP: 22, WATER: 23,
       COAL_ORE: 24, IRON_ORE: 25, GOLD_ORE: 26, DIAMOND_ORE: 27,
-      // === Phase 1A: more ores + mineral blocks (28-37) ===
-      LAPIS_ORE: 28, LAPIS_BLOCK: 29, REDSTONE_ORE: 30, REDSTONE_BLOCK: 31,
-      EMERALD_ORE: 32, EMERALD_BLOCK: 33, COPPER_ORE: 34, QUARTZ_ORE: 35,
-      OBSIDIAN: 36, GLOWSTONE: 37,
-      // === Phase 1B: wood variants (38-52) ===
-      LOG_BIRCH: 38, LOG_BIRCH_TOP: 39, PLANKS_BIRCH: 40, LEAVES_BIRCH: 41,
-      LOG_SPRUCE: 42, PLANKS_SPRUCE: 43, LEAVES_SPRUCE: 44,
-      LOG_JUNGLE: 45, PLANKS_JUNGLE: 46, LEAVES_JUNGLE: 47,
-      LOG_ACACIA: 48, PLANKS_ACACIA: 49, LEAVES_ACACIA: 50,
-      LOG_DARK_OAK: 51, PLANKS_DARK_OAK: 52,
-      // === Phase 1C: stone variants (53-59) ===
-      GRANITE: 53, GRANITE_SMOOTH: 54, DIORITE: 55, DIORITE_SMOOTH: 56,
-      ANDESITE: 57, ANDESITE_SMOOTH: 58, STONEBRICK: 59,
-      // === Phase 1D: nature + decorative (60-67) ===
-      SNOW: 60, ICE: 61, NETHERRACK: 62, SOUL_SAND: 63,
-      BOOKSHELF: 64, PUMPKIN_TOP: 65, PUMPKIN_SIDE: 66, SPONGE: 67,
-      // === Phase 1E: wool colors (68-72) ===
-      WOOL_WHITE: 68, WOOL_BLACK: 69, WOOL_RED: 70, WOOL_BLUE: 71, WOOL_GREEN: 72,
-      // Missing log end-grain textures, appended to preserve existing tile indices.
-      LOG_SPRUCE_TOP: 73, LOG_JUNGLE_TOP: 74, LOG_ACACIA_TOP: 75, LOG_DARK_OAK_TOP: 76,
-      FURNACE_TOP: 77, PUMPKIN_FACE: 78,
+      LAPIS_ORE: 28, LAPIS_BLOCK: 29, REDSTONE_ORE: 30, EMERALD_BLOCK: 31,
+      OBSIDIAN: 32, GLOWSTONE: 33,
+      STONEBRICK: 34, SNOW: 35, ICE: 36, NETHERRACK: 37, SOUL_SAND: 38,
+      BOOKSHELF: 39, PUMPKIN_TOP: 40, PUMPKIN_SIDE: 41, PUMPKIN_FACE: 42,
+      CLOTH: 43,
     };
     const TEXTURE_FILES = [
-      // 0-23: original 24 textures
-      'grass_top','grass_side_carried','dirt','stone','cobblestone',
+      // 0-15: terrain + mineral blocks (coal_block.png is the coal_ore speck source)
+      'grass_top','grass_side_carried','dirt','stone',
       'log_oak_top','log_oak','planks_oak','leaves_oak_opaque','sand',
       'gravel','glass','bedrock','brick','gold_block','diamond_block',
-      'iron_block','coal_block','crafting_table_top','crafting_table_side',
-      'crafting_table_front','furnace_front_off','furnace_side','water_still',
-      // 24-27: original 4 ores (procedurally generated in atlas)
+      'iron_block','coal_block',
+      // 16-23: workbench, furnace, water
+      'crafting_table_top','crafting_table_side','crafting_table_front',
+      'furnace_front_off','furnace_side','furnace_top','water_still',
+      // 24-27: ores (procedurally generated in atlas from stone + mineral block)
       'coal_ore','iron_ore','gold_ore','diamond_ore',
-      // 28-37: more ores + mineral blocks
-      'lapis_ore','lapis_block','redstone_ore','redstone_block',
-      'emerald_ore','emerald_block','copper_ore','quartz_ore',
+      // 28-33: rujukan mineral blocks
+      'lapis_ore','lapis_block','redstone_ore','emerald_block',
       'obsidian','glowstone',
-      // 38-52: wood variants
-      'log_birch','log_birch_top','planks_birch','leaves_birch_opaque',
-      'log_spruce','planks_spruce','leaves_spruce_opaque',
-      'log_jungle','planks_jungle','leaves_jungle_opaque',
-      'log_acacia','planks_acacia','leaves_acacia_opaque',
-      'log_big_oak','planks_big_oak',
-      // 53-59: stone variants
-      'stone_granite','stone_granite_smooth','stone_diorite','stone_diorite_smooth',
-      'stone_andesite','stone_andesite_smooth','stonebrick',
-      // 60-67: nature + decorative
-      'snow','ice','netherrack','soul_sand',
-      'bookshelf','pumpkin_top','pumpkin_side','sponge',
-      // 68-72: wool colors
-      'wool_colored_white','wool_colored_black','wool_colored_red','wool_colored_blue','wool_colored_green',
-      // Missing end-grain textures for non-oak logs.
-      'log_spruce_top','log_jungle_top','log_acacia_top','log_big_oak_top',
-      // Correct face textures verified against VoxelCraft/blocks.json + terrain_texture.json.
-      'furnace_top','pumpkin_face_off',
+      // 34-42: nature + decorative (rujukan MCPE 2013)
+      'stonebrick','snow','ice','netherrack','soul_sand',
+      'bookshelf','pumpkin_top','pumpkin_side','pumpkin_face_off',
+      // 43: single cloth tile (replaces the five wool colors)
+      'wool_colored_white',
     ];
     const TEXTURE_DIR = './VoxelCraft/textures/blocks/';
 
     // Block definitions: id -> {name, top, bottom, side, solid, transparent, noCollide}
+    // Trimmed to the rujukan MCPE 2013 block set (IDs 0-35, contiguous from 0).
+    // Removed: cobblestone, coal block, redstone block, emerald ore, copper ore,
+    // quartz ore, all non-oak wood variants, granite/diorite/andesite, sponge,
+    // and the four non-white wool colors (a single cloth block replaces them).
     const BLOCKS = {
-      0: null, // air
-      1:  { name:'Rumput',        top:TILE.GRASS_TOP,  bottom:TILE.DIRT,  side:TILE.GRASS_SIDE, solid:true },
-      2:  { name:'Tanah',         top:TILE.DIRT,       bottom:TILE.DIRT,  side:TILE.DIRT,       solid:true },
-      3:  { name:'Batu',          top:TILE.STONE,      bottom:TILE.STONE, side:TILE.STONE,      solid:true },
-      4:  { name:'Cobblestone',   top:TILE.COBBLE,     bottom:TILE.COBBLE, side:TILE.COBBLE,     solid:true },
-      5:  { name:'Kayu Ek',       top:TILE.LOG_TOP,    bottom:TILE.LOG_TOP, side:TILE.LOG_SIDE,  solid:true },
-      6:  { name:'Papan Ek',      top:TILE.PLANKS,     bottom:TILE.PLANKS, side:TILE.PLANKS,     solid:true },
-      7:  { name:'Daun Ek',       top:TILE.LEAVES,     bottom:TILE.LEAVES, side:TILE.LEAVES,     solid:true },
-      8:  { name:'Pasir',         top:TILE.SAND,       bottom:TILE.SAND,   side:TILE.SAND,       solid:true },
-      9:  { name:'Kerakal',       top:TILE.GRAVEL,     bottom:TILE.GRAVEL, side:TILE.GRAVEL,     solid:true },
-      10: { name:'Kaca',          top:TILE.GLASS,      bottom:TILE.GLASS,  side:TILE.GLASS,       solid:true, transparent:true },
-      11: { name:'Bedrock',       top:TILE.BEDROCK,    bottom:TILE.BEDROCK, side:TILE.BEDROCK,   solid:true },
-      12: { name:'Bata',          top:TILE.BRICK,      bottom:TILE.BRICK,  side:TILE.BRICK,       solid:true },
-      13: { name:'Emas',          top:TILE.GOLD,       bottom:TILE.GOLD,   side:TILE.GOLD,        solid:true },
-      14: { name:'Berlian',       top:TILE.DIAMOND,    bottom:TILE.DIAMOND, side:TILE.DIAMOND,   solid:true },
-      15: { name:'Besi',          top:TILE.IRON,       bottom:TILE.IRON,   side:TILE.IRON,        solid:true },
-      16: { name:'Batubara',      top:TILE.COAL,       bottom:TILE.COAL,   side:TILE.COAL,        solid:true },
-      17: { name:'Meja Kerja', top:TILE.CRAFT_TOP, bottom:TILE.PLANKS, side:TILE.CRAFT_SIDE, front:TILE.CRAFT_FRONT, frontBothZ:true, solid:true },
-      18: { name:'Tungku', top:TILE.FURNACE_TOP, bottom:TILE.FURNACE_TOP, side:TILE.FURNACE_SIDE, front:TILE.FURNACE_FRONT, solid:true },
-      19: { name:'Air',           top:TILE.WATER,      bottom:TILE.WATER, side:TILE.WATER,      solid:false, transparent:true, noCollide:true },
-      20: { name:'Bijih Batubara', top:TILE.COAL_ORE,  bottom:TILE.COAL_ORE,  side:TILE.COAL_ORE,  solid:true },
-      21: { name:'Bijih Besi',     top:TILE.IRON_ORE,  bottom:TILE.IRON_ORE,  side:TILE.IRON_ORE,  solid:true },
-      22: { name:'Bijih Emas',     top:TILE.GOLD_ORE,  bottom:TILE.GOLD_ORE,  side:TILE.GOLD_ORE,  solid:true },
-      23: { name:'Bijih Berlian',  top:TILE.DIAMOND_ORE, bottom:TILE.DIAMOND_ORE, side:TILE.DIAMOND_ORE, solid:true },
-      // === Phase 1A: more ores + mineral blocks (24-33) ===
-      24: { name:'Bijih Lapis',    top:TILE.LAPIS_ORE, bottom:TILE.LAPIS_ORE, side:TILE.LAPIS_ORE, solid:true },
-      25: { name:'Blok Lapis',    top:TILE.LAPIS_BLOCK, bottom:TILE.LAPIS_BLOCK, side:TILE.LAPIS_BLOCK, solid:true },
-      26: { name:'Bijih Redstone', top:TILE.REDSTONE_ORE, bottom:TILE.REDSTONE_ORE, side:TILE.REDSTONE_ORE, solid:true },
-      27: { name:'Blok Redstone', top:TILE.REDSTONE_BLOCK, bottom:TILE.REDSTONE_BLOCK, side:TILE.REDSTONE_BLOCK, solid:true },
-      28: { name:'Bijih Zamrud',  top:TILE.EMERALD_ORE, bottom:TILE.EMERALD_ORE, side:TILE.EMERALD_ORE, solid:true },
-      29: { name:'Blok Zamrud',   top:TILE.EMERALD_BLOCK, bottom:TILE.EMERALD_BLOCK, side:TILE.EMERALD_BLOCK, solid:true },
-      30: { name:'Bijih Tembaga',  top:TILE.COPPER_ORE, bottom:TILE.COPPER_ORE, side:TILE.COPPER_ORE, solid:true },
-      31: { name:'Bijih Kuarsa',   top:TILE.QUARTZ_ORE, bottom:TILE.QUARTZ_ORE, side:TILE.QUARTZ_ORE, solid:true },
-      32: { name:'Obsidian',      top:TILE.OBSIDIAN, bottom:TILE.OBSIDIAN, side:TILE.OBSIDIAN, solid:true },
-      33: { name:'Batu Bersinar', top:TILE.GLOWSTONE, bottom:TILE.GLOWSTONE, side:TILE.GLOWSTONE, solid:true },
-      // === Phase 1B: wood variants (34-47) ===
-      34: { name:'Kayu Birch',    top:TILE.LOG_BIRCH_TOP, bottom:TILE.LOG_BIRCH_TOP, side:TILE.LOG_BIRCH, solid:true },
-      35: { name:'Papan Birch',   top:TILE.PLANKS_BIRCH, bottom:TILE.PLANKS_BIRCH, side:TILE.PLANKS_BIRCH, solid:true },
-      36: { name:'Daun Birch',    top:TILE.LEAVES_BIRCH, bottom:TILE.LEAVES_BIRCH, side:TILE.LEAVES_BIRCH, solid:true },
-      37: { name:'Kayu Spruce',   top:TILE.LOG_SPRUCE_TOP, bottom:TILE.LOG_SPRUCE_TOP, side:TILE.LOG_SPRUCE, solid:true },
-      38: { name:'Papan Spruce',  top:TILE.PLANKS_SPRUCE, bottom:TILE.PLANKS_SPRUCE, side:TILE.PLANKS_SPRUCE, solid:true },
-      39: { name:'Daun Spruce',   top:TILE.LEAVES_SPRUCE, bottom:TILE.LEAVES_SPRUCE, side:TILE.LEAVES_SPRUCE, solid:true },
-      40: { name:'Kayu Jungle',   top:TILE.LOG_JUNGLE_TOP, bottom:TILE.LOG_JUNGLE_TOP, side:TILE.LOG_JUNGLE, solid:true },
-      41: { name:'Papan Jungle',  top:TILE.PLANKS_JUNGLE, bottom:TILE.PLANKS_JUNGLE, side:TILE.PLANKS_JUNGLE, solid:true },
-      42: { name:'Daun Jungle',   top:TILE.LEAVES_JUNGLE, bottom:TILE.LEAVES_JUNGLE, side:TILE.LEAVES_JUNGLE, solid:true },
-      43: { name:'Kayu Acacia',   top:TILE.LOG_ACACIA_TOP, bottom:TILE.LOG_ACACIA_TOP, side:TILE.LOG_ACACIA, solid:true },
-      44: { name:'Papan Acacia',  top:TILE.PLANKS_ACACIA, bottom:TILE.PLANKS_ACACIA, side:TILE.PLANKS_ACACIA, solid:true },
-      45: { name:'Daun Acacia',   top:TILE.LEAVES_ACACIA, bottom:TILE.LEAVES_ACACIA, side:TILE.LEAVES_ACACIA, solid:true },
-      46: { name:'Kayu Dark Oak', top:TILE.LOG_DARK_OAK_TOP, bottom:TILE.LOG_DARK_OAK_TOP, side:TILE.LOG_DARK_OAK, solid:true },
-      47: { name:'Papan Dark Oak', top:TILE.PLANKS_DARK_OAK, bottom:TILE.PLANKS_DARK_OAK, side:TILE.PLANKS_DARK_OAK, solid:true },
-      // === Phase 1C: stone variants (48-54) ===
-      48: { name:'Granit',        top:TILE.GRANITE, bottom:TILE.GRANITE, side:TILE.GRANITE, solid:true },
-      49: { name:'Granit Pole',   top:TILE.GRANITE_SMOOTH, bottom:TILE.GRANITE_SMOOTH, side:TILE.GRANITE_SMOOTH, solid:true },
-      50: { name:'Diorit',        top:TILE.DIORITE, bottom:TILE.DIORITE, side:TILE.DIORITE, solid:true },
-      51: { name:'Diorit Pole',   top:TILE.DIORITE_SMOOTH, bottom:TILE.DIORITE_SMOOTH, side:TILE.DIORITE_SMOOTH, solid:true },
-      52: { name:'Andesit',       top:TILE.ANDESITE, bottom:TILE.ANDESITE, side:TILE.ANDESITE, solid:true },
-      53: { name:'Andesit Pole',  top:TILE.ANDESITE_SMOOTH, bottom:TILE.ANDESITE_SMOOTH, side:TILE.ANDESITE_SMOOTH, solid:true },
-      54: { name:'Batu Bata',     top:TILE.STONEBRICK, bottom:TILE.STONEBRICK, side:TILE.STONEBRICK, solid:true },
-      // === Phase 1D: nature + decorative (55-61) ===
-      55: { name:'Salju',         top:TILE.SNOW, bottom:TILE.SNOW, side:TILE.SNOW, solid:true },
-      56: { name:'Es',            top:TILE.ICE, bottom:TILE.ICE, side:TILE.ICE, solid:true, transparent:true },
-      57: { name:'Netherrack',    top:TILE.NETHERRACK, bottom:TILE.NETHERRACK, side:TILE.NETHERRACK, solid:true },
-      58: { name:'Soul Sand',     top:TILE.SOUL_SAND, bottom:TILE.SOUL_SAND, side:TILE.SOUL_SAND, solid:true },
-      59: { name:'Rak Buku',      top:TILE.PLANKS, bottom:TILE.PLANKS, side:TILE.BOOKSHELF, solid:true },
-      60: { name:'Labu', top:TILE.PUMPKIN_TOP, bottom:TILE.PUMPKIN_TOP, side:TILE.PUMPKIN_SIDE, front:TILE.PUMPKIN_FACE, solid:true },
-      61: { name:'Spons',         top:TILE.SPONGE, bottom:TILE.SPONGE, side:TILE.SPONGE, solid:true },
-      // === Phase 1E: wool (62-66) ===
-      62: { name:'Wol Putih',     top:TILE.WOOL_WHITE, bottom:TILE.WOOL_WHITE, side:TILE.WOOL_WHITE, solid:true },
-      63: { name:'Wol Hitam',     top:TILE.WOOL_BLACK, bottom:TILE.WOOL_BLACK, side:TILE.WOOL_BLACK, solid:true },
-      64: { name:'Wol Merah',     top:TILE.WOOL_RED, bottom:TILE.WOOL_RED, side:TILE.WOOL_RED, solid:true },
-      65: { name:'Wol Biru',      top:TILE.WOOL_BLUE, bottom:TILE.WOOL_BLUE, side:TILE.WOOL_BLUE, solid:true },
-      66: { name:'Wol Hijau',     top:TILE.WOOL_GREEN, bottom:TILE.WOOL_GREEN, side:TILE.WOOL_GREEN, solid:true },
+      0:  null, // air
+      1:  { name:'Rumput',        top:TILE.GRASS_TOP,    bottom:TILE.DIRT,        side:TILE.GRASS_SIDE,    solid:true },
+      2:  { name:'Tanah',         top:TILE.DIRT,         bottom:TILE.DIRT,        side:TILE.DIRT,          solid:true },
+      3:  { name:'Batu',          top:TILE.STONE,        bottom:TILE.STONE,       side:TILE.STONE,         solid:true },
+      4:  { name:'Kayu Ek',       top:TILE.LOG_TOP,      bottom:TILE.LOG_TOP,     side:TILE.LOG_SIDE,      solid:true },
+      5:  { name:'Papan Ek',      top:TILE.PLANKS,       bottom:TILE.PLANKS,      side:TILE.PLANKS,        solid:true },
+      6:  { name:'Daun Ek',       top:TILE.LEAVES,       bottom:TILE.LEAVES,      side:TILE.LEAVES,        solid:true },
+      7:  { name:'Pasir',         top:TILE.SAND,         bottom:TILE.SAND,        side:TILE.SAND,          solid:true },
+      8:  { name:'Kerakal',       top:TILE.GRAVEL,       bottom:TILE.GRAVEL,      side:TILE.GRAVEL,        solid:true },
+      9:  { name:'Kaca',          top:TILE.GLASS,        bottom:TILE.GLASS,       side:TILE.GLASS,         solid:true, transparent:true },
+      10: { name:'Bedrock',       top:TILE.BEDROCK,      bottom:TILE.BEDROCK,     side:TILE.BEDROCK,       solid:true },
+      11: { name:'Bata',          top:TILE.BRICK,        bottom:TILE.BRICK,       side:TILE.BRICK,         solid:true },
+      12: { name:'Emas',          top:TILE.GOLD,         bottom:TILE.GOLD,        side:TILE.GOLD,          solid:true },
+      13: { name:'Berlian',       top:TILE.DIAMOND,      bottom:TILE.DIAMOND,     side:TILE.DIAMOND,       solid:true },
+      14: { name:'Besi',          top:TILE.IRON,         bottom:TILE.IRON,        side:TILE.IRON,          solid:true },
+      15: { name:'Meja Kerja', top:TILE.CRAFT_TOP,   bottom:TILE.PLANKS,      side:TILE.CRAFT_SIDE,    front:TILE.CRAFT_FRONT,  frontBothZ:true, solid:true },
+      16: { name:'Tungku',     top:TILE.FURNACE_TOP,  bottom:TILE.FURNACE_TOP,  side:TILE.FURNACE_SIDE,  front:TILE.FURNACE_FRONT, solid:true },
+      17: { name:'Air',           top:TILE.WATER,        bottom:TILE.WATER,       side:TILE.WATER,         solid:false, transparent:true, noCollide:true },
+      18: { name:'Bijih Batubara', top:TILE.COAL_ORE,    bottom:TILE.COAL_ORE,    side:TILE.COAL_ORE,      solid:true },
+      19: { name:'Bijih Besi',    top:TILE.IRON_ORE,     bottom:TILE.IRON_ORE,    side:TILE.IRON_ORE,      solid:true },
+      20: { name:'Bijih Emas',    top:TILE.GOLD_ORE,     bottom:TILE.GOLD_ORE,    side:TILE.GOLD_ORE,      solid:true },
+      21: { name:'Bijih Berlian', top:TILE.DIAMOND_ORE,  bottom:TILE.DIAMOND_ORE, side:TILE.DIAMOND_ORE,   solid:true },
+      22: { name:'Bijih Lapis',   top:TILE.LAPIS_ORE,    bottom:TILE.LAPIS_ORE,   side:TILE.LAPIS_ORE,     solid:true },
+      23: { name:'Blok Lapis',   top:TILE.LAPIS_BLOCK,  bottom:TILE.LAPIS_BLOCK,  side:TILE.LAPIS_BLOCK,   solid:true },
+      24: { name:'Bijih Redstone', top:TILE.REDSTONE_ORE, bottom:TILE.REDSTONE_ORE, side:TILE.REDSTONE_ORE, solid:true },
+      25: { name:'Blok Zamrud',  top:TILE.EMERALD_BLOCK, bottom:TILE.EMERALD_BLOCK, side:TILE.EMERALD_BLOCK, solid:true },
+      26: { name:'Obsidian',     top:TILE.OBSIDIAN,     bottom:TILE.OBSIDIAN,     side:TILE.OBSIDIAN,      solid:true },
+      27: { name:'Batu Bersinar', top:TILE.GLOWSTONE,   bottom:TILE.GLOWSTONE,    side:TILE.GLOWSTONE,     solid:true },
+      28: { name:'Batu Bata',    top:TILE.STONEBRICK,   bottom:TILE.STONEBRICK,   side:TILE.STONEBRICK,    solid:true },
+      29: { name:'Salju',        top:TILE.SNOW,         bottom:TILE.SNOW,         side:TILE.SNOW,          solid:true },
+      30: { name:'Es',           top:TILE.ICE,          bottom:TILE.ICE,          side:TILE.ICE,           solid:true, transparent:true },
+      31: { name:'Netherrack',   top:TILE.NETHERRACK,   bottom:TILE.NETHERRACK,   side:TILE.NETHERRACK,    solid:true },
+      32: { name:'Soul Sand',    top:TILE.SOUL_SAND,    bottom:TILE.SOUL_SAND,    side:TILE.SOUL_SAND,     solid:true },
+      33: { name:'Rak Buku',     top:TILE.PLANKS,       bottom:TILE.PLANKS,       side:TILE.BOOKSHELF,     solid:true },
+      34: { name:'Labu',         top:TILE.PUMPKIN_TOP,  bottom:TILE.PUMPKIN_TOP,   side:TILE.PUMPKIN_SIDE,  front:TILE.PUMPKIN_FACE,  solid:true },
+      35: { name:'Kain',         top:TILE.CLOTH,        bottom:TILE.CLOTH,        side:TILE.CLOTH,         solid:true },
     };
 
-    // Hotbar block ids (9 slots) — Phase 1: more variety
-    const HOTBAR = [1, 3, 5, 6, 12, 32, 14, 62, 33]; // grass, stone, oak log, planks, brick, obsidian, diamond, wool white, glowstone
+    // Hotbar block ids (8 slots) — rujukan MCPE 2013 set (no wool/cloth in the default bar)
+    const HOTBAR = [1, 3, 4, 5, 11, 26, 13, 27]; // grass, stone, oak log, planks, brick, obsidian, diamond block, glowstone
 
     // The renderer uses custom compact IDs; this registry explicitly preserves that mapping.
     function runtimeBlockKey(id) { return id === 0 ? 'minecraft:air' : 'minecraft:voxelcraft_block_' + id; }
@@ -1139,18 +1082,18 @@
         hardness: 0, sound: 'silent', lightOpacity: 0, lightEmission: 0, drops: [],
       }];
       for (const id of Object.keys(BLOCKS).map(Number).filter(id => id > 0 && BLOCKS[id]).sort((a,b) => a-b)) {
-        const block = BLOCKS[id], dropId = id === 1 ? 2 : id === 3 ? 4 : id;
-        const sound = id === 19 ? 'silent' : [5,6,7,17,18,34,35,36,37,38,39,40,41,42,43,44,45,46,47,59].includes(id) ? 'wood'
-          : [8,9,58].includes(id) ? 'sand' : id === 10 || id === 56 ? 'glass'
-          : [13,14,15,25,27,29,33].includes(id) ? 'metal' : 'stone';
+        const block = BLOCKS[id], dropId = id;
+        const sound = id === 17 ? 'silent' : [4,5,6,15,16,33].includes(id) ? 'wood'
+          : [7,8,32].includes(id) ? 'sand' : id === 9 || id === 30 ? 'glass'
+          : [12,13,14,23,25,27].includes(id) ? 'metal' : 'stone';
         entries.push({
           key: runtimeBlockKey(id), legacyId: id, displayName: block.name,
-          shape: id === 19 ? 'liquid' : 'cube',
-          renderLayer: id === 19 || block.transparent ? 'translucent' : 'opaque',
-          solid: block.solid === true, selectable: id !== 19 && !block.noCollide,
-          replaceable: id === 19, hardness: id === 11 ? -1 : id === 3 ? 1.5 : id === 1 ? 0.6 : id === 2 ? 0.5 : 1,
-          sound, lightOpacity: id === 19 ? 1 : 15, lightEmission: id === 33 ? 15 : 0,
-          drops: id === 11 ? [] : [runtimeBlockKey(dropId)],
+          shape: id === 17 ? 'liquid' : 'cube',
+          renderLayer: id === 17 || block.transparent ? 'translucent' : 'opaque',
+          solid: block.solid === true, selectable: id !== 17 && !block.noCollide,
+          replaceable: id === 17, hardness: id === 10 ? -1 : id === 3 ? 1.5 : id === 1 ? 0.6 : id === 2 ? 0.5 : 1,
+          sound, lightOpacity: id === 17 ? 1 : 15, lightEmission: id === 27 ? 15 : 0,
+          drops: id === 10 ? [] : [runtimeBlockKey(dropId)],
         });
       }
       return new window.VoxelCraftBlockRegistry(entries);
@@ -1276,7 +1219,7 @@
         if (![x, y, z].every(Number.isFinite)) return 0;
         x = Math.floor(x); y = Math.floor(y); z = Math.floor(z);
         if (!Number.isSafeInteger(x) || !Number.isSafeInteger(z)) return 0;
-        if (y < 0) return 11; // bedrock below
+        if (y < 0) return 10; // bedrock below
         if (y >= CHUNK_Y) return 0;
         const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
         const c = this.ensureChunk(cx, cz);
@@ -1287,7 +1230,7 @@
         if (![x, y, z].every(Number.isFinite)) return 0;
         x = Math.floor(x); y = Math.floor(y); z = Math.floor(z);
         if (!Number.isSafeInteger(x) || !Number.isSafeInteger(z)) return 0;
-        if (y < 0) return 11;
+        if (y < 0) return 10;
         if (y >= CHUNK_Y) return 0;
         const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
         const c = this.getChunk(cx, cz);
@@ -1343,39 +1286,30 @@
             const beachy = hf <= WATER_LEVEL + 1;
             for (let y = 0; y <= hf; y++) {
               let b = 3; // stone
-              if (y === 0) b = 11; // bedrock
-              else if (y === hf) b = beachy ? 8 : 1; // grass/sand top
-              else if (y > hf - 4) b = beachy ? 8 : 2; // dirt/sand
+              if (y === 0) b = 10; // bedrock
+              else if (y === hf) b = beachy ? 7 : 1; // grass/sand top
+              else if (y > hf - 4) b = beachy ? 7 : 2; // dirt/sand
               c.set(lx, y, lz, b);
             }
-            // ores in stone layer (depth-based) — Phase 1: more ore types
+            // ores in stone layer (depth-based) — rujukan MCPE 2013 set
             for (let y = 1; y < hf - 4; y++) {
               if (c.get(lx, y, lz) !== 3) continue; // only stone
               const oreNoise = hash2(wx * 31 + 7, wz * 19 + y * 3);
               const oreNoise2 = hash2(wx * 53 + 17, wz * 29 + y * 5);
-              if (y <= 10 && oreNoise < 0.0018) c.set(lx, y, lz, 23);       // diamond (deep, rare)
-              else if (y <= 10 && oreNoise2 < 0.0022) c.set(lx, y, lz, 24);  // lapis ore (deep; BLOCKS[24])
-              else if (y <= 12 && oreNoise2 < 0.0028) c.set(lx, y, lz, 28);  // emerald ore (very rare; BLOCKS[28])
-              else if (y <= 14 && oreNoise < 0.005) c.set(lx, y, lz, 22);    // gold
-              else if (y <= 16 && oreNoise2 < 0.006) c.set(lx, y, lz, 26);   // redstone
-              else if (y <= 18 && oreNoise2 < 0.008) c.set(lx, y, lz, 30);   // copper
-              else if (y <= 22 && oreNoise < 0.015) c.set(lx, y, lz, 21);   // iron
-              else if (y <= 30 && oreNoise < 0.025) c.set(lx, y, lz, 20);   // coal
-              // === Phase 1C: stone variant patches (rare blobs) ===
-              else if (y > 5 && y < 25) {
-                const stoneNoise = hash2(wx * 73 + 3, wz * 41 + y * 11);
-                if (stoneNoise < 0.008) c.set(lx, y, lz, 48);    // granite
-                else if (stoneNoise < 0.016) c.set(lx, y, lz, 50); // diorite
-                else if (stoneNoise < 0.024) c.set(lx, y, lz, 52); // andesite
-              }
+              if (y <= 10 && oreNoise < 0.0018) c.set(lx, y, lz, 21);       // diamond ore (deep, rare)
+              else if (y <= 10 && oreNoise2 < 0.0022) c.set(lx, y, lz, 22);  // lapis ore (deep; BLOCKS[22])
+              else if (y <= 14 && oreNoise < 0.005) c.set(lx, y, lz, 20);    // gold ore
+              else if (y <= 16 && oreNoise2 < 0.006) c.set(lx, y, lz, 24);   // redstone ore (BLOCKS[24])
+              else if (y <= 22 && oreNoise < 0.015) c.set(lx, y, lz, 19);   // iron ore
+              else if (y <= 30 && oreNoise < 0.025) c.set(lx, y, lz, 18);   // coal ore
             }
             // water fill
             if (hf < WATER_LEVEL) {
-              for (let y = hf + 1; y <= WATER_LEVEL; y++) c.set(lx, y, lz, 19);
+              for (let y = hf + 1; y <= WATER_LEVEL; y++) c.set(lx, y, lz, 17);
             }
             // snow caps on high terrain
             if (hf >= WATER_LEVEL + 10) {
-              c.set(lx, hf, lz, 55); // snow on top of mountains
+              c.set(lx, hf, lz, 29); // snow on top of mountains
             }
             // Tree placement is deferred until all terrain columns are generated.
           }
@@ -1399,10 +1333,9 @@
         c.dirty = true;
       }
       plantTree(c, worldX, ly, worldZ, woodType = 0) {
-        const logIds = [5, 34, 37, 40, 43, 46];
-        const leavesIds = [7, 36, 39, 42, 45, 45];
-        const logId = logIds[woodType] ?? 5;
-        const leavesId = leavesIds[woodType] ?? 7;
+        // rujukan MCPE 2013: only oak trees (woodType ignored — birch/spruce/jungle/acacia/dark oak don't exist).
+        const logId = 4;    // oak log
+        const leavesId = 6; // oak leaves
         const baseX = c.cx * CHUNK_X, baseZ = c.cz * CHUNK_Z;
         const h = 4 + Math.floor(hash2(worldX * 31, worldZ * 17) * 3);
         if (worldX >= baseX && worldX < baseX + CHUNK_X && worldZ >= baseZ && worldZ < baseZ + CHUNK_Z) {
@@ -1494,7 +1427,7 @@
               if (!nId) draw = true;
               else if (BLOCKS[nId] && BLOCKS[nId].transparent && nId !== id) draw = true;
               // Water: only draw top face when neighbor is air (skip side faces against water)
-              if (id === 19 && nId === 19) draw = false;
+              if (id === 17 && nId === 17) draw = false;
               if (!draw) continue;
 
               // Face order follows FACES: +X, -X, +Y, -Y, +Z, -Z.
@@ -2199,7 +2132,7 @@
           for (let y = y0 - 1; y < y1; y++) {  // §27.13: Y starts at y0 - 1
             const id = world.getBlock(x, y, z);
             if (!id) continue;  // air
-            if (id === 19) continue;  // water (this port: id 19, noCollide)
+            if (id === 17) continue;  // water (this port: id 17, noCollide)
             // §27.13 simplified: full 1x1x1 cube for any solid block
             const d = BLOCKS[id];
             if (!d || !d.solid) continue;
@@ -2496,7 +2429,7 @@
       }
       isInWater() {
         const id = world.getBlock(Math.floor(this.x), Math.floor(this.y + 0.5), Math.floor(this.z));
-        return id === 19;  // this port: water is id 19 (TILE.WATER, noCollide)
+        return id === 17;  // this port: water is id 17 (TILE.WATER, noCollide)
       }
       isInLava() {
         // No lava block in this port — always false.
@@ -2514,7 +2447,7 @@
         const cz = Math.floor(this.z);
         const id = world.getBlock(cx, cy, cz);
         if (!id) return false;
-        if (id === 19) return false;  // water
+        if (id === 17) return false;  // water
         const d = BLOCKS[id];
         return d ? d.solid : false;
       }
@@ -3003,7 +2936,7 @@
       }
       getTileFriction(id) {
         // §27.7 simplified Tile::tiles[t]->friction — 0.6 default, 0.98 ice
-        if (id === 56) return 0.98;  // ice (this port: id 56)
+        if (id === 30) return 0.98;  // ice (this port: id 30)
         return 0.6;
       }
       updateWalkAnim() {
@@ -3247,7 +3180,7 @@
         const sz = player.pos.z + Math.sin(ang) * dist;
         for (let y = CHUNK_Y - 1; y >= 0; y--) {
           const id = world.getBlock(Math.floor(sx), y, Math.floor(sz));
-          if (id && id !== 8 && id !== 9 && id !== 19) {
+          if (id && id !== 7 && id !== 8 && id !== 17) {
             if (id === 2 || id === 3) { spawnChicken(sx + 0.5, y + 1, sz + 0.5); }
             break;
           }
@@ -3311,11 +3244,8 @@
     const inventoryEl = document.getElementById('inventory');
     const invGridEl = document.getElementById('invGrid');
     const inventoryHintEl = document.querySelector('#inventory .inv-hint');
-    const itemCatalogTools = document.getElementById('itemCatalogTools');
-    const itemCatalogSearch = document.getElementById('itemCatalogSearch');
-    const itemCatalogCategory = document.getElementById('itemCatalogCategory');
-    let itemCatalogCache = null;
-    let itemCatalogPromise = null;
+    // Item catalog removed — MCPE 2013 inventory only shows placeable blocks (tiles),
+    // not a 776-icon RP catalog. The "Katalog Item (776)" tab exceeded rujukan scope.
     let inventoryOpen = false;
     let inventoryReturnToGame = false;
     const vcGuide = document.getElementById('vcGuide');
@@ -3353,10 +3283,10 @@
     let browserBlocksPlaced = browserStats.blocksPlaced;
     const inventoryFilterSets = {
       all: null,
-      items: new Set(),
-      nature: new Set([1, 2, 3, 4, 5, 7, 8, 9, 19, 34, 36, 37, 39, 40, 42, 43, 45, 46, 48, 49, 50, 51, 52, 53, 55, 56, 57, 58]),
-      building: new Set([6, 10, 11, 12, 17, 18, 35, 38, 41, 44, 47, 54, 59, 60, 61, 62, 63, 64, 65, 66]),
-      minerals: new Set([13, 14, 15, 16, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]),
+      // MCPE 2013 inventory: only placeable blocks (tiles). No item catalog.
+      nature: new Set([1, 2, 3, 4, 6, 7, 8, 17, 29, 30, 31, 32, 34]),
+      building: new Set([5, 9, 10, 11, 15, 16, 28, 33, 35]),
+      minerals: new Set([12, 13, 14, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]),
     };
     let activeInventoryFilter = 'all';
     const inventoryTabs = [...document.querySelectorAll('#inventory [data-inv-filter]')];
@@ -3391,50 +3321,14 @@
       });
     });
 
-    function renderItemCatalog(items) {
-      if (activeInventoryFilter !== 'items') return;
-      const query = itemCatalogSearch.value.trim().toLocaleLowerCase();
-      const category = itemCatalogCategory.value;
-      const visible = items.filter(item => (category === 'all' || item.category === category) &&
-        (!query || item.name.toLocaleLowerCase().includes(query) || item.id.toLocaleLowerCase().includes(query)));
-      invGridEl.innerHTML = '';
-      if (!visible.length) { invGridEl.textContent = 'Tidak ada ikon yang cocok.'; return; }
-      const fragment = document.createDocumentFragment();
-      for (const item of visible) {
-        const slot = document.createElement('div'); slot.className = 'inv-slot item-catalog-slot'; slot.title = item.name; slot.style.cursor = 'default';
-        const img = document.createElement('img'); img.loading = 'lazy'; img.alt = item.name; img.width = 40; img.height = 40;
-        img.src = './VoxelCraft/textures/items/' + encodeURIComponent(item.file);
-        const label = document.createElement('div'); label.className = 'lbl'; label.textContent = item.name;
-        slot.append(img, label); fragment.appendChild(slot);
-      }
-      invGridEl.appendChild(fragment);
-    }
+    // renderItemCatalog removed — MCPE 2013 has no item icon catalog, only block inventory.
     function buildInventory(filter = activeInventoryFilter) {
       activeInventoryFilter = filter;
-      inventoryHintEl.textContent = filter === 'items'
-        ? 'Katalog ini menampilkan ikon asli Resource Pack untuk referensi visual; ikon yang belum memiliki definisi gameplay tidak otomatis menjadi item yang bisa dipakai.'
-        : 'Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di bawah.';
+      inventoryHintEl.textContent = 'Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di bawah.';
       invGridEl.innerHTML = '';
       const allowedIds = inventoryFilterSets[filter];
-      itemCatalogTools.classList.toggle('hidden', filter !== 'items');
-      if (filter === 'items') {
-        invGridEl.setAttribute('aria-label', 'Katalog ikon item dari Resource Pack');
-        invGridEl.textContent = 'Memuat katalog ikon...';
-        if (!itemCatalogPromise) itemCatalogPromise = fetch('./item-catalog.json').then(response => {
-          if (!response.ok) throw new Error('HTTP ' + response.status);
-          return response.json();
-        }).then(data => {
-          if (data?.version !== 1 || !Array.isArray(data.items)) throw new Error('Format katalog tidak valid');
-          itemCatalogCache = data.items;
-          return data.items;
-        }).catch(error => { itemCatalogPromise = null; throw error; });
-        itemCatalogPromise.then(items => renderItemCatalog(items)).catch(error => {
-          if (activeInventoryFilter === 'items') invGridEl.textContent = 'Katalog gagal dimuat: ' + error.message;
-        });
-        return;
-      }
       invGridEl.removeAttribute('aria-label');
-      for (let id = 1; id <= 66; id++) {
+      for (let id = 1; id <= 35; id++) {
         const def = BLOCKS[id];
         if (!def || (allowedIds && !allowedIds.has(id))) continue;
         const slot = document.createElement('div');
@@ -3484,8 +3378,7 @@
         }
       }
     }
-    itemCatalogSearch.addEventListener('input', () => { if (activeInventoryFilter === 'items' && itemCatalogCache) renderItemCatalog(itemCatalogCache); });
-    itemCatalogCategory.addEventListener('change', () => { if (activeInventoryFilter === 'items' && itemCatalogCache) renderItemCatalog(itemCatalogCache); });
+    // itemCatalog event listeners removed — no item catalog in MCPE 2013 inventory.
     document.getElementById('invClose').addEventListener('click', toggleInventory);
 
     // ---- Toast ----
@@ -3503,10 +3396,6 @@
     const TINTS = {
       'grass_top': [121, 192, 90],          // plains grass green
       'leaves_oak_opaque': [86, 158, 48],   // oak leaves green
-      'leaves_birch_opaque': [128, 167, 85],
-      'leaves_spruce_opaque': [72, 111, 54],
-      'leaves_jungle_opaque': [65, 145, 52],
-      'leaves_acacia_opaque': [105, 151, 65],
     };
     async function buildAtlas() {
       const canvas2 = document.createElement('canvas');
@@ -3904,7 +3793,7 @@
       remeshAround(hit.x, hit.y, hit.z);
       browserBlocksBroken++;
       browserStats.blocksBroken = browserBlocksBroken;
-      const coinRewards = { 20: 2, 21: 3, 22: 5, 23: 15, 24: 4, 26: 3, 28: 20, 31: 2 };
+      const coinRewards = { 18: 2, 19: 3, 20: 5, 21: 15, 22: 4, 24: 3 };
       const coinsEarned = coinRewards[id] || 0;
       if (coinsEarned > 0) { browserStats.coins += coinsEarned; toast('+' + coinsEarned + ' koin'); }
       saveBrowserStats();
@@ -4054,7 +3943,7 @@
       button.addEventListener('click', () => {
         switch (button.dataset.vcAction) {
           case 'kit':
-            [1, 3, 5, 6, 12, 14, 33, 62, 19].forEach((id, i) => { if (BLOCKS[id]) HOTBAR[i] = id; });
+            [1, 3, 4, 5, 11, 26, 13, 27].forEach((id, i) => { if (BLOCKS[id]) HOTBAR[i] = id; });
             buildHotbar(); selectSlot(selectedSlot);
             toast('Kit blok starter dipasang ke hotbar');
             break;
@@ -4347,7 +4236,7 @@
       const gx = Math.floor(player.pos.x), gz = Math.floor(player.pos.z);
       for (let y = CHUNK_Y - 1; y >= 0; y--) {
         const id = world.getBlock(gx, y, gz);
-        if (id && id !== 19) { player.pos.y = y + 1; break; }
+        if (id && id !== 17) { player.pos.y = y + 1; break; }
       }
       // spawn initial chickens near spawn
       for (let i = 0; i < 3; i++) {
@@ -4356,7 +4245,7 @@
         const sz = player.pos.z + Math.sin(ang) * 6;
         for (let y = CHUNK_Y - 1; y >= 0; y--) {
           const id = world.getBlock(Math.floor(sx), y, Math.floor(sz));
-          if (id && id !== 19) { spawnChicken(sx, y + 1, sz); break; }
+          if (id && id !== 17) { spawnChicken(sx, y + 1, sz); break; }
         }
       }
       requestAnimationFrame(animate);
