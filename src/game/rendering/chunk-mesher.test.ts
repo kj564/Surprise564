@@ -77,7 +77,8 @@ describe('buildChunkMesh', () => {
     expect(buildChunkMesh(world, 0, 0, defaultBlockRegistry).layers.opaque?.faceCount).toBe(10);
 
     world.setBlock({ x: 1, y: 0, z: 0 }, 1);
-    expect(buildChunkMesh(world, 0, 0, defaultBlockRegistry).layers.opaque?.faceCount).toBe(10);
+    // The cube's full face remains to cover the portion not occupied by the half slab.
+    expect(buildChunkMesh(world, 0, 0, defaultBlockRegistry).layers.opaque?.faceCount).toBe(11);
   });
 
   test('does not cull full cube faces against partial-height blocks with a gap', () => {
