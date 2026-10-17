@@ -39,12 +39,18 @@ This mismatch is material: e.g. browser ID `1` means grass, while engine ID `1` 
 - Rendering meshes are rebuilt by `updateChunk` / `remeshAround`.
 - Browser persistence currently stores block overrides in localStorage using its own version-1 shape.
 
-## Safe next integration sequence
+## Integration status (updated 2026-10-17)
 
-1. Expand the explicit identity map and decide how unsupported custom blocks map before any conversion.
-2. Add a read-only world adapter and compare generated/read blocks against the live source at selected coordinates.
-3. Integrate the new collision/targeting code behind a feature flag and run browser-level regression checks.
-4. Migrate block edits and saves only after a versioned conversion test proves round-trip preservation.
-5. Remove the old live path only after parity tests and browser play tests pass.
+The rebuild is now available as a separate playable page at `public/voxelcraft-rebuild.html`. That preview uses the rebuilt engine for its own world state, player physics, targeting, mining, placement, inventory, terrain generation and local save/load. The legacy `public/minecraft.html` remains a separate runtime and has not been silently migrated.
 
-The adapter is a first compatibility seam, not a claim that the new engine is already controlling the live game. Main remains unchanged and the draft PR must not be merged until checks and parity tests pass.
+The explicit ID adapter and atomic block-buffer translator remain compatibility tools; they are not permission to copy IDs or saved edits without checking every block identity. The preview generates its own engine-format terrain and does not convert the legacy world's full live state.
+
+## Remaining safe integration sequence
+
+1. Expand the explicit identity map only when the source texture/block identity is verified; keep unsupported/custom-only IDs explicit.
+2. Build a read-only parity harness that samples the legacy generator and compares equivalent engine coordinates without mutating either world.
+3. Cover browser behavior with automated and manual regression checks on desktop and touch devices.
+4. Migrate block edits and saves only after versioned conversion tests prove round-trip preservation for every supported ID and report unsupported entries.
+5. Retire any legacy live path only after gameplay parity, save migration, asset provenance and browser play tests are reviewed.
+
+PR #97 was merged on 2026-10-12. Further rebuild work continues on `rebuild/voxelcraft-modern-engine`; the legacy `minecraft.html` remains intact while the dedicated preview advances independently. CI validates mechanics, build/export and static preview hooks, but it does not replace manual browser playtesting.
