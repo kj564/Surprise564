@@ -34,7 +34,7 @@ describe('VoxelWorld', () => {
     expect(world.setBlockState({ x: 1, y: 1, z: 0 }, 3)).toBe(false);
     expect(world.consumeDirtyChunks()).toEqual([]);
     expect(() => world.setBlockState({ x: 1, y: 1, z: 0 }, 256)).toThrow(RangeError);
-    expect(() => world.setBlockState({ x: 2, y: 1, z: 0 }, 1)).toThrow('unloaded chunk');
+    expect(() => world.setBlockState({ x: 4, y: 1, z: 0 }, 1)).toThrow('unloaded chunk');
   });
 
   test('clears metadata when replacing a block with a different ID', () => {
