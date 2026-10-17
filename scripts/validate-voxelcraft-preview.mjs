@@ -32,6 +32,11 @@ if (!html.includes('id="inventory-grid"') || !html.includes("event.code==='KeyE'
 if (!html.includes("renderer.domElement.addEventListener('wheel'") || !html.includes('engine.selectSlot(next);updateHotbar()') || !html.includes('{passive:false}')) throw new Error('Preview must support wheel-based hotbar selection without page-scroll handling leaks');
 if (!html.includes('scroll roda mouse')) throw new Error('Preview controls must document mouse-wheel hotbar selection');
 if (!html.includes("./VoxelCraft/textures/blocks/" ) || !html.includes('new THREE.Float32BufferAttribute(group.uvs,2)')) throw new Error('Preview must map face UVs and load staged block textures');
+for (const texture of ['gold_block.png','iron_block.png','diamond_block.png','obsidian.png','ice.png','snow.png','water_still.png','crafting_table_top.png','crafting_table_front.png','furnace_front_off.png']) {
+  if (!html.includes("'" + texture + "'")) throw new Error('Preview is missing expected vanilla texture mapping: ' + texture);
+}
+if (!html.includes('textureFileFor(definition,nx,ny,nz)')) throw new Error('Preview must select face-specific textures using the face normal');
+
 if (!existsSync(bundlePath)) throw new Error('Generated engine bundle is missing; run prebuild first');
 if (!existsSync(wasmPath) || readFileSync(wasmPath).length === 0) throw new Error('Generated terrain WASM is missing; run bun run build:wasm-kernel first');
 const bundle = readFileSync(bundlePath, 'utf8');
