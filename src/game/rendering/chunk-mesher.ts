@@ -189,9 +189,15 @@ function shouldRenderSlabFace(
   if (neighborId === undefined || neighborId === 0) return true;
   const neighbor = registry.getById(neighborId);
   if (!neighbor || neighbor.renderLayer === 'invisible' || neighbor.shape === 'none') return true;
-  if (face.face === 'up' || face.face === 'down') {
-    // A partial-height block below/above cannot cover the whole horizontal face.
-    return !(neighbor.renderLayer === 'opaque' && (neighbor.shape !== 'slab' || (neighbor.shapeHeight ?? 0.5) >= 1));
+  if (face.face === 'up') {
+    // A block above only touches the slab's top plane when the slab reaches full height.
+    return !(height >= 1 && neighbor.renderLayer === 'opaque' &&
+      (neighbor.shape !== 'slab' || (neighbor.shapeHeight ?? 0.5) >= 1));
+  }
+  if (face.face === 'down') {
+    // A full-height block below reaches the slab's bottom plane even when this slab is partial.
+    return !(neighbor.renderLayer === 'opaque' &&
+      (neighbor.shape !== 'slab' || (neighbor.shapeHeight ?? 0.5) >= 1));
   }
   if (neighbor.renderLayer === 'opaque') return false;
   if (neighbor.key === current.key && neighbor.renderLayer === current.renderLayer) return false;
