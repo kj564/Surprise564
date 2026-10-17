@@ -126,7 +126,7 @@ export function validateWorldSave(input: unknown): SaveValidationResult {
           states.push(state);
         }
       }
-      if (blocks.length === volume && chunk.blocks.length === volume && states.length === volume && rawStates.length === volume) {
+      if (blocks.length === volume && chunk.blocks.length === volume && states.length === volume && Array.isArray(rawStates) && rawStates.length === volume) {
         normalizedChunks.push(Object.freeze({
           x: chunk.x as number,
           z: chunk.z as number,
