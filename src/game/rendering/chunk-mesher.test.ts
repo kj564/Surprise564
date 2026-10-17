@@ -69,6 +69,17 @@ describe('buildChunkMesh', () => {
     expect(buildChunkMesh(world, 0, 0, defaultBlockRegistry).layers.opaque?.faceCount).toBe(6);
     expect(() => buildChunkMesh(world, 1, 0, defaultBlockRegistry)).toThrow('unloaded chunk');
   });
+  test('culls shared side faces between adjacent slabs and opaque cubes', () => {
+    const world = makeWorld();
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 0, y: 0, z: 0 }, 44);
+    world.setBlock({ x: 1, y: 0, z: 0 }, 44);
+    expect(buildChunkMesh(world, 0, 0, defaultBlockRegistry).layers.opaque?.faceCount).toBe(10);
+
+    world.setBlock({ x: 1, y: 0, z: 0 }, 1);
+    expect(buildChunkMesh(world, 0, 0, defaultBlockRegistry).layers.opaque?.faceCount).toBe(10);
+  });
+
   test('renders snow layers at one-eighth block height', () => {
     const world = makeWorld();
     world.loadChunk(0, 0);
