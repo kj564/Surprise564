@@ -21,6 +21,32 @@ describe('VoxelWorld', () => {
     expect(world.getBlock(-2, 1, -2)).toBe(0);
   });
 
+  test('reads and mutates block metadata while invalidating affected meshes', () => {
+    const world = new VoxelWorld({ chunkSizeX: 2, height: 4, chunkSizeZ: 2 });
+    expect(world.getBlockState(0, 0, 0)).toBeUndefined();
+    world.loadChunk(0, 0);
+    world.loadChunk(1, 0);
+    world.consumeDirtyChunks();
+
+    expect(world.setBlockState({ x: 1, y: 1, z: 0 }, 3)).toBe(true);
+    expect(world.getBlockState(1, 1, 0)).toBe(3);
+    expect(world.consumeDirtyChunks().sort()).toEqual(['0,0', '1,0']);
+    expect(world.setBlockState({ x: 1, y: 1, z: 0 }, 3)).toBe(false);
+    expect(world.consumeDirtyChunks()).toEqual([]);
+    expect(() => world.setBlockState({ x: 1, y: 1, z: 0 }, 256)).toThrow(RangeError);
+    expect(() => world.setBlockState({ x: 2, y: 1, z: 0 }, 1)).toThrow('unloaded chunk');
+  });
+
+  test('clears metadata when replacing a block with a different ID', () => {
+    const world = new VoxelWorld({ chunkSizeX: 2, height: 4, chunkSizeZ: 2 });
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 0, y: 1, z: 0 }, 17);
+    world.setBlockState({ x: 0, y: 1, z: 0 }, 4);
+    expect(world.getBlockState(0, 1, 0)).toBe(4);
+    world.setBlock({ x: 0, y: 1, z: 0 }, 0);
+    expect(world.getBlockState(0, 1, 0)).toBe(0);
+  });
+
   test('requires loaded chunks and valid vertical coordinates for mutations', () => {
     const world = new VoxelWorld({ chunkSizeX: 2, height: 4, chunkSizeZ: 2 });
     expect(() => world.setBlock({ x: 0, y: 0, z: 0 }, 1)).toThrow('unloaded chunk');
