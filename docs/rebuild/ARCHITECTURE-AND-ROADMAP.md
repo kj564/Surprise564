@@ -31,6 +31,15 @@ src/game/
   ui/            menus, HUD, inventory, settings and accessibility
 ```
 
+
+## Block state / metadata storage (implemented foundation)
+
+- Each loaded chunk now stores the numeric block ID and an independent unsigned metadata byte per cell.
+- `VoxelWorld.getBlockState` / `setBlockState` expose that byte without conflating it with block identity; state edits update chunk revisions and dirty affected render chunks.
+- Replacing a block with a different ID clears the previous metadata. Re-applying the same block ID preserves its state.
+- World saves include a `states` array for every chunk. Historical schema-version-1 saves without that optional field normalize to zero state, preserving compatibility.
+- This is storage and persistence only: stairs/log orientation, door halves, fluid levels and other state-specific mesh/collision/behavior rules are **not** yet enabled. Do not infer a block's orientation from the metadata byte until its MCPE encoding has been verified against the reference source and covered by tests.
+
 ## Data contracts
 
 ### Blocks
