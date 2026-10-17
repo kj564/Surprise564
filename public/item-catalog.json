@@ -1,0 +1,4662 @@
+{
+  "version": 1,
+  "count": 776,
+  "items": [
+    {
+      "id": "acacia_chest_boat",
+      "name": "Acacia Chest Boat",
+      "file": "acacia_chest_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "acacia_hanging_sign",
+      "name": "Acacia Hanging Sign",
+      "file": "acacia_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "amethyst_shard",
+      "name": "Amethyst Shard",
+      "file": "amethyst_shard.png",
+      "category": "materials"
+    },
+    {
+      "id": "angler_pottery_sherd",
+      "name": "Angler Pottery Sherd",
+      "file": "angler_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "apple_golden",
+      "name": "Apple Golden",
+      "file": "apple_golden.png",
+      "category": "food"
+    },
+    {
+      "id": "apple",
+      "name": "Apple",
+      "file": "apple.png",
+      "category": "food"
+    },
+    {
+      "id": "archer_pottery_sherd",
+      "name": "Archer Pottery Sherd",
+      "file": "archer_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "armadillo_scute",
+      "name": "Armadillo Scute",
+      "file": "armadillo_scute.png",
+      "category": "materials"
+    },
+    {
+      "id": "armor_stand",
+      "name": "Armor Stand",
+      "file": "armor_stand.png",
+      "category": "utility"
+    },
+    {
+      "id": "arms_up_pottery_sherd",
+      "name": "Arms Up Pottery Sherd",
+      "file": "arms_up_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "arrow",
+      "name": "Arrow",
+      "file": "arrow.png",
+      "category": "materials"
+    },
+    {
+      "id": "bamboo_chest_raft",
+      "name": "Bamboo Chest Raft",
+      "file": "bamboo_chest_raft.png",
+      "category": "materials"
+    },
+    {
+      "id": "bamboo_door",
+      "name": "Bamboo Door",
+      "file": "bamboo_door.png",
+      "category": "utility"
+    },
+    {
+      "id": "bamboo_hanging_sign",
+      "name": "Bamboo Hanging Sign",
+      "file": "bamboo_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "bamboo_raft",
+      "name": "Bamboo Raft",
+      "file": "bamboo_raft.png",
+      "category": "materials"
+    },
+    {
+      "id": "bamboo_sign",
+      "name": "Bamboo Sign",
+      "file": "bamboo_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "bamboo",
+      "name": "Bamboo",
+      "file": "bamboo.png",
+      "category": "materials"
+    },
+    {
+      "id": "banner_pattern",
+      "name": "Banner Pattern",
+      "file": "banner_pattern.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_black",
+      "name": "Bed Black",
+      "file": "bed_black.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_blue",
+      "name": "Bed Blue",
+      "file": "bed_blue.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_brown",
+      "name": "Bed Brown",
+      "file": "bed_brown.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_cyan",
+      "name": "Bed Cyan",
+      "file": "bed_cyan.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_gray",
+      "name": "Bed Gray",
+      "file": "bed_gray.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_green",
+      "name": "Bed Green",
+      "file": "bed_green.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_light_blue",
+      "name": "Bed Light Blue",
+      "file": "bed_light_blue.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_lime",
+      "name": "Bed Lime",
+      "file": "bed_lime.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_magenta",
+      "name": "Bed Magenta",
+      "file": "bed_magenta.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_orange",
+      "name": "Bed Orange",
+      "file": "bed_orange.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_pink",
+      "name": "Bed Pink",
+      "file": "bed_pink.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_purple",
+      "name": "Bed Purple",
+      "file": "bed_purple.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_red",
+      "name": "Bed Red",
+      "file": "bed_red.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_silver",
+      "name": "Bed Silver",
+      "file": "bed_silver.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_white",
+      "name": "Bed White",
+      "file": "bed_white.png",
+      "category": "utility"
+    },
+    {
+      "id": "bed_yellow",
+      "name": "Bed Yellow",
+      "file": "bed_yellow.png",
+      "category": "utility"
+    },
+    {
+      "id": "beef_cooked",
+      "name": "Beef Cooked",
+      "file": "beef_cooked.png",
+      "category": "food"
+    },
+    {
+      "id": "beef_raw",
+      "name": "Beef Raw",
+      "file": "beef_raw.png",
+      "category": "food"
+    },
+    {
+      "id": "beetroot_soup",
+      "name": "Beetroot Soup",
+      "file": "beetroot_soup.png",
+      "category": "food"
+    },
+    {
+      "id": "beetroot",
+      "name": "Beetroot",
+      "file": "beetroot.png",
+      "category": "food"
+    },
+    {
+      "id": "birch_chest_boat",
+      "name": "Birch Chest Boat",
+      "file": "birch_chest_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "birch_hanging_sign",
+      "name": "Birch Hanging Sign",
+      "file": "birch_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "black_cushion",
+      "name": "Black Cushion",
+      "file": "black_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "blade_pottery_sherd",
+      "name": "Blade Pottery Sherd",
+      "file": "blade_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "blaze_powder",
+      "name": "Blaze Powder",
+      "file": "blaze_powder.png",
+      "category": "materials"
+    },
+    {
+      "id": "blaze_rod",
+      "name": "Blaze Rod",
+      "file": "blaze_rod.png",
+      "category": "materials"
+    },
+    {
+      "id": "blue_cushion",
+      "name": "Blue Cushion",
+      "file": "blue_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "blue_egg",
+      "name": "Blue Egg",
+      "file": "blue_egg.png",
+      "category": "food"
+    },
+    {
+      "id": "boat_acacia",
+      "name": "Boat Acacia",
+      "file": "boat_acacia.png",
+      "category": "utility"
+    },
+    {
+      "id": "boat_birch",
+      "name": "Boat Birch",
+      "file": "boat_birch.png",
+      "category": "utility"
+    },
+    {
+      "id": "boat_dark_oak",
+      "name": "Boat Dark Oak",
+      "file": "boat_dark_oak.png",
+      "category": "utility"
+    },
+    {
+      "id": "boat_darkoak",
+      "name": "Boat Darkoak",
+      "file": "boat_darkoak.png",
+      "category": "utility"
+    },
+    {
+      "id": "boat_jungle",
+      "name": "Boat Jungle",
+      "file": "boat_jungle.png",
+      "category": "utility"
+    },
+    {
+      "id": "boat_oak",
+      "name": "Boat Oak",
+      "file": "boat_oak.png",
+      "category": "utility"
+    },
+    {
+      "id": "boat_spruce",
+      "name": "Boat Spruce",
+      "file": "boat_spruce.png",
+      "category": "utility"
+    },
+    {
+      "id": "boat",
+      "name": "Boat",
+      "file": "boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "bolt_armor_trim_smithing_template",
+      "name": "Bolt Armor Trim Smithing Template",
+      "file": "bolt_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "bone",
+      "name": "Bone",
+      "file": "bone.png",
+      "category": "materials"
+    },
+    {
+      "id": "book_enchanted",
+      "name": "Book Enchanted",
+      "file": "book_enchanted.png",
+      "category": "materials"
+    },
+    {
+      "id": "book_normal",
+      "name": "Book Normal",
+      "file": "book_normal.png",
+      "category": "materials"
+    },
+    {
+      "id": "book_portfolio",
+      "name": "Book Portfolio",
+      "file": "book_portfolio.png",
+      "category": "materials"
+    },
+    {
+      "id": "book_writable",
+      "name": "Book Writable",
+      "file": "book_writable.png",
+      "category": "materials"
+    },
+    {
+      "id": "book_written",
+      "name": "Book Written",
+      "file": "book_written.png",
+      "category": "materials"
+    },
+    {
+      "id": "bordure_indented_banner_pattern",
+      "name": "Bordure Indented Banner Pattern",
+      "file": "bordure_indented_banner_pattern.png",
+      "category": "utility"
+    },
+    {
+      "id": "bow_pulling_0",
+      "name": "Bow Pulling 0",
+      "file": "bow_pulling_0.png",
+      "category": "tools"
+    },
+    {
+      "id": "bow_pulling_1",
+      "name": "Bow Pulling 1",
+      "file": "bow_pulling_1.png",
+      "category": "tools"
+    },
+    {
+      "id": "bow_pulling_2",
+      "name": "Bow Pulling 2",
+      "file": "bow_pulling_2.png",
+      "category": "tools"
+    },
+    {
+      "id": "bow_standby",
+      "name": "Bow Standby",
+      "file": "bow_standby.png",
+      "category": "tools"
+    },
+    {
+      "id": "bowl",
+      "name": "Bowl",
+      "file": "bowl.png",
+      "category": "tools"
+    },
+    {
+      "id": "bread",
+      "name": "Bread",
+      "file": "bread.png",
+      "category": "food"
+    },
+    {
+      "id": "breeze_rod",
+      "name": "Breeze Rod",
+      "file": "breeze_rod.png",
+      "category": "materials"
+    },
+    {
+      "id": "brewer_pottery_sherd",
+      "name": "Brewer Pottery Sherd",
+      "file": "brewer_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "brewing_stand",
+      "name": "Brewing Stand",
+      "file": "brewing_stand.png",
+      "category": "materials"
+    },
+    {
+      "id": "brick",
+      "name": "Brick",
+      "file": "brick.png",
+      "category": "materials"
+    },
+    {
+      "id": "broken_elytra",
+      "name": "Broken Elytra",
+      "file": "broken_elytra.png",
+      "category": "utility"
+    },
+    {
+      "id": "brown_cushion",
+      "name": "Brown Cushion",
+      "file": "brown_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "brown_egg",
+      "name": "Brown Egg",
+      "file": "brown_egg.png",
+      "category": "food"
+    },
+    {
+      "id": "brush",
+      "name": "Brush",
+      "file": "brush.png",
+      "category": "materials"
+    },
+    {
+      "id": "bucket_axolotl",
+      "name": "Bucket Axolotl",
+      "file": "bucket_axolotl.png",
+      "category": "utility"
+    },
+    {
+      "id": "bucket_cod",
+      "name": "Bucket Cod",
+      "file": "bucket_cod.png",
+      "category": "food"
+    },
+    {
+      "id": "bucket_empty",
+      "name": "Bucket Empty",
+      "file": "bucket_empty.png",
+      "category": "utility"
+    },
+    {
+      "id": "bucket_lava",
+      "name": "Bucket Lava",
+      "file": "bucket_lava.png",
+      "category": "utility"
+    },
+    {
+      "id": "bucket_milk",
+      "name": "Bucket Milk",
+      "file": "bucket_milk.png",
+      "category": "food"
+    },
+    {
+      "id": "bucket_powder_snow",
+      "name": "Bucket Powder Snow",
+      "file": "bucket_powder_snow.png",
+      "category": "materials"
+    },
+    {
+      "id": "bucket_pufferfish",
+      "name": "Bucket Pufferfish",
+      "file": "bucket_pufferfish.png",
+      "category": "food"
+    },
+    {
+      "id": "bucket_salmon",
+      "name": "Bucket Salmon",
+      "file": "bucket_salmon.png",
+      "category": "food"
+    },
+    {
+      "id": "bucket_sulfur_cube",
+      "name": "Bucket Sulfur Cube",
+      "file": "bucket_sulfur_cube.png",
+      "category": "utility"
+    },
+    {
+      "id": "bucket_tadpole",
+      "name": "Bucket Tadpole",
+      "file": "bucket_tadpole.png",
+      "category": "utility"
+    },
+    {
+      "id": "bucket_tropical",
+      "name": "Bucket Tropical",
+      "file": "bucket_tropical.png",
+      "category": "utility"
+    },
+    {
+      "id": "bucket_water",
+      "name": "Bucket Water",
+      "file": "bucket_water.png",
+      "category": "utility"
+    },
+    {
+      "id": "bundle_black_open_back",
+      "name": "Bundle Black Open Back",
+      "file": "bundle_black_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_black_open_front",
+      "name": "Bundle Black Open Front",
+      "file": "bundle_black_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_black_open",
+      "name": "Bundle Black Open",
+      "file": "bundle_black_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_black",
+      "name": "Bundle Black",
+      "file": "bundle_black.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_blue_open_back",
+      "name": "Bundle Blue Open Back",
+      "file": "bundle_blue_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_blue_open_front",
+      "name": "Bundle Blue Open Front",
+      "file": "bundle_blue_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_blue_open",
+      "name": "Bundle Blue Open",
+      "file": "bundle_blue_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_blue",
+      "name": "Bundle Blue",
+      "file": "bundle_blue.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_brown_open_back",
+      "name": "Bundle Brown Open Back",
+      "file": "bundle_brown_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_brown_open_front",
+      "name": "Bundle Brown Open Front",
+      "file": "bundle_brown_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_brown_open",
+      "name": "Bundle Brown Open",
+      "file": "bundle_brown_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_brown",
+      "name": "Bundle Brown",
+      "file": "bundle_brown.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_cyan_open_back",
+      "name": "Bundle Cyan Open Back",
+      "file": "bundle_cyan_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_cyan_open_front",
+      "name": "Bundle Cyan Open Front",
+      "file": "bundle_cyan_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_cyan_open",
+      "name": "Bundle Cyan Open",
+      "file": "bundle_cyan_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_cyan",
+      "name": "Bundle Cyan",
+      "file": "bundle_cyan.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_gray_open_back",
+      "name": "Bundle Gray Open Back",
+      "file": "bundle_gray_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_gray_open_front",
+      "name": "Bundle Gray Open Front",
+      "file": "bundle_gray_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_gray_open",
+      "name": "Bundle Gray Open",
+      "file": "bundle_gray_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_gray",
+      "name": "Bundle Gray",
+      "file": "bundle_gray.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_green_open_back",
+      "name": "Bundle Green Open Back",
+      "file": "bundle_green_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_green_open_front",
+      "name": "Bundle Green Open Front",
+      "file": "bundle_green_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_green_open",
+      "name": "Bundle Green Open",
+      "file": "bundle_green_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_green",
+      "name": "Bundle Green",
+      "file": "bundle_green.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_light_blue_open_back",
+      "name": "Bundle Light Blue Open Back",
+      "file": "bundle_light_blue_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_light_blue_open_front",
+      "name": "Bundle Light Blue Open Front",
+      "file": "bundle_light_blue_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_light_blue_open",
+      "name": "Bundle Light Blue Open",
+      "file": "bundle_light_blue_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_light_blue",
+      "name": "Bundle Light Blue",
+      "file": "bundle_light_blue.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_light_gray_open_back",
+      "name": "Bundle Light Gray Open Back",
+      "file": "bundle_light_gray_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_light_gray_open_front",
+      "name": "Bundle Light Gray Open Front",
+      "file": "bundle_light_gray_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_light_gray_open",
+      "name": "Bundle Light Gray Open",
+      "file": "bundle_light_gray_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_light_gray",
+      "name": "Bundle Light Gray",
+      "file": "bundle_light_gray.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_lime_open_back",
+      "name": "Bundle Lime Open Back",
+      "file": "bundle_lime_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_lime_open_front",
+      "name": "Bundle Lime Open Front",
+      "file": "bundle_lime_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_lime_open",
+      "name": "Bundle Lime Open",
+      "file": "bundle_lime_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_lime",
+      "name": "Bundle Lime",
+      "file": "bundle_lime.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_magenta_open_back",
+      "name": "Bundle Magenta Open Back",
+      "file": "bundle_magenta_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_magenta_open_front",
+      "name": "Bundle Magenta Open Front",
+      "file": "bundle_magenta_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_magenta_open",
+      "name": "Bundle Magenta Open",
+      "file": "bundle_magenta_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_magenta",
+      "name": "Bundle Magenta",
+      "file": "bundle_magenta.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_open_back",
+      "name": "Bundle Open Back",
+      "file": "bundle_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_open_front",
+      "name": "Bundle Open Front",
+      "file": "bundle_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_open",
+      "name": "Bundle Open",
+      "file": "bundle_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_orange_open_back",
+      "name": "Bundle Orange Open Back",
+      "file": "bundle_orange_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_orange_open_front",
+      "name": "Bundle Orange Open Front",
+      "file": "bundle_orange_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_orange_open",
+      "name": "Bundle Orange Open",
+      "file": "bundle_orange_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_orange",
+      "name": "Bundle Orange",
+      "file": "bundle_orange.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_pink_open_back",
+      "name": "Bundle Pink Open Back",
+      "file": "bundle_pink_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_pink_open_front",
+      "name": "Bundle Pink Open Front",
+      "file": "bundle_pink_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_pink_open",
+      "name": "Bundle Pink Open",
+      "file": "bundle_pink_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_pink",
+      "name": "Bundle Pink",
+      "file": "bundle_pink.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_purple_open_back",
+      "name": "Bundle Purple Open Back",
+      "file": "bundle_purple_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_purple_open_front",
+      "name": "Bundle Purple Open Front",
+      "file": "bundle_purple_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_purple_open",
+      "name": "Bundle Purple Open",
+      "file": "bundle_purple_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_purple",
+      "name": "Bundle Purple",
+      "file": "bundle_purple.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_red_open_back",
+      "name": "Bundle Red Open Back",
+      "file": "bundle_red_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_red_open_front",
+      "name": "Bundle Red Open Front",
+      "file": "bundle_red_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_red_open",
+      "name": "Bundle Red Open",
+      "file": "bundle_red_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_red",
+      "name": "Bundle Red",
+      "file": "bundle_red.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_white_open_back",
+      "name": "Bundle White Open Back",
+      "file": "bundle_white_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_white_open_front",
+      "name": "Bundle White Open Front",
+      "file": "bundle_white_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_white_open",
+      "name": "Bundle White Open",
+      "file": "bundle_white_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_white",
+      "name": "Bundle White",
+      "file": "bundle_white.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_yellow_open_back",
+      "name": "Bundle Yellow Open Back",
+      "file": "bundle_yellow_open_back.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_yellow_open_front",
+      "name": "Bundle Yellow Open Front",
+      "file": "bundle_yellow_open_front.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_yellow_open",
+      "name": "Bundle Yellow Open",
+      "file": "bundle_yellow_open.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle_yellow",
+      "name": "Bundle Yellow",
+      "file": "bundle_yellow.png",
+      "category": "materials"
+    },
+    {
+      "id": "bundle",
+      "name": "Bundle",
+      "file": "bundle.png",
+      "category": "materials"
+    },
+    {
+      "id": "burn_pottery_sherd",
+      "name": "Burn Pottery Sherd",
+      "file": "burn_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "bush",
+      "name": "Bush",
+      "file": "bush.png",
+      "category": "materials"
+    },
+    {
+      "id": "cake",
+      "name": "Cake",
+      "file": "cake.png",
+      "category": "food"
+    },
+    {
+      "id": "campfire",
+      "name": "Campfire",
+      "file": "campfire.png",
+      "category": "materials"
+    },
+    {
+      "id": "carrot_golden",
+      "name": "Carrot Golden",
+      "file": "carrot_golden.png",
+      "category": "food"
+    },
+    {
+      "id": "carrot_on_a_stick",
+      "name": "Carrot On A Stick",
+      "file": "carrot_on_a_stick.png",
+      "category": "food"
+    },
+    {
+      "id": "carrot",
+      "name": "Carrot",
+      "file": "carrot.png",
+      "category": "food"
+    },
+    {
+      "id": "cauldron",
+      "name": "Cauldron",
+      "file": "cauldron.png",
+      "category": "materials"
+    },
+    {
+      "id": "chain",
+      "name": "Chain",
+      "file": "chain.png",
+      "category": "materials"
+    },
+    {
+      "id": "chainmail_boots",
+      "name": "Chainmail Boots",
+      "file": "chainmail_boots.png",
+      "category": "tools"
+    },
+    {
+      "id": "chainmail_chestplate",
+      "name": "Chainmail Chestplate",
+      "file": "chainmail_chestplate.png",
+      "category": "tools"
+    },
+    {
+      "id": "chainmail_helmet",
+      "name": "Chainmail Helmet",
+      "file": "chainmail_helmet.png",
+      "category": "tools"
+    },
+    {
+      "id": "chainmail_leggings",
+      "name": "Chainmail Leggings",
+      "file": "chainmail_leggings.png",
+      "category": "tools"
+    },
+    {
+      "id": "chalkboard_large",
+      "name": "Chalkboard Large",
+      "file": "chalkboard_large.png",
+      "category": "materials"
+    },
+    {
+      "id": "chalkboard_medium",
+      "name": "Chalkboard Medium",
+      "file": "chalkboard_medium.png",
+      "category": "materials"
+    },
+    {
+      "id": "chalkboard_small",
+      "name": "Chalkboard Small",
+      "file": "chalkboard_small.png",
+      "category": "materials"
+    },
+    {
+      "id": "charcoal",
+      "name": "Charcoal",
+      "file": "charcoal.png",
+      "category": "materials"
+    },
+    {
+      "id": "cherry_boat",
+      "name": "Cherry Boat",
+      "file": "cherry_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "cherry_chest_boat",
+      "name": "Cherry Chest Boat",
+      "file": "cherry_chest_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "cherry_door",
+      "name": "Cherry Door",
+      "file": "cherry_door.png",
+      "category": "utility"
+    },
+    {
+      "id": "cherry_hanging_sign",
+      "name": "Cherry Hanging Sign",
+      "file": "cherry_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "cherry_sign",
+      "name": "Cherry Sign",
+      "file": "cherry_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "chicken_cooked",
+      "name": "Chicken Cooked",
+      "file": "chicken_cooked.png",
+      "category": "food"
+    },
+    {
+      "id": "chicken_raw",
+      "name": "Chicken Raw",
+      "file": "chicken_raw.png",
+      "category": "food"
+    },
+    {
+      "id": "chorus_fruit_popped",
+      "name": "Chorus Fruit Popped",
+      "file": "chorus_fruit_popped.png",
+      "category": "materials"
+    },
+    {
+      "id": "chorus_fruit",
+      "name": "Chorus Fruit",
+      "file": "chorus_fruit.png",
+      "category": "materials"
+    },
+    {
+      "id": "clay_ball",
+      "name": "Clay Ball",
+      "file": "clay_ball.png",
+      "category": "materials"
+    },
+    {
+      "id": "clock_item",
+      "name": "Clock Item",
+      "file": "clock_item.png",
+      "category": "tools"
+    },
+    {
+      "id": "coal",
+      "name": "Coal",
+      "file": "coal.png",
+      "category": "materials"
+    },
+    {
+      "id": "coast_armor_trim_smithing_template",
+      "name": "Coast Armor Trim Smithing Template",
+      "file": "coast_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "comparator",
+      "name": "Comparator",
+      "file": "comparator.png",
+      "category": "materials"
+    },
+    {
+      "id": "compass_atlas",
+      "name": "Compass Atlas",
+      "file": "compass_atlas.png",
+      "category": "tools"
+    },
+    {
+      "id": "compass_item",
+      "name": "Compass Item",
+      "file": "compass_item.png",
+      "category": "tools"
+    },
+    {
+      "id": "cookie",
+      "name": "Cookie",
+      "file": "cookie.png",
+      "category": "food"
+    },
+    {
+      "id": "copper_axe",
+      "name": "Copper Axe",
+      "file": "copper_axe.png",
+      "category": "tools"
+    },
+    {
+      "id": "copper_boots",
+      "name": "Copper Boots",
+      "file": "copper_boots.png",
+      "category": "tools"
+    },
+    {
+      "id": "copper_chain",
+      "name": "Copper Chain",
+      "file": "copper_chain.png",
+      "category": "materials"
+    },
+    {
+      "id": "copper_chestplate",
+      "name": "Copper Chestplate",
+      "file": "copper_chestplate.png",
+      "category": "tools"
+    },
+    {
+      "id": "copper_door",
+      "name": "Copper Door",
+      "file": "copper_door.png",
+      "category": "utility"
+    },
+    {
+      "id": "copper_helmet",
+      "name": "Copper Helmet",
+      "file": "copper_helmet.png",
+      "category": "tools"
+    },
+    {
+      "id": "copper_hoe",
+      "name": "Copper Hoe",
+      "file": "copper_hoe.png",
+      "category": "tools"
+    },
+    {
+      "id": "copper_horse_armor",
+      "name": "Copper Horse Armor",
+      "file": "copper_horse_armor.png",
+      "category": "materials"
+    },
+    {
+      "id": "copper_ingot",
+      "name": "Copper Ingot",
+      "file": "copper_ingot.png",
+      "category": "materials"
+    },
+    {
+      "id": "copper_lantern",
+      "name": "Copper Lantern",
+      "file": "copper_lantern.png",
+      "category": "materials"
+    },
+    {
+      "id": "copper_leggings",
+      "name": "Copper Leggings",
+      "file": "copper_leggings.png",
+      "category": "tools"
+    },
+    {
+      "id": "copper_nugget",
+      "name": "Copper Nugget",
+      "file": "copper_nugget.png",
+      "category": "materials"
+    },
+    {
+      "id": "copper_pickaxe",
+      "name": "Copper Pickaxe",
+      "file": "copper_pickaxe.png",
+      "category": "tools"
+    },
+    {
+      "id": "copper_shovel",
+      "name": "Copper Shovel",
+      "file": "copper_shovel.png",
+      "category": "tools"
+    },
+    {
+      "id": "copper_sword",
+      "name": "Copper Sword",
+      "file": "copper_sword.png",
+      "category": "tools"
+    },
+    {
+      "id": "creeper_banner_pattern",
+      "name": "Creeper Banner Pattern",
+      "file": "creeper_banner_pattern.png",
+      "category": "utility"
+    },
+    {
+      "id": "crimson_door",
+      "name": "Crimson Door",
+      "file": "crimson_door.png",
+      "category": "utility"
+    },
+    {
+      "id": "crimson_hanging_sign",
+      "name": "Crimson Hanging Sign",
+      "file": "crimson_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "crossbow_arrow",
+      "name": "Crossbow Arrow",
+      "file": "crossbow_arrow.png",
+      "category": "tools"
+    },
+    {
+      "id": "crossbow_firework",
+      "name": "Crossbow Firework",
+      "file": "crossbow_firework.png",
+      "category": "tools"
+    },
+    {
+      "id": "crossbow_pulling_0",
+      "name": "Crossbow Pulling 0",
+      "file": "crossbow_pulling_0.png",
+      "category": "tools"
+    },
+    {
+      "id": "crossbow_pulling_1",
+      "name": "Crossbow Pulling 1",
+      "file": "crossbow_pulling_1.png",
+      "category": "tools"
+    },
+    {
+      "id": "crossbow_pulling_2",
+      "name": "Crossbow Pulling 2",
+      "file": "crossbow_pulling_2.png",
+      "category": "tools"
+    },
+    {
+      "id": "crossbow_standby",
+      "name": "Crossbow Standby",
+      "file": "crossbow_standby.png",
+      "category": "tools"
+    },
+    {
+      "id": "cyan_cushion",
+      "name": "Cyan Cushion",
+      "file": "cyan_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "danger_pottery_sherd",
+      "name": "Danger Pottery Sherd",
+      "file": "danger_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "dark_oak_chest_boat",
+      "name": "Dark Oak Chest Boat",
+      "file": "dark_oak_chest_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "dark_oak_hanging_sign",
+      "name": "Dark Oak Hanging Sign",
+      "file": "dark_oak_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "diamond_axe",
+      "name": "Diamond Axe",
+      "file": "diamond_axe.png",
+      "category": "tools"
+    },
+    {
+      "id": "diamond_boots",
+      "name": "Diamond Boots",
+      "file": "diamond_boots.png",
+      "category": "tools"
+    },
+    {
+      "id": "diamond_chestplate",
+      "name": "Diamond Chestplate",
+      "file": "diamond_chestplate.png",
+      "category": "tools"
+    },
+    {
+      "id": "diamond_helmet",
+      "name": "Diamond Helmet",
+      "file": "diamond_helmet.png",
+      "category": "tools"
+    },
+    {
+      "id": "diamond_hoe",
+      "name": "Diamond Hoe",
+      "file": "diamond_hoe.png",
+      "category": "tools"
+    },
+    {
+      "id": "diamond_horse_armor",
+      "name": "Diamond Horse Armor",
+      "file": "diamond_horse_armor.png",
+      "category": "materials"
+    },
+    {
+      "id": "diamond_leggings",
+      "name": "Diamond Leggings",
+      "file": "diamond_leggings.png",
+      "category": "tools"
+    },
+    {
+      "id": "diamond_pickaxe",
+      "name": "Diamond Pickaxe",
+      "file": "diamond_pickaxe.png",
+      "category": "tools"
+    },
+    {
+      "id": "diamond_shovel",
+      "name": "Diamond Shovel",
+      "file": "diamond_shovel.png",
+      "category": "tools"
+    },
+    {
+      "id": "diamond_sword",
+      "name": "Diamond Sword",
+      "file": "diamond_sword.png",
+      "category": "tools"
+    },
+    {
+      "id": "diamond",
+      "name": "Diamond",
+      "file": "diamond.png",
+      "category": "materials"
+    },
+    {
+      "id": "disc_fragment_5",
+      "name": "Disc Fragment 5",
+      "file": "disc_fragment_5.png",
+      "category": "materials"
+    },
+    {
+      "id": "door_acacia",
+      "name": "Door Acacia",
+      "file": "door_acacia.png",
+      "category": "utility"
+    },
+    {
+      "id": "door_birch",
+      "name": "Door Birch",
+      "file": "door_birch.png",
+      "category": "utility"
+    },
+    {
+      "id": "door_dark_oak",
+      "name": "Door Dark Oak",
+      "file": "door_dark_oak.png",
+      "category": "utility"
+    },
+    {
+      "id": "door_iron",
+      "name": "Door Iron",
+      "file": "door_iron.png",
+      "category": "utility"
+    },
+    {
+      "id": "door_jungle",
+      "name": "Door Jungle",
+      "file": "door_jungle.png",
+      "category": "utility"
+    },
+    {
+      "id": "door_spruce",
+      "name": "Door Spruce",
+      "file": "door_spruce.png",
+      "category": "utility"
+    },
+    {
+      "id": "door_wood",
+      "name": "Door Wood",
+      "file": "door_wood.png",
+      "category": "utility"
+    },
+    {
+      "id": "dragon_fireball",
+      "name": "Dragon Fireball",
+      "file": "dragon_fireball.png",
+      "category": "materials"
+    },
+    {
+      "id": "dragons_breath",
+      "name": "Dragons Breath",
+      "file": "dragons_breath.png",
+      "category": "materials"
+    },
+    {
+      "id": "dried_kelp",
+      "name": "Dried Kelp",
+      "file": "dried_kelp.png",
+      "category": "food"
+    },
+    {
+      "id": "dune_armor_trim_smithing_template",
+      "name": "Dune Armor Trim Smithing Template",
+      "file": "dune_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_black_new",
+      "name": "Dye Powder Black New",
+      "file": "dye_powder_black_new.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_black",
+      "name": "Dye Powder Black",
+      "file": "dye_powder_black.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_blue_new",
+      "name": "Dye Powder Blue New",
+      "file": "dye_powder_blue_new.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_blue",
+      "name": "Dye Powder Blue",
+      "file": "dye_powder_blue.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_brown_new",
+      "name": "Dye Powder Brown New",
+      "file": "dye_powder_brown_new.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_brown",
+      "name": "Dye Powder Brown",
+      "file": "dye_powder_brown.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_cyan",
+      "name": "Dye Powder Cyan",
+      "file": "dye_powder_cyan.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_glow",
+      "name": "Dye Powder Glow",
+      "file": "dye_powder_glow.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_gray",
+      "name": "Dye Powder Gray",
+      "file": "dye_powder_gray.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_green",
+      "name": "Dye Powder Green",
+      "file": "dye_powder_green.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_light_blue",
+      "name": "Dye Powder Light Blue",
+      "file": "dye_powder_light_blue.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_lime",
+      "name": "Dye Powder Lime",
+      "file": "dye_powder_lime.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_magenta",
+      "name": "Dye Powder Magenta",
+      "file": "dye_powder_magenta.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_orange",
+      "name": "Dye Powder Orange",
+      "file": "dye_powder_orange.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_pink",
+      "name": "Dye Powder Pink",
+      "file": "dye_powder_pink.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_purple",
+      "name": "Dye Powder Purple",
+      "file": "dye_powder_purple.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_red",
+      "name": "Dye Powder Red",
+      "file": "dye_powder_red.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_silver",
+      "name": "Dye Powder Silver",
+      "file": "dye_powder_silver.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_white_new",
+      "name": "Dye Powder White New",
+      "file": "dye_powder_white_new.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_white",
+      "name": "Dye Powder White",
+      "file": "dye_powder_white.png",
+      "category": "materials"
+    },
+    {
+      "id": "dye_powder_yellow",
+      "name": "Dye Powder Yellow",
+      "file": "dye_powder_yellow.png",
+      "category": "materials"
+    },
+    {
+      "id": "echo_shard",
+      "name": "Echo Shard",
+      "file": "echo_shard.png",
+      "category": "materials"
+    },
+    {
+      "id": "egg_agent",
+      "name": "Egg Agent",
+      "file": "egg_agent.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_bat",
+      "name": "Egg Bat",
+      "file": "egg_bat.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_bee",
+      "name": "Egg Bee",
+      "file": "egg_bee.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_blaze",
+      "name": "Egg Blaze",
+      "file": "egg_blaze.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_cat",
+      "name": "Egg Cat",
+      "file": "egg_cat.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_cave_spider",
+      "name": "Egg Cave Spider",
+      "file": "egg_cave_spider.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_chicken",
+      "name": "Egg Chicken",
+      "file": "egg_chicken.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_clownfish",
+      "name": "Egg Clownfish",
+      "file": "egg_clownfish.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_cod",
+      "name": "Egg Cod",
+      "file": "egg_cod.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_cow",
+      "name": "Egg Cow",
+      "file": "egg_cow.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_creeper",
+      "name": "Egg Creeper",
+      "file": "egg_creeper.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_dolphin",
+      "name": "Egg Dolphin",
+      "file": "egg_dolphin.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_donkey",
+      "name": "Egg Donkey",
+      "file": "egg_donkey.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_drowned",
+      "name": "Egg Drowned",
+      "file": "egg_drowned.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_elderguardian",
+      "name": "Egg Elderguardian",
+      "file": "egg_elderguardian.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_enderman",
+      "name": "Egg Enderman",
+      "file": "egg_enderman.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_endermite",
+      "name": "Egg Endermite",
+      "file": "egg_endermite.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_evoker",
+      "name": "Egg Evoker",
+      "file": "egg_evoker.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_fish",
+      "name": "Egg Fish",
+      "file": "egg_fish.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_fox",
+      "name": "Egg Fox",
+      "file": "egg_fox.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_ghast",
+      "name": "Egg Ghast",
+      "file": "egg_ghast.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_glow_squid",
+      "name": "Egg Glow Squid",
+      "file": "egg_glow_squid.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_guardian",
+      "name": "Egg Guardian",
+      "file": "egg_guardian.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_horse",
+      "name": "Egg Horse",
+      "file": "egg_horse.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_husk",
+      "name": "Egg Husk",
+      "file": "egg_husk.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_lava_slime",
+      "name": "Egg Lava Slime",
+      "file": "egg_lava_slime.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_llama",
+      "name": "Egg Llama",
+      "file": "egg_llama.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_mask",
+      "name": "Egg Mask",
+      "file": "egg_mask.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_mule",
+      "name": "Egg Mule",
+      "file": "egg_mule.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_mushroomcow",
+      "name": "Egg Mushroomcow",
+      "file": "egg_mushroomcow.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_npc",
+      "name": "Egg Npc",
+      "file": "egg_npc.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_null",
+      "name": "Egg Null",
+      "file": "egg_null.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_ocelot",
+      "name": "Egg Ocelot",
+      "file": "egg_ocelot.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_panda",
+      "name": "Egg Panda",
+      "file": "egg_panda.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_parrot",
+      "name": "Egg Parrot",
+      "file": "egg_parrot.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_phantom",
+      "name": "Egg Phantom",
+      "file": "egg_phantom.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_pig",
+      "name": "Egg Pig",
+      "file": "egg_pig.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_pigzombie",
+      "name": "Egg Pigzombie",
+      "file": "egg_pigzombie.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_pillager",
+      "name": "Egg Pillager",
+      "file": "egg_pillager.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_polarbear",
+      "name": "Egg Polarbear",
+      "file": "egg_polarbear.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_pufferfish",
+      "name": "Egg Pufferfish",
+      "file": "egg_pufferfish.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_rabbit",
+      "name": "Egg Rabbit",
+      "file": "egg_rabbit.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_ravager",
+      "name": "Egg Ravager",
+      "file": "egg_ravager.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_salmon",
+      "name": "Egg Salmon",
+      "file": "egg_salmon.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_sheep",
+      "name": "Egg Sheep",
+      "file": "egg_sheep.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_shulker",
+      "name": "Egg Shulker",
+      "file": "egg_shulker.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_silverfish",
+      "name": "Egg Silverfish",
+      "file": "egg_silverfish.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_skeleton",
+      "name": "Egg Skeleton",
+      "file": "egg_skeleton.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_skeletonhorse",
+      "name": "Egg Skeletonhorse",
+      "file": "egg_skeletonhorse.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_slime",
+      "name": "Egg Slime",
+      "file": "egg_slime.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_spider",
+      "name": "Egg Spider",
+      "file": "egg_spider.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_squid",
+      "name": "Egg Squid",
+      "file": "egg_squid.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_stray",
+      "name": "Egg Stray",
+      "file": "egg_stray.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_turtle",
+      "name": "Egg Turtle",
+      "file": "egg_turtle.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_vex",
+      "name": "Egg Vex",
+      "file": "egg_vex.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_villager",
+      "name": "Egg Villager",
+      "file": "egg_villager.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_vindicator",
+      "name": "Egg Vindicator",
+      "file": "egg_vindicator.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_wanderingtrader",
+      "name": "Egg Wanderingtrader",
+      "file": "egg_wanderingtrader.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_witch",
+      "name": "Egg Witch",
+      "file": "egg_witch.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_wither",
+      "name": "Egg Wither",
+      "file": "egg_wither.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_wolf",
+      "name": "Egg Wolf",
+      "file": "egg_wolf.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_zombie",
+      "name": "Egg Zombie",
+      "file": "egg_zombie.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_zombiehorse",
+      "name": "Egg Zombiehorse",
+      "file": "egg_zombiehorse.png",
+      "category": "food"
+    },
+    {
+      "id": "egg_zombievillager",
+      "name": "Egg Zombievillager",
+      "file": "egg_zombievillager.png",
+      "category": "food"
+    },
+    {
+      "id": "egg",
+      "name": "Egg",
+      "file": "egg.png",
+      "category": "food"
+    },
+    {
+      "id": "elytra",
+      "name": "Elytra",
+      "file": "elytra.png",
+      "category": "utility"
+    },
+    {
+      "id": "emerald",
+      "name": "Emerald",
+      "file": "emerald.png",
+      "category": "materials"
+    },
+    {
+      "id": "empty_armor_slot_boots",
+      "name": "Empty Armor Slot Boots",
+      "file": "empty_armor_slot_boots.png",
+      "category": "tools"
+    },
+    {
+      "id": "empty_armor_slot_chestplate",
+      "name": "Empty Armor Slot Chestplate",
+      "file": "empty_armor_slot_chestplate.png",
+      "category": "tools"
+    },
+    {
+      "id": "empty_armor_slot_helmet",
+      "name": "Empty Armor Slot Helmet",
+      "file": "empty_armor_slot_helmet.png",
+      "category": "tools"
+    },
+    {
+      "id": "empty_armor_slot_leggings",
+      "name": "Empty Armor Slot Leggings",
+      "file": "empty_armor_slot_leggings.png",
+      "category": "tools"
+    },
+    {
+      "id": "empty_armor_slot_shield",
+      "name": "Empty Armor Slot Shield",
+      "file": "empty_armor_slot_shield.png",
+      "category": "tools"
+    },
+    {
+      "id": "end_crystal",
+      "name": "End Crystal",
+      "file": "end_crystal.png",
+      "category": "materials"
+    },
+    {
+      "id": "ender_eye",
+      "name": "Ender Eye",
+      "file": "ender_eye.png",
+      "category": "materials"
+    },
+    {
+      "id": "ender_pearl",
+      "name": "Ender Pearl",
+      "file": "ender_pearl.png",
+      "category": "materials"
+    },
+    {
+      "id": "experience_bottle",
+      "name": "Experience Bottle",
+      "file": "experience_bottle.png",
+      "category": "materials"
+    },
+    {
+      "id": "explorer_pottery_sherd",
+      "name": "Explorer Pottery Sherd",
+      "file": "explorer_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "exposed_copper_chain",
+      "name": "Exposed Copper Chain",
+      "file": "exposed_copper_chain.png",
+      "category": "materials"
+    },
+    {
+      "id": "exposed_copper_door",
+      "name": "Exposed Copper Door",
+      "file": "exposed_copper_door.png",
+      "category": "utility"
+    },
+    {
+      "id": "exposed_copper_lantern",
+      "name": "Exposed Copper Lantern",
+      "file": "exposed_copper_lantern.png",
+      "category": "materials"
+    },
+    {
+      "id": "eye_armor_trim_smithing_template",
+      "name": "Eye Armor Trim Smithing Template",
+      "file": "eye_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "feather",
+      "name": "Feather",
+      "file": "feather.png",
+      "category": "materials"
+    },
+    {
+      "id": "field_masoned_banner_pattern",
+      "name": "Field Masoned Banner Pattern",
+      "file": "field_masoned_banner_pattern.png",
+      "category": "utility"
+    },
+    {
+      "id": "fireball",
+      "name": "Fireball",
+      "file": "fireball.png",
+      "category": "materials"
+    },
+    {
+      "id": "firefly_bush",
+      "name": "Firefly Bush",
+      "file": "firefly_bush.png",
+      "category": "materials"
+    },
+    {
+      "id": "fireworks",
+      "name": "Fireworks",
+      "file": "fireworks.png",
+      "category": "materials"
+    },
+    {
+      "id": "fish_clownfish_raw",
+      "name": "Fish Clownfish Raw",
+      "file": "fish_clownfish_raw.png",
+      "category": "food"
+    },
+    {
+      "id": "fish_cooked",
+      "name": "Fish Cooked",
+      "file": "fish_cooked.png",
+      "category": "food"
+    },
+    {
+      "id": "fish_pufferfish_raw",
+      "name": "Fish Pufferfish Raw",
+      "file": "fish_pufferfish_raw.png",
+      "category": "food"
+    },
+    {
+      "id": "fish_raw",
+      "name": "Fish Raw",
+      "file": "fish_raw.png",
+      "category": "food"
+    },
+    {
+      "id": "fish_salmon_cooked",
+      "name": "Fish Salmon Cooked",
+      "file": "fish_salmon_cooked.png",
+      "category": "food"
+    },
+    {
+      "id": "fish_salmon_raw",
+      "name": "Fish Salmon Raw",
+      "file": "fish_salmon_raw.png",
+      "category": "food"
+    },
+    {
+      "id": "fishing_rod_cast",
+      "name": "Fishing Rod Cast",
+      "file": "fishing_rod_cast.png",
+      "category": "tools"
+    },
+    {
+      "id": "fishing_rod_uncast",
+      "name": "Fishing Rod Uncast",
+      "file": "fishing_rod_uncast.png",
+      "category": "tools"
+    },
+    {
+      "id": "flint_and_steel",
+      "name": "Flint And Steel",
+      "file": "flint_and_steel.png",
+      "category": "tools"
+    },
+    {
+      "id": "flint",
+      "name": "Flint",
+      "file": "flint.png",
+      "category": "materials"
+    },
+    {
+      "id": "flow_armor_trim_smithing_template",
+      "name": "Flow Armor Trim Smithing Template",
+      "file": "flow_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "flow_banner_pattern",
+      "name": "Flow Banner Pattern",
+      "file": "flow_banner_pattern.png",
+      "category": "utility"
+    },
+    {
+      "id": "flow_pottery_sherd",
+      "name": "Flow Pottery Sherd",
+      "file": "flow_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "flower_banner_pattern",
+      "name": "Flower Banner Pattern",
+      "file": "flower_banner_pattern.png",
+      "category": "utility"
+    },
+    {
+      "id": "flower_pot",
+      "name": "Flower Pot",
+      "file": "flower_pot.png",
+      "category": "utility"
+    },
+    {
+      "id": "friend_pottery_sherd",
+      "name": "Friend Pottery Sherd",
+      "file": "friend_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "ghast_tear",
+      "name": "Ghast Tear",
+      "file": "ghast_tear.png",
+      "category": "materials"
+    },
+    {
+      "id": "globe_banner_pattern",
+      "name": "Globe Banner Pattern",
+      "file": "globe_banner_pattern.png",
+      "category": "utility"
+    },
+    {
+      "id": "glow_berries",
+      "name": "Glow Berries",
+      "file": "glow_berries.png",
+      "category": "food"
+    },
+    {
+      "id": "glow_item_frame",
+      "name": "Glow Item Frame",
+      "file": "glow_item_frame.png",
+      "category": "utility"
+    },
+    {
+      "id": "glowstone_dust",
+      "name": "Glowstone Dust",
+      "file": "glowstone_dust.png",
+      "category": "materials"
+    },
+    {
+      "id": "goat_horn",
+      "name": "Goat Horn",
+      "file": "goat_horn.png",
+      "category": "materials"
+    },
+    {
+      "id": "gold_axe",
+      "name": "Gold Axe",
+      "file": "gold_axe.png",
+      "category": "tools"
+    },
+    {
+      "id": "gold_boots",
+      "name": "Gold Boots",
+      "file": "gold_boots.png",
+      "category": "tools"
+    },
+    {
+      "id": "gold_chestplate",
+      "name": "Gold Chestplate",
+      "file": "gold_chestplate.png",
+      "category": "tools"
+    },
+    {
+      "id": "gold_helmet",
+      "name": "Gold Helmet",
+      "file": "gold_helmet.png",
+      "category": "tools"
+    },
+    {
+      "id": "gold_hoe",
+      "name": "Gold Hoe",
+      "file": "gold_hoe.png",
+      "category": "tools"
+    },
+    {
+      "id": "gold_horse_armor",
+      "name": "Gold Horse Armor",
+      "file": "gold_horse_armor.png",
+      "category": "materials"
+    },
+    {
+      "id": "gold_ingot",
+      "name": "Gold Ingot",
+      "file": "gold_ingot.png",
+      "category": "materials"
+    },
+    {
+      "id": "gold_leggings",
+      "name": "Gold Leggings",
+      "file": "gold_leggings.png",
+      "category": "tools"
+    },
+    {
+      "id": "gold_nugget",
+      "name": "Gold Nugget",
+      "file": "gold_nugget.png",
+      "category": "materials"
+    },
+    {
+      "id": "gold_pickaxe",
+      "name": "Gold Pickaxe",
+      "file": "gold_pickaxe.png",
+      "category": "tools"
+    },
+    {
+      "id": "gold_shovel",
+      "name": "Gold Shovel",
+      "file": "gold_shovel.png",
+      "category": "tools"
+    },
+    {
+      "id": "gold_sword",
+      "name": "Gold Sword",
+      "file": "gold_sword.png",
+      "category": "tools"
+    },
+    {
+      "id": "gray_cushion",
+      "name": "Gray Cushion",
+      "file": "gray_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "green_cushion",
+      "name": "Green Cushion",
+      "file": "green_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "gunpowder",
+      "name": "Gunpowder",
+      "file": "gunpowder.png",
+      "category": "materials"
+    },
+    {
+      "id": "guster_banner_pattern",
+      "name": "Guster Banner Pattern",
+      "file": "guster_banner_pattern.png",
+      "category": "utility"
+    },
+    {
+      "id": "guster_pottery_sherd",
+      "name": "Guster Pottery Sherd",
+      "file": "guster_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "hanging_roots",
+      "name": "Hanging Roots",
+      "file": "hanging_roots.png",
+      "category": "materials"
+    },
+    {
+      "id": "heart_pottery_sherd",
+      "name": "Heart Pottery Sherd",
+      "file": "heart_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "heartbreak_pottery_sherd",
+      "name": "Heartbreak Pottery Sherd",
+      "file": "heartbreak_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "heartofthesea_closed",
+      "name": "Heartofthesea Closed",
+      "file": "heartofthesea_closed.png",
+      "category": "materials"
+    },
+    {
+      "id": "hoglin_meat_cooked",
+      "name": "Hoglin Meat Cooked",
+      "file": "hoglin_meat_cooked.png",
+      "category": "materials"
+    },
+    {
+      "id": "hoglin_meat_raw",
+      "name": "Hoglin Meat Raw",
+      "file": "hoglin_meat_raw.png",
+      "category": "materials"
+    },
+    {
+      "id": "honey_bottle",
+      "name": "Honey Bottle",
+      "file": "honey_bottle.png",
+      "category": "food"
+    },
+    {
+      "id": "honeycomb",
+      "name": "Honeycomb",
+      "file": "honeycomb.png",
+      "category": "food"
+    },
+    {
+      "id": "hopper",
+      "name": "Hopper",
+      "file": "hopper.png",
+      "category": "materials"
+    },
+    {
+      "id": "host_armor_trim_smithing_template",
+      "name": "Host Armor Trim Smithing Template",
+      "file": "host_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "howl_pottery_sherd",
+      "name": "Howl Pottery Sherd",
+      "file": "howl_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "iron_axe",
+      "name": "Iron Axe",
+      "file": "iron_axe.png",
+      "category": "tools"
+    },
+    {
+      "id": "iron_boots",
+      "name": "Iron Boots",
+      "file": "iron_boots.png",
+      "category": "tools"
+    },
+    {
+      "id": "iron_chestplate",
+      "name": "Iron Chestplate",
+      "file": "iron_chestplate.png",
+      "category": "tools"
+    },
+    {
+      "id": "iron_helmet",
+      "name": "Iron Helmet",
+      "file": "iron_helmet.png",
+      "category": "tools"
+    },
+    {
+      "id": "iron_hoe",
+      "name": "Iron Hoe",
+      "file": "iron_hoe.png",
+      "category": "tools"
+    },
+    {
+      "id": "iron_horse_armor",
+      "name": "Iron Horse Armor",
+      "file": "iron_horse_armor.png",
+      "category": "materials"
+    },
+    {
+      "id": "iron_ingot",
+      "name": "Iron Ingot",
+      "file": "iron_ingot.png",
+      "category": "materials"
+    },
+    {
+      "id": "iron_leggings",
+      "name": "Iron Leggings",
+      "file": "iron_leggings.png",
+      "category": "tools"
+    },
+    {
+      "id": "iron_nugget",
+      "name": "Iron Nugget",
+      "file": "iron_nugget.png",
+      "category": "materials"
+    },
+    {
+      "id": "iron_pickaxe",
+      "name": "Iron Pickaxe",
+      "file": "iron_pickaxe.png",
+      "category": "tools"
+    },
+    {
+      "id": "iron_shovel",
+      "name": "Iron Shovel",
+      "file": "iron_shovel.png",
+      "category": "tools"
+    },
+    {
+      "id": "iron_sword",
+      "name": "Iron Sword",
+      "file": "iron_sword.png",
+      "category": "tools"
+    },
+    {
+      "id": "item_frame",
+      "name": "Item Frame",
+      "file": "item_frame.png",
+      "category": "utility"
+    },
+    {
+      "id": "jungle_chest_boat",
+      "name": "Jungle Chest Boat",
+      "file": "jungle_chest_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "jungle_hanging_sign",
+      "name": "Jungle Hanging Sign",
+      "file": "jungle_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "kelp",
+      "name": "Kelp",
+      "file": "kelp.png",
+      "category": "food"
+    },
+    {
+      "id": "lantern",
+      "name": "Lantern",
+      "file": "lantern.png",
+      "category": "materials"
+    },
+    {
+      "id": "lead",
+      "name": "Lead",
+      "file": "lead.png",
+      "category": "utility"
+    },
+    {
+      "id": "leaf_litter",
+      "name": "Leaf Litter",
+      "file": "leaf_litter.png",
+      "category": "materials"
+    },
+    {
+      "id": "leather_chestplate",
+      "name": "Leather Chestplate",
+      "file": "leather_chestplate.png",
+      "category": "tools"
+    },
+    {
+      "id": "leather",
+      "name": "Leather",
+      "file": "leather.png",
+      "category": "materials"
+    },
+    {
+      "id": "lever",
+      "name": "Lever",
+      "file": "lever.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_0",
+      "name": "Light Block 0",
+      "file": "light_block_0.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_1",
+      "name": "Light Block 1",
+      "file": "light_block_1.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_10",
+      "name": "Light Block 10",
+      "file": "light_block_10.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_11",
+      "name": "Light Block 11",
+      "file": "light_block_11.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_12",
+      "name": "Light Block 12",
+      "file": "light_block_12.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_13",
+      "name": "Light Block 13",
+      "file": "light_block_13.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_14",
+      "name": "Light Block 14",
+      "file": "light_block_14.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_15",
+      "name": "Light Block 15",
+      "file": "light_block_15.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_2",
+      "name": "Light Block 2",
+      "file": "light_block_2.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_3",
+      "name": "Light Block 3",
+      "file": "light_block_3.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_4",
+      "name": "Light Block 4",
+      "file": "light_block_4.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_5",
+      "name": "Light Block 5",
+      "file": "light_block_5.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_6",
+      "name": "Light Block 6",
+      "file": "light_block_6.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_7",
+      "name": "Light Block 7",
+      "file": "light_block_7.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_8",
+      "name": "Light Block 8",
+      "file": "light_block_8.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_block_9",
+      "name": "Light Block 9",
+      "file": "light_block_9.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_blue_cushion",
+      "name": "Light Blue Cushion",
+      "file": "light_blue_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "light_gray_cushion",
+      "name": "Light Gray Cushion",
+      "file": "light_gray_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "lime_cushion",
+      "name": "Lime Cushion",
+      "file": "lime_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "lodestonecompass_atlas",
+      "name": "Lodestonecompass Atlas",
+      "file": "lodestonecompass_atlas.png",
+      "category": "tools"
+    },
+    {
+      "id": "lodestonecompass_item",
+      "name": "Lodestonecompass Item",
+      "file": "lodestonecompass_item.png",
+      "category": "tools"
+    },
+    {
+      "id": "mace",
+      "name": "Mace",
+      "file": "mace.png",
+      "category": "materials"
+    },
+    {
+      "id": "magenta_cushion",
+      "name": "Magenta Cushion",
+      "file": "magenta_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "magma_cream",
+      "name": "Magma Cream",
+      "file": "magma_cream.png",
+      "category": "materials"
+    },
+    {
+      "id": "mangrove_boat",
+      "name": "Mangrove Boat",
+      "file": "mangrove_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "mangrove_chest_boat",
+      "name": "Mangrove Chest Boat",
+      "file": "mangrove_chest_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "mangrove_door",
+      "name": "Mangrove Door",
+      "file": "mangrove_door.png",
+      "category": "utility"
+    },
+    {
+      "id": "mangrove_hanging_sign",
+      "name": "Mangrove Hanging Sign",
+      "file": "mangrove_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "mangrove_propagule",
+      "name": "Mangrove Propagule",
+      "file": "mangrove_propagule.png",
+      "category": "materials"
+    },
+    {
+      "id": "mangrove_sign",
+      "name": "Mangrove Sign",
+      "file": "mangrove_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "map_abandoned_campsite",
+      "name": "Map Abandoned Campsite",
+      "file": "map_abandoned_campsite.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_ancient_city",
+      "name": "Map Ancient City",
+      "file": "map_ancient_city.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_desert_pyramid",
+      "name": "Map Desert Pyramid",
+      "file": "map_desert_pyramid.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_desert_village",
+      "name": "Map Desert Village",
+      "file": "map_desert_village.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_empty",
+      "name": "Map Empty",
+      "file": "map_empty.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_filled",
+      "name": "Map Filled",
+      "file": "map_filled.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_jungle_temple",
+      "name": "Map Jungle Temple",
+      "file": "map_jungle_temple.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_locked",
+      "name": "Map Locked",
+      "file": "map_locked.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_mansion",
+      "name": "Map Mansion",
+      "file": "map_mansion.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_mineshaft",
+      "name": "Map Mineshaft",
+      "file": "map_mineshaft.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_monument",
+      "name": "Map Monument",
+      "file": "map_monument.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_nautilus",
+      "name": "Map Nautilus",
+      "file": "map_nautilus.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_plains_village",
+      "name": "Map Plains Village",
+      "file": "map_plains_village.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_savanna_village",
+      "name": "Map Savanna Village",
+      "file": "map_savanna_village.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_snowy_village",
+      "name": "Map Snowy Village",
+      "file": "map_snowy_village.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_swamp_hut",
+      "name": "Map Swamp Hut",
+      "file": "map_swamp_hut.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_taiga_village",
+      "name": "Map Taiga Village",
+      "file": "map_taiga_village.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_trial_chambers",
+      "name": "Map Trial Chambers",
+      "file": "map_trial_chambers.png",
+      "category": "tools"
+    },
+    {
+      "id": "map_warm_ocean_ruins",
+      "name": "Map Warm Ocean Ruins",
+      "file": "map_warm_ocean_ruins.png",
+      "category": "tools"
+    },
+    {
+      "id": "melon_speckled",
+      "name": "Melon Speckled",
+      "file": "melon_speckled.png",
+      "category": "food"
+    },
+    {
+      "id": "melon",
+      "name": "Melon",
+      "file": "melon.png",
+      "category": "food"
+    },
+    {
+      "id": "minecart_chest",
+      "name": "Minecart Chest",
+      "file": "minecart_chest.png",
+      "category": "utility"
+    },
+    {
+      "id": "minecart_command_block",
+      "name": "Minecart Command Block",
+      "file": "minecart_command_block.png",
+      "category": "utility"
+    },
+    {
+      "id": "minecart_furnace",
+      "name": "Minecart Furnace",
+      "file": "minecart_furnace.png",
+      "category": "utility"
+    },
+    {
+      "id": "minecart_hopper",
+      "name": "Minecart Hopper",
+      "file": "minecart_hopper.png",
+      "category": "utility"
+    },
+    {
+      "id": "minecart_normal",
+      "name": "Minecart Normal",
+      "file": "minecart_normal.png",
+      "category": "utility"
+    },
+    {
+      "id": "minecart_tnt",
+      "name": "Minecart Tnt",
+      "file": "minecart_tnt.png",
+      "category": "utility"
+    },
+    {
+      "id": "miner_pottery_sherd",
+      "name": "Miner Pottery Sherd",
+      "file": "miner_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "mojang_banner_pattern",
+      "name": "Mojang Banner Pattern",
+      "file": "mojang_banner_pattern.png",
+      "category": "utility"
+    },
+    {
+      "id": "mourner_pottery_sherd",
+      "name": "Mourner Pottery Sherd",
+      "file": "mourner_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "mushroom_stew",
+      "name": "Mushroom Stew",
+      "file": "mushroom_stew.png",
+      "category": "food"
+    },
+    {
+      "id": "music_disc_bounce",
+      "name": "Music Disc Bounce",
+      "file": "music_disc_bounce.png",
+      "category": "materials"
+    },
+    {
+      "id": "music_disc_creator_music_box",
+      "name": "Music Disc Creator Music Box",
+      "file": "music_disc_creator_music_box.png",
+      "category": "materials"
+    },
+    {
+      "id": "music_disc_creator",
+      "name": "Music Disc Creator",
+      "file": "music_disc_creator.png",
+      "category": "materials"
+    },
+    {
+      "id": "music_disc_lava_chicken",
+      "name": "Music Disc Lava Chicken",
+      "file": "music_disc_lava_chicken.png",
+      "category": "food"
+    },
+    {
+      "id": "music_disc_precipice",
+      "name": "Music Disc Precipice",
+      "file": "music_disc_precipice.png",
+      "category": "materials"
+    },
+    {
+      "id": "music_disc_relic",
+      "name": "Music Disc Relic",
+      "file": "music_disc_relic.png",
+      "category": "materials"
+    },
+    {
+      "id": "music_disc_tears",
+      "name": "Music Disc Tears",
+      "file": "music_disc_tears.png",
+      "category": "materials"
+    },
+    {
+      "id": "mutton_cooked",
+      "name": "Mutton Cooked",
+      "file": "mutton_cooked.png",
+      "category": "food"
+    },
+    {
+      "id": "mutton_raw",
+      "name": "Mutton Raw",
+      "file": "mutton_raw.png",
+      "category": "food"
+    },
+    {
+      "id": "name_tag",
+      "name": "Name Tag",
+      "file": "name_tag.png",
+      "category": "materials"
+    },
+    {
+      "id": "nautilus",
+      "name": "Nautilus",
+      "file": "nautilus.png",
+      "category": "materials"
+    },
+    {
+      "id": "nether_sprouts",
+      "name": "Nether Sprouts",
+      "file": "nether_sprouts.png",
+      "category": "materials"
+    },
+    {
+      "id": "nether_star",
+      "name": "Nether Star",
+      "file": "nether_star.png",
+      "category": "materials"
+    },
+    {
+      "id": "nether_wart",
+      "name": "Nether Wart",
+      "file": "nether_wart.png",
+      "category": "materials"
+    },
+    {
+      "id": "netherbrick",
+      "name": "Netherbrick",
+      "file": "netherbrick.png",
+      "category": "materials"
+    },
+    {
+      "id": "netherite_axe",
+      "name": "Netherite Axe",
+      "file": "netherite_axe.png",
+      "category": "tools"
+    },
+    {
+      "id": "netherite_boots",
+      "name": "Netherite Boots",
+      "file": "netherite_boots.png",
+      "category": "tools"
+    },
+    {
+      "id": "netherite_chestplate",
+      "name": "Netherite Chestplate",
+      "file": "netherite_chestplate.png",
+      "category": "tools"
+    },
+    {
+      "id": "netherite_helmet",
+      "name": "Netherite Helmet",
+      "file": "netherite_helmet.png",
+      "category": "tools"
+    },
+    {
+      "id": "netherite_hoe",
+      "name": "Netherite Hoe",
+      "file": "netherite_hoe.png",
+      "category": "tools"
+    },
+    {
+      "id": "netherite_horse_armor",
+      "name": "Netherite Horse Armor",
+      "file": "netherite_horse_armor.png",
+      "category": "materials"
+    },
+    {
+      "id": "netherite_ingot",
+      "name": "Netherite Ingot",
+      "file": "netherite_ingot.png",
+      "category": "materials"
+    },
+    {
+      "id": "netherite_leggings",
+      "name": "Netherite Leggings",
+      "file": "netherite_leggings.png",
+      "category": "tools"
+    },
+    {
+      "id": "netherite_pickaxe",
+      "name": "Netherite Pickaxe",
+      "file": "netherite_pickaxe.png",
+      "category": "tools"
+    },
+    {
+      "id": "netherite_scrap",
+      "name": "Netherite Scrap",
+      "file": "netherite_scrap.png",
+      "category": "materials"
+    },
+    {
+      "id": "netherite_shovel",
+      "name": "Netherite Shovel",
+      "file": "netherite_shovel.png",
+      "category": "tools"
+    },
+    {
+      "id": "netherite_sword",
+      "name": "Netherite Sword",
+      "file": "netherite_sword.png",
+      "category": "tools"
+    },
+    {
+      "id": "netherite_upgrade_smithing_template",
+      "name": "Netherite Upgrade Smithing Template",
+      "file": "netherite_upgrade_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "oak_chest_boat",
+      "name": "Oak Chest Boat",
+      "file": "oak_chest_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "oak_hanging_sign",
+      "name": "Oak Hanging Sign",
+      "file": "oak_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "ominous_bottle",
+      "name": "Ominous Bottle",
+      "file": "ominous_bottle.png",
+      "category": "materials"
+    },
+    {
+      "id": "ominous_trial_key",
+      "name": "Ominous Trial Key",
+      "file": "ominous_trial_key.png",
+      "category": "materials"
+    },
+    {
+      "id": "orange_cushion",
+      "name": "Orange Cushion",
+      "file": "orange_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "oxidized_copper_chain",
+      "name": "Oxidized Copper Chain",
+      "file": "oxidized_copper_chain.png",
+      "category": "materials"
+    },
+    {
+      "id": "oxidized_copper_door",
+      "name": "Oxidized Copper Door",
+      "file": "oxidized_copper_door.png",
+      "category": "utility"
+    },
+    {
+      "id": "oxidized_copper_lantern",
+      "name": "Oxidized Copper Lantern",
+      "file": "oxidized_copper_lantern.png",
+      "category": "materials"
+    },
+    {
+      "id": "painting",
+      "name": "Painting",
+      "file": "painting.png",
+      "category": "materials"
+    },
+    {
+      "id": "pale_oak_boat",
+      "name": "Pale Oak Boat",
+      "file": "pale_oak_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "pale_oak_chest_boat",
+      "name": "Pale Oak Chest Boat",
+      "file": "pale_oak_chest_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "pale_oak_door",
+      "name": "Pale Oak Door",
+      "file": "pale_oak_door.png",
+      "category": "utility"
+    },
+    {
+      "id": "pale_oak_hanging_sign",
+      "name": "Pale Oak Hanging Sign",
+      "file": "pale_oak_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "pale_oak_sign",
+      "name": "Pale Oak Sign",
+      "file": "pale_oak_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "paper",
+      "name": "Paper",
+      "file": "paper.png",
+      "category": "materials"
+    },
+    {
+      "id": "phantom_membrane",
+      "name": "Phantom Membrane",
+      "file": "phantom_membrane.png",
+      "category": "materials"
+    },
+    {
+      "id": "piglin_banner_pattern",
+      "name": "Piglin Banner Pattern",
+      "file": "piglin_banner_pattern.png",
+      "category": "utility"
+    },
+    {
+      "id": "pink_cushion",
+      "name": "Pink Cushion",
+      "file": "pink_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "pink_petals",
+      "name": "Pink Petals",
+      "file": "pink_petals.png",
+      "category": "materials"
+    },
+    {
+      "id": "pitcher_pod",
+      "name": "Pitcher Pod",
+      "file": "pitcher_pod.png",
+      "category": "materials"
+    },
+    {
+      "id": "plenty_pottery_sherd",
+      "name": "Plenty Pottery Sherd",
+      "file": "plenty_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "poplar_boat",
+      "name": "Poplar Boat",
+      "file": "poplar_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "poplar_chest_boat",
+      "name": "Poplar Chest Boat",
+      "file": "poplar_chest_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "poplar_door",
+      "name": "Poplar Door",
+      "file": "poplar_door.png",
+      "category": "utility"
+    },
+    {
+      "id": "poplar_hanging_sign",
+      "name": "Poplar Hanging Sign",
+      "file": "poplar_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "poplar_sign",
+      "name": "Poplar Sign",
+      "file": "poplar_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "porkchop_cooked",
+      "name": "Porkchop Cooked",
+      "file": "porkchop_cooked.png",
+      "category": "food"
+    },
+    {
+      "id": "porkchop_raw",
+      "name": "Porkchop Raw",
+      "file": "porkchop_raw.png",
+      "category": "food"
+    },
+    {
+      "id": "potato_baked",
+      "name": "Potato Baked",
+      "file": "potato_baked.png",
+      "category": "food"
+    },
+    {
+      "id": "potato_poisonous",
+      "name": "Potato Poisonous",
+      "file": "potato_poisonous.png",
+      "category": "food"
+    },
+    {
+      "id": "potato",
+      "name": "Potato",
+      "file": "potato.png",
+      "category": "food"
+    },
+    {
+      "id": "potion_bottle_absorption",
+      "name": "Potion Bottle Absorption",
+      "file": "potion_bottle_absorption.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_blindness",
+      "name": "Potion Bottle Blindness",
+      "file": "potion_bottle_blindness.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_confusion",
+      "name": "Potion Bottle Confusion",
+      "file": "potion_bottle_confusion.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_damageBoost",
+      "name": "Potion Bottle DamageBoost",
+      "file": "potion_bottle_damageBoost.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_digSlowdown",
+      "name": "Potion Bottle DigSlowdown",
+      "file": "potion_bottle_digSlowdown.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_digSpeed",
+      "name": "Potion Bottle DigSpeed",
+      "file": "potion_bottle_digSpeed.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_drinkable",
+      "name": "Potion Bottle Drinkable",
+      "file": "potion_bottle_drinkable.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_empty",
+      "name": "Potion Bottle Empty",
+      "file": "potion_bottle_empty.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_fireResistance",
+      "name": "Potion Bottle FireResistance",
+      "file": "potion_bottle_fireResistance.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_harm",
+      "name": "Potion Bottle Harm",
+      "file": "potion_bottle_harm.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_heal",
+      "name": "Potion Bottle Heal",
+      "file": "potion_bottle_heal.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_healthBoost",
+      "name": "Potion Bottle HealthBoost",
+      "file": "potion_bottle_healthBoost.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_hunger",
+      "name": "Potion Bottle Hunger",
+      "file": "potion_bottle_hunger.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_infested",
+      "name": "Potion Bottle Infested",
+      "file": "potion_bottle_infested.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_invisibility",
+      "name": "Potion Bottle Invisibility",
+      "file": "potion_bottle_invisibility.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_jump",
+      "name": "Potion Bottle Jump",
+      "file": "potion_bottle_jump.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_levitation",
+      "name": "Potion Bottle Levitation",
+      "file": "potion_bottle_levitation.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_damageBoost",
+      "name": "Potion Bottle Lingering DamageBoost",
+      "file": "potion_bottle_lingering_damageBoost.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_empty",
+      "name": "Potion Bottle Lingering Empty",
+      "file": "potion_bottle_lingering_empty.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_fireResistance",
+      "name": "Potion Bottle Lingering FireResistance",
+      "file": "potion_bottle_lingering_fireResistance.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_harm",
+      "name": "Potion Bottle Lingering Harm",
+      "file": "potion_bottle_lingering_harm.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_heal",
+      "name": "Potion Bottle Lingering Heal",
+      "file": "potion_bottle_lingering_heal.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_infested",
+      "name": "Potion Bottle Lingering Infested",
+      "file": "potion_bottle_lingering_infested.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_invisibility",
+      "name": "Potion Bottle Lingering Invisibility",
+      "file": "potion_bottle_lingering_invisibility.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_jump",
+      "name": "Potion Bottle Lingering Jump",
+      "file": "potion_bottle_lingering_jump.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_luck",
+      "name": "Potion Bottle Lingering Luck",
+      "file": "potion_bottle_lingering_luck.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_moveSlowdown",
+      "name": "Potion Bottle Lingering MoveSlowdown",
+      "file": "potion_bottle_lingering_moveSlowdown.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_moveSpeed",
+      "name": "Potion Bottle Lingering MoveSpeed",
+      "file": "potion_bottle_lingering_moveSpeed.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_nightVision",
+      "name": "Potion Bottle Lingering NightVision",
+      "file": "potion_bottle_lingering_nightVision.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_oozing",
+      "name": "Potion Bottle Lingering Oozing",
+      "file": "potion_bottle_lingering_oozing.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_poison",
+      "name": "Potion Bottle Lingering Poison",
+      "file": "potion_bottle_lingering_poison.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_regeneration",
+      "name": "Potion Bottle Lingering Regeneration",
+      "file": "potion_bottle_lingering_regeneration.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_slowFall",
+      "name": "Potion Bottle Lingering SlowFall",
+      "file": "potion_bottle_lingering_slowFall.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_turtleMaster",
+      "name": "Potion Bottle Lingering TurtleMaster",
+      "file": "potion_bottle_lingering_turtleMaster.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_waterBreathing",
+      "name": "Potion Bottle Lingering WaterBreathing",
+      "file": "potion_bottle_lingering_waterBreathing.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_weakness",
+      "name": "Potion Bottle Lingering Weakness",
+      "file": "potion_bottle_lingering_weakness.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_weaving",
+      "name": "Potion Bottle Lingering Weaving",
+      "file": "potion_bottle_lingering_weaving.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_windCharged",
+      "name": "Potion Bottle Lingering WindCharged",
+      "file": "potion_bottle_lingering_windCharged.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering_wither",
+      "name": "Potion Bottle Lingering Wither",
+      "file": "potion_bottle_lingering_wither.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_lingering",
+      "name": "Potion Bottle Lingering",
+      "file": "potion_bottle_lingering.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_moveSlowdown",
+      "name": "Potion Bottle MoveSlowdown",
+      "file": "potion_bottle_moveSlowdown.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_moveSpeed",
+      "name": "Potion Bottle MoveSpeed",
+      "file": "potion_bottle_moveSpeed.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_nightVision",
+      "name": "Potion Bottle NightVision",
+      "file": "potion_bottle_nightVision.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_oozing",
+      "name": "Potion Bottle Oozing",
+      "file": "potion_bottle_oozing.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_poison",
+      "name": "Potion Bottle Poison",
+      "file": "potion_bottle_poison.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_regeneration",
+      "name": "Potion Bottle Regeneration",
+      "file": "potion_bottle_regeneration.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_resistance",
+      "name": "Potion Bottle Resistance",
+      "file": "potion_bottle_resistance.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_saturation",
+      "name": "Potion Bottle Saturation",
+      "file": "potion_bottle_saturation.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_slowFall",
+      "name": "Potion Bottle SlowFall",
+      "file": "potion_bottle_slowFall.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_absorption",
+      "name": "Potion Bottle Splash Absorption",
+      "file": "potion_bottle_splash_absorption.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_blindness",
+      "name": "Potion Bottle Splash Blindness",
+      "file": "potion_bottle_splash_blindness.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_confusion",
+      "name": "Potion Bottle Splash Confusion",
+      "file": "potion_bottle_splash_confusion.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_damageBoost",
+      "name": "Potion Bottle Splash DamageBoost",
+      "file": "potion_bottle_splash_damageBoost.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_digSlowdown",
+      "name": "Potion Bottle Splash DigSlowdown",
+      "file": "potion_bottle_splash_digSlowdown.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_digSpeed",
+      "name": "Potion Bottle Splash DigSpeed",
+      "file": "potion_bottle_splash_digSpeed.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_fireResistance",
+      "name": "Potion Bottle Splash FireResistance",
+      "file": "potion_bottle_splash_fireResistance.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_harm",
+      "name": "Potion Bottle Splash Harm",
+      "file": "potion_bottle_splash_harm.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_heal",
+      "name": "Potion Bottle Splash Heal",
+      "file": "potion_bottle_splash_heal.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_healthBoost",
+      "name": "Potion Bottle Splash HealthBoost",
+      "file": "potion_bottle_splash_healthBoost.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_hunger",
+      "name": "Potion Bottle Splash Hunger",
+      "file": "potion_bottle_splash_hunger.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_infested",
+      "name": "Potion Bottle Splash Infested",
+      "file": "potion_bottle_splash_infested.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_invisibility",
+      "name": "Potion Bottle Splash Invisibility",
+      "file": "potion_bottle_splash_invisibility.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_jump",
+      "name": "Potion Bottle Splash Jump",
+      "file": "potion_bottle_splash_jump.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_levitation",
+      "name": "Potion Bottle Splash Levitation",
+      "file": "potion_bottle_splash_levitation.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_moveSlowdown",
+      "name": "Potion Bottle Splash MoveSlowdown",
+      "file": "potion_bottle_splash_moveSlowdown.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_moveSpeed",
+      "name": "Potion Bottle Splash MoveSpeed",
+      "file": "potion_bottle_splash_moveSpeed.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_nightVision",
+      "name": "Potion Bottle Splash NightVision",
+      "file": "potion_bottle_splash_nightVision.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_oozing",
+      "name": "Potion Bottle Splash Oozing",
+      "file": "potion_bottle_splash_oozing.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_poison",
+      "name": "Potion Bottle Splash Poison",
+      "file": "potion_bottle_splash_poison.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_regeneration",
+      "name": "Potion Bottle Splash Regeneration",
+      "file": "potion_bottle_splash_regeneration.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_resistance",
+      "name": "Potion Bottle Splash Resistance",
+      "file": "potion_bottle_splash_resistance.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_saturation",
+      "name": "Potion Bottle Splash Saturation",
+      "file": "potion_bottle_splash_saturation.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_slowFall",
+      "name": "Potion Bottle Splash SlowFall",
+      "file": "potion_bottle_splash_slowFall.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_turtleMaster",
+      "name": "Potion Bottle Splash TurtleMaster",
+      "file": "potion_bottle_splash_turtleMaster.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_waterBreathing",
+      "name": "Potion Bottle Splash WaterBreathing",
+      "file": "potion_bottle_splash_waterBreathing.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_weakness",
+      "name": "Potion Bottle Splash Weakness",
+      "file": "potion_bottle_splash_weakness.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_weaving",
+      "name": "Potion Bottle Splash Weaving",
+      "file": "potion_bottle_splash_weaving.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_windCharged",
+      "name": "Potion Bottle Splash WindCharged",
+      "file": "potion_bottle_splash_windCharged.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash_wither",
+      "name": "Potion Bottle Splash Wither",
+      "file": "potion_bottle_splash_wither.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_splash",
+      "name": "Potion Bottle Splash",
+      "file": "potion_bottle_splash.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_turtleMaster",
+      "name": "Potion Bottle TurtleMaster",
+      "file": "potion_bottle_turtleMaster.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_waterBreathing",
+      "name": "Potion Bottle WaterBreathing",
+      "file": "potion_bottle_waterBreathing.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_weakness",
+      "name": "Potion Bottle Weakness",
+      "file": "potion_bottle_weakness.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_weaving",
+      "name": "Potion Bottle Weaving",
+      "file": "potion_bottle_weaving.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_windCharged",
+      "name": "Potion Bottle WindCharged",
+      "file": "potion_bottle_windCharged.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_bottle_wither",
+      "name": "Potion Bottle Wither",
+      "file": "potion_bottle_wither.png",
+      "category": "materials"
+    },
+    {
+      "id": "potion_overlay",
+      "name": "Potion Overlay",
+      "file": "potion_overlay.png",
+      "category": "materials"
+    },
+    {
+      "id": "prismarine_crystals",
+      "name": "Prismarine Crystals",
+      "file": "prismarine_crystals.png",
+      "category": "materials"
+    },
+    {
+      "id": "prismarine_shard",
+      "name": "Prismarine Shard",
+      "file": "prismarine_shard.png",
+      "category": "materials"
+    },
+    {
+      "id": "prize_pottery_sherd",
+      "name": "Prize Pottery Sherd",
+      "file": "prize_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "pumpkin_pie",
+      "name": "Pumpkin Pie",
+      "file": "pumpkin_pie.png",
+      "category": "food"
+    },
+    {
+      "id": "purple_cushion",
+      "name": "Purple Cushion",
+      "file": "purple_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "quartz",
+      "name": "Quartz",
+      "file": "quartz.png",
+      "category": "materials"
+    },
+    {
+      "id": "quiver",
+      "name": "Quiver",
+      "file": "quiver.png",
+      "category": "materials"
+    },
+    {
+      "id": "rabbit_cooked",
+      "name": "Rabbit Cooked",
+      "file": "rabbit_cooked.png",
+      "category": "food"
+    },
+    {
+      "id": "rabbit_foot",
+      "name": "Rabbit Foot",
+      "file": "rabbit_foot.png",
+      "category": "food"
+    },
+    {
+      "id": "rabbit_hide",
+      "name": "Rabbit Hide",
+      "file": "rabbit_hide.png",
+      "category": "food"
+    },
+    {
+      "id": "rabbit_raw",
+      "name": "Rabbit Raw",
+      "file": "rabbit_raw.png",
+      "category": "food"
+    },
+    {
+      "id": "rabbit_stew",
+      "name": "Rabbit Stew",
+      "file": "rabbit_stew.png",
+      "category": "food"
+    },
+    {
+      "id": "raiser_armor_trim_smithing_template",
+      "name": "Raiser Armor Trim Smithing Template",
+      "file": "raiser_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "raw_copper",
+      "name": "Raw Copper",
+      "file": "raw_copper.png",
+      "category": "materials"
+    },
+    {
+      "id": "raw_gold",
+      "name": "Raw Gold",
+      "file": "raw_gold.png",
+      "category": "materials"
+    },
+    {
+      "id": "raw_iron",
+      "name": "Raw Iron",
+      "file": "raw_iron.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_11",
+      "name": "Record 11",
+      "file": "record_11.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_13",
+      "name": "Record 13",
+      "file": "record_13.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_5",
+      "name": "Record 5",
+      "file": "record_5.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_blocks",
+      "name": "Record Blocks",
+      "file": "record_blocks.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_cat",
+      "name": "Record Cat",
+      "file": "record_cat.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_chirp",
+      "name": "Record Chirp",
+      "file": "record_chirp.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_far",
+      "name": "Record Far",
+      "file": "record_far.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_mall",
+      "name": "Record Mall",
+      "file": "record_mall.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_mellohi",
+      "name": "Record Mellohi",
+      "file": "record_mellohi.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_otherside",
+      "name": "Record Otherside",
+      "file": "record_otherside.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_pigstep",
+      "name": "Record Pigstep",
+      "file": "record_pigstep.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_stal",
+      "name": "Record Stal",
+      "file": "record_stal.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_strad",
+      "name": "Record Strad",
+      "file": "record_strad.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_wait",
+      "name": "Record Wait",
+      "file": "record_wait.png",
+      "category": "materials"
+    },
+    {
+      "id": "record_ward",
+      "name": "Record Ward",
+      "file": "record_ward.png",
+      "category": "materials"
+    },
+    {
+      "id": "recovery_compass_atlas",
+      "name": "Recovery Compass Atlas",
+      "file": "recovery_compass_atlas.png",
+      "category": "tools"
+    },
+    {
+      "id": "recovery_compass_item",
+      "name": "Recovery Compass Item",
+      "file": "recovery_compass_item.png",
+      "category": "tools"
+    },
+    {
+      "id": "red_cushion",
+      "name": "Red Cushion",
+      "file": "red_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "redstone_dust",
+      "name": "Redstone Dust",
+      "file": "redstone_dust.png",
+      "category": "materials"
+    },
+    {
+      "id": "reeds",
+      "name": "Reeds",
+      "file": "reeds.png",
+      "category": "materials"
+    },
+    {
+      "id": "repeater",
+      "name": "Repeater",
+      "file": "repeater.png",
+      "category": "materials"
+    },
+    {
+      "id": "resin_brick",
+      "name": "Resin Brick",
+      "file": "resin_brick.png",
+      "category": "materials"
+    },
+    {
+      "id": "resin_clump",
+      "name": "Resin Clump",
+      "file": "resin_clump.png",
+      "category": "materials"
+    },
+    {
+      "id": "rib_armor_trim_smithing_template",
+      "name": "Rib Armor Trim Smithing Template",
+      "file": "rib_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "rotten_flesh",
+      "name": "Rotten Flesh",
+      "file": "rotten_flesh.png",
+      "category": "materials"
+    },
+    {
+      "id": "ruby",
+      "name": "Ruby",
+      "file": "ruby.png",
+      "category": "materials"
+    },
+    {
+      "id": "saddle",
+      "name": "Saddle",
+      "file": "saddle.png",
+      "category": "utility"
+    },
+    {
+      "id": "scrape_pottery_sherd",
+      "name": "Scrape Pottery Sherd",
+      "file": "scrape_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "sea_pickle",
+      "name": "Sea Pickle",
+      "file": "sea_pickle.png",
+      "category": "materials"
+    },
+    {
+      "id": "seeds_beetroot",
+      "name": "Seeds Beetroot",
+      "file": "seeds_beetroot.png",
+      "category": "food"
+    },
+    {
+      "id": "seeds_melon",
+      "name": "Seeds Melon",
+      "file": "seeds_melon.png",
+      "category": "food"
+    },
+    {
+      "id": "seeds_pumpkin",
+      "name": "Seeds Pumpkin",
+      "file": "seeds_pumpkin.png",
+      "category": "materials"
+    },
+    {
+      "id": "seeds_wheat",
+      "name": "Seeds Wheat",
+      "file": "seeds_wheat.png",
+      "category": "materials"
+    },
+    {
+      "id": "sentry_armor_trim_smithing_template",
+      "name": "Sentry Armor Trim Smithing Template",
+      "file": "sentry_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "shaper_armor_trim_smithing_template",
+      "name": "Shaper Armor Trim Smithing Template",
+      "file": "shaper_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "sheaf_pottery_sherd",
+      "name": "Sheaf Pottery Sherd",
+      "file": "sheaf_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "shears",
+      "name": "Shears",
+      "file": "shears.png",
+      "category": "tools"
+    },
+    {
+      "id": "shelter_pottery_sherd",
+      "name": "Shelter Pottery Sherd",
+      "file": "shelter_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "shulker_shell",
+      "name": "Shulker Shell",
+      "file": "shulker_shell.png",
+      "category": "materials"
+    },
+    {
+      "id": "sign_acacia",
+      "name": "Sign Acacia",
+      "file": "sign_acacia.png",
+      "category": "utility"
+    },
+    {
+      "id": "sign_birch",
+      "name": "Sign Birch",
+      "file": "sign_birch.png",
+      "category": "utility"
+    },
+    {
+      "id": "sign_crimson",
+      "name": "Sign Crimson",
+      "file": "sign_crimson.png",
+      "category": "utility"
+    },
+    {
+      "id": "sign_darkoak",
+      "name": "Sign Darkoak",
+      "file": "sign_darkoak.png",
+      "category": "utility"
+    },
+    {
+      "id": "sign_jungle",
+      "name": "Sign Jungle",
+      "file": "sign_jungle.png",
+      "category": "utility"
+    },
+    {
+      "id": "sign_spruce",
+      "name": "Sign Spruce",
+      "file": "sign_spruce.png",
+      "category": "utility"
+    },
+    {
+      "id": "sign_warped",
+      "name": "Sign Warped",
+      "file": "sign_warped.png",
+      "category": "utility"
+    },
+    {
+      "id": "sign",
+      "name": "Sign",
+      "file": "sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "silence_armor_trim_smithing_template",
+      "name": "Silence Armor Trim Smithing Template",
+      "file": "silence_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "skull_banner_pattern",
+      "name": "Skull Banner Pattern",
+      "file": "skull_banner_pattern.png",
+      "category": "utility"
+    },
+    {
+      "id": "skull_pottery_sherd",
+      "name": "Skull Pottery Sherd",
+      "file": "skull_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "slimeball",
+      "name": "Slimeball",
+      "file": "slimeball.png",
+      "category": "materials"
+    },
+    {
+      "id": "sniffer_egg",
+      "name": "Sniffer Egg",
+      "file": "sniffer_egg.png",
+      "category": "food"
+    },
+    {
+      "id": "snort_pottery_sherd",
+      "name": "Snort Pottery Sherd",
+      "file": "snort_pottery_sherd.png",
+      "category": "materials"
+    },
+    {
+      "id": "snout_armor_trim_smithing_template",
+      "name": "Snout Armor Trim Smithing Template",
+      "file": "snout_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "snowball",
+      "name": "Snowball",
+      "file": "snowball.png",
+      "category": "materials"
+    },
+    {
+      "id": "soul_campfire",
+      "name": "Soul Campfire",
+      "file": "soul_campfire.png",
+      "category": "materials"
+    },
+    {
+      "id": "soul_lantern",
+      "name": "Soul Lantern",
+      "file": "soul_lantern.png",
+      "category": "materials"
+    },
+    {
+      "id": "spawn_egg_overlay",
+      "name": "Spawn Egg Overlay",
+      "file": "spawn_egg_overlay.png",
+      "category": "food"
+    },
+    {
+      "id": "spawn_egg_sulfur_cube",
+      "name": "Spawn Egg Sulfur Cube",
+      "file": "spawn_egg_sulfur_cube.png",
+      "category": "food"
+    },
+    {
+      "id": "spawn_egg",
+      "name": "Spawn Egg",
+      "file": "spawn_egg.png",
+      "category": "food"
+    },
+    {
+      "id": "spider_eye_fermented",
+      "name": "Spider Eye Fermented",
+      "file": "spider_eye_fermented.png",
+      "category": "materials"
+    },
+    {
+      "id": "spider_eye",
+      "name": "Spider Eye",
+      "file": "spider_eye.png",
+      "category": "materials"
+    },
+    {
+      "id": "spire_armor_trim_smithing_template",
+      "name": "Spire Armor Trim Smithing Template",
+      "file": "spire_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "spruce_chest_boat",
+      "name": "Spruce Chest Boat",
+      "file": "spruce_chest_boat.png",
+      "category": "utility"
+    },
+    {
+      "id": "spruce_hanging_sign",
+      "name": "Spruce Hanging Sign",
+      "file": "spruce_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "spyglass",
+      "name": "Spyglass",
+      "file": "spyglass.png",
+      "category": "tools"
+    },
+    {
+      "id": "stick",
+      "name": "Stick",
+      "file": "stick.png",
+      "category": "materials"
+    },
+    {
+      "id": "stone_axe",
+      "name": "Stone Axe",
+      "file": "stone_axe.png",
+      "category": "tools"
+    },
+    {
+      "id": "stone_hoe",
+      "name": "Stone Hoe",
+      "file": "stone_hoe.png",
+      "category": "tools"
+    },
+    {
+      "id": "stone_pickaxe",
+      "name": "Stone Pickaxe",
+      "file": "stone_pickaxe.png",
+      "category": "tools"
+    },
+    {
+      "id": "stone_shovel",
+      "name": "Stone Shovel",
+      "file": "stone_shovel.png",
+      "category": "tools"
+    },
+    {
+      "id": "stone_sword",
+      "name": "Stone Sword",
+      "file": "stone_sword.png",
+      "category": "tools"
+    },
+    {
+      "id": "straw_bed",
+      "name": "Straw Bed",
+      "file": "straw_bed.png",
+      "category": "utility"
+    },
+    {
+      "id": "string",
+      "name": "String",
+      "file": "string.png",
+      "category": "materials"
+    },
+    {
+      "id": "sugar",
+      "name": "Sugar",
+      "file": "sugar.png",
+      "category": "materials"
+    },
+    {
+      "id": "suspicious_stew",
+      "name": "Suspicious Stew",
+      "file": "suspicious_stew.png",
+      "category": "food"
+    },
+    {
+      "id": "sweet_berries",
+      "name": "Sweet Berries",
+      "file": "sweet_berries.png",
+      "category": "food"
+    },
+    {
+      "id": "tide_armor_trim_smithing_template",
+      "name": "Tide Armor Trim Smithing Template",
+      "file": "tide_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_base",
+      "name": "Tipped Arrow Base",
+      "file": "tipped_arrow_base.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_fireres",
+      "name": "Tipped Arrow Fireres",
+      "file": "tipped_arrow_fireres.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_harm",
+      "name": "Tipped Arrow Harm",
+      "file": "tipped_arrow_harm.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_head",
+      "name": "Tipped Arrow Head",
+      "file": "tipped_arrow_head.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_healing",
+      "name": "Tipped Arrow Healing",
+      "file": "tipped_arrow_healing.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_infested",
+      "name": "Tipped Arrow Infested",
+      "file": "tipped_arrow_infested.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_invisibility",
+      "name": "Tipped Arrow Invisibility",
+      "file": "tipped_arrow_invisibility.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_leaping",
+      "name": "Tipped Arrow Leaping",
+      "file": "tipped_arrow_leaping.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_luck",
+      "name": "Tipped Arrow Luck",
+      "file": "tipped_arrow_luck.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_nightvision",
+      "name": "Tipped Arrow Nightvision",
+      "file": "tipped_arrow_nightvision.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_oozing",
+      "name": "Tipped Arrow Oozing",
+      "file": "tipped_arrow_oozing.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_poison",
+      "name": "Tipped Arrow Poison",
+      "file": "tipped_arrow_poison.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_regen",
+      "name": "Tipped Arrow Regen",
+      "file": "tipped_arrow_regen.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_slow",
+      "name": "Tipped Arrow Slow",
+      "file": "tipped_arrow_slow.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_slowfalling",
+      "name": "Tipped Arrow Slowfalling",
+      "file": "tipped_arrow_slowfalling.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_strength",
+      "name": "Tipped Arrow Strength",
+      "file": "tipped_arrow_strength.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_swift",
+      "name": "Tipped Arrow Swift",
+      "file": "tipped_arrow_swift.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_turtlemaster",
+      "name": "Tipped Arrow Turtlemaster",
+      "file": "tipped_arrow_turtlemaster.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_waterbreathing",
+      "name": "Tipped Arrow Waterbreathing",
+      "file": "tipped_arrow_waterbreathing.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_weakness",
+      "name": "Tipped Arrow Weakness",
+      "file": "tipped_arrow_weakness.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_weaving",
+      "name": "Tipped Arrow Weaving",
+      "file": "tipped_arrow_weaving.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_windCharged",
+      "name": "Tipped Arrow WindCharged",
+      "file": "tipped_arrow_windCharged.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow_wither",
+      "name": "Tipped Arrow Wither",
+      "file": "tipped_arrow_wither.png",
+      "category": "materials"
+    },
+    {
+      "id": "tipped_arrow",
+      "name": "Tipped Arrow",
+      "file": "tipped_arrow.png",
+      "category": "materials"
+    },
+    {
+      "id": "torchflower_seeds",
+      "name": "Torchflower Seeds",
+      "file": "torchflower_seeds.png",
+      "category": "materials"
+    },
+    {
+      "id": "totem",
+      "name": "Totem",
+      "file": "totem.png",
+      "category": "utility"
+    },
+    {
+      "id": "trial_key",
+      "name": "Trial Key",
+      "file": "trial_key.png",
+      "category": "materials"
+    },
+    {
+      "id": "trident",
+      "name": "Trident",
+      "file": "trident.png",
+      "category": "tools"
+    },
+    {
+      "id": "turtle_egg",
+      "name": "Turtle Egg",
+      "file": "turtle_egg.png",
+      "category": "food"
+    },
+    {
+      "id": "turtle_helmet",
+      "name": "Turtle Helmet",
+      "file": "turtle_helmet.png",
+      "category": "tools"
+    },
+    {
+      "id": "turtle_shell_piece",
+      "name": "Turtle Shell Piece",
+      "file": "turtle_shell_piece.png",
+      "category": "food"
+    },
+    {
+      "id": "vex_armor_trim_smithing_template",
+      "name": "Vex Armor Trim Smithing Template",
+      "file": "vex_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "villagebell",
+      "name": "Villagebell",
+      "file": "villagebell.png",
+      "category": "materials"
+    },
+    {
+      "id": "ward_armor_trim_smithing_template",
+      "name": "Ward Armor Trim Smithing Template",
+      "file": "ward_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "warped_door",
+      "name": "Warped Door",
+      "file": "warped_door.png",
+      "category": "utility"
+    },
+    {
+      "id": "warped_fungus_on_a_stick",
+      "name": "Warped Fungus On A Stick",
+      "file": "warped_fungus_on_a_stick.png",
+      "category": "materials"
+    },
+    {
+      "id": "warped_hanging_sign",
+      "name": "Warped Hanging Sign",
+      "file": "warped_hanging_sign.png",
+      "category": "utility"
+    },
+    {
+      "id": "watch_atlas",
+      "name": "Watch Atlas",
+      "file": "watch_atlas.png",
+      "category": "materials"
+    },
+    {
+      "id": "wayfinder_armor_trim_smithing_template",
+      "name": "Wayfinder Armor Trim Smithing Template",
+      "file": "wayfinder_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "weathered_copper_chain",
+      "name": "Weathered Copper Chain",
+      "file": "weathered_copper_chain.png",
+      "category": "materials"
+    },
+    {
+      "id": "weathered_copper_door",
+      "name": "Weathered Copper Door",
+      "file": "weathered_copper_door.png",
+      "category": "utility"
+    },
+    {
+      "id": "weathered_copper_lantern",
+      "name": "Weathered Copper Lantern",
+      "file": "weathered_copper_lantern.png",
+      "category": "materials"
+    },
+    {
+      "id": "wheat",
+      "name": "Wheat",
+      "file": "wheat.png",
+      "category": "materials"
+    },
+    {
+      "id": "white_cushion",
+      "name": "White Cushion",
+      "file": "white_cushion.png",
+      "category": "materials"
+    },
+    {
+      "id": "wild_armor_trim_smithing_template",
+      "name": "Wild Armor Trim Smithing Template",
+      "file": "wild_armor_trim_smithing_template.png",
+      "category": "materials"
+    },
+    {
+      "id": "wildflowers",
+      "name": "Wildflowers",
+      "file": "wildflowers.png",
+      "category": "materials"
+    },
+    {
+      "id": "wind_charge",
+      "name": "Wind Charge",
+      "file": "wind_charge.png",
+      "category": "materials"
+    },
+    {
+      "id": "wolf_armor",
+      "name": "Wolf Armor",
+      "file": "wolf_armor.png",
+      "category": "materials"
+    },
+    {
+      "id": "wood_axe",
+      "name": "Wood Axe",
+      "file": "wood_axe.png",
+      "category": "tools"
+    },
+    {
+      "id": "wood_hoe",
+      "name": "Wood Hoe",
+      "file": "wood_hoe.png",
+      "category": "tools"
+    },
+    {
+      "id": "wood_pickaxe",
+      "name": "Wood Pickaxe",
+      "file": "wood_pickaxe.png",
+      "category": "tools"
+    },
+    {
+      "id": "wood_shovel",
+      "name": "Wood Shovel",
+      "file": "wood_shovel.png",
+      "category": "tools"
+    },
+    {
+      "id": "wood_sword",
+      "name": "Wood Sword",
+      "file": "wood_sword.png",
+      "category": "tools"
+    },
+    {
+      "id": "yellow_cushion",
+      "name": "Yellow Cushion",
+      "file": "yellow_cushion.png",
+      "category": "materials"
+    }
+  ]
+}
