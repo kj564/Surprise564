@@ -153,7 +153,6 @@ function intersectRayBox(
     let sign = -Math.sign(axis.direction);
     if (near > far) {
       [near, far] = [far, near];
-      sign = Math.sign(axis.direction);
     }
     if (near > enter) {
       enter = near;
