@@ -27,6 +27,15 @@
   #crosshair::before { left: 50%; top: 0; width: 2px; height: 100%; transform: translateX(-50%); }
   #crosshair::after { top: 50%; left: 0; height: 2px; width: 100%; transform: translateY(-50%); }
 
+  /* Night vignette: subtle darkening of screen edges after sunset.
+     Opacity is driven by the day/night factor in animate(). z-index 4 sits
+     above the 3D canvas but below the HUD/hotbar (5) and overlays (10). */
+  #vignette {
+    position: fixed; inset: 0; z-index: 4; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,8,0.6) 100%);
+    opacity: 0; transition: opacity 0.4s linear;
+  }
+
   /* Hotbar */
   #hotbar {
     position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
@@ -293,14 +302,10 @@
   }
   #overlay .settings-panel {
     background-color: rgba(16,16,16,.95);
-    /* background_panel is a 16x16 source tile: preserve its pixel scale instead of stretching it. */
     background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 16px 16px;
-    background-repeat: repeat;
-    image-rendering: pixelated;
-    border: 3px solid transparent;
-    /* background_with_border.json defines a 1px nine-slice on a 3x3 source. */
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;
+    background-size: 100% 100%;
+    border: 4px solid transparent;
+    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
     border-radius: 0;
   }
   #overlay .settings-panel select {
@@ -320,14 +325,10 @@
     padding: 12px 14px 8px;
     color: #262626;
     background-color: #c6c6c6;
-    /* Preserve the original 16x16 Resource Pack tile scale in the menu panel. */
     background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 16px 16px;
-    background-repeat: repeat;
-    image-rendering: pixelated;
-    border: 3px solid transparent;
-    /* The source border is a 3x3 texture with a 1px nine-slice. */
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;
+    background-size: 100% 100%;
+    border: 4px solid transparent;
+    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
     text-align: left;
     letter-spacing: 0;
     text-shadow: 1px 1px rgba(255,255,255,.55);
@@ -656,7 +657,7 @@
   /* Inventory category tabs follow the vanilla Bedrock panel/button treatment. */
   #inventory .inv-tabs {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
     width: min(100%, 620px);
     padding: 8px 10px 0;
@@ -693,8 +694,6 @@
     background-image: url('./VoxelCraft/textures/ui/button_borderless_darkpressed.png');
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.24);
   }
-  #inventory .inv-slot img { width: 80%; height: 80%; object-fit: contain; image-rendering: pixelated; pointer-events: none; }
-  #inventory .inv-grid .inv-hint { grid-column: 1 / -1; }
   #inventory .inv-grid {
     border-top: 0;
     border-top-left-radius: 0;
@@ -790,12 +789,7 @@
     padding: 8px 10px 0;
     border-image: none;
     border: 0;
-    /* Tile the original 16x16 panel texture; do not stretch the pixel pattern. */
-    background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 16px 16px;
-    background-repeat: repeat;
-    background-position: center;
-    image-rendering: pixelated;
+    background: url('./VoxelCraft/textures/ui/background_panel.png') center / 100% 100% repeat;
   }
   #inventory .inv-tabs button {
     min-height: 36px;
@@ -865,216 +859,11 @@
     cursor: url('./VoxelCraft/textures/ui/cursor_pc.png') 4 4, pointer;
   }
 
-
-  /* === UI pass: consistent Bedrock-style layout, readable hierarchy, responsive sizing === */
-  #overlay {
-    align-items: stretch;
-    justify-content: center;
-    padding: 18px clamp(12px, 3vw, 40px);
-    background-position: center;
-    background-size: cover;
-    overflow: auto;
-  }
-  #overlay .menu-wrap {
-    flex: 0 0 auto;
-    width: min(370px, calc(100vw - 28px));
-    margin: auto auto auto 2vw;
-    padding: 22px 20px 14px;
-    gap: 0;
-    background-color: rgba(20, 20, 20, .86);
-    /* Preserve the original 16x16 Resource Pack tile scale in the menu panel. */
-    background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 16px 16px;
-    background-repeat: repeat;
-    image-rendering: pixelated;
-    border: 3px solid transparent;
-    /* The source border is a 3x3 texture with a 1px nine-slice. */
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;
-    box-shadow: 0 8px 0 rgba(0,0,0,.42);
-  }
-  #overlay .brand {
-    position: relative;
-    inset: auto;
-    width: 100%;
-    max-width: 100%;
-    margin: 0 0 22px;
-    transform: none;
-    text-align: left;
-  }
-  #overlay h1 {
-    color: #fff;
-    font-family: 'Minecraft Ten', 'Segoe UI', system-ui, sans-serif;
-    font-size: clamp(28px, 3.2vw, 38px);
-    font-weight: 900;
-    letter-spacing: 0;
-    line-height: 1.05;
-    -webkit-text-stroke: 1px #262626;
-    text-shadow: 2px 2px #262626, 4px 4px rgba(0,0,0,.55);
-  }
-  #overlay h1 span { color: #9fe65b; }
-  #overlay .edition {
-    margin-top: 7px;
-    color: #e4e4e4;
-    font-size: 10px;
-    letter-spacing: 2.5px;
-    text-shadow: 1px 1px #222;
-  }
-  #overlay .menu-buttons { gap: 8px; }
-  #overlay .menu-buttons > button,
-  #overlay .button-row > button {
-    min-height: 46px;
-    padding: 10px 14px;
-    font-family: inherit;
-    font-size: 14px;
-    letter-spacing: .2px;
-    text-align: center;
-    background-position: center;
-    background-repeat: no-repeat;
-    transition: filter .12s ease, transform .08s ease;
-  }
-  #overlay .menu-buttons > button:hover,
-  #overlay .button-row > button:hover { filter: brightness(1.15); }
-  #overlay .menu-buttons > button:focus-visible,
-  #overlay .button-row > button:focus-visible,
-  #pauseOverlay button:focus-visible,
-  #inventory button:focus-visible,
-  #vcGuide button:focus-visible {
-    outline: 2px solid #fff;
-    outline-offset: 2px;
-  }
-  #overlay .help-options-panel,
-  #overlay .settings-panel {
-    margin-top: 12px;
-    padding: 12px;
-  }
-  #overlay .help-options-panel.open { gap: 8px; }
-  #overlay .help-options-panel h2,
-  #overlay .settings-panel h2 {
-    color: #252525;
-    font-size: 16px;
-    text-shadow: 1px 1px rgba(255,255,255,.55);
-  }
-  #overlay .menu-foot {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-    margin-top: 18px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,.18);
-    color: #d4d4d4;
-    font-size: 9px;
-    line-height: 1.4;
-    text-align: left;
-  }
-  #overlay .menu-foot span:last-child { text-align: left; }
-  #hud {
-    top: max(10px, env(safe-area-inset-top));
-    bottom: auto;
-    left: max(10px, env(safe-area-inset-left));
-    transform: none;
-    width: auto;
-    max-width: min(56vw, 560px);
-    padding: 7px 10px;
-    text-align: left;
-    line-height: 1.55;
-    overflow-wrap: anywhere;
-    font-size: 11px;
-  }
-  #hotbar {
-    bottom: max(12px, env(safe-area-inset-bottom));
-    max-width: calc(100vw - 12px);
-  }
-  .slot { flex: 0 1 40px; min-width: 0; }
-  .slot.active { transform: translateY(-2px) scale(1.08); }
-  #crosshair {
-    filter: drop-shadow(1px 1px 0 rgba(0,0,0,.8)) drop-shadow(-1px -1px 0 rgba(0,0,0,.6));
-  }
-  #inventory {
-    justify-content: center;
-    gap: 0;
-    padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom));
-    overflow-y: auto;
-  }
-  #inventory h2 { flex: 0 0 auto; }
-  #inventory .inv-tabs { flex: 0 0 auto; }
-  #inventory .inv-grid {
-    flex: 0 1 auto;
-    min-height: 0;
-    max-height: min(54vh, 460px);
-    overscroll-behavior: contain;
-  }
-  .inv-hint {
-    flex: 0 0 auto;
-    font-size: 11px;
-    line-height: 1.45;
-  }
-  #invClose { flex: 0 0 auto; min-height: 40px; }
-  #pauseOverlay {
-    padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom));
-    overflow-y: auto;
-  }
-  #pauseOverlay .pause-wrap {
-    width: min(100%, 390px);
-    padding: 18px;
-    box-shadow: 0 6px 0 rgba(0,0,0,.4);
-  }
-  #pauseOverlay .pause-buttons { gap: 9px; }
-  #pauseOverlay .pause-buttons button { min-height: 46px; }
-  #vcGuide .vc-form { overscroll-behavior: contain; }
-  button, select { touch-action: manipulation; }
-  @media (max-width: 600px) {
-    #overlay { padding: 10px 12px; }
-    #overlay .menu-wrap {
-      width: min(370px, calc(100vw - 24px));
-      margin: auto;
-      padding: 17px 14px 12px;
-    }
-    #overlay .brand { margin-bottom: 17px; }
-    #overlay h1 { font-size: clamp(26px, 8vw, 34px); }
-    #overlay .edition { font-size: 9px; letter-spacing: 2px; }
-    #overlay .menu-buttons > button { min-height: 44px; }
-    #overlay .menu-foot { margin-top: 14px; font-size: 8px; }
-    #hud {
-      max-width: min(66vw, 430px);
-      padding: 5px 7px;
-      font-size: 9px;
-      line-height: 1.4;
-    }
-    #hotbar { gap: 0; padding: 3px 4px; }
-    .slot { width: min(10vw, 38px); height: min(11vw, 42px); flex: 0 1 min(10vw, 38px); }
-    .slot .num { top: 1px; left: 2px; font-size: 9px; }
-    .slot .name { display: none; }
-    #inventory h2 { font-size: 13px; padding: 8px; }
-    #inventory .inv-grid { max-height: 48dvh; padding: 8px; }
-    .inv-hint { padding: 7px; font-size: 10px; }
-    #pauseOverlay .pause-wrap { padding: 14px; }
-  }
-  @media (max-height: 520px) and (orientation: landscape) {
-    #overlay { justify-content: flex-start; }
-    #overlay .menu-wrap { margin: 8px auto; padding: 12px 16px; }
-    #overlay .brand { margin-bottom: 10px; }
-    #overlay h1 { font-size: 26px; }
-    #overlay .menu-foot { margin-top: 10px; }
-    #inventory { justify-content: flex-start; }
-    #inventory .inv-grid { max-height: 36dvh; }
-  }
-
-
-  /* The active screen owns overlay visibility, even when pointer-lock events race with inventory changes. */
-  body[data-ui-screen="inventory"] #overlay,
-  body[data-ui-screen="inventory"] #pauseOverlay,
-  body[data-ui-screen="inventory"] #vcGuide {
-    display: none !important;
-  }
-  body[data-ui-screen="inventory"] #inventory {
-    display: flex !important;
-    z-index: 1000;
-  }
 </style>
 </head>
 <body>
   <canvas id="game"></canvas>
+  <div id="vignette"></div>
   <div id="crosshair"></div>
   <div id="hud"></div>
   <div id="hotbar"></div>
@@ -1087,10 +876,9 @@
       <button type="button" id="inventoryTabNature" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="nature">Alam</button>
       <button type="button" id="inventoryTabBuilding" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="building">Bangunan</button>
       <button type="button" id="inventoryTabMinerals" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="minerals">Mineral</button>
-      <button type="button" id="inventoryTabItems" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="items">Item</button>
     </div>
     <div class="inv-grid" id="invGrid" role="tabpanel" aria-labelledby="inventoryTabAll" tabindex="0"></div>
-    <p class="inv-hint">Pilih blok untuk hotbar. Tab Item adalah katalog ikon asli; fungsi item nonblok akan diaktifkan bertahap. Tutup dengan E atau tombol di bawah.</p>
+    <p class="inv-hint">Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di bawah.</p>
     <button id="invClose">Tutup (E)</button>
   </div>
 
@@ -1126,38 +914,38 @@
       </div>
       <p class="menu-subtitle">A world of blocks awaits.</p>
       <div id="mainMenuButtons" class="menu-buttons">
-        <button id="playButton">Main</button>
-        <button id="helpOptionsButton">Bantuan &amp; Opsi</button>
+        <button id="playButton">Play Game</button>
+        <button id="helpOptionsButton">Help &amp; Options</button>
       </div>
       <div id="helpOptionsPanel" class="help-options-panel">
-        <h2>Bantuan &amp; Opsi</h2>
-        <button id="guideButton">Cara Bermain</button>
-        <button id="optionsButton">Pengaturan</button>
-        <p class="menu-panel-note">Atur kontrol dan kualitas tampilan permainan.</p>
-        <button id="helpBackButton" class="menu-back">Kembali</button>
+        <h2>Help &amp; Options</h2>
+        <button id="guideButton">How to Play</button>
+        <button id="optionsButton">Game Options</button>
+        <p class="menu-panel-note">Controls, graphics, and world settings for this browser game.</p>
+        <button id="helpBackButton" class="menu-back">Back</button>
       </div>
       <div id="settingsPanel" class="settings-panel">
-        <h2>Pengaturan Permainan</h2>
-        <label for="renderQuality">Kualitas Grafis
+        <h2>Game Options</h2>
+        <label for="renderQuality">Render Quality
           <select id="renderQuality"><option value="high">High</option><option value="balanced" selected>Balanced</option><option value="low">Low</option></select>
         </label>
-        <label for="menuFov">Sudut Pandang
+        <label for="menuFov">Field of View
           <select id="menuFov"><option value="70">70</option><option value="80" selected>80</option><option value="90">90</option><option value="100">100</option></select>
         </label>
-        <button id="saveOptionsButton" class="settings-close">Selesai</button>
+        <button id="saveOptionsButton" class="settings-close">Done</button>
       </div>
-      <div class="menu-foot"><span>VoxelCraft 3D · Edisi Browser</span><span>Bukan produk resmi Minecraft.</span></div>
+      <div class="menu-foot"><span>VoxelCraft 3D · Browser Edition</span><span>Not an official Minecraft product.</span></div>
     </div>
   </div>
 
   <div id="pauseOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
     <div class="pause-wrap">
-      <h2 id="pauseTitle">Menu Permainan</h2>
+      <h2 id="pauseTitle">Game Menu</h2>
       <p class="pause-subtitle">Permainan dijeda</p>
       <div class="pause-buttons">
-        <button id="resumeGameButton" type="button">Lanjutkan Permainan</button>
-        <button id="saveWorldButton" type="button">Simpan Dunia</button>
-        <button id="returnTitleButton" type="button">Simpan &amp; Kembali ke Menu</button>
+        <button id="resumeGameButton" type="button">Resume Game</button>
+        <button id="saveWorldButton" type="button">Save World</button>
+        <button id="returnTitleButton" type="button">Save &amp; Return to Title</button>
       </div>
     </div>
   </div>
@@ -1373,20 +1161,13 @@
       }
       idx(x, y, z) { return y * CHUNK_X * CHUNK_Z + z * CHUNK_X + x; }
       get(x, y, z) {
-        // Chunk storage is a flat array; unchecked x/z can alias another row
-        // or read undefined when a caller crosses a chunk boundary.
-        if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z) ||
-            x < 0 || x >= CHUNK_X || y < 0 || y >= CHUNK_Y || z < 0 || z >= CHUNK_Z) return 0;
+        if (y < 0 || y >= CHUNK_Y) return 0;
         return this.data[this.idx(x, y, z)];
       }
       set(x, y, z, v) {
-        // Reject invalid local coordinates and block ids before indexing Uint8Array.
-        if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z) ||
-            x < 0 || x >= CHUNK_X || y < 0 || y >= CHUNK_Y || z < 0 || z >= CHUNK_Z ||
-            !Number.isInteger(v) || v < 0 || v > 255) return false;
+        if (y < 0 || y >= CHUNK_Y) return;
         this.data[this.idx(x, y, z)] = v;
         this.dirty = true;
-        return true;
       }
     }
 
@@ -1395,8 +1176,6 @@
       constructor() {
         this.chunks = new Map();
         this.overrides = new Map();
-        // Index edits by chunk so generating one chunk does not scan every saved edit.
-        this.chunkOverrides = new Map();
         try {
           const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
           if (saved && saved.version === 1 && saved.blocks && typeof saved.blocks === 'object' && !Array.isArray(saved.blocks)) {
@@ -1408,21 +1187,9 @@
               const [x, y, z] = key.split(',').map(Number);
               if (!Number.isSafeInteger(x) || !Number.isSafeInteger(z) || !Number.isInteger(y) || y < 0 || y >= CHUNK_Y) continue;
               this.overrides.set(key, id);
-              this.indexOverride(x, y, z, id);
             }
           }
         } catch (err) { console.warn('Save VoxelCraft tidak dapat dibaca:', err); }
-      }
-      indexOverride(x, y, z, id) {
-        const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
-        const key = chunkKey(cx, cz);
-        let edits = this.chunkOverrides.get(key);
-        if (!edits) {
-          edits = new Map();
-          this.chunkOverrides.set(key, edits);
-        }
-        const lx = x - cx * CHUNK_X, lz = z - cz * CHUNK_Z;
-        edits.set(lx + ',' + y + ',' + lz, id);
       }
       save() {
         try {
@@ -1437,32 +1204,10 @@
       ensureChunk(cx, cz) {
         const k = chunkKey(cx, cz);
         let c = this.chunks.get(k);
-        if (!c) {
-          c = new Chunk(cx, cz);
-          this.generate(c);
-          this.chunks.set(k, c);
-          // A newly loaded neighbor can hide faces that were previously exposed.
-          // Mark only already-loaded neighbors dirty so their meshes are rebuilt.
-          this.invalidateChunk(cx - 1, cz);
-          this.invalidateChunk(cx + 1, cz);
-          this.invalidateChunk(cx, cz - 1);
-          this.invalidateChunk(cx, cz + 1);
-        }
+        if (!c) { c = new Chunk(cx, cz); this.generate(c); this.chunks.set(k, c); }
         return c;
       }
       getChunk(cx, cz) { return this.chunks.get(chunkKey(cx, cz)); }
-      getBlockIfLoaded(x, y, z) {
-        if (![x, y, z].every(Number.isFinite)) return 0;
-        x = Math.floor(x); y = Math.floor(y); z = Math.floor(z);
-        if (!Number.isSafeInteger(x) || !Number.isSafeInteger(z)) return 0;
-        if (y < 0) return 11;
-        if (y >= CHUNK_Y) return 0;
-        const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
-        const c = this.getChunk(cx, cz);
-        if (!c) return 0;
-        const lx = x - cx * CHUNK_X, lz = z - cz * CHUNK_Z;
-        return c.get(lx, y, lz);
-      }
       getBlock(x, y, z) {
         if (![x, y, z].every(Number.isFinite)) return 0;
         x = Math.floor(x); y = Math.floor(y); z = Math.floor(z);
@@ -1484,8 +1229,6 @@
         const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
         const c = this.ensureChunk(cx, cz);
         const lx = x - cx * CHUNK_X, lz = z - cz * CHUNK_Z;
-        // Match the reference LevelChunk behavior: identical writes are no-ops.
-        if (c.get(lx, y, lz) === v) return false;
         c.set(lx, y, lz, v);
 
         // A face at a chunk edge may become visible/hidden in both chunks.
@@ -1497,7 +1240,6 @@
         if (lz === CHUNK_Z - 1) this.invalidateChunk(cx, cz + 1);
 
         this.overrides.set(x + ',' + y + ',' + z, v);
-        this.indexOverride(x, y, z, v);
         this.save();
         return true;
       }
@@ -1526,8 +1268,8 @@
               const oreNoise = hash2(wx * 31 + 7, wz * 19 + y * 3);
               const oreNoise2 = hash2(wx * 53 + 17, wz * 29 + y * 5);
               if (y <= 10 && oreNoise < 0.0018) c.set(lx, y, lz, 23);       // diamond (deep, rare)
-              else if (y <= 10 && oreNoise2 < 0.0022) c.set(lx, y, lz, 24);  // lapis ore (deep; BLOCKS[24])
-              else if (y <= 12 && oreNoise2 < 0.0028) c.set(lx, y, lz, 28);  // emerald ore (very rare; BLOCKS[28])
+              else if (y <= 10 && oreNoise2 < 0.0022) c.set(lx, y, lz, 28);  // lapis (deep)
+              else if (y <= 12 && oreNoise2 < 0.0028) c.set(lx, y, lz, 32);  // emerald (very rare)
               else if (y <= 14 && oreNoise < 0.005) c.set(lx, y, lz, 22);    // gold
               else if (y <= 16 && oreNoise2 < 0.006) c.set(lx, y, lz, 26);   // redstone
               else if (y <= 18 && oreNoise2 < 0.008) c.set(lx, y, lz, 30);   // copper
@@ -1549,43 +1291,35 @@
             if (hf >= WATER_LEVEL + 10) {
               c.set(lx, hf, lz, 55); // snow on top of mountains
             }
+            // trees on grass — Phase 1: random wood type per tree
+            if (!beachy && hf > WATER_LEVEL + 1) {
+              const th = hash2(wx * 7 + 13, wz * 11 + 5);
+              if (th > 0.985) {
+                const woodType = hash2(wx * 91, wz * 83) ;
+                // pick a wood type: 0=oak (default), 1=birch, 2=spruce, 3=jungle, 4=acacia, 5=dark_oak
+                const wt = Math.floor(woodType * 6);
+                this.plantTree(c, lx, hf + 1, lz, wt);
+              }
+            }
           }
         }
-        // Generate trees from world coordinates, not chunk-local coordinates.
-        // Each chunk independently writes the portions of nearby trees it owns, so
-        // trunks/canopies remain continuous when a tree crosses a chunk boundary.
-        for (let wx = baseX - 2; wx < baseX + CHUNK_X + 2; wx++) {
-          for (let wz = baseZ - 2; wz < baseZ + CHUNK_Z + 2; wz++) {
-            const hf = Math.floor(terrainHeight(wx, wz));
-            if (hf <= WATER_LEVEL + 1) continue;
-            if (hash2(wx * 7 + 13, wz * 11 + 5) <= 0.985) continue;
-            const wt = Math.floor(hash2(wx * 91, wz * 83) * 6);
-            this.plantTree(c, wx, hf + 1, wz, wt);
-          }
-        }
-        const chunkEdits = this.chunkOverrides.get(chunkKey(c.cx, c.cz));
-        if (chunkEdits) {
-          for (const [localKey, id] of chunkEdits) {
-            const [lx, y, lz] = localKey.split(',').map(Number);
-            c.set(lx, y, lz, id);
+        for (const [key, id] of this.overrides) {
+          const [wx, wy, wz] = key.split(',').map(Number);
+          if (Math.floor(wx / CHUNK_X) === c.cx && Math.floor(wz / CHUNK_Z) === c.cz && wy >= 0 && wy < CHUNK_Y) {
+            c.set(wx - c.cx * CHUNK_X, wy, wz - c.cz * CHUNK_Z, id);
           }
         }
         c.dirty = true;
       }
-      plantTree(c, worldX, ly, worldZ, woodType = 0) {
-        // A tree is a world-space feature. Clip writes to this chunk, not the
-        // tree itself; adjacent chunks generate the remaining trunk/canopy voxels.
+      plantTree(c, lx, ly, lz, woodType = 0) {
+        // woodType: 0=oak, 1=birch, 2=spruce, 3=jungle, 4=acacia, 5=dark_oak
         const logIds = [5, 34, 37, 40, 43, 46];
-        const leavesIds = [7, 36, 39, 42, 45, 45]; // dark oak currently reuses the acacia leaf texture
-        const logId = logIds[woodType] ?? 5;
-        const leavesId = leavesIds[woodType] ?? 7;
-        const h = 4 + Math.floor(hash2(worldX * 31, worldZ * 17) * 3);
-        const baseX = c.cx * CHUNK_X, baseZ = c.cz * CHUNK_Z;
-        const localX = worldX - baseX, localZ = worldZ - baseZ;
-        if (localX >= 0 && localX < CHUNK_X && localZ >= 0 && localZ < CHUNK_Z) {
-          for (let i = 0; i < h; i++) {
-            if (ly + i < CHUNK_Y) c.set(localX, ly + i, localZ, logId);
-          }
+        const leavesIds = [7, 36, 39, 42, 45, 45]; // dark oak uses oak-like (we don't have dark_oak leaves tile, use acacia)
+        const logId = logIds[woodType] || 5;
+        const leavesId = leavesIds[woodType] || 7;
+        const h = 4 + Math.floor(hash2(lx * 31, lz * 17) * 3);
+        for (let i = 0; i < h; i++) {
+          if (ly + i < CHUNK_Y) c.set(lx, ly + i, lz, logId);
         }
         const topY = ly + h - 1;
         for (let dy = -2; dy <= 1; dy++) {
@@ -1593,8 +1327,7 @@
           for (let dx = -r; dx <= r; dx++) {
             for (let dz = -r; dz <= r; dz++) {
               if (dx === 0 && dz === 0 && dy < 1) continue;
-              const wx = worldX + dx, y = topY + dy, wz = worldZ + dz;
-              const x = wx - baseX, z = wz - baseZ;
+              const x = lx + dx, y = topY + dy, z = lz + dz;
               if (x < 0 || x >= CHUNK_X || z < 0 || z >= CHUNK_Z || y < 0 || y >= CHUNK_Y) continue;
               if (c.get(x, y, z) === 0) c.set(x, y, z, leavesId);
             }
@@ -1667,7 +1400,7 @@
             for (let f = 0; f < 6; f++) {
               const face = FACES[f];
               const nx = x + face.dir[0], ny = y + face.dir[1], nz = z + face.dir[2];
-              const nId = world.getBlockIfLoaded(baseX + nx, ny, baseZ + nz);
+              const nId = world.getBlock(baseX + nx, ny, baseZ + nz);
 
               // Draw face if neighbor is air, or neighbor is transparent and different type
               let draw = false;
@@ -1726,6 +1459,7 @@
     //  GAME
     // ============================================================
     const canvas = document.getElementById('game');
+    const vignetteEl = document.getElementById('vignette');
     const overlay = document.getElementById('overlay');
     const loadingEl = document.getElementById('loading');
     const loadingDetail = document.getElementById('loadingDetail');
@@ -1781,6 +1515,54 @@
     stars.frustumCulled = false;
     scene.add(stars);
 
+    // Drifting cloud layer: a single horizontal plane high above the world.
+    // The cloud pattern is generated procedurally (soft white blobs on a
+    // transparent canvas) and is NOT a Minecraft asset. Scrolling the texture
+    // offset gives the illusion of wind-driven drift without moving meshes.
+    function makeCloudTexture() {
+      const size = 256;
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, size, size);
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 7; i++) {
+        const cx = Math.random() * size, cy = Math.random() * size;
+        const rx = 30 + Math.random() * 44, ry = 18 + Math.random() * 28;
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rx, ry));
+        g.addColorStop(0, 'rgba(255,255,255,0.85)');
+        g.addColorStop(0.6, 'rgba(255,255,255,0.32)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(rx / Math.max(rx, ry), ry / Math.max(rx, ry));
+        ctx.translate(-cx, -cy);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, size, size);
+        ctx.restore();
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(6, 6);
+      return tex;
+    }
+    const cloudTex = makeCloudTexture();
+    const cloudMat = new THREE.MeshBasicMaterial({
+      map: cloudTex, transparent: true, opacity: 0.72,
+      depthWrite: false, fog: false, side: THREE.DoubleSide,
+    });
+    const cloudMesh = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), cloudMat);
+    cloudMesh.rotation.x = -Math.PI / 2;
+    cloudMesh.position.y = 104;
+    cloudMesh.frustumCulled = false;
+    scene.add(cloudMesh);
+    function updateClouds(dt) {
+      cloudTex.offset.x = (cloudTex.offset.x + dt * 0.009) % 1;
+      // Keep the cloud layer centered above the player so clouds always feel overhead.
+      cloudMesh.position.x = player.pos.x;
+      cloudMesh.position.z = player.pos.z;
+    }
+
     const world = new World();
     let atlasTexture = null;
     let opaqueMat = null, transparentMat = null;
@@ -1795,16 +1577,39 @@
     highlightEdges.visible = false;
     scene.add(highlightEdges);
 
+    // ============================================================
+    //  FIXED-TIMESTEP PHYSICS (rujukan Timer.h verified)
+    //  rujukan runs 20 ticks/second. Browser renders at 60fps. We
+    //  accumulate real time and run movePlayerTick() at a fixed 20 tps,
+    //  with camera interpolation between ticks for smooth visuals.
+    //  MAX_TICKS_PER_UPDATE = 10 (Timer.h) prevents spiral-of-death.
+    // ============================================================
+    const TICKS_PER_SECOND = 20;
+    const MAX_TICKS_PER_UPDATE = 10;
+    const TICK_DT = 1 / TICKS_PER_SECOND;
+    const TICK_MS = 1000 / TICKS_PER_SECOND;  // 50ms per tick (integer-safe)
+    let physicsAccumMs = 0;
+
     // Player
+    // rujukan Player.h: AABB 0.6×1.8, eye 1.62, MAX_HEALTH 20.
+    // speed/flySpeed are now PER-TICK values (rujukan Mob.h walkingSpeed/flyingSpeed):
+    //   walkingSpeed = DEFAULT_WALK_SPEED = 0.1 (Player.h)
+    //   flyingSpeed  = 0.05 (Player::travel flying override scales 0.02→0.05)
+    // prevPos used for camera interpolation between physics ticks.
     const player = {
       pos: new THREE.Vector3(8, WATER_LEVEL + 16, 8),
+      prevPos: new THREE.Vector3(8, WATER_LEVEL + 16, 8),
       vel: new THREE.Vector3(),
       yaw: 0, pitch: 0,
       onGround: false,
       fly: false,
       width: 0.6, height: 1.8, eye: 1.62,
-      speed: 4.5, flySpeed: 9,
+      speed: 0.1, flySpeed: 0.05,  // PER-TICK (rujukan verified)
+      sprinting: false,
     };
+    // Base FOV follows the menu option; sprinting temporarily widens it. The
+    // initial 72 matches the PerspectiveCamera constructor so the kick lerps cleanly.
+    let baseFov = 72;
 
     let selectedSlot = 0;
     const keys = {};
@@ -2186,7 +1991,7 @@
     const vcFlyStatus = document.getElementById('vcFlyStatus');
     let vcGuideOpen = false;
     let vcGuideReturnToGame = false;
-    // Track browser-only player statistics in browser storage; these are not Behavior Pack data.
+    // Mirror the Behavior Pack's persistent player stats in browser storage.
     const BROWSER_STATS_KEY = 'voxelcraft_browser_stats_v1';
     function safeBrowserCount(value) {
       return Number.isSafeInteger(value) && value >= 0 ? value : 0;
@@ -2216,10 +2021,9 @@
     let browserBlocksPlaced = browserStats.blocksPlaced;
     const inventoryFilterSets = {
       all: null,
-      nature: new Set([1, 2, 3, 4, 5, 7, 8, 9, 11, 19, 34, 36, 37, 39, 40, 42, 43, 45, 46, 48, 49, 50, 51, 52, 53, 55, 56, 57, 58, 60, 61]),
-      building: new Set([6, 10, 12, 17, 18, 35, 38, 41, 44, 47, 54, 59, 62, 63, 64, 65, 66]),
+      nature: new Set([1, 2, 3, 4, 5, 7, 8, 9, 19, 34, 36, 37, 39, 40, 42, 43, 45, 46, 48, 49, 50, 51, 52, 53, 55, 56, 57, 58]),
+      building: new Set([6, 10, 11, 12, 17, 18, 25, 27, 29, 32, 33, 35, 38, 41, 44, 47, 54, 59, 60, 61, 62, 63, 64, 65, 66]),
       minerals: new Set([13, 14, 15, 16, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]),
-      items: null,
     };
     let activeInventoryFilter = 'all';
     const inventoryTabs = [...document.querySelectorAll('#inventory [data-inv-filter]')];
@@ -2254,62 +2058,9 @@
       });
     });
 
-    let itemCatalog = [];
-    let itemCatalogReady = false;
-    fetch('./item-catalog.json')
-      .then(response => {
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-        return response.json();
-      })
-      .then(data => {
-        if (!data || data.version !== 1 || !Array.isArray(data.items)) throw new Error('Format katalog item tidak valid');
-        itemCatalog = data.items.filter(item => item && typeof item.id === 'string' && typeof item.file === 'string');
-        itemCatalogReady = true;
-        if (activeInventoryFilter === 'items') buildInventory('items');
-      })
-      .catch(error => {
-        console.warn('Katalog item VoxelCraft tidak dapat dimuat:', error);
-        itemCatalogReady = false;
-        if (activeInventoryFilter === 'items') buildInventory('items');
-      });
-
     function buildInventory(filter = activeInventoryFilter) {
       activeInventoryFilter = filter;
       invGridEl.innerHTML = '';
-      if (filter === 'items') {
-        if (!itemCatalogReady) {
-          const note = document.createElement('p');
-          note.className = 'inv-hint';
-          note.textContent = 'Memuat katalog item…';
-          invGridEl.appendChild(note);
-          return;
-        }
-        const fragment = document.createDocumentFragment();
-        for (const item of itemCatalog) {
-          const slot = document.createElement('div');
-          slot.className = 'inv-slot';
-          const icon = document.createElement('img');
-          icon.loading = 'lazy';
-          icon.decoding = 'async';
-          icon.src = './VoxelCraft/textures/items/' + encodeURIComponent(item.file);
-          icon.alt = '';
-          slot.appendChild(icon);
-          const label = document.createElement('div');
-          label.className = 'lbl';
-          label.textContent = item.name;
-          slot.appendChild(label);
-          slot.title = item.name + ' — katalog ikon';
-          slot.setAttribute('aria-label', item.name + ', katalog ikon; belum menjadi item gameplay');
-          slot.setAttribute('role', 'img');
-          fragment.appendChild(slot);
-        }
-        invGridEl.appendChild(fragment);
-        const note = document.createElement('p');
-        note.className = 'inv-hint';
-        note.textContent = itemCatalog.length + ' ikon item asli dari Resource Pack. Item nonblok ditampilkan sebagai katalog; mekanik penggunaannya belum aktif.';
-        invGridEl.appendChild(note);
-        return;
-      }
       const allowedIds = inventoryFilterSets[filter];
       for (let id = 1; id <= 66; id++) {
         const def = BLOCKS[id];
@@ -2593,47 +2344,44 @@
       return false;
     }
 
-    function movePlayer(dt) {
-      // input -> wishdir
-      const forward = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
-      const right = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
-      const wish = new THREE.Vector3();
-      if (keys['KeyW']) wish.add(forward);
-      if (keys['KeyS']) wish.sub(forward);
-      if (keys['KeyD']) wish.add(right);
-      if (keys['KeyA']) wish.sub(right);
-      if (wish.lengthSq() > 0) wish.normalize();
-      const sprint = keys['ShiftLeft'] && !player.fly;
-      const sp = player.fly ? player.flySpeed : player.speed * (sprint ? 1.5 : 1);
-      player.vel.x = wish.x * sp;
-      player.vel.z = wish.z * sp;
-
-      if (player.fly) {
-        let vy = 0;
-        if (keys['Space']) vy += 1;
-        if (keys['ShiftLeft']) vy -= 1;
-        player.vel.y = vy * player.flySpeed;
-      } else {
-        player.vel.y -= 24 * dt; // gravity
-        if (player.vel.y < -40) player.vel.y = -40;
-      }
-
-      // Substep each axis to prevent tunneling through blocks during fast falls
-      // or a delayed frame. Each collision check moves at most 0.25 world units.
+    // ============================================================
+    //  movePlayerTick — PER-TICK physics (rujukan Mob::travel + LocalPlayer)
+    //  VERIFIED constants from MODLOG (reverse-engineering skill, Rule Zero):
+    //    gravity = 0.08/tick, airDrag = 0.98/tick
+    //    groundFriction = 0.6 * 0.91 (× tile.friction; 0.6 default — DEVIATION:
+    //      minecraft.html has no per-tile friction table, uses 0.6 default)
+    //    jumpFromGround = 0.42 (single value, no water/lava branch)
+    //    friction2 = (0.6*0.6*0.91*0.91*0.6*0.91) / (friction^3)
+    //    moveRelative adds to velocity (momentum model, not instant-set)
+    //    Entity::move order: Y → X → Z (verified Entry 1)
+    //  DEVIATION: minecraft.html uses slide=true (per-axis zeroing on collision,
+    //    slide along walls) matching Minecraft feel. rujukan default !slide zeros
+    //    all velocity on any collision.
+    // ============================================================
+    function moveRelativeTick(xa, za, speed) {
+      // rujukan Entity::moveRelative (Entry 1): adds to vel using yaw rotation.
+      // DEVIATION: rujukan yRot=0 looks south (+Z); minecraft.html yaw=0 looks -Z
+      // (Three.js). The mapping is yRot = yaw - 180°, so cos(yRot)=-cos(yaw),
+      // sin(yRot)=-sin(yaw). Substituting into rujukan's formula gives:
+      //   vel.x += za*sin(yaw) - xa*cos(yaw)
+      //   vel.z += -za*cos(yaw) - xa*sin(yaw)
+      // Verified at yaw=0: W(za=+1)→vel.z=-1 (forward -Z ✓); A(xa=+1)→vel.x=-1 (left -X ✓)
+      let dist = Math.sqrt(xa*xa + za*za);
+      if (dist < 0.01) return;
+      if (dist < 1) dist = 1;
+      const f = speed / dist;
+      xa *= f; za *= f;
+      const sinY = Math.sin(player.yaw);
+      const cosY = Math.cos(player.yaw);
+      player.vel.x += za * sinY - xa * cosY;
+      player.vel.z += -za * cosY - xa * sinY;
+    }
+    function moveWithCollision() {
+      // rujukan Entity::move: Y first, then X, then Z (Entry 1 verified)
+      // slide=true: only zero the collided axis (Minecraft slide-along-wall feel)
       const maxStep = 0.25;
-      const dx = player.vel.x * dt;
-      const xSteps = Math.max(1, Math.ceil(Math.abs(dx) / maxStep));
-      const stepX = dx / xSteps;
-      for (let i = 0; i < xSteps; i++) {
-        const nx = player.pos.x + stepX;
-        if (collidesAABB(nx, player.pos.y, player.pos.z)) {
-          player.vel.x = 0;
-          break;
-        }
-        player.pos.x = nx;
-      }
-
-      const dy = player.vel.y * dt;
+      // Y axis
+      const dy = player.vel.y;
       const ySteps = Math.max(1, Math.ceil(Math.abs(dy) / maxStep));
       const stepY = dy / ySteps;
       for (let i = 0; i < ySteps; i++) {
@@ -2646,8 +2394,20 @@
         player.pos.y = ny;
         player.onGround = false;
       }
-
-      const dz = player.vel.z * dt;
+      // X axis
+      const dx = player.vel.x;
+      const xSteps = Math.max(1, Math.ceil(Math.abs(dx) / maxStep));
+      const stepX = dx / xSteps;
+      for (let i = 0; i < xSteps; i++) {
+        const nx = player.pos.x + stepX;
+        if (collidesAABB(nx, player.pos.y, player.pos.z)) {
+          player.vel.x = 0;
+          break;
+        }
+        player.pos.x = nx;
+      }
+      // Z axis
+      const dz = player.vel.z;
       const zSteps = Math.max(1, Math.ceil(Math.abs(dz) / maxStep));
       const stepZ = dz / zSteps;
       for (let i = 0; i < zSteps; i++) {
@@ -2658,11 +2418,57 @@
         }
         player.pos.z = nz;
       }
+    }
+    function movePlayerTick() {
+      // rujukan LocalPlayer::aiStep + Mob::aiStep + Mob::travel (land branch)
+      // Input → xxa (strafe, +1=left), yya (forward, +1=forward)
+      let xxa = (keys['KeyA'] ? 1 : 0) - (keys['KeyD'] ? 1 : 0);
+      let yya = (keys['KeyW'] ? 1 : 0) - (keys['KeyS'] ? 1 : 0);
+      if (xxa !== 0 && yya !== 0) {
+        const m = Math.sqrt(xxa*xxa + yya*yya);
+        xxa /= m; yya /= m;
+      }
+      const sprint = keys['ShiftLeft'] && !player.fly;
+      player.sprinting = sprint;
+      // rujukan Mob::aiStep: xxa *= 0.98, yya *= 0.98 (per-tick input decay).
+      // minecraft.html resets input each tick so this has no visible effect; skip.
 
-      // jump
+      // Jump (rujukan Mob::aiStep: if jumping && onGround, jumpFromGround = 0.42)
       if (keys['Space'] && player.onGround && !player.fly) {
-        player.vel.y = 8.5;
+        player.vel.y = 0.42;
         player.onGround = false;
+      }
+
+      if (player.fly) {
+        // rujukan LocalPlayer::calculateFlight (simplified): direct velocity from input
+        // VERIFIED: abilities.flyingSpeed = 0.05, vertical impulse ±0.15/tick
+        // Same yaw-convention adaptation as moveRelativeTick (yRot = yaw - 180°).
+        const sinY = Math.sin(player.yaw), cosY = Math.cos(player.yaw);
+        const fsp = player.flySpeed;
+        player.vel.x = (yya * sinY - xxa * cosY) * fsp;
+        player.vel.z = (-yya * cosY - xxa * sinY) * fsp;
+        player.vel.y = ((keys['Space'] ? 1 : 0) - (keys['ShiftLeft'] ? 1 : 0)) * 0.15;
+        moveWithCollision();
+      } else {
+        // rujukan Mob::travel land branch (Entry 2 verified)
+        let friction = 0.91;
+        if (player.onGround) {
+          friction = 0.6 * 0.91;
+          // DEVIATION: rujukan reads Tile::tiles[t]->friction. minecraft.html
+          // has no per-tile friction table; uses default 0.6.
+        }
+        const friction2 = (0.6*0.6*0.91*0.91*0.6*0.91) / (friction*friction*friction);
+        // DEVIATION from rujukan: minecraft.html adds sprint (Shift) as a 1.5×
+        // walk-speed multiplier. rujukan has no sprint in 2013 MCPE. Preserved
+        // to keep minecraft.html's gameplay feel intact during the merge.
+        const speed = player.onGround ? player.speed * (sprint ? 1.5 : 1) * friction2 : player.flySpeed;
+        moveRelativeTick(xxa, yya, speed);
+        moveWithCollision();
+        // gravity + air drag + horizontal friction (per-tick, verified)
+        player.vel.y -= 0.08;
+        player.vel.y *= 0.98;
+        player.vel.x *= friction;
+        player.vel.z *= friction;
       }
 
       // prevent falling forever
@@ -2902,6 +2708,7 @@
       settingsPanel.classList.add('open');
     });
     saveOptionsButton.addEventListener('click', () => {
+      baseFov = Number(menuFov.value);
       camera.fov = Number(menuFov.value);
       camera.updateProjectionMatrix();
       const pixelRatio = renderQuality.value === 'high' ? Math.min(window.devicePixelRatio || 1, 2) : renderQuality.value === 'low' ? 0.75 : Math.min(window.devicePixelRatio || 1, 1.25);
@@ -3018,19 +2825,49 @@
       }
 
       const gameplayActive = getActiveUiScreen() === 'playing';
-      if (gameplayActive) movePlayer(dt);
 
-      // Pause gameplay systems while the title, pause, inventory, or guide UI is open.
+      // ---- Fixed-timestep physics (rujukan Timer.h: 20 tps, MAX_TICKS_PER_UPDATE=10) ----
+      // Integer-millisecond accumulator avoids floating-point precision loss
+      // that occurred with dt≈TICK_DT (Math.floor(0.05/0.05) returned 0 on some
+      // frames, halving the effective tick rate). Integer ms is exact.
+      if (gameplayActive) {
+        physicsAccumMs += dt * 1000;
+        let nTicks = 0;
+        while (physicsAccumMs >= TICK_MS && nTicks < MAX_TICKS_PER_UPDATE) {
+          physicsAccumMs -= TICK_MS;
+          nTicks++;
+          player.prevPos.copy(player.pos);
+          movePlayerTick();
+        }
+      }
+
+      // Visual systems stay at 60fps (dt-based) — particles, mobs, day/night.
       if (gameplayActive) {
         updateParticles(dt);
         updateMobs(dt);
       }
 
-      // camera follow
-      camera.position.set(player.pos.x, player.pos.y + player.eye, player.pos.z);
+      // camera follow with interpolation between physics ticks.
+      // alpha = physicsAccumMs / TICK_MS (0..1) interpolates prevPos→pos so
+      // 20 tps physics looks smooth at 60 fps render.
+      const alpha = gameplayActive ? Math.min(1, physicsAccumMs / TICK_MS) : 1;
+      const camX = player.prevPos.x + (player.pos.x - player.prevPos.x) * alpha;
+      const camY = player.prevPos.y + (player.pos.y - player.prevPos.y) * alpha;
+      const camZ = player.prevPos.z + (player.pos.z - player.prevPos.z) * alpha;
+      camera.position.set(camX, camY + player.eye, camZ);
       camera.rotation.order = 'YXZ';
       camera.rotation.y = player.yaw;
       camera.rotation.x = player.pitch;
+
+      // Smooth sprint FOV kick: widen the view while sprinting on the ground,
+      // ease back to the base FOV from the options menu when not. Clouds drift
+      // every frame so the sky stays alive even while the game is paused.
+      const targetFov = baseFov + (player.sprinting && !player.fly ? 6 : 0);
+      if (Math.abs(camera.fov - targetFov) > 0.05) {
+        camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 8);
+        camera.updateProjectionMatrix();
+      }
+      updateClouds(dt);
 
       // ---- Day/night cycle with visible sun/moon + stars + sunset tint ----
       if (gameplayActive) worldTime = (worldTime + dt / 600) % 1;
@@ -3055,6 +2892,9 @@
       scene.fog.color.copy(skyCol);
       // stars fade in at night
       starMat.opacity = Math.max(0, 1 - daylight * 2.4);
+      // night vignette darkens screen edges after sunset (kept gentle so night
+      // gameplay stays readable; peaks around ~0.4 at deep night)
+      vignetteEl.style.opacity = Math.max(0, 1 - daylight * 2.0) * 0.45;
       // hemisphere light follows sky brightness
       const hemi = scene.children.find(c => c.isHemisphereLight);
       if (hemi) hemi.intensity = 0.25 + daylight * 0.55;
@@ -3077,8 +2917,9 @@
         hudTimer = 0;
         const clockMinutes = Math.floor((((worldTime % 1) + 1) % 1) * 1440);
         const clock = `${String(Math.floor(clockMinutes / 60) % 24).padStart(2, '0')}:${String(clockMinutes % 60).padStart(2, '0')}`;
+        const clockIcon = (worldTime > 0.22 && worldTime < 0.78) ? '☀' : '🌙';
         hudEl.innerHTML =
-          `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> <b>${clock}</b> <span class="hud-sep">|</span> Koin: <b>${browserStats.coins}</b> <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : 'Jalan'} <span class="hud-sep">|</span> Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
+          `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> ${clockIcon} <b>${clock}</b> <span class="hud-sep">|</span> Koin: <b>${browserStats.coins}</b> <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : (player.sprinting ? 'Lari' : 'Jalan')} <span class="hud-sep">|</span> Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
       }
     }
 
