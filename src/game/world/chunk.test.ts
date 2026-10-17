@@ -25,6 +25,26 @@ describe('ChunkData', () => {
     expect(chunk.getBlock(0, 0, 0)).toBe(0);
   });
 
+  test('stores block metadata independently, tracks revisions, and returns detached snapshots', () => {
+    const chunk = new ChunkData({ sizeX: 2, height: 2, sizeZ: 2 });
+    expect(chunk.getState(0, 0, 0)).toBe(0);
+    expect(chunk.setState(0, 0, 0, 5)).toBe(true);
+    expect(chunk.revision).toBe(1);
+    expect(chunk.setState(0, 0, 0, 5)).toBe(false);
+    const snapshot = chunk.states;
+    snapshot[0] = 99;
+    expect(chunk.getState(0, 0, 0)).toBe(5);
+    expect(chunk.toStateArray()[0]).toBe(5);
+    expect(() => chunk.setState(0, 0, 0, 256)).toThrow(RangeError);
+  });
+
+  test('restores and validates initial metadata arrays', () => {
+    const chunk = new ChunkData({ sizeX: 2, height: 1, sizeZ: 2 }, [0, 1, 2, 3], [0, 1, 2, 255]);
+    expect(chunk.getState(1, 0, 1)).toBe(255);
+    expect(() => new ChunkData({ sizeX: 2, height: 1, sizeZ: 2 }, undefined, [0, 1])).toThrow(RangeError);
+    expect(() => new ChunkData({ sizeX: 2, height: 1, sizeZ: 2 }, undefined, [0, 1, 2, 256])).toThrow(RangeError);
+  });
+
   test('validates dimensions, initial data and coordinates', () => {
     expect(() => new ChunkData({ sizeX: 0, height: 2, sizeZ: 2 })).toThrow(RangeError);
     expect(() => new ChunkData({ sizeX: 2, height: 2, sizeZ: 2 }, [1, 2])).toThrow(RangeError);
