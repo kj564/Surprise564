@@ -61,6 +61,44 @@ describe('raycastVoxels', () => {
     if (result.status === 'hit') expect(result.block).toEqual({ x: 1, y: 6, z: 1 });
   });
 
+  test('does not target the empty space above a partial-height block', () => {
+    const world = makeWorld();
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 1, y: 1, z: 1 }, 78); // one-eighth-height snow layer
+    world.setBlock({ x: 2, y: 1, z: 1 }, 1);
+    const hit = raycastVoxels(
+      world,
+      { x: 1.5, y: 1.5, z: 1.5 },
+      { x: 1, y: 0, z: 0 },
+      4,
+      id => id !== 0,
+      id => id === 78 ? 0.125 : undefined,
+    );
+    expect(hit.status).toBe('hit');
+    if (hit.status !== 'hit') return;
+    expect(hit.block).toEqual({ x: 2, y: 1, z: 1 });
+    expect(hit.distance).toBeCloseTo(0.5);
+  });
+
+  test('hits the actual top surface and face of a partial-height block', () => {
+    const world = makeWorld();
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 1, y: 1, z: 1 }, 78);
+    const hit = raycastVoxels(
+      world,
+      { x: 1.5, y: 2.5, z: 1.5 },
+      { x: 0, y: -1, z: 0 },
+      4,
+      id => id !== 0,
+      id => id === 78 ? 0.125 : undefined,
+    );
+    expect(hit.status).toBe('hit');
+    if (hit.status !== 'hit') return;
+    expect(hit.block).toEqual({ x: 1, y: 1, z: 1 });
+    expect(hit.distance).toBeCloseTo(1.375);
+    expect(hit.face).toEqual({ x: 0, y: 1, z: 0 });
+  });
+
   test('returns miss after max distance and validates ray inputs', () => {
     const world = makeWorld();
     world.loadChunk(0, 0);
