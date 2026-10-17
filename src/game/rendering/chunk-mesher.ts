@@ -97,7 +97,12 @@ export function buildChunkMesh(
         }
 
         if (definition.shape === 'slab') {
-          appendSlab(layers[definition.renderLayer], x, y, z, blockId, definition.shapeHeight ?? 0.5);
+          const height = definition.shapeHeight ?? 0.5;
+          appendSlab(
+            layers[definition.renderLayer],
+            x, y, z, blockId, height,
+            face => shouldRenderSlabFace(world, registry, definition, x, y, z, height, face),
+          );
           continue;
         }
         if (definition.shape === 'torch') {
@@ -160,16 +165,37 @@ function appendFace(layer: MutableLayer, face: FaceTemplate, x: number, y: numbe
 
 
 /** Half-height slab geometry; orientation/state variants can extend this contract later. */
-function appendSlab(layer: MutableLayer, x: number, y: number, z: number, blockId: number, h: number): void {
+function appendSlab(layer: MutableLayer, x: number, y: number, z: number, blockId: number, h: number, shouldRender: (face: FaceTemplate) => boolean): void {
   const faces: readonly FaceTemplate[] = [
     { face: 'west', normal: [-1, 0, 0], dx: -1, dy: 0, dz: 0, vertices: [[0, 0, 0], [0, 0, 1], [0, h, 1], [0, h, 0]] },
     { face: 'east', normal: [1, 0, 0], dx: 1, dy: 0, dz: 0, vertices: [[1, 0, 1], [1, 0, 0], [1, h, 0], [1, h, 1]] },
     { face: 'down', normal: [0, -1, 0], dx: 0, dy: -1, dz: 0, vertices: [[0, 0, 1], [0, 0, 0], [1, 0, 0], [1, 0, 1]] },
-    { face: 'up', normal: [0, 1, 0], dx: 0, dy: 0, dz: 0, vertices: [[0, h, 0], [0, h, 1], [1, h, 1], [1, h, 0]] },
+    { face: 'up', normal: [0, 1, 0], dx: 0, dy: 1, dz: 0, vertices: [[0, h, 0], [0, h, 1], [1, h, 1], [1, h, 0]] },
     { face: 'north', normal: [0, 0, -1], dx: 0, dy: 0, dz: -1, vertices: [[1, 0, 0], [0, 0, 0], [0, h, 0], [1, h, 0]] },
     { face: 'south', normal: [0, 0, 1], dx: 0, dy: 0, dz: 1, vertices: [[0, 0, 1], [1, 0, 1], [1, h, 1], [0, h, 1]] },
   ];
-  for (const face of faces) appendFace(layer, face, x, y, z, blockId);
+  for (const face of faces) if (shouldRender(face)) appendFace(layer, face, x, y, z, blockId);
+}
+
+function shouldRenderSlabFace(
+  world: VoxelWorld,
+  registry: BlockRegistry,
+  current: BlockDefinition,
+  x: number, y: number, z: number,
+  height: number,
+  face: FaceTemplate,
+): boolean {
+  const neighborId = world.getBlock(x + face.dx, y + face.dy, z + face.dz);
+  if (neighborId === undefined || neighborId === 0) return true;
+  const neighbor = registry.getById(neighborId);
+  if (!neighbor || neighbor.renderLayer === 'invisible' || neighbor.shape === 'none') return true;
+  if (face.face === 'up' || face.face === 'down') {
+    // A partial-height block below/above cannot cover the whole horizontal face.
+    return !(neighbor.renderLayer === 'opaque' && (neighbor.shape !== 'slab' || (neighbor.shapeHeight ?? 0.5) >= 1));
+  }
+  if (neighbor.renderLayer === 'opaque') return false;
+  if (neighbor.key === current.key && neighbor.renderLayer === current.renderLayer) return false;
+  return neighbor.shape === 'slab' && (neighbor.shapeHeight ?? 0.5) >= height;
 }
 
 /** Narrow upright torch prism; lighting emission remains data-driven in the block registry. */
