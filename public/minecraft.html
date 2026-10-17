@@ -5,27 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>VoxelCraft — Minecraft di Browser</title>
 <style>
-  @font-face {
-    font-family: 'Minecraft Ten';
-    src: url('./VoxelCraft/font/minecraft-ten.ttf') format('truetype');
-    font-display: swap;
-  }
+  /* MCPE 2013 UI — system font fallback (default8.png not available in browser).
+     All UI sprites are blitted from gui.png / icons.png via CSS background
+     positioning, the same way Gui.cpp blits sub-regions of the 256x256 atlas. */
   :root { color-scheme: light; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #88c5ff; font-family: 'Minecraft Ten', 'Segoe UI', system-ui, -apple-system, sans-serif; user-select: none; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden; background: #88c5ff;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    user-select: none;
+  }
   #game { position: fixed; inset: 0; display: block; }
 
-  /* Crosshair */
+  /* Crosshair — icons.png (0,0) 16x16 sprite, centered.
+     mix-blend-mode: difference reproduces MCPE's GL_ONE_MINUS_DST_COLOR blit,
+     which inverts the framebuffer under the crosshair so it stays visible
+     against both bright sky and dark caves. */
   #crosshair {
     position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    width: 22px; height: 22px; pointer-events: none; z-index: 5;
+    width: 16px; height: 16px; pointer-events: none; z-index: 5;
+    background: url('./VoxelCraft/textures/gui/icons.png') no-repeat;
+    background-position: 0 0;
+    background-size: 256px 256px;
+    image-rendering: pixelated;
     mix-blend-mode: difference;
   }
-  #crosshair::before, #crosshair::after {
-    content: ""; position: absolute; background: #fff;
-  }
-  #crosshair::before { left: 50%; top: 0; width: 2px; height: 100%; transform: translateX(-50%); }
-  #crosshair::after { top: 50%; left: 0; height: 2px; width: 100%; transform: translateY(-50%); }
 
   /* Night vignette: subtle darkening of screen edges after sunset.
      Opacity is driven by the day/night factor in animate(). z-index 4 sits
@@ -36,30 +40,57 @@
     opacity: 0; transition: opacity 0.4s linear;
   }
 
-  /* Hotbar */
+  /* Hotbar — gui.png (0,0)-(180,22) sprite, scaled 2x for browser display.
+     MCPE 2013 hotbar is a single 180x22 bar with 9 transparent 20x22 slots;
+     the selected slot is overlaid as a 24x22 highlight sprite (gui.png 0,22).
+     We scale the whole hotbar 2x via transform: scale(2) so the logical slot
+     size stays 20x22 (matching the atlas) while the on-screen size is 40x44. */
   #hotbar {
-    position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
-    display: flex; gap: 4px; padding: 4px; background: rgba(0,0,0,0.45);
-    border: 2px solid rgba(255,255,255,0.25); border-radius: 6px; z-index: 5;
-    backdrop-filter: blur(2px);
+    position: fixed; left: 50%; bottom: 14px;
+    transform: translateX(-50%) scale(2);
+    transform-origin: center bottom;
+    display: flex; gap: 0; padding: 0; margin: 0;
+    width: 180px; height: 22px;
+    background: url('./VoxelCraft/textures/gui/gui.png') no-repeat;
+    background-position: 0 0;
+    background-size: 256px 256px;
+    image-rendering: pixelated;
+    z-index: 5;
+    border: 0; border-radius: 0; box-shadow: none;
+    backdrop-filter: none;
   }
   .slot {
-    width: 52px; height: 52px; background: rgba(20,20,20,0.55);
-    border: 2px solid rgba(255,255,255,0.18); border-radius: 4px;
+    width: 20px; height: 22px; background: transparent;
+    border: 0; border-radius: 0; box-shadow: none;
     display: flex; align-items: center; justify-content: center; position: relative;
-    cursor: pointer;
+    cursor: pointer; image-rendering: pixelated;
   }
-  .slot.active { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.4); }
-  .slot canvas { width: 36px; height: 36px; image-rendering: pixelated; }
-  .slot .num { position: absolute; top: 1px; left: 3px; font-size: 10px; color: #fff; text-shadow: 1px 1px 0 #000; }
-  .slot .name { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #fff; text-shadow: 1px 1px 0 #000; white-space: nowrap; opacity: 0; transition: opacity .15s; }
+  .slot.active {
+    /* Selected slot: gui.png (0,22)-(24,44) 24x22 highlight sprite.
+       Drawn 1px left of the slot (per Gui.cpp getSlotPos). The 24x22 sprite
+       is wider than the 20x22 slot, so we pull it 2px to the left and 2px to
+       the right with negative margins to centre the highlight on the slot. */
+    width: 24px; height: 22px;
+    background: url('./VoxelCraft/textures/gui/gui.png') no-repeat;
+    background-position: 0 -22px;
+    background-size: 256px 256px;
+    border: 0; box-shadow: none;
+    margin: 0 -2px;
+    z-index: 1;
+  }
+  .slot canvas { width: 16px; height: 16px; image-rendering: pixelated; }
+  .slot .num { position: absolute; top: 0; left: 1px; font-size: 7px; color: #fff; text-shadow: 1px 1px 0 #000; line-height: 1; }
+  .slot .name { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); font-size: 8px; color: #fff; text-shadow: 1px 1px 0 #000; white-space: nowrap; opacity: 0; transition: opacity .15s; }
   .slot.active .name { opacity: 1; }
+  .slot .count { position:absolute; right:1px; bottom:0; color:#fff; font-size:7px; line-height:1; text-shadow:1px 1px #000; pointer-events:none; }
 
-  /* HUD */
+  /* HUD — plain text, no background panel (MCPE 2013 draws HUD text directly
+     onto the framebuffer with the default8.png font, no toast background).
+     We keep a subtle text-shadow for readability against any backdrop. */
   #hud {
     position: fixed; top: 10px; left: 10px; z-index: 5; color: #fff;
     font-size: 12px; line-height: 1.5; text-shadow: 1px 1px 0 #000;
-    background: rgba(0,0,0,0.35); padding: 6px 10px; border-radius: 4px;
+    background: transparent; padding: 0; border: 0; border-radius: 0;
     font-variant-numeric: tabular-nums; pointer-events: none;
   }
   #hud b { color: #ffe082; }
@@ -84,9 +115,10 @@
 
   #toast {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    background: rgba(0,0,0,0.8); color: #fff; padding: 10px 18px; border-radius: 6px;
+    background: rgba(0,0,0,0.82); color: #fff; padding: 10px 18px; border-radius: 0;
     font-size: 14px; z-index: 8; opacity: 0; transition: opacity .2s; pointer-events: none;
-    text-shadow: 1px 1px 0 #000;
+    text-shadow: 2px 2px 0 #000;
+    border: 1px solid #000;
   }
   #toast.show { opacity: 1; }
 
@@ -108,49 +140,45 @@
     display:none;
     width:100%;
     margin-top:2px;
-    padding:14px;
-    color:#262626;
-    background-color:#c6c6c6;
-    background-image:url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size:100% 100%;
-    border:4px solid transparent;
-    border-image:url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
-    box-shadow:0 5px 0 rgba(0,0,0,.35);
+    padding:12px;
+    color:#fff;
+    background-color:#1d1d1d;
+    border:2px solid #000;
+    border-radius:0;
+    box-shadow:0 4px 0 rgba(0,0,0,.35);
   }
   #overlay .help-options-panel.open { display:grid; gap:8px; }
   #overlay .help-options-panel h2 {
     margin:0 0 4px;
-    color:#262626;
-    font-size:17px;
+    color:#fff;
+    font-size:15px;
     text-align:left;
     letter-spacing:0;
-    text-shadow:1px 1px rgba(255,255,255,.55);
+    text-shadow:2px 2px #000;
   }
   #overlay .help-options-panel .menu-panel-note {
     margin:3px 0 4px;
-    color:#444;
+    color:#bcbcbc;
     font-size:11px;
     line-height:1.45;
     text-align:left;
-    text-shadow:none;
+    text-shadow:1px 1px #000;
   }
   #overlay .help-options-panel .menu-back {
     margin-top:3px;
-    background-color:#5a5a5a;
   }
-  #overlay button { width:100%; min-height:42px; padding:9px 14px; border:2px solid #171717; border-radius:2px; color:#fff; font-size:15px; font-weight:600; letter-spacing:.2px; text-shadow:2px 2px #333; background:linear-gradient(#777,#555); box-shadow:inset 2px 2px rgba(255,255,255,.28), inset -2px -3px rgba(0,0,0,.25), 0 2px 0 rgba(0,0,0,.4); cursor:pointer; }
-  #overlay button:hover, #overlay button:focus-visible { outline:none; background:linear-gradient(#91b5c9,#66899c); border-color:#fff; }
+  /* #overlay button base styling comes from the shared gui_buttons.png rule below. */
   #overlay .button-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   #overlay .menu-foot { display:flex; justify-content:space-between; gap:12px; width:100%; margin-top:22px; font-size:11px; color:#eee; text-shadow:1px 1px #222; }
   #overlay .menu-foot span:last-child { text-align:right; }
   #overlay .menu-subtitle { font-size:12px; color:#f1f1f1; margin:0 0 18px; text-shadow:1px 2px #222; }
   #overlay .keys { display:none; }
   #overlay .cta { display:none; }
-  #overlay .settings-panel { display:none; width:100%; margin-top:12px; padding:14px; background:rgba(0,0,0,.8); border:2px solid #777; }
+  #overlay .settings-panel { display:none; width:100%; margin-top:12px; padding:12px; background:#1d1d1d; border:2px solid #000; color:#fff; }
   #overlay .settings-panel.open { display:block; }
-  #overlay .settings-panel h2 { font-size:17px; margin-bottom:12px; text-shadow:2px 2px #222; }
-  #overlay .settings-panel label { display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:13px; margin:10px 0; }
-  #overlay .settings-panel select { max-width:58%; padding:5px; background:#333; color:#fff; border:1px solid #aaa; }
+  #overlay .settings-panel h2 { font-size:15px; margin-bottom:10px; text-shadow:2px 2px #000; }
+  #overlay .settings-panel label { display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:12px; margin:8px 0; }
+  #overlay .settings-panel select { max-width:58%; padding:4px; background:#292929; color:#fff; border:1px solid #111; }
   #overlay .settings-panel .settings-close { margin-top:8px; }
   #overlay p { max-width:none; }
   @media (max-width:560px) {
@@ -192,122 +220,75 @@
   #invClose:hover { background: #5cb84a; }
 
 
-  /* Vanilla Bedrock UI skin: use the repository's original Resource Pack sprites. */
-  #hotbar {
-    position: fixed;
-    gap: 0;
-    padding: 4px 6px;
-    background-color: rgba(16, 16, 16, .82);
-    background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 100% 100%;
-    image-rendering: pixelated;
-    border: 4px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
-    border-radius: 0;
-    backdrop-filter: none;
-    box-shadow: 0 2px 0 rgba(0,0,0,.65);
-  }
-  #hotbar::before, #hotbar::after {
-    content: "";
-    position: absolute;
-    top: 3px;
-    bottom: 3px;
-    width: 4px;
-    pointer-events: none;
-    background-size: 100% 100%;
-    image-rendering: pixelated;
-  }
-  #hotbar::before { left: -2px; background-image: url('./VoxelCraft/textures/ui/hotbar_start_cap.png'); }
-  #hotbar::after { right: -2px; background-image: url('./VoxelCraft/textures/ui/hotbar_end_cap.png'); }
-  /* Bedrock hud_screen.json defines a 20x22 slot; at 2x UI scale use 40x44. */
-  .slot {
-    width: 40px;
-    height: 44px;
-    background-color: rgba(0,0,0,.38);
-    background-image: url('./VoxelCraft/textures/ui/item_cell.png');
-    background-size: 100% 100%;
-    border: 1px solid rgba(0,0,0,.6);
-    border-radius: 0;
-    box-shadow: inset 1px 1px rgba(255,255,255,.08), inset -1px -1px rgba(0,0,0,.45);
-    image-rendering: pixelated;
-  }
-  .slot.active {
-    background-color: rgba(255,255,255,.12);
-    background-image: url('./VoxelCraft/textures/ui/highlight_slot.png');
-    background-size: 100% 100%;
-    border: 0;
-    box-shadow: none;
-    /* Bedrock selected slot is 24x24 over a 20x22 slot. */
-    transform: translateY(-2px) scaleX(1.2) scaleY(1.09);
-    z-index: 1;
-  }
-  .slot .num { top: 2px; left: 4px; font-size: 10px; color: #fff; text-shadow: 2px 2px #252525; }
-  .slot .name { bottom: -20px; padding: 3px 6px; background: rgba(16,16,16,.82); border: 1px solid #373737; font-size: 11px; }
-
-  #hud {
-    top: 10px;
-    left: 10px;
-    padding: 7px 10px;
-    color: #fff;
-    background-color: rgba(16,16,16,.78);
-    background-image: url('./VoxelCraft/textures/ui/hud_tip_text_background.png');
-    background-size: 100% 100%;
-    border: 0;
-    border-radius: 0;
-    box-shadow: 2px 2px 0 rgba(0,0,0,.3);
-    text-shadow: 2px 2px #222;
-    image-rendering: pixelated;
-  }
+  /* (Legacy VoxelCraft RP hotbar/hud/toast/button overrides removed in favour of
+     the MCPE 2013 gui.png/icons.png sprites declared above. The blocks here now
+     only carry the additional layout rules that the MCPE 2013 look still needs.) */
   #hud b { color: #fff; }
-  .slot .count { position:absolute; right:3px; bottom:1px; color:#fff; font-size:10px; line-height:1; text-shadow:2px 2px #222; pointer-events:none; }
-  #crosshair { width: 16px; height: 16px; mix-blend-mode: difference; }
-  #crosshair::before { width: 2px; }
-  #crosshair::after { height: 2px; }
 
+  /* Toast — plain dark dialog, no RP panel sprite. */
   #toast {
     min-width: 180px;
     max-width: min(90vw, 520px);
     padding: 12px 18px;
     background-color: rgba(16,16,16,.94);
-    background-image: url('./VoxelCraft/textures/ui/dialog_background_opaque.png');
-    background-size: 100% 100%;
-    border: 3px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 3px / 0 stretch;
+    border: 1px solid #000;
     border-radius: 0;
     text-align: center;
     text-shadow: 2px 2px #222;
-  }
-
-  #overlay .menu-buttons { gap: 6px; }
-  #overlay button {
-    min-height: 42px;
-    padding: 9px 14px;
-    background-color: #454545;
-    background-image: url('./VoxelCraft/textures/ui/button_borderless_dark.png');
-    background-size: 100% 100%;
-    border: 2px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 2px / 0 stretch;
-    border-radius: 0;
-    box-shadow: inset 1px 1px rgba(255,255,255,.08), 0 2px 0 rgba(0,0,0,.55);
     image-rendering: pixelated;
   }
-  #overlay button:hover, #overlay button:focus-visible {
-    background-color: #666;
-    background-image: url('./VoxelCraft/textures/ui/button_borderless_darkhover.png');
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 2px / 0 stretch;
+
+  /* Buttons — gui_buttons.png (200x60, three states stacked) extracted from
+     gui.png at (0,46)/(0,66)/(0,86). background-size 200px 60px keeps the
+     sprite at 1:1 scale and `repeat-x` tiles it cleanly across any width —
+     no rest-of-atlas bleeding between tiles. State changes are pure
+     background-position shifts, matching Gui.cpp's button render. */
+  #overlay .menu-buttons { gap: 6px; }
+  #overlay button,
+  #invClose,
+  #pauseOverlay .pause-buttons button,
+  #inventory .inv-tabs button,
+  #vcGuide button {
+    min-height: 22px;
+    padding: 1px 8px;
+    color: #fff;
+    font-size: 11px;
+    line-height: 20px;
+    text-shadow: 1px 1px #222;
+    background-color: #2c2c2c;
+    background-image: url('./VoxelCraft/textures/gui/gui_buttons.png');
+    background-position: 0 0;
+    background-size: 200px 60px;
+    background-repeat: repeat-x;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    image-rendering: pixelated;
+    cursor: pointer;
   }
-  #overlay button:active {
-    background-image: url('./VoxelCraft/textures/ui/button_borderless_darkpressed.png');
+  #overlay button:hover,
+  #overlay button:focus-visible,
+  #invClose:hover,
+  #pauseOverlay .pause-buttons button:hover,
+  #pauseOverlay .pause-buttons button:focus-visible,
+  #inventory .inv-tabs button:hover,
+  #inventory .inv-tabs button:focus-visible,
+  #vcGuide button:hover,
+  #vcGuide button:focus-visible {
+    background-position: 0 -20px;
+  }
+  #overlay button:active,
+  #invClose:active,
+  #pauseOverlay .pause-buttons button:active,
+  #vcGuide button:active {
+    background-position: 0 -40px;
     transform: translateY(1px);
-    box-shadow: inset 1px 1px rgba(0,0,0,.25);
   }
   #overlay .settings-panel {
-    background-color: rgba(16,16,16,.95);
-    background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 100% 100%;
-    border: 4px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
+    background-color: #1d1d1d;
+    border: 2px solid #000;
     border-radius: 0;
+    color: #fff;
   }
   #overlay .settings-panel select {
     background-color: #292929;
@@ -315,88 +296,76 @@
     border-radius: 0;
   }
 
+  /* Inventory — MCPE 2013 style: simple dark stone panel, no RP panel sprite. */
   #inventory {
-    background: rgba(0,0,0,.58);
+    background: rgba(0,0,0,.7);
     backdrop-filter: none;
     padding: 18px;
   }
   #inventory h2 {
     width: min(100%, 620px);
-    margin: 0;
-    padding: 12px 14px 8px;
-    color: #262626;
-    background-color: #c6c6c6;
-    background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 100% 100%;
-    border: 4px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
+    margin: 0 0 8px;
+    padding: 6px 10px;
+    color: #fff;
+    background-color: #1d1d1d;
+    border: 2px solid #000;
+    border-radius: 0;
     text-align: left;
     letter-spacing: 0;
-    text-shadow: 1px 1px rgba(255,255,255,.55);
-    font-size: 16px;
+    text-shadow: 2px 2px #000;
+    font-size: 14px;
   }
   .inv-grid {
-    /* Bedrock inventory uses nine columns, matching the nine-slot hotbar. */
+    /* Nine columns matches the nine-slot hotbar. */
     grid-template-columns: repeat(9, minmax(38px, 52px));
     gap: 3px;
     width: min(100%, 620px);
-    padding: 12px;
-    background-color: #c6c6c6;
-    background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 100% 100%;
-    border: 4px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
+    padding: 10px;
+    background-color: #1d1d1d;
+    border: 2px solid #000;
     border-radius: 0;
-    box-shadow: 0 6px 0 rgba(0,0,0,.3);
+    box-shadow: 0 4px 0 rgba(0,0,0,.4);
   }
   .inv-slot {
     width: 100%;
     height: auto;
     aspect-ratio: 1;
-    background-color: rgba(0,0,0,.12);
-    background-image: url('./VoxelCraft/textures/ui/item_cell.png');
-    background-size: 100% 100%;
-    border: 1px solid rgba(0,0,0,.35);
+    background-color: #2a2a2a;
+    border: 1px solid #000;
     border-radius: 0;
-    box-shadow: inset 1px 1px rgba(255,255,255,.18), inset -1px -1px rgba(0,0,0,.2);
+    box-shadow: inset 1px 1px rgba(255,255,255,.06);
+    image-rendering: pixelated;
   }
   .inv-slot:hover {
-    background-color: rgba(255,255,255,.16);
-    background-image: url('./VoxelCraft/textures/ui/highlight_slot.png');
-    border-color: transparent;
+    background-color: #4a4a4a;
+    border-color: #fff;
   }
-  .inv-slot canvas { width: 80%; height: 80%; }
+  .inv-slot canvas { width: 80%; height: 80%; image-rendering: pixelated; }
   .inv-hint {
     width: min(100%, 590px);
-    margin: 0;
-    padding: 9px 12px;
-    color: #eee;
+    margin: 8px 0 0;
+    padding: 6px 10px;
+    color: #ddd;
     background: rgba(0,0,0,.8);
+    border: 1px solid #000;
     text-align: center;
+    font-size: 12px;
+    text-shadow: 1px 1px #000;
   }
   #invClose {
     min-width: 160px;
     margin-top: 10px;
-    padding: 10px 24px;
-    background-color: #454545;
-    background-image: url('./VoxelCraft/textures/ui/button_borderless_dark.png');
-    background-size: 100% 100%;
-    border: 2px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 2px / 0 stretch;
-    border-radius: 0;
-    box-shadow: 0 2px 0 rgba(0,0,0,.5);
+    padding: 1px 16px;
   }
-  #invClose:hover { background-image: url('./VoxelCraft/textures/ui/button_borderless_darkhover.png'); }
   @media (max-width: 600px) {
-    #hotbar { bottom: 8px; padding: 3px 4px; }
-    .slot { width: min(10vw, 38px); height: min(11vw, 42px); }
-    .slot canvas { width: 82%; height: 82%; }
     .inv-grid { grid-template-columns: repeat(6, minmax(34px, 1fr)); max-height: 56vh; overflow-y: auto; }
     .inv-slot { min-width: 0; }
     #inventory { padding: 10px; }
-  .item-catalog-tools { width: min(100%, 620px); display: flex; gap: 8px; padding: 8px 10px; background: #c6c6c6; }
+    #hud { max-width: 65vw; font-size: 10px; }
+  }
+  .item-catalog-tools { width: min(100%, 620px); display: flex; gap: 8px; padding: 8px 10px; background: #2a2a2a; border: 1px solid #000; }
   .item-catalog-tools.hidden { display: none; }
-  .item-catalog-tools input, .item-catalog-tools select { min-width: 0; padding: 8px; border: 2px solid #777; background: #fff; color: #222; font: inherit; }
+  .item-catalog-tools input, .item-catalog-tools select { min-width: 0; padding: 6px; border: 1px solid #000; background: #1a1a1a; color: #fff; font: inherit; }
   .item-catalog-tools input { flex: 1; }
   .item-catalog-tools select { width: 42%; }
   .item-catalog-slot { min-height: 88px; }
@@ -405,8 +374,6 @@
   body[data-ui-screen="inventory"] #pauseOverlay,
   body[data-ui-screen="inventory"] #vcGuide { display: none !important; }
   body[data-ui-screen="inventory"] #inventory { z-index: 1000; }
-    #hud { max-width: 65vw; font-size: 10px; }
-  }
 
 
   /* Browser adaptation of the Behavior Pack's ActionFormData menu. */
@@ -418,30 +385,22 @@
   #vcGuide.hidden { display: none; }
   #vcGuide .vc-form {
     width: min(100%, 440px); max-height: min(88vh, 650px); overflow-y: auto;
-    padding: 18px; color: #262626;
-    background-color: #c6c6c6;
-    background-image: url('./VoxelCraft/textures/ui/background_panel.png'); background-size: 100% 100%;
-    border: 4px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
-    box-shadow: 0 8px 0 rgba(0,0,0,.4);
+    padding: 14px; color: #fff;
+    background-color: #1d1d1d;
+    border: 2px solid #000;
+    border-radius: 0;
+    box-shadow: 0 6px 0 rgba(0,0,0,.4);
   }
-  #vcGuide .vc-title { margin: 0 0 8px; color: #262626; font-size: 20px; letter-spacing: 0; text-shadow: 1px 1px rgba(255,255,255,.45); }
-  #vcGuide .vc-body { margin: 0 0 14px; padding: 10px; background: rgba(0,0,0,.08); border: 2px solid rgba(0,0,0,.12); font-size: 13px; line-height: 1.5; white-space: pre-line; }
+  #vcGuide .vc-title { margin: 0 0 8px; color: #fff; font-size: 16px; letter-spacing: 0; text-shadow: 2px 2px #000; }
+  #vcGuide .vc-body { margin: 0 0 14px; padding: 8px 10px; color: #ddd; background: #0e0e0e; border: 1px solid #000; font-size: 12px; line-height: 1.5; white-space: pre-line; text-shadow: 1px 1px #000; }
   /* Bedrock ActionFormData stacks its action buttons vertically. */
-  #vcGuide .vc-actions { display: grid; grid-template-columns: 1fr; gap: 7px; }
-  #vcGuide button {
-    min-height: 48px; padding: 8px 10px; color: #fff; font-size: 13px; text-align: left;
-    background-color: #454545; background-image: url('./VoxelCraft/textures/ui/button_borderless_dark.png'); background-size: 100% 100%;
-    border: 2px solid transparent; border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 2px / 0 stretch;
-    border-radius: 0; box-shadow: 0 2px 0 rgba(0,0,0,.45); text-shadow: 2px 2px #222;
-  }
-  #vcGuide button:hover, #vcGuide button:focus-visible { background-image: url('./VoxelCraft/textures/ui/button_borderless_darkhover.png'); }
-  #vcGuide button:active { background-image: url('./VoxelCraft/textures/ui/button_borderless_darkpressed.png'); transform: translateY(1px); }
+  #vcGuide .vc-actions { display: grid; grid-template-columns: 1fr; gap: 6px; }
+  /* #vcGuide button styling is inherited from the shared gui_buttons.png rule above. */
   #vcGuide button:disabled { opacity: .55; cursor: not-allowed; }
-  #vcGuide button .vc-small { display: block; margin-top: 3px; color: #ddd; font-size: 10px; font-weight: normal; }
-  #vcGuide .vc-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
-  #vcGuide .vc-close { min-height: 38px; min-width: 116px; text-align: center; }
-  @media (max-width: 460px) { #vcGuide .vc-actions { grid-template-columns: 1fr; } #vcGuide .vc-form { padding: 12px; } }
+  #vcGuide button .vc-small { display: block; margin-top: 2px; color: #bcbcbc; font-size: 9px; font-weight: normal; }
+  #vcGuide .vc-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
+  #vcGuide .vc-close { min-width: 116px; text-align: center; }
+  @media (max-width: 460px) { #vcGuide .vc-actions { grid-template-columns: 1fr; } #vcGuide .vc-form { padding: 10px; } }
 
 
   /* ActionForm button icons use the same item sprites referenced by the Bedrock Behavior Pack. */
@@ -487,14 +446,17 @@
   #vcGuide [data-vc-action="weather"]::before { background-image: url('./VoxelCraft/textures/items/compass_item.png'); }
   #vcGuide [data-vc-action="stats"]::before { background-image: url('./VoxelCraft/textures/items/book_normal.png'); }
   #vcGuide .vc-close::before {
-    content: "";
+    content: "\2715";  /* plain Unicode X — no RP cursor/cancel sprite needed */
     display: inline-block;
-    width: 16px;
-    height: 16px;
-    margin-right: 7px;
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
     vertical-align: middle;
-    background: url('./VoxelCraft/textures/ui/cancel.png') center / contain no-repeat;
-    image-rendering: pixelated;
+    color: #fff;
+    font-size: 10px;
+    line-height: 12px;
+    text-align: center;
+    text-shadow: 1px 1px #000;
   }
   @media (max-width: 460px) {
     #vcGuide .vc-actions button { min-height: 54px; grid-template-columns: 26px minmax(0, 1fr); column-gap: 6px; padding: 7px; }
@@ -502,12 +464,14 @@
   }
 
 
-  /* Main menu backdrop from the original Bedrock Resource Pack. */
+  /* Main menu backdrop — MCPE 2013 title screen uses a panorama; we don't have
+     that texture, so fall back to a dark dirt-block gradient that matches the
+     in-game block palette. */
   #overlay {
     background-color: #202020;
     background-image:
       linear-gradient(rgba(0, 0, 0, .30), rgba(0, 0, 0, .56)),
-      url('./VoxelCraft/textures/ui/menubackground.png');
+      radial-gradient(ellipse at center, #3a2a1a 0%, #1a1a1a 70%);
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -523,37 +487,40 @@
   }
 
 
-  /* Use the exact inventory glyph from the original Bedrock Resource Pack. */
+  /* Inventory title bar — plain dark header (no RP inventory icon sprite). */
   #inventory h2 {
     display: flex;
     align-items: center;
     gap: 8px;
     width: min(100%, 590px);
-    padding: 10px 12px;
-    color: #262626;
-    background-color: #c6c6c6;
-    background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 100% 100%;
-    border: 4px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
-    font-size: 15px;
+    padding: 6px 10px;
+    color: #fff;
+    background-color: #1d1d1d;
+    border: 2px solid #000;
+    border-radius: 0;
+    font-size: 13px;
     letter-spacing: 0;
     text-align: left;
-    text-shadow: 1px 1px rgba(255,255,255,.5);
+    text-shadow: 2px 2px #000;
   }
+  /* Inventory glyph: use a small Unicode block symbol (no RP icon). */
   #inventory h2::before {
-    content: "";
+    content: "\25A6";  /* square with diagonal cross — looks like a crate */
     display: inline-block;
-    flex: 0 0 22px;
-    width: 22px;
-    height: 22px;
-    background: url('./VoxelCraft/textures/ui/inventory_icon.png') center / contain no-repeat;
-    image-rendering: pixelated;
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    color: #bfff7a;
+    font-size: 14px;
+    line-height: 16px;
+    text-align: center;
+    text-shadow: 1px 1px #000;
   }
 
 
 
-  /* Compact action-bar layout adapted from Bedrock's Behavior Pack HUD. */
+  /* Compact action-bar HUD — plain text, no panel sprite (MCPE 2013 draws
+     HUD text directly on the framebuffer). */
   #hud {
     top: auto;
     left: 50%;
@@ -561,20 +528,18 @@
     transform: translateX(-50%);
     width: max-content;
     max-width: min(94vw, 920px);
-    padding: 6px 12px;
+    padding: 0;
     text-align: center;
     white-space: normal;
     overflow-wrap: anywhere;
     line-height: 1.45;
     font-size: 11px;
     color: #f5f5f5;
-    background-color: rgba(16,16,16,.82);
-    background-image: url('./VoxelCraft/textures/ui/hud_tip_text_background.png');
-    background-size: 100% 100%;
+    background: transparent;
     border: 0;
     border-radius: 0;
-    box-shadow: 2px 2px 0 rgba(0,0,0,.3);
-    text-shadow: 2px 2px #222;
+    box-shadow: none;
+    text-shadow: 2px 2px #000;
   }
   #hud .hud-brand { color: #8de35f; font-weight: 800; }
   #hud .hud-sep { color: #9b9b9b; padding: 0 3px; }
@@ -584,7 +549,7 @@
       bottom: 60px;
       width: max-content;
       max-width: 96vw;
-      padding: 4px 7px;
+      padding: 0;
       font-size: 9px;
       line-height: 1.35;
     }
@@ -593,7 +558,7 @@
 
 
 
-  /* Bedrock pause-screen adaptation, based on VoxelCraft/ui/pause_screen.json. */
+  /* Bedrock pause-screen adaptation — MCPE 2013 style dark stone panel. */
   #pauseOverlay {
     position: fixed;
     inset: 0;
@@ -609,101 +574,52 @@
   #pauseOverlay.hidden { display: none; }
   #pauseOverlay .pause-wrap {
     width: min(100%, 430px);
-    padding: 18px;
-    color: #262626;
-    background-color: #c6c6c6;
-    background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 100% 100%;
-    border: 4px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
-    box-shadow: 0 8px 0 rgba(0,0,0,.4);
+    padding: 14px;
+    color: #fff;
+    background-color: #1d1d1d;
+    border: 2px solid #000;
+    border-radius: 0;
+    box-shadow: 0 6px 0 rgba(0,0,0,.4);
   }
   #pauseOverlay h2 {
     margin: 0 0 5px;
-    color: #262626;
-    font-size: 20px;
+    color: #fff;
+    font-size: 18px;
     letter-spacing: 0;
     text-align: center;
-    text-shadow: 1px 1px rgba(255,255,255,.5);
+    text-shadow: 2px 2px #000;
   }
   #pauseOverlay .pause-subtitle {
-    margin: 0 0 14px;
-    color: #4b4b4b;
+    margin: 0 0 12px;
+    color: #bcbcbc;
     font-size: 12px;
     text-align: center;
-    text-shadow: none;
+    text-shadow: 1px 1px #000;
   }
-  #pauseOverlay .pause-buttons { display: grid; grid-template-columns: 1fr; gap: 7px; }
-  #pauseOverlay .pause-buttons button {
-    width: 100%;
-    min-height: 44px;
-    padding: 9px 12px;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600;
-    text-align: center;
-    text-shadow: 2px 2px #222;
-    background-color: #454545;
-    background-image: url('./VoxelCraft/textures/ui/button_borderless_dark.png');
-    background-size: 100% 100%;
-    border: 2px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 2px / 0 stretch;
-    border-radius: 0;
-    box-shadow: 0 2px 0 rgba(0,0,0,.45);
-  }
-  #pauseOverlay .pause-buttons button:hover,
-  #pauseOverlay .pause-buttons button:focus-visible {
-    background-image: url('./VoxelCraft/textures/ui/button_borderless_darkhover.png');
-  }
-  #pauseOverlay .pause-buttons button:active {
-    background-image: url('./VoxelCraft/textures/ui/button_borderless_darkpressed.png');
-    transform: translateY(1px);
-  }
+  #pauseOverlay .pause-buttons { display: grid; grid-template-columns: 1fr; gap: 6px; }
+  /* #pauseOverlay button styling is inherited from the shared gui_buttons.png rule above. */
   @media (max-width: 600px) {
     #pauseOverlay { padding: 12px; }
-    #pauseOverlay .pause-wrap { padding: 12px; }
+    #pauseOverlay .pause-wrap { padding: 10px; }
   }
 
 
 
-  /* Inventory category tabs follow the vanilla Bedrock panel/button treatment. */
+  /* Inventory category tabs — MCPE 2013 style dark tab strip. */
   #inventory .inv-tabs {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 4px;
+    gap: 3px;
     width: min(100%, 620px);
-    padding: 8px 10px 0;
-    background-color: #c6c6c6;
-    background-image: url('./VoxelCraft/textures/ui/background_panel.png');
-    background-size: 100% 100%;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 4px / 0 stretch;
-  }
-  #inventory .inv-tabs button {
-    min-width: 0;
-    min-height: 34px;
-    padding: 6px 3px;
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    text-shadow: 2px 2px #222;
-    background-color: #454545;
-    background-image: url('./VoxelCraft/textures/ui/button_borderless_dark.png');
-    background-size: 100% 100%;
-    border: 2px solid transparent;
-    border-image: url('./VoxelCraft/textures/ui/background_with_border.png') 1 fill / 2px / 0 stretch;
+    padding: 6px 6px 4px;
+    background-color: #1d1d1d;
+    border: 2px solid #000;
     border-radius: 0;
-    cursor: pointer;
   }
-  #inventory .inv-tabs button:hover,
-  #inventory .inv-tabs button:focus-visible {
-    background-image: url('./VoxelCraft/textures/ui/button_borderless_darkhover.png');
-  }
+  /* inv-tabs button base styling inherited from the shared gui_buttons.png rule above. */
   #inventory .inv-tabs button.active,
   #inventory .inv-tabs button[aria-selected="true"] {
-    color: #fff;
-    background-image: url('./VoxelCraft/textures/ui/button_borderless_darkpressed.png');
+    background-position: 0 -40px;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.24);
   }
   #inventory .inv-grid {
@@ -712,24 +628,25 @@
     border-top-right-radius: 0;
   }
   @media (max-width: 600px) {
-    #inventory .inv-tabs { gap: 3px; padding: 6px 6px 0; }
-    #inventory .inv-tabs button { min-height: 32px; font-size: 10px; }
+    #inventory .inv-tabs { gap: 3px; padding: 4px 4px 3px; }
   }
 
 
-  /* Original Bedrock item sprites identify the inventory categories. */
+  /* Inventory category tab icons — keep the original item sprites (apple,
+     brick, diamond) since they're MCPE 2013 item sprites from items/, NOT
+     ui/. Replace inventory_icon.png with a Unicode glyph for the "all" tab. */
   #inventory .inv-tabs button {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
   }
   #inventory .inv-tabs button::before {
     content: "";
     display: inline-block;
-    flex: 0 0 16px;
-    width: 16px;
-    height: 16px;
+    flex: 0 0 14px;
+    width: 14px;
+    height: 14px;
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;
@@ -737,7 +654,14 @@
     filter: drop-shadow(1px 1px 0 rgba(0,0,0,.35));
   }
   #inventory .inv-tabs button[data-inv-filter="all"]::before {
-    background-image: url('./VoxelCraft/textures/ui/inventory_icon.png');
+    content: "\25A6";  /* Unicode crate glyph — no inventory_icon.png */
+    background: none;
+    color: #bfff7a;
+    font-size: 11px;
+    line-height: 14px;
+    text-align: center;
+    text-shadow: 1px 1px #000;
+    filter: none;
   }
   #inventory .inv-tabs button[data-inv-filter="nature"]::before {
     background-image: url('./VoxelCraft/textures/items/apple.png');
@@ -752,13 +676,12 @@
     #inventory .inv-tabs button {
       flex-direction: column;
       gap: 2px;
-      min-height: 44px;
-      padding: 4px 2px;
+      padding: 2px 2px;
       font-size: 10px;
       line-height: 1.1;
     }
     #inventory .inv-tabs button::before {
-      flex-basis: 16px;
+      flex-basis: 14px;
     }
   }
 
@@ -795,80 +718,70 @@
   }
 
 
-  /* Use Bedrock's actual tab sprites, not CSS-painted tab approximations. */
-  #inventory .inv-tabs {
-    gap: 0;
-    padding: 8px 10px 0;
-    border-image: none;
-    border: 0;
-    background: url('./VoxelCraft/textures/ui/background_panel.png') center / 100% 100% repeat;
-  }
-  #inventory .inv-tabs button {
-    min-height: 36px;
-    margin: 0;
-    border: 0;
-    border-radius: 0;
-    background-color: transparent;
-    background-image: url('./VoxelCraft/textures/ui/TabTopBack.png');
-    background-size: 100% 100%;
-    box-shadow: none;
-    text-shadow: 1px 1px #333;
-  }
-  #inventory .inv-tabs button:hover,
-  #inventory .inv-tabs button:focus-visible {
-    background-image: url('./VoxelCraft/textures/ui/TabTopBackHover.png');
-    outline: 1px solid rgba(255,255,255,.55);
-    outline-offset: -2px;
-  }
-  #inventory .inv-tabs button.active,
-  #inventory .inv-tabs button[aria-selected="true"] {
-    background-image: url('./VoxelCraft/textures/ui/TabTopFront.png');
-    box-shadow: none;
-    color: #262626;
-    text-shadow: 1px 1px rgba(255,255,255,.45);
-  }
-  #inventory .inv-tabs button.active:hover,
-  #inventory .inv-tabs button[aria-selected="true"]:hover {
-    background-image: url('./VoxelCraft/textures/ui/TabTopFrontHover.png');
-  }
-  @media (max-width: 460px) {
-    #inventory .inv-tabs { padding: 6px 6px 0; }
-    #inventory .inv-tabs button { min-height: 44px; }
-  }
+  /* (legacy VoxelCraft RP tab sprite overrides removed — MCPE 2013 uses the
+     shared gui_buttons.png button background declared above) */
 
 
-  /* Main-menu controls use the original Resource Pack's newgui button states. */
-  #overlay .menu-buttons > button,
-  #overlay .button-row > button {
-    background-color: transparent;
-    background-image: url('./VoxelCraft/textures/gui/newgui/ButtonWithBorder.png');
-    background-size: 100% 100%;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    text-shadow: 1px 1px #222;
-    image-rendering: pixelated;
-  }
-  #overlay .menu-buttons > button:hover,
-  #overlay .menu-buttons > button:focus-visible,
-  #overlay .button-row > button:hover,
-  #overlay .button-row > button:focus-visible {
-    background-image: url('./VoxelCraft/textures/gui/newgui/ButtonWithBorderHover.png');
-    outline: none;
-  }
-  #overlay .menu-buttons > button:active,
-  #overlay .button-row > button:active {
-    background-image: url('./VoxelCraft/textures/gui/newgui/ButtonWithBorderPressed.png');
-    transform: translateY(1px);
-  }
+  /* (legacy VoxelCraft RP newgui button overrides removed — MCPE 2013 uses
+     the shared gui_buttons.png button background declared above) */
 
 
 
-  /* Use the original Resource Pack pointer outside the locked 3D viewport. */
-  body { cursor: url('./VoxelCraft/textures/ui/cursor_pc.png') 4 4, auto; }
+  /* (legacy VoxelCraft RP cursor_pc.png pointer removed — MCPE 2013 in-browser
+     uses the host OS cursor. The 3D viewport hides it via #game { cursor: none }.) */
+  body { cursor: auto; }
   #game { cursor: none; }
   #overlay button, .slot, .inv-slot, #invClose {
-    cursor: url('./VoxelCraft/textures/ui/cursor_pc.png') 4 4, pointer;
+    cursor: pointer;
+  }
+
+  /* Hearts — icons.png heart sprites, 10 hearts (MAX_HEALTH/2 = 10).
+     Each heart is 9x9 in the icons.png atlas at GuiScale=1. The CSS element
+     is the natural 9x9 size (matching the atlas) and `transform: scale(2)`
+     doubles the visual size for browser display, matching the 2x hotbar
+     scale. Each heart stacks two layers:
+       .heart-bg : icons.png (16,0) 9x9 heart background (always shown)
+       .heart-fg : icons.png (52,0) 9x9 full heart OR (61,0) 9x9 half heart,
+                   overlaid on top of the background. The "blink" variants
+                   at (25,0)/(70,0)/(79,0) are used during the i-frame flash
+                   (invulnerableTime > 0). */
+  #hearts {
+    position: fixed; left: 6px; top: 6px; z-index: 5;
+    display: flex; gap: 0; padding: 0; margin: 0;
+    pointer-events: none;
+    transform: scale(2);
+    transform-origin: top left;
+  }
+  #hearts.hidden { display: none; }
+  #hearts .heart {
+    position: relative;
+    width: 9px; height: 9px;
+    margin-right: -1px;  /* hearts in MCPE overlap by 1px (8px apart, 9px wide) */
+    image-rendering: pixelated;
+  }
+  #hearts .heart::before,
+  #hearts .heart::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: url('./VoxelCraft/textures/gui/icons.png') no-repeat;
+    background-size: 256px 256px;
+    image-rendering: pixelated;
+  }
+  /* Default heart background at (16,0). */
+  #hearts .heart::before { background-position: -16px 0; }
+  /* Foreground: full heart at (52,0) by default. */
+  #hearts .heart::after { background-position: -52px 0; }
+  /* Half heart — set on the element via class. */
+  #hearts .heart.half::after { background-position: -61px 0; }
+  #hearts .heart.empty::after { display: none; }
+  /* Blink variants during invulnerability flash. */
+  #hearts.blink .heart::before { background-position: -25px 0; }
+  #hearts.blink .heart::after { background-position: -70px 0; }
+  #hearts.blink .heart.half::after { background-position: -79px 0; }
+  @media (max-width: 600px) {
+    /* On small screens the 2x hearts would crowd the HUD — keep scale but
+       shift down so they don't overlap the top-left HUD text. */
+    #hearts { top: 32px; }
   }
 
 </style>
@@ -877,6 +790,7 @@
   <canvas id="game"></canvas>
   <div id="vignette"></div>
   <div id="crosshair"></div>
+  <div id="hearts" class="hidden"></div>
   <div id="hud"></div>
   <div id="hotbar"></div>
   <div id="toast"></div>
@@ -1489,6 +1403,7 @@
     const loadingDetail = document.getElementById('loadingDetail');
     const hudEl = document.getElementById('hud');
     const hotbarEl = document.getElementById('hotbar');
+    const heartsEl = document.getElementById('hearts');
     const toastEl = document.getElementById('toast');
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -1677,6 +1592,14 @@
       width: 0.6, height: 1.8, eye: 1.62,
       speed: 0.1, flySpeed: 0.05,  // PER-TICK (rujukan verified)
       sprinting: false,
+      // Health / survival fields — rujukan Player.h MAX_HEALTH=20, Mob.h invulnerableTime.
+      // Browser port defaults to creative-like play (canHurtPlayer=false) so the
+      // hearts container stays hidden until a future survival mode enables it.
+      health: 20,
+      maxHealth: 20,           // Player::getMaxHealth() = MAX_HEALTH = 20
+      invulnerableTime: 0,     // i-frame ticks remaining after taking damage
+      invulnerableDuration: 10, // Mob.h default
+      canHurtPlayer: false,    // survival mode toggle (false = creative-style, no hearts)
     };
     // Base FOV follows the menu option; sprinting temporarily widens it. The
     // initial 72 matches the PerspectiveCamera constructor so the kick lerps cleanly.
@@ -3485,12 +3408,16 @@
         const slot = document.createElement('div');
         slot.className = 'slot' + (i === 0 ? ' active' : '');
         slot.dataset.index = i;
+        // Canvas internal resolution matches the MCPE 2013 block tile size
+        // (16x16). The .slot CSS displays it at 16x16 (logical, before the
+        // 2x hotbar transform) so each pixel maps 1:1 to an atlas texel —
+        // pixel-perfect block previews, no scaling blur.
         const c = document.createElement('canvas');
-        c.width = 36; c.height = 36;
+        c.width = 16; c.height = 16;
         const cx = c.getContext('2d');
         cx.imageSmoothingEnabled = false;
         // draw the side texture tile as preview
-        drawTilePreview(cx, def.side, 36);
+        drawTilePreview(cx, def.side, 16);
         slot.appendChild(c);
         const num = document.createElement('div');
         num.className = 'num'; num.textContent = (i + 1);
@@ -3522,6 +3449,48 @@
         const count = slot.querySelector('.count');
         if (count) count.textContent = String(voxelEngine.inventory.getSlot(index)?.count ?? 0);
       });
+    }
+
+    // ---- Hearts UI ----
+    // Build the 10-heart row (MAX_HEALTH/2 = 10) once at init; updateHearts()
+    // toggles the .half / .empty / .blink classes each frame to reflect the
+    // player's current health and i-frame state.
+    function buildHearts() {
+      heartsEl.innerHTML = '';
+      for (let i = 0; i < 10; i++) {
+        const h = document.createElement('div');
+        h.className = 'heart';
+        heartsEl.appendChild(h);
+      }
+    }
+    function updateHearts() {
+      // Only show hearts in survival-like modes where the player can take damage.
+      // Browser port defaults to creative-style (canHurtPlayer=false) so the
+      // hearts container stays hidden, matching MCPE 2013's creative mode.
+      if (!player.canHurtPlayer) {
+        heartsEl.classList.add('hidden');
+        return;
+      }
+      heartsEl.classList.remove('hidden');
+      const heartEls = heartsEl.querySelectorAll('.heart');
+      const hp = Math.max(0, Math.min(player.maxHealth, player.health));
+      const fullHearts = Math.floor(hp / 2);
+      const hasHalf = (hp % 2) === 1;
+      // Blink during invulnerability frames (MCPE flashes the hearts when
+      // invulnerableTime > 0 — Gui.cpp renderHearts blink check).
+      heartsEl.classList.toggle('blink', player.invulnerableTime > 0);
+      for (let i = 0; i < heartEls.length; i++) {
+        const h = heartEls[i];
+        if (i < fullHearts) {
+          h.classList.remove('half', 'empty');
+        } else if (i === fullHearts && hasHalf) {
+          h.classList.add('half');
+          h.classList.remove('empty');
+        } else {
+          h.classList.add('empty');
+          h.classList.remove('half');
+        }
+      }
     }
 
     // ---- Chunk meshing management ----
@@ -4189,6 +4158,14 @@
       // fps + hud
       fpsAccum += dt; fpsFrames++;
       if (fpsAccum >= 0.5) { fps = Math.round(fpsFrames / fpsAccum); fpsAccum = 0; fpsFrames = 0; }
+      // Tick down the player's invulnerability timer each frame (rujukan Mob::tick
+      // decrements invulnerableTime once per tick — we approximate by dt so the
+      // blink duration looks right at 60fps rather than waiting for the 20 tps
+      // physics tick). The hearts UI reads this in updateHearts().
+      if (player.invulnerableTime > 0) {
+        player.invulnerableTime = Math.max(0, player.invulnerableTime - dt * 20);
+      }
+      updateHearts();
       hudTimer += dt;
       if (hudTimer >= 0.2) {
         hudTimer = 0;
@@ -4208,6 +4185,7 @@
       transparentMat = new THREE.MeshLambertMaterial({ map: atlasTexture, transparent: true, opacity: 0.82, depthWrite: false, side: THREE.DoubleSide });
 
       buildHotbar();
+      buildHearts();
       loadingDetail.textContent = 'membangun dunia...';
       // pre-generate spawn area synchronously so first frame has ground
       const pcx = Math.floor(player.pos.x / CHUNK_X), pcz = Math.floor(player.pos.z / CHUNK_Z);
