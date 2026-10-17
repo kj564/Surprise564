@@ -2,7 +2,7 @@ name: VoxelCraft rebuild checks
 
 on:
   push:
-    branches: ["rebuild/voxelcraft-modern-engine"]
+    branches: ["main", "rebuild/voxelcraft-modern-engine"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
