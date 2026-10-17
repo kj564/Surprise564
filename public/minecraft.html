@@ -1604,8 +1604,11 @@
 
     // Drifting cloud layer: a single horizontal plane high above the world.
     // The cloud pattern is generated procedurally (soft white blobs on a
-    // transparent canvas) and is NOT a Minecraft asset. Scrolling the texture
-    // offset gives the illusion of wind-driven drift without moving meshes.
+    // transparent canvas) and is NOT a Minecraft asset. The canvas is tiled
+    // with wrap seams hidden: every blob near an edge is also drawn mirrored
+    // on the opposite edge, so the RepeatWrapping texture has no visible
+    // grid lines. Scrolling the texture offset gives the illusion of
+    // wind-driven drift without moving meshes.
     function makeCloudTexture() {
       const size = 256;
       const c = document.createElement('canvas');
@@ -1613,9 +1616,9 @@
       const ctx = c.getContext('2d');
       ctx.clearRect(0, 0, size, size);
       ctx.globalCompositeOperation = 'lighter';
-      for (let i = 0; i < 7; i++) {
-        const cx = Math.random() * size, cy = Math.random() * size;
-        const rx = 30 + Math.random() * 44, ry = 18 + Math.random() * 28;
+      // 14 blobs, twice as dense as the previous 7. Each blob that crosses an
+      // edge is also stamped at the wrapped position so the texture is seamless.
+      const drawBlob = (cx, cy, rx, ry) => {
         const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rx, ry));
         g.addColorStop(0, 'rgba(255,255,255,0.85)');
         g.addColorStop(0.6, 'rgba(255,255,255,0.32)');
@@ -1627,6 +1630,22 @@
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, size, size);
         ctx.restore();
+      };
+      for (let i = 0; i < 14; i++) {
+        const cx = Math.random() * size, cy = Math.random() * size;
+        const rx = 30 + Math.random() * 44, ry = 18 + Math.random() * 28;
+        drawBlob(cx, cy, rx, ry);
+        // Wrap to opposite edges if the blob extends past them, so the
+        // RepeatWrapping seam has matching pixels on both sides.
+        if (cx + rx > size) drawBlob(cx - size, cy, rx, ry);
+        if (cx - rx < 0)    drawBlob(cx + size, cy, rx, ry);
+        if (cy + ry > size) drawBlob(cx, cy - size, rx, ry);
+        if (cy - ry < 0)    drawBlob(cx, cy + size, rx, ry);
+        // Corner wrap (both x and y overflow)
+        if (cx + rx > size && cy + ry > size) drawBlob(cx - size, cy - size, rx, ry);
+        if (cx - rx < 0    && cy - ry < 0)    drawBlob(cx + size, cy + size, rx, ry);
+        if (cx + rx > size && cy - ry < 0)    drawBlob(cx - size, cy + size, rx, ry);
+        if (cx - rx < 0    && cy + ry > size) drawBlob(cx + size, cy - size, rx, ry);
       }
       const tex = new THREE.CanvasTexture(c);
       tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
@@ -1718,6 +1737,7 @@
     window.__w = world;
     window.__p = player;
     window.__scene = scene;
+    window.__cam = camera;
     // debug helpers for in-game testing (not gameplay-affecting)
     window.__raycast = raycastVoxel;
     window.__breakBlock = breakBlock;
@@ -2520,13 +2540,18 @@
     //    all velocity on any collision.
     // ============================================================
     function moveRelativeTick(xa, za, speed) {
-      // rujukan Entity::moveRelative (Entry 1): adds to vel using yaw rotation.
-      // DEVIATION: rujukan yRot=0 looks south (+Z); minecraft.html yaw=0 looks -Z
-      // (Three.js). The mapping is yRot = yaw - 180°, so cos(yRot)=-cos(yaw),
-      // sin(yRot)=-sin(yaw). Substituting into rujukan's formula gives:
-      //   vel.x += za*sin(yaw) - xa*cos(yaw)
-      //   vel.z += -za*cos(yaw) - xa*sin(yaw)
-      // Verified at yaw=0: W(za=+1)→vel.z=-1 (forward -Z ✓); A(xa=+1)→vel.x=-1 (left -X ✓)
+      // Movement must follow the camera's forward/right vectors, not a
+      // separate yaw convention. With Three.js rotation.order='YXZ' and
+      // camera default looking toward -Z:
+      //   forward = (-sin(yaw), 0, -cos(yaw))
+      //   right   = ( cos(yaw), 0, -sin(yaw))
+      // Input convention (matches rujukan KeyboardInput):
+      //   za = +1 → forward (W), xa = +1 → strafe left (A, = -right)
+      // So: vel += forward*za + right*(-xa)
+      //   vel.x += -sin(yaw)*za - cos(yaw)*xa
+      //   vel.z += -cos(yaw)*za + sin(yaw)*xa
+      // Verified at yaw=0:    W(za=+1)→vel.z=-1 (forward -Z ✓); A(xa=+1)→vel.x=-1 (left -X ✓)
+      // Verified at yaw=+π/2: W(za=+1)→vel.x=-1, vel.z=0 (forward -X, matches camera looking -X ✓)
       let dist = Math.sqrt(xa*xa + za*za);
       if (dist < 0.01) return;
       if (dist < 1) dist = 1;
@@ -2534,8 +2559,8 @@
       xa *= f; za *= f;
       const sinY = Math.sin(player.yaw);
       const cosY = Math.cos(player.yaw);
-      player.vel.x += za * sinY - xa * cosY;
-      player.vel.z += -za * cosY - xa * sinY;
+      player.vel.x += -sinY * za - cosY * xa;
+      player.vel.z += -cosY * za + sinY * xa;
     }
     function moveWithCollision() {
       // rujukan Entity::move: Y first, then X, then Z (Entry 1 verified)
@@ -2601,13 +2626,14 @@
       }
 
       if (player.fly) {
-        // rujukan LocalPlayer::calculateFlight (simplified): direct velocity from input
-        // VERIFIED: abilities.flyingSpeed = 0.05, vertical impulse ±0.15/tick
-        // Same yaw-convention adaptation as moveRelativeTick (yRot = yaw - 180°).
+        // rujukan LocalPlayer::calculateFlight (simplified): direct velocity from input.
+        // VERIFIED: abilities.flyingSpeed = 0.05, vertical impulse ±0.15/tick.
+        // Same camera-relative convention as moveRelativeTick: forward =
+        // (-sin yaw, 0, -cos yaw), right = (cos yaw, 0, -sin yaw), xa=+1 left.
         const sinY = Math.sin(player.yaw), cosY = Math.cos(player.yaw);
         const fsp = player.flySpeed;
-        player.vel.x = (yya * sinY - xxa * cosY) * fsp;
-        player.vel.z = (-yya * cosY - xxa * sinY) * fsp;
+        player.vel.x = (-sinY * yya - cosY * xxa) * fsp;
+        player.vel.z = (-cosY * yya + sinY * xxa) * fsp;
         player.vel.y = ((keys['Space'] ? 1 : 0) - (keys['ShiftLeft'] ? 1 : 0)) * 0.15;
         moveWithCollision();
       } else {
