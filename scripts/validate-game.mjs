@@ -20,8 +20,8 @@ if (styleStart < 0 || styleEnd < 0) throw new Error('Could not parse CSS from pu
 const uiPanelSource = source.slice(styleStart, styleEnd);
 
 function lastCssRule(selector, predicate = () => true) {
-  const escaped = selector.replaceAll('.', '\\\\.').replaceAll('#', '\\\\#').replaceAll(' ', '\\\\s+');
-  const expression = new RegExp(escaped + '\\\\s*\\\\{([^}]*)\\\\}', 'g');
+  const escaped = selector.replaceAll('.', '\\.').replaceAll(' ', '\\s+');
+  const expression = new RegExp(escaped + '\\s*\\{([^}]*)\\}', 'g');
   let selectedRule = '';
   for (const match of uiPanelSource.matchAll(expression)) {
     if (predicate(match[1])) selectedRule = match[1];
