@@ -40,6 +40,7 @@ export function raycastVoxels(
   direction: RayVector,
   maxDistance: number,
   isSelectable: (blockId: number) => boolean,
+  getSelectionHeight?: (blockId: number) => number | undefined,
 ): VoxelRayResult {
   assertFiniteVector(origin, 'origin');
   assertFiniteVector(direction, 'direction');
@@ -75,7 +76,17 @@ export function raycastVoxels(
       return { status: 'unloaded', block: Object.freeze({ x, y, z }), distance };
     }
     if (isSelectable(blockId)) {
-      return { status: 'hit', blockId, block: Object.freeze({ x, y, z }), face: Object.freeze(face), distance };
+      const shapeHeight = getSelectionHeight?.(blockId);
+      if (shapeHeight === undefined || shapeHeight >= 1) {
+        return { status: 'hit', blockId, block: Object.freeze({ x, y, z }), face: Object.freeze(face), distance };
+      }
+      if (!Number.isFinite(shapeHeight) || shapeHeight <= 0) throw new RangeError('Selection shape height must be finite and positive');
+      const cellExit = Math.min(maxX, maxY, maxZ, maxDistance);
+      const shapeHit = intersectRayBox(origin, { x: dx, y: dy, z: dz },
+        { x, y, z }, { x: x + 1, y: y + shapeHeight, z: z + 1 }, distance, cellExit);
+      if (shapeHit) {
+        return { status: 'hit', blockId, block: Object.freeze({ x, y, z }), face: Object.freeze(shapeHit.face), distance: shapeHit.distance };
+      }
     }
 
     // Strict comparisons deliberately establish X -> Y -> Z tie-breaking.
@@ -110,4 +121,48 @@ function assertFiniteVector(vector: RayVector, name: string): void {
   if (![vector.x, vector.y, vector.z].every(Number.isFinite)) {
     throw new TypeError(name + ' components must be finite');
   }
+}
+
+
+interface RayBoxHit { readonly distance: number; readonly face: RayVector }
+
+/** Intersects the ray with an axis-aligned selection box, restricted to the current DDA cell. */
+function intersectRayBox(
+  origin: RayVector,
+  direction: RayVector,
+  min: RayVector,
+  max: RayVector,
+  minDistance: number,
+  maxDistance: number,
+): RayBoxHit | null {
+  let enter = -Infinity;
+  let exit = Infinity;
+  let enterFace: RayVector = { x: 0, y: 0, z: 0 };
+  const axes = [
+    { origin: origin.x, direction: direction.x, min: min.x, max: max.x, axis: 'x' as const },
+    { origin: origin.y, direction: direction.y, min: min.y, max: max.y, axis: 'y' as const },
+    { origin: origin.z, direction: direction.z, min: min.z, max: max.z, axis: 'z' as const },
+  ];
+  for (const axis of axes) {
+    if (Math.abs(axis.direction) < 1e-12) {
+      if (axis.origin < axis.min || axis.origin > axis.max) return null;
+      continue;
+    }
+    let near = (axis.min - axis.origin) / axis.direction;
+    let far = (axis.max - axis.origin) / axis.direction;
+    let sign = -Math.sign(axis.direction);
+    if (near > far) {
+      [near, far] = [far, near];
+      sign = Math.sign(axis.direction);
+    }
+    if (near > enter) {
+      enter = near;
+      enterFace = { x: 0, y: 0, z: 0, [axis.axis]: sign };
+    }
+    exit = Math.min(exit, far);
+    if (enter > exit) return null;
+  }
+  const hitDistance = Math.max(enter, minDistance);
+  if (hitDistance > exit + 1e-9 || hitDistance > maxDistance + 1e-9 || exit < minDistance - 1e-9) return null;
+  return { distance: hitDistance, face: enter < minDistance ? { x: 0, y: 0, z: 0 } : enterFace };
 }
