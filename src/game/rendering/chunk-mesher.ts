@@ -144,7 +144,10 @@ function isFaceOccluded(current: BlockDefinition, neighborId: number | undefined
   if (neighborId === undefined || neighborId === 0) return false;
   const neighbor = registry.getById(neighborId);
   if (!neighbor || neighbor.renderLayer === 'invisible' || neighbor.shape === 'none') return false;
-  if (neighbor.renderLayer === 'opaque') return true;
+  // A partial-height neighbor cannot occlude a whole cube face; keep it to avoid holes.
+  if (neighbor.renderLayer === 'opaque') {
+    return neighbor.shape !== 'slab' || (neighbor.shapeHeight ?? 0.5) >= 1;
+  }
   return current.key === neighbor.key && current.renderLayer === neighbor.renderLayer;
 }
 
