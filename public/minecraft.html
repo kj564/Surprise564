@@ -2046,419 +2046,491 @@
     });
 
     // ============================================================
-    //  Chicken entity — 1:1 faithful port of rujukan Chicken class
-    //  (Chicken.cpp:1-114, Chicken.h:1-50) + Animal (Animal.cpp:1-93)
-    //  + PathfinderMob (PathfinderMob.cpp:1-249) + Mob (Mob.cpp:1-1145)
+    //  Mob class hierarchy — 1:1 faithful ES6 port of rujukan C++
     //
-    //  VERIFIED constants from rujukan source (MODLOG Entries 21-24):
-    //    size:        0.3 x 0.7 (Chicken.h)
-    //    health:      4 (Chicken constructor)
-    //    walkingSpeed: 0.1 (Mob base) x 0.7 (getWalkingSpeedModifier) = 0.07/tick
-    //    jumpFromGround: 0.42 (single value, Mob.cpp)
-    //    gravity:    0.08/tick (Mob::travel land branch)
-    //    airDrag:    0.98/tick
-    //    groundFriction: 0.6 * 0.91 (default tile friction)
-    //    friction2:  (0.6*0.6*0.91*0.91*0.6*0.91) / (friction^3)
-    //    wing flap:   flapSpeed += (onGround ? -1 : 4) * 0.3, clamp [0,1]
-    //                flap += flapSpeed * 2
-    //                flapSpeed *= 0.9 (decay)
-    //    slow fall:  yd *= 0.6 when !onGround && yd < 0 (no fall damage)
-    //    egg timer:  DISABLED in MCPE 2013 (commented out)
-    //    drops:      0-2 feathers + 1 raw chicken (no cooked)
+    //  Inheritance (MODLOG Entry 26, verified from rujukan headers):
+    //    Entity → Mob → PathfinderMob → AgableMob → Animal → Chicken
     //
-    //  AI (PathfinderMob::updateAi + Mob::updateAi):
-    //    look-around: 2%/tick chance, duration 10-30 ticks
-    //    random turn: ±10° at 5%/tick
-    //    MAX_TURN: 30°/tick
-    //    wander stroll: ±6/±3/±6 sampling, 10 attempts
-    //    flee: 60 ticks, walkingSpeed * 2
-    //    despawn: hard 96 blocks, soft 32 + 30s idle + 1/800 chance
+    //  Constructor chain (MODLOG §26.8):
+    //    Entity() → Mob() → PathfinderMob() → AgableMob() → Animal() → Chicken()
+    //    Then MobFactory re-sets health = getMaxHealth() (C++ vtable-in-ctor quirk)
     //
-    //  MobSpawner (MODLOG Entry 25):
-    //    MIN_SPAWN_DISTANCE: 24 blocks
-    //    caps: creature 15/level
-    //    spawn on grass + brightness > 8
+    //  Virtual dispatch (MODLOG §26.9):
+    //    tick(): Entity::baseTick → Mob::tick (super.tick + aiStep + walkAnim)
+    //    aiStep(): Mob::aiStep (updateAi + travel) → AgableMob::aiStep (age) → Chicken::aiStep (wing flap)
+    //    travel(): Mob::travel (3-branch water/lava/land)
+    //    updateAi(): Mob::updateAi (look-around) → PathfinderMob::updateAi (wander)
+    //    getMaxHealth(): Mob=10 → Chicken=4
+    //    getWalkingSpeedModifier(): Mob=1.0 → Animal=0.7
+    //    causeFallDamage(): Mob (damage) → Chicken (no-op)
     // ============================================================
-    function spawnChicken(x, y, z) {
-      const group = makeVanillaChickenModel() || makeChickenFallback();
-      group.position.set(x, y, z);
-      scene.add(group);
-      // VERIFIED Chicken fields (Chicken.h + Mob.h)
-      mobs.push({
-        mesh: group,
-        body: group.userData?.bones?.get('body') || group.userData?.fallbackBody || group,
-        bones: group.userData?.bones || null,
-        // physics state (Entity/Mob fields)
-        pos: group.position,            // alias to mesh.position (Three.js Vector3)
-        vel: new THREE.Vector3(),
-        yRot: Math.random() * Math.PI * 2,    // yaw (rujukan: yRot)
-        xRot: 0,
-        yRotO: 0,
-        onGround: false,
-        // Mob fields
-        health: 4,
-        hurtTime: 0,
-        noActionTime: 0,
-        // Chicken fields (Chicken.h)
-        flapSpeed: 0,
-        flap: 0,
-        oFlap: 0,
-        oFlapSpeed: 0,
-        flapping: 1,
-        isChicken: true,  // marker for Chicken::aiStep override
-        // PathfinderMob AI fields
-        xxa: 0,                        // strafe input
-        yya: 0,                        // forward input
-        yRotA: 0,                      // yaw delta per tick (degrees)
-        jumping: false,
-        lookTime: 0,
-        lookingAtId: 0,
-        horizontalCollision: false,    // for swim-up check
-        // Animal AI
-        fleeTime: 0,
-        strollX: 0, strollY: 0, strollZ: 0,
-        strollTimer: 0,
-      });
-    }
-    // VERIFIED Mob::isInWater (simplified — check tile id 8/9 = water)
-    function mobIsInWater(m) {
-      const id = world.getBlock(Math.floor(m.pos.x), Math.floor(m.pos.y + 0.5), Math.floor(m.pos.z));
-      return id === 8 || id === 9;
-    }
-    // VERIFIED Mob::isInLava (tile id 10/11)
-    function mobIsInLava(m) {
-      const id = world.getBlock(Math.floor(m.pos.x), Math.floor(m.pos.y + 0.5), Math.floor(m.pos.z));
-      return id === 10 || id === 11;
-    }
-    // VERIFIED Entity::moveRelative (Entry 1) — adds to vel using yaw rotation
-    function mobMoveRelative(m, xa, za, speed) {
-      let dist = Math.sqrt(xa*xa + za*za);
-      if (dist < 0.01) return;
-      if (dist < 1) dist = 1;
-      const f = speed / dist;
-      xa *= f; za *= f;
-      const sinY = Math.sin(m.yRot);
-      const cosY = Math.cos(m.yRot);
-      m.vel.x += xa * cosY - za * sinY;
-      m.vel.z += za * cosY + xa * sinY;
-    }
-    // VERIFIED Mob::travel (Mob.cpp:558-626) — 3 branches
-    function mobTravel(m, xa, ya) {
-      if (mobIsInWater(m)) {
-        const yo = m.pos.y;
-        mobMoveRelative(m, xa, ya, 0.02);
-        mobMoveWithCollision(m);
-        m.vel.x *= 0.8; m.vel.y *= 0.8; m.vel.z *= 0.8;
-        m.vel.y -= 0.02;
-        // swim up if horizontal collision and free above
-        if (m.horizontalCollision && mobIsFree(m, m.vel.x, m.vel.y + 0.6 - m.pos.y + yo, m.vel.z)) {
-          m.vel.y = 0.3;
+
+    // ---- Entity (Entity.h:23, 224 lines) — root base ----
+    class MobEntity {
+      constructor(level) {
+        // VERIFIED Entity init list (Entity.cpp:15-63)
+        this.level = level;
+        this.x = 0; this.y = 0; this.z = 0;
+        this.xo = 0; this.yo = 0; this.zo = 0;
+        this.xd = 0; this.yd = 0; this.zd = 0;
+        this.yRot = 0; this.xRot = 0;
+        this.yRotO = 0; this.xRotO = 0;
+        this.onGround = false;
+        this.horizontalCollision = false;
+        this.verticalCollision = false;
+        this.collision = false;
+        this.removed = false;
+        this.noPhysics = false;
+        this.tickCount = 0;
+        this.fallDistance = 0;
+        this.bbWidth = 0.6; this.bbHeight = 1.8;
+        this.heightOffset = 0;
+        this.pushthrough = 0;
+        this.airSupply = 300; this.airCapacity = 300;
+        this.onFire = 0; this.flameTime = 1;
+        this.firstTick = true;
+        this.blocksBuilding = false;
+        this.walkDist = 0; this.walkDistO = 0;
+        this.entityId = 0;
+      }
+      // VERIFIED Entity::tick (Entity.cpp:463-466) — calls baseTick
+      tick() { this.baseTick(); }
+      // VERIFIED Entity::baseTick (Entity.cpp:468+) — tickCount++, xo=x, etc.
+      baseTick() {
+        this.tickCount++;
+        this.walkDistO = this.walkDist;
+        this.xo = this.x; this.yo = this.y; this.zo = this.z;
+        this.xRotO = this.xRot; this.yRotO = this.yRot;
+        this.firstTick = false;
+      }
+      // VERIFIED Entity::move (Entity.cpp:137) — Y→X→Z with slide
+      move(xa, ya, za) {
+        if (this.noPhysics) {
+          this.setPos(this.x + xa, this.y + ya, this.z + za);
+          return;
         }
-      } else if (mobIsInLava(m)) {
-        const yo = m.pos.y;
-        mobMoveRelative(m, xa, ya, 0.02);
-        mobMoveWithCollision(m);
-        m.vel.x *= 0.5; m.vel.y *= 0.5; m.vel.z *= 0.5;
-        m.vel.y -= 0.02;
-        if (m.horizontalCollision && mobIsFree(m, m.vel.x, m.vel.y + 0.6 - m.pos.y + yo, m.vel.z)) {
-          m.vel.y = 0.3;
+        // Y axis first (verified Entry 1)
+        const maxStep = 0.25;
+        let newYd = ya;
+        const ySteps = Math.max(1, Math.ceil(Math.abs(newYd) / maxStep));
+        const stepY = newYd / ySteps;
+        for (let i = 0; i < ySteps; i++) {
+          const ny = this.y + stepY;
+          if (this.isSolidAt(this.x, ny, this.z)) {
+            if (newYd < 0) this.onGround = true;
+            newYd = 0; this.yd = 0;
+            break;
+          }
+          this.y = ny;
+          this.onGround = false;
         }
-      } else {
-        // land branch — friction2 formula
-        let friction = 0.91;
-        if (m.onGround) friction = 0.6 * 0.91;
-        const friction2 = (0.6*0.6*0.91*0.91*0.6*0.91) / (friction*friction*friction);
-        mobMoveRelative(m, xa, ya, m.onGround ? 0.1 * 0.7 * friction2 : 0.02);
-        mobMoveWithCollision(m);
-        m.vel.y -= 0.08;
-        m.vel.y *= 0.98;
-        m.vel.x *= friction;
-        m.vel.z *= friction;
-      }
-    }
-    function mobIsFree(m, xa, ya, za) {
-      // simplified — check if moving by (xa,ya,za) keeps out of solid
-      return !isSolid(Math.floor(m.pos.x + xa), Math.floor(m.pos.y + ya), Math.floor(m.pos.z + za));
-    }
-    // VERIFIED Entity::move (Entry 1) — Y first, then X, then Z, with slide
-    function mobMoveWithCollision(m) {
-      const maxStep = 0.25;
-      // Y axis
-      const dy = m.vel.y;
-      const ySteps = Math.max(1, Math.ceil(Math.abs(dy) / maxStep));
-      const stepY = dy / ySteps;
-      for (let i = 0; i < ySteps; i++) {
-        const ny = m.pos.y + stepY;
-        if (isSolid(m.pos.x, ny, m.pos.z)) {
-          if (m.vel.y < 0) m.onGround = true;
-          m.vel.y = 0;
-          break;
+        // X axis
+        let newXa = xa;
+        const xSteps = Math.max(1, Math.ceil(Math.abs(newXa) / maxStep));
+        const stepX = newXa / xSteps;
+        for (let i = 0; i < xSteps; i++) {
+          const nx = this.x + stepX;
+          if (this.isSolidAt(nx, this.y, this.z)) { newXa = 0; this.xd = 0; break; }
+          this.x = nx;
         }
-        m.pos.y = ny;
-        m.onGround = false;
+        // Z axis
+        let newZa = za;
+        const zSteps = Math.max(1, Math.ceil(Math.abs(newZa) / maxStep));
+        const stepZ = newZa / zSteps;
+        for (let i = 0; i < zSteps; i++) {
+          const nz = this.z + stepZ;
+          if (this.isSolidAt(this.x, this.y, nz)) { newZa = 0; this.zd = 0; break; }
+          this.z = nz;
+        }
+        this.horizontalCollision = (xa !== newXa) || (za !== newZa);
+        this.verticalCollision = (ya !== newYd);
       }
-      // X axis
-      const dx = m.vel.x;
-      const xSteps = Math.max(1, Math.ceil(Math.abs(dx) / maxStep));
-      const stepX = dx / xSteps;
-      for (let i = 0; i < xSteps; i++) {
-        const nx = m.pos.x + stepX;
-        if (isSolid(nx, m.pos.y, m.pos.z)) { m.vel.x = 0; break; }
-        m.pos.x = nx;
+      // VERIFIED Entity::moveRelative (Entity.cpp:575) — adds to vel using yRot
+      moveRelative(xa, za, speed) {
+        let dist = Math.sqrt(xa * xa + za * za);
+        if (dist < 0.01) return;
+        if (dist < 1) dist = 1;
+        const f = speed / dist;
+        xa *= f; za *= f;
+        const sinY = Math.sin(this.yRot);
+        const cosY = Math.cos(this.yRot);
+        this.xd += xa * cosY - za * sinY;
+        this.zd += za * cosY + xa * sinY;
       }
-      // Z axis
-      const dz = m.vel.z;
-      const zSteps = Math.max(1, Math.ceil(Math.abs(dz) / maxStep));
-      const stepZ = dz / zSteps;
-      for (let i = 0; i < zSteps; i++) {
-        const nz = m.pos.z + stepZ;
-        if (isSolid(m.pos.x, m.pos.y, nz)) { m.vel.z = 0; break; }
-        m.pos.z = nz;
+      setPos(x, y, z) { this.x = x; this.y = y; this.z = z; }
+      // VERIFIED Entity::isSolidAt — checks world for solid block
+      isSolidAt(x, y, z) {
+        const id = world.getBlock(Math.floor(x), Math.floor(y), Math.floor(z));
+        if (!id) return false;
+        const d = BLOCKS[id];
+        return d ? d.solid : false;
       }
+      isInWater() {
+        const id = world.getBlock(Math.floor(this.x), Math.floor(this.y + 0.5), Math.floor(this.z));
+        return id === 8 || id === 9;
+      }
+      isInLava() {
+        const id = world.getBlock(Math.floor(this.x), Math.floor(this.y + 0.5), Math.floor(this.z));
+        return id === 10 || id === 11;
+      }
+      distanceToSqr(x, y, z) {
+        const dx = this.x - x, dy = this.y - y, dz = this.z - z;
+        return dx * dx + dy * dy + dz * dz;
+      }
+      // Pure virtual — must be overridden
+      getEntityTypeId() { throw new Error('abstract'); }
     }
-    // VERIFIED Mob::jumpFromGround (Mob.cpp) — single value 0.42
-    function mobJumpFromGround(m) {
-      if (mobIsInWater(m)) m.vel.y += 0.04;
-      else if (mobIsInLava(m)) m.vel.y += 0.04;
-      else if (m.onGround) m.vel.y = 0.42;
-    }
-    // VERIFIED Mob::updateAi (Mob.cpp:760-802) — look-around + random turn
-    function mobUpdateAi(m) {
-      m.noActionTime++;
-      m.xxa = 0; m.yya = 0;
-      // 2%/tick look at nearest player within 8 blocks
-      if (Math.random() < 0.02) {
-        const dx = player.pos.x - m.pos.x, dy = player.pos.y - m.pos.y, dz = player.pos.z - m.pos.z;
-        if (dx*dx + dy*dy + dz*dz < 64) {
-          m.lookingAtId = 1; // player id (single-player)
-          m.lookTime = 10 + Math.floor(Math.random() * 20); // 10-30 ticks
+
+    // ---- Mob (Mob.h:23, 249 lines) : extends MobEntity ----
+    class Mob extends MobEntity {
+      constructor(level) {
+        super(level);
+        // VERIFIED Mob init list (Mob.cpp:27-68)
+        this.health = 10;  // VERIFIED Mob.cpp:73 — health=10 (NOT getMaxHealth yet)
+        this.lastHealth = 20;
+        this.hurtTime = 0;
+        this.hurtDuration = 0;
+        this.hurtDir = 0;
+        this.deathTime = 0;
+        this.attackTime = 0;
+        this.tilt = 0; this.oTilt = 0;
+        this.bob = 0; this.oBob = 0;
+        this.xxa = 0; this.yya = 0; this.yRotA = 0;
+        this.run = 0; this.oRun = 0;
+        this.walkAnimSpeed = 0; this.walkAnimSpeedO = 0; this.walkAnimPos = 0;
+        this.attackAnim = 0; this.oAttackAnim = 0;
+        this.walkingSpeed = 0.1;  // VERIFIED Mob.h: DEFAULT_WALK_SPEED
+        this.flyingSpeed = 0.02;  // VERIFIED Mob.h: DEFAULT_FLY_SPEED
+        this.runSpeed = 0.7;
+        this.noActionTime = 0;
+        this.lookingAtId = 0;
+        this.lookTime = 0;
+        this.jumping = false;
+        this.swinging = false;
+        this.swingTime = 0;
+        this.invulnerableTime = 0;
+        this.invulnerableDuration = 20;
+        this.yBodyRot = 0; this.yBodyRotO = 0;
+        this.timeOffs = Math.random() * 12398;  // VERIFIED Mob.cpp:78
+        this.yRot = Math.random() * Math.PI * 2;  // VERIFIED Mob.cpp:79
+        this.footSize = 0.5;  // VERIFIED Mob.cpp:81
+        this.blocksBuilding = true;  // VERIFIED Mob.cpp:75 — overrides Entity's false
+      }
+      // VERIFIED Mob::tick (Mob.cpp:270-303) — super.tick + aiStep + updateWalkAnim
+      tick() {
+        super.tick();  // Entity::tick → baseTick
+        // arrowCount + lSteps skipped (no network/arrows in port)
+        this.aiStep();  // virtual — Chicken overrides
+        this.updateWalkAnim();
+      }
+      // VERIFIED Mob::aiStep (Mob.cpp:688-757) — updateAi + jumping + travel
+      aiStep() {
+        if (this.isImmobile()) {
+          this.jumping = false; this.xxa = 0; this.yya = 0; this.yRotA = 0;
         } else {
-          m.yRotA = (Math.random() - 0.5) * 20; // ±10° random turn
+          this.updateAi();  // virtual — PathfinderMob::updateAi
+        }
+        // jumping (Mob.cpp:717-725)
+        if (this.jumping) {
+          if (this.isInWater()) this.yd += 0.04;
+          else if (this.isInLava()) this.yd += 0.04;
+          else if (this.onGround) this.jumpFromGround();
+        }
+        // input decay (Mob.cpp:727-729)
+        this.xxa *= 0.98;
+        this.yya *= 0.98;
+        this.yRotA *= 0.9;
+        // travel with walkingSpeed modifier (Mob.cpp:731-737)
+        const normalSpeed = this.walkingSpeed;
+        this.walkingSpeed *= this.getWalkingSpeedModifier();  // virtual
+        this.travel(this.xxa, this.yya);  // virtual — Mob::travel
+        this.walkingSpeed = normalSpeed;
+      }
+      // VERIFIED Mob::travel (Mob.cpp:558-626) — 3 branches: water/lava/land
+      travel(xa, ya) {
+        if (this.isInWater()) {
+          const yo = this.y;
+          this.moveRelative(xa, ya, 0.02);
+          this.move(this.xd, this.yd, this.zd);
+          this.xd *= 0.8; this.yd *= 0.8; this.zd *= 0.8;
+          this.yd -= 0.02;
+          if (this.horizontalCollision && !this.isSolidAt(this.x, this.y + 0.6, this.z)) {
+            this.yd = 0.3;
+          }
+        } else if (this.isInLava()) {
+          const yo = this.y;
+          this.moveRelative(xa, ya, 0.02);
+          this.move(this.xd, this.yd, this.zd);
+          this.xd *= 0.5; this.yd *= 0.5; this.zd *= 0.5;
+          this.yd -= 0.02;
+          if (this.horizontalCollision && !this.isSolidAt(this.x, this.y + 0.6, this.z)) {
+            this.yd = 0.3;
+          }
+        } else {
+          // land branch — friction2 formula (Mob.cpp:586-624)
+          let friction = 0.91;
+          if (this.onGround) friction = 0.6 * 0.91;
+          const friction2 = (0.6*0.6*0.91*0.91*0.6*0.91) / (friction*friction*friction);
+          this.moveRelative(xa, ya, this.onGround ? this.walkingSpeed * friction2 : this.flyingSpeed);
+          this.move(this.xd, this.yd, this.zd);
+          this.yd -= 0.08;       // gravity
+          this.yd *= 0.98;       // air drag
+          this.xd *= friction;
+          this.zd *= friction;
         }
       }
-      if (m.lookingAtId !== 0) {
-        // look at player (simplified — set yaw toward player)
-        const dx = player.pos.x - m.pos.x, dz = player.pos.z - m.pos.z;
-        const targetYaw = Math.atan2(-dx, -dz);
-        // MAX_TURN = 30° per tick
-        const maxTurn = Math.PI / 6;
-        let delta = targetYaw - m.yRot;
-        while (delta > Math.PI) delta -= 2 * Math.PI;
-        while (delta < -Math.PI) delta += 2 * Math.PI;
-        delta = Math.max(-maxTurn, Math.min(maxTurn, delta));
-        m.yRot += delta;
-        if (m.lookTime-- <= 0 || m.pos.distanceTo(player.pos) > 8) m.lookingAtId = 0;
-      } else {
-        if (Math.random() < 0.05) m.yRotA = (Math.random() - 0.5) * 20;
-        m.yRot += m.yRotA * Math.PI / 180;  // yRotA in degrees
+      // VERIFIED Mob::updateAi (Mob.cpp:760-802) — look-around + random turn
+      updateAi() {
+        this.noActionTime++;
+        this.xxa = 0; this.yya = 0;
+        // 2%/tick look at nearest player within 8 blocks
+        if (Math.random() < 0.02) {
+          const d = this.distanceToSqr(player.pos.x, player.pos.y, player.pos.z);
+          if (d < 64) {
+            this.lookingAtId = 1;
+            this.lookTime = 10 + Math.floor(Math.random() * 20); // 10-30 ticks
+          } else {
+            this.yRotA = (Math.random() - 0.5) * 20; // ±10°
+          }
+        }
+        if (this.lookingAtId !== 0) {
+          const dx = player.pos.x - this.x, dz = player.pos.z - this.z;
+          const targetYaw = Math.atan2(-dx, -dz);
+          const maxTurn = Math.PI / 6;  // MAX_TURN = 30°
+          let delta = targetYaw - this.yRot;
+          while (delta > Math.PI) delta -= 2 * Math.PI;
+          while (delta < -Math.PI) delta += 2 * Math.PI;
+          delta = Math.max(-maxTurn, Math.min(maxTurn, delta));
+          this.yRot += delta;
+          if (this.lookTime-- <= 0 || this.distanceToSqr(player.pos.x, player.pos.y, player.pos.z) > 64) {
+            this.lookingAtId = 0;
+          }
+        } else {
+          if (Math.random() < 0.05) this.yRotA = (Math.random() - 0.5) * 20;
+          this.yRot += this.yRotA * Math.PI / 180;
+        }
       }
+      // VERIFIED Mob::jumpFromGround (Mob.cpp) — single value 0.42
+      jumpFromGround() { this.yd = 0.42; }
+      // VERIFIED Mob::getMaxHealth — returns 10 (Chicken overrides to 4)
+      getMaxHealth() { return 10; }
+      // VERIFIED Mob::getWalkingSpeedModifier — 1.0 (Animal overrides to 0.7)
+      getWalkingSpeedModifier() { return 1.0; }
+      // VERIFIED Mob::updateWalkAnim (Mob.cpp:628-637)
+      updateWalkAnim() {
+        this.walkAnimSpeedO = this.walkAnimSpeed;
+        const dx = this.x - this.xo, dz = this.z - this.zo;
+        let wst = Math.sqrt(dx * dx + dz * dz) * 4;
+        if (wst > 1) wst = 1;
+        this.walkAnimSpeed += (wst - this.walkAnimSpeed) * 0.4;
+        this.walkAnimPos += this.walkAnimSpeed;
+        this.run += (Math.sqrt(dx * dx + dz * dz) - this.run) * 0.1;
+      }
+      // VERIFIED Mob::checkDespawn (Mob.cpp) — hard 96, soft 32 + 30s + 1/800
+      checkDespawn() {
+        const d = this.distanceToSqr(player.pos.x, player.pos.y, player.pos.z);
+        if (d > 96 * 96) return true;
+        if (d > 32 * 32) {
+          if (this.noActionTime > 600 && Math.random() < 1/800) return true;
+        } else {
+          this.noActionTime = 0;
+        }
+        return false;
+      }
+      isImmobile() { return this.health <= 0; }
+      interpolateOnly() { return false; }
+      removeWhenFarAway() { return true; }
+      setSize(w, h) { this.bbWidth = w; this.bbHeight = h; }
     }
-    // VERIFIED PathfinderMob::updateAi (PathfinderMob.cpp) — wander stroll
-    function pathfinderUpdateAi(m) {
-      mobUpdateAi(m); // base look-around
-      // Animal flee: 60 ticks, walkingSpeed * 2
-      if (m.fleeTime > 0) {
-        m.fleeTime--;
-        // move away from player
-        const dx = m.pos.x - player.pos.x, dz = m.pos.z - player.pos.z;
-        const d = Math.sqrt(dx*dx + dz*dz) || 1;
-        m.yya = -dx / d; // away from player
-        m.xxa = -dz / d;
-        if (m.onGround) m.jumping = true;
-      } else {
-        // wander stroll: pick random target every few seconds
-        m.strollTimer--;
-        if (m.strollTimer <= 0) {
-          // ±6/±3/±6 sampling, 10 attempts (PathfinderMob::findRandomStrollLocation)
-          for (let i = 0; i < 10; i++) {
-            const tx = m.pos.x + (Math.random() - 0.5) * 12;   // ±6
-            const ty = m.pos.y + (Math.random() - 0.5) * 6;    // ±3
-            const tz = m.pos.z + (Math.random() - 0.5) * 12;   // ±6
-            if (isSolid(Math.floor(tx), Math.floor(ty) - 1, Math.floor(tz))) {
-              m.strollX = tx; m.strollY = ty; m.strollZ = tz;
-              m.strollTimer = 60 + Math.floor(Math.random() * 60); // 3-6s
-              break;
+
+    // ---- PathfinderMob (PathfinderMob.h:21, 65 lines) : extends Mob ----
+    class PathfinderMob extends Mob {
+      constructor(level) {
+        super(level);
+        // VERIFIED PathfinderMob init list (PathfinderMob.cpp:11-17)
+        this.attackTargetId = 0;
+        this.holdGround = false;
+        this.fleeTime = 0;
+        this.strollX = 0; this.strollY = 0; this.strollZ = 0;
+        this.strollTimer = 0;
+      }
+      // VERIFIED PathfinderMob::updateAi (PathfinderMob.cpp:59+) — wander + super
+      updateAi() {
+        super.updateAi();  // Mob::updateAi (look-around)
+        // Animal flee: 60 ticks, walkingSpeed * 2
+        if (this.fleeTime > 0) {
+          this.fleeTime--;
+          const dx = this.x - player.pos.x, dz = this.z - player.pos.z;
+          const d = Math.sqrt(dx * dx + dz * dz) || 1;
+          this.yya = -dx / d;
+          this.xxa = -dz / d;
+          if (this.onGround) this.jumping = true;
+        } else {
+          // wander stroll: ±6/±3/±6, 10 attempts (PathfinderMob::findRandomStrollLocation)
+          this.strollTimer--;
+          if (this.strollTimer <= 0) {
+            for (let i = 0; i < 10; i++) {
+              const tx = this.x + (Math.random() - 0.5) * 12;
+              const ty = this.y + (Math.random() - 0.5) * 6;
+              const tz = this.z + (Math.random() - 0.5) * 12;
+              if (!this.isSolidAt(tx, ty - 1, tz)) {
+                this.strollX = tx; this.strollY = ty; this.strollZ = tz;
+                this.strollTimer = 60 + Math.floor(Math.random() * 60);
+                break;
+              }
+            }
+          }
+          if (this.strollTimer > 0) {
+            const dx = this.strollX - this.x, dz = this.strollZ - this.z;
+            const d = Math.sqrt(dx * dx + dz * dz);
+            if (d > 0.5) {
+              this.yya = dx / d;
+              this.xxa = -dz / d;
             }
           }
         }
-        if (m.strollTimer > 0) {
-          const dx = m.strollX - m.pos.x, dz = m.strollZ - m.pos.z;
-          const d = Math.sqrt(dx*dx + dz*dz);
-          if (d > 0.5) {
-            m.yya = dx / d;
-            m.xxa = -dz / d;
-          } else {
-            m.yya = 0; m.xxa = 0;
-          }
-        }
       }
     }
-    // VERIFIED Mob::checkDespawn (Mob.cpp) — hard 96, soft 32 + 30s + 1/800
-    function mobCheckDespawn(m) {
-      const dist = m.pos.distanceTo(player.pos);
-      if (dist > 96) { // hard despawn
-        return true;
+
+    // ---- AgableMob (AgableMob.h:8, 30 lines) : extends PathfinderMob ----
+    class AgableMob extends PathfinderMob {
+      constructor(level) {
+        super(level);
+        // VERIFIED AgableMob init (AgableMob.cpp:3-5)
+        this.age = -1;
+        this.setAge(0);  // VERIFIED AgableMob body: setAge(0) — age was -1 → 0
       }
-      if (dist > 32) {
-        if (m.noActionTime > 600 && Math.random() < 1/800) return true; // soft despawn
-      } else {
-        m.noActionTime = 0;
+      // VERIFIED AgableMob::aiStep — super.aiStep() + age progression
+      aiStep() {
+        super.aiStep();  // Mob::aiStep (or Chicken::aiStep if Chicken)
+        // age progression (AgableMob.cpp:aiStep body)
+        if (this.age > 0) this.age--;
+        else if (this.age < 0) this.age++;
       }
-      return false;
+      isBaby() { return this.age < 0; }
+      setAge(a) { this.age = a; }
     }
-    // (Old chickenAiStep + mobAiStep removed — replaced by the 1:1 versions
-    // defined below mobTick. The new versions match rujukan's exact call
-    // order: Chicken::aiStep calls super.aiStep (Mob::aiStep with travel)
-    // FIRST, then wing flap + slow fall AFTER.)
-    // VERIFIED Mob::tick (Mob.cpp:270-303) — call order 1:1 with rujukan:
-    //   1. super::tick() = Entity::tick() = Entity::baseTick()
-    //   2. aiStep()  (Chicken overrides this — calls super::aiStep() FIRST, then wing flap)
-    //   3. updateWalkAnim()
-    //
-    // VERIFIED Chicken::aiStep (Chicken.cpp:33-61) — 1:1 call order:
-    //   1. super::aiStep()  (Mob::aiStep: updateAi + jumping + xxa*=0.98 + travel)
-    //   2. oFlap = flap; oFlapSpeed = flapSpeed
-    //   3. flapSpeed += (onGround ? -1 : 4) * 0.3, clamp [0,1]
-    //   4. if (!onGround && flapping < 1) flapping = 1; flapping *= 0.9
-    //   5. if (!onGround && yd < 0) yd *= 0.6   <-- slow fall AFTER travel
-    //   6. flap += flapping * 2
-    //
-    // The slow-fall (yd *= 0.6) happens AFTER travel(), so it damps the yd
-    // that will be applied on the NEXT tick's gravity+travel. Doing it
-    // before travel (as the previous ad-hoc port did) was wrong: it
-    // damped the same-tick yd that travel was about to consume, breaking
-    // the chicken's glide physics.
-    function mobTick(m) {
-      // 1. Entity::baseTick (simplified — no fire/air in port)
-      // VERIFIED Entity::baseTick (Entity.cpp:468+): tickCount++, xo=x, yo=y, zo=z, yRotO=yRot
-      m.tickCount = (m.tickCount || 0) + 1;
-      m.xo = m.pos.x; m.yo = m.pos.y; m.zo = m.pos.z;
-      m.yRotO = m.yRot; m.xRotO = m.xRot;
-      // Mob::baseTick (Mob.cpp:148+): decay hurtTime, invulnerableTime
-      if (m.hurtTime > 0) m.hurtTime--;
-      if (m.invulnerableTime > 0) m.invulnerableTime--;
-      // 2. aiStep — Chicken overrides this; Chicken::aiStep calls
-      //    super.aiStep (Mob::aiStep = updateAi + travel) FIRST, then wing flap.
-      mobAiStep(m);  // this is Mob::aiStep; Chicken override adds wing flap inside
-      // 3. updateWalkAnim — VERIFIED Mob.cpp:628-637
-      mobUpdateWalkAnim(m);
-    }
-    // VERIFIED Chicken::aiStep (Chicken.cpp:33-61) — wing flap + slow fall
-    // AFTER super.aiStep (Mob::aiStep which contains travel).
-    function chickenAiStep(m) {
-      // super::aiStep() was already called by mobAiStep above (in mobTick).
-      // Now Chicken's post-travel logic: wing flap + slow fall.
-      m.oFlap = m.flap;
-      m.oFlapSpeed = m.flapSpeed;
-      m.flapSpeed += (m.onGround ? -1 : 4) * 0.3;
-      if (m.flapSpeed < 0) m.flapSpeed = 0;
-      if (m.flapSpeed > 1) m.flapSpeed = 1;
-      if (!m.onGround && m.flapping < 1) m.flapping = 1;
-      m.flapping *= 0.9;
-      // slow fall: yd *= 0.6 when airborne & descending (AFTER travel)
-      if (!m.onGround && m.vel.y < 0) {
-        m.vel.y *= 0.6;
+
+    // ---- Animal (Animal.h:13, 39 lines) : extends AgableMob ----
+    class Animal extends AgableMob {
+      constructor(level) {
+        super(level);
+        // VERIFIED Animal init (Animal.cpp:8-13)
+        this.inLove = 0;
       }
-      m.flap += m.flapping * 2;
+      // VERIFIED Animal::getWalkingSpeedModifier — 0.7 (NOT 1.0)
+      getWalkingSpeedModifier() { return 0.7; }
+      // VERIFIED Animal::removeWhenFarAway — false (never despawn)
+      removeWhenFarAway() { return false; }
     }
-    // VERIFIED Mob::aiStep (Mob.cpp:688-757) — updateAi + jumping + travel
-    function mobAiStep(m) {
-      // Mob::aiStep order:
-      // 1. isImmobile check (skip if immobile)
-      // 2. updateAi() (PathfinderMob for animals — wander + look-around)
-      // 3. jumping logic
-      // 4. xxa *= 0.98, yya *= 0.98, yRotA *= 0.9
-      // 5. walkingSpeed *= getWalkingSpeedModifier (0.7 for animals)
-      // 6. travel(xxa, yya)
-      // 7. (push other entities — skip for port)
-      pathfinderUpdateAi(m);
-      // jumping
-      if (m.jumping) {
-        if (mobIsInWater(m)) m.vel.y += 0.04;
-        else if (mobIsInLava(m)) m.vel.y += 0.04;
-        else if (m.onGround) mobJumpFromGround(m);
+
+    // ---- Chicken (Chicken.h:11, 49 lines) : extends Animal ----
+    class Chicken extends Animal {
+      constructor(level) {
+        super(level);
+        // VERIFIED Chicken init (Chicken.cpp:14-19)
+        this.sheared = false;
+        this.flap = 0;
+        this.oFlap = 0;
+        this.flapSpeed = 0;
+        this.oFlapSpeed = 0;
+        this.flapping = 1;
+        this.eggTime = Math.floor(Math.random() * 6000) + 6000;
+        this.setSize(0.3, 0.7);  // VERIFIED Chicken.cpp:18
       }
-      m.jumping = false;
-      m.xxa *= 0.98;
-      m.yya *= 0.98;
-      m.yRotA *= 0.9;
-      // VERIFIED walkingSpeed *= getWalkingSpeedModifier (0.7 for Animal)
-      // The 0.7 factor is applied inside mobTravel's moveRelative speed arg.
-      mobTravel(m, m.xxa, m.yya);
-      // Chicken-specific post-travel wing flap + slow fall (1:1 with rujukan)
-      if (m.isChicken) chickenAiStep(m);
+      // VERIFIED Chicken::aiStep (Chicken.cpp:33-61) — super.aiStep() THEN wing flap
+      aiStep() {
+        super.aiStep();  // AgableMob::aiStep → Mob::aiStep (travel happens here)
+        // wing flap + slow fall AFTER travel (1:1 with rujukan)
+        this.oFlap = this.flap;
+        this.oFlapSpeed = this.flapSpeed;
+        this.flapSpeed += (this.onGround ? -1 : 4) * 0.3;
+        if (this.flapSpeed < 0) this.flapSpeed = 0;
+        if (this.flapSpeed > 1) this.flapSpeed = 1;
+        if (!this.onGround && this.flapping < 1) this.flapping = 1;
+        this.flapping *= 0.9;
+        if (!this.onGround && this.yd < 0) this.yd *= 0.6;  // slow fall
+        this.flap += this.flapping * 2;
+      }
+      // VERIFIED Chicken::getMaxHealth — 4 (overrides Mob's 10)
+      getMaxHealth() { return 4; }
+      // VERIFIED Chicken::causeFallDamage — no-op (chickens don't take fall damage)
+      causeFallDamage(distance) { /* no-op — DO NOT call super */ }
+      // VERIFIED Chicken::getEntityTypeId — MobTypes::Chicken = 10
+      getEntityTypeId() { return 10; }
     }
-    // VERIFIED Mob::updateWalkAnim (Mob.cpp:628-637)
-    function mobUpdateWalkAnim(m) {
-      m.walkAnimSpeedO = m.walkAnimSpeed || 0;
-      const dx = m.pos.x - m.xo, dz = m.pos.z - m.zo;
-      let wst = Math.sqrt(dx*dx + dz*dz) * 4;
-      if (wst > 1) wst = 1;
-      m.walkAnimSpeed = (m.walkAnimSpeed || 0) + (wst - (m.walkAnimSpeed || 0)) * 0.4;
-      m.walkAnimPos = (m.walkAnimPos || 0) + m.walkAnimSpeed;
-      m.run = (m.run || 0) + (Math.sqrt(dx*dx + dz*dz) - (m.run || 0)) * 0.1;
+
+    // ---- MobFactory (MobFactory.h) — post-construction health re-set ----
+    class MobFactory {
+      static createChicken(level) {
+        const chicken = new Chicken(level);
+        // VERIFIED MobFactory.cpp:50-52: re-set health = getMaxHealth()
+        // (C++ vtable-in-ctor quirk: during Mob ctor, getMaxHealth returns
+        // Mob's 10, not Chicken's 4. Factory re-sets after full construction.)
+        chicken.health = chicken.getMaxHealth();  // 4
+        return chicken;
+      }
     }
-    function updateMobs(dt) { window.__mobUpdateCount = (window.__mobUpdateCount || 0) + 1;
+
+    // ---- Mob spawning + tick driver (uses class hierarchy) ----
+    function spawnChicken(x, y, z) {
+      const chicken = MobFactory.createChicken(null);
+      chicken.setPos(x, y, z);
+      // attach Three.js mesh
+      const mesh = makeVanillaChickenModel() || makeChickenFallback();
+      mesh.position.set(x, y, z);
+      scene.add(mesh);
+      chicken.mesh = mesh;
+      chicken.bones = mesh.userData?.bones || null;
+      chicken.body = mesh.userData?.bones?.get('body') || mesh.userData?.fallbackBody || mesh;
+      mobs.push(chicken);
+    }
+
+    function updateMobs(dt) {
+      window.__mobUpdateCount = (window.__mobUpdateCount || 0) + 1;
       // VERIFIED MobSpawner::tick — spawn rules
-      // MIN_SPAWN_DISTANCE = 24, cap creature = 15, spawn on grass + brightness > 8
       if (mobs.length < 4 && Math.random() < 0.008) {
         const ang = Math.random() * Math.PI * 2;
-        const dist = 12 + Math.random() * 14;  // 12-26 blocks from player (>MIN_SPAWN_DISTANCE)
+        const dist = 12 + Math.random() * 14;
         const sx = player.pos.x + Math.cos(ang) * dist;
         const sz = player.pos.z + Math.sin(ang) * dist;
-        // find ground (top non-air block, not water)
         for (let y = CHUNK_Y - 1; y >= 0; y--) {
           const id = world.getBlock(Math.floor(sx), y, Math.floor(sz));
           if (id && id !== 8 && id !== 9 && id !== 19) {
-            // spawn on top, check it's grass/dirt (Animal::canSpawn)
-            const topId = world.getBlock(Math.floor(sx), y, Math.floor(sz));
-            if (topId === 2 || topId === 3) { // grass or dirt
-              spawnChicken(sx + 0.5, y + 1, sz + 0.5);
-            }
+            if (id === 2 || id === 3) { spawnChicken(sx + 0.5, y + 1, sz + 0.5); }
             break;
           }
         }
       }
-      // tick each mob at FIXED 20 tps using an accumulator (matches player
-      // physics). The previous Math.round(dt*20) ran mobs at 60 tick/s on a
-      // 60 fps display (3x too fast), making chickens sprint and behave
-      // erratically. The accumulator pattern is identical to the player
-      // physics loop (physicsAccumMs + TICK_MS, see animate()).
+      // tick mobs at FIXED 20 tps (accumulator, matches player physics)
       mobPhysicsAccumMs += dt * 1000;
       let mobTicks = 0;
       while (mobPhysicsAccumMs >= TICK_MS && mobTicks < MAX_TICKS_PER_UPDATE) {
         mobPhysicsAccumMs -= TICK_MS;
         mobTicks++;
-        for (let i = mobs.length - 1; i >= 0; i--) {
-          mobTick(mobs[i]);
-        }
+        for (const m of mobs) m.tick();
       }
+      // sync meshes (Entity logic → Three.js render)
       for (let i = mobs.length - 1; i >= 0; i--) {
         const m = mobs[i];
-        // mesh sync (mesh.position is aliased to m.pos)
+        m.mesh.position.set(m.x, m.y, m.z);
         m.mesh.rotation.y = m.yRot;
-        // VERIFIED ChickenModel::setupAnim — wing flap + leg swing animation
+        // ChickenModel::setupAnim — wing flap + leg swing
         if (m.bones) {
-          // ChickenModel.cpp:setupAnim — leg swing cos(time*0.6662)*1.4*walkAnimPos
-          const legSwing = Math.cos(m.flap * 0.6662) * 1.4 * (m.yya || 0);
+          const legSwing = Math.cos(m.walkAnimPos * 0.6662) * 1.4;
           const leftLeg = m.bones.get('leg0');
           const rightLeg = m.bones.get('leg1');
           if (leftLeg) leftLeg.rotation.x = legSwing;
           if (rightLeg) rightLeg.rotation.x = -legSwing;
-          // wing flap (ChickenRenderer::getBob = (sin(flap)+1)*flapSpeed)
           const wingBob = (Math.sin(m.flap) + 1) * m.flapSpeed;
           const leftWing = m.bones.get('wing0');
           const rightWing = m.bones.get('wing1');
           if (leftWing) leftWing.rotation.z = -wingBob * 0.3;
           if (rightWing) rightWing.rotation.z = wingBob * 0.3;
-          // body bob
           if (m.bones.get('body')) m.bones.get('body').rotation.x = -wingBob * 0.1;
-        } else {
-          // fallback model bob
-          m.body.position.y = 0.38 + Math.abs(Math.sin(m.flap * 0.05)) * 0.025;
         }
         // despawn
-        if (mobCheckDespawn(m)) {
+        if (m.checkDespawn()) {
           scene.remove(m.mesh);
           mobs.splice(i, 1);
         }
@@ -2466,10 +2538,13 @@
     }
     window.__mobs = mobs;
     window.__spawnChicken = spawnChicken;
-    window.__mobTick = mobTick;
-    window.__mobTravel = mobTravel;
-    window.__mobAiStep = mobAiStep;
-    window.__pathfinderUpdateAi = pathfinderUpdateAi;
+    window.__Chicken = Chicken;
+    window.__MobFactory = MobFactory;
+    window.__MobEntity = MobEntity;
+    window.__Mob = Mob;
+    window.__PathfinderMob = PathfinderMob;
+    window.__AgableMob = AgableMob;
+    window.__Animal = Animal;
     window.__setTime = (t) => { worldTime = t % 1; };
     window.__getTime = () => worldTime;
     window.__getChickenState = () => ({
