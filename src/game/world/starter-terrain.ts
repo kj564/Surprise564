@@ -41,7 +41,10 @@ export function generateStarterChunk(
   if (!Number.isSafeInteger(waterLevel) || waterLevel < 0 || waterLevel >= world.dimensions.height) {
     throw new RangeError('waterLevel must be within world height');
   }
-  if (!world.hasChunk(chunkX, chunkZ)) world.loadChunk(chunkX, chunkZ);
+  if (world.hasChunk(chunkX, chunkZ)) {
+    throw new Error('Cannot generate starter terrain over an already loaded chunk');
+  }
+  world.loadChunk(chunkX, chunkZ);
 
   const { chunkSizeX, chunkSizeZ, height } = world.dimensions;
   let minHeight = height;
