@@ -72,6 +72,16 @@ jobs:
             cp "$src" "public/VoxelCraft/textures/ui/${name}.png"
           done
 
+      - name: Stage environment textures (clouds)
+        run: |
+          # minecraft.html loads environment/clouds.png for the cloud layer
+          # (rujukan LevelRenderer::renderClouds, verified via reverse-engineering).
+          # Without this, the cloud texture 404s and Three.js falls back to a
+          # blank white material, making clouds look like soft wispy blobs.
+          mkdir -p public/VoxelCraft/textures/environment
+          cp VoxelCraft/textures/environment/clouds.png public/VoxelCraft/textures/environment/clouds.png
+          test -f public/VoxelCraft/textures/environment/clouds.png || { echo "Missing clouds.png"; exit 1; }
+
       - name: Stage original game menu button sprites
         run: |
           mkdir -p public/VoxelCraft/textures/gui/newgui
