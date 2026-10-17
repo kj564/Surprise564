@@ -4,6 +4,10 @@ import { resolve } from 'node:path';
 
 const gamePath = resolve('public/minecraft.html');
 const source = readFileSync(gamePath, 'utf8');
+const placementSource = readFileSync(resolve('src/game/interaction/placement.ts'), 'utf8');
+const miningSource = readFileSync(resolve('src/game/interaction/mining.ts'), 'utf8');
+const raycastSource = readFileSync(resolve('src/game/interaction/raycast.ts'), 'utf8');
+const raycastTestSource = readFileSync(resolve('src/game/interaction/raycast.test.ts'), 'utf8');
 const failures = [];
 const pass = (message) => console.log('✓ ' + message);
 const fail = (message) => failures.push(message);
@@ -454,18 +458,28 @@ if (!source.includes('invalidateChunk(cx - 1, cz)') ||
 
 if (!source.includes('const epsilon = 1e-7')) fail('Player AABB collision must tolerate exact voxel-face contact');
 else pass('Player collision ignores zero-area contact at voxel faces');
-if (!source.includes('existing !== 0 && existing !== 19') ||
-    !source.includes('if (!world.setBlock(px, py, pz, id)) return;')) {
-  fail('Block placement must only replace air/water and must honor setBlock validation');
-} else pass('Block placement cannot overwrite occupied voxels and honors world bounds');
-if (!source.includes('if (!id || !world.setBlock(hit.x, hit.y, hit.z, 0)) return;')) {
-  fail('Block breaking must honor the world mutation result');
-} else pass('Block breaking stops when the world rejects a mutation');
+if (!(source.includes('existing !== 0 && existing !== 19') &&
+      source.includes('if (!world.setBlock(px, py, pz, id)) return;')) &&
+    !(source.includes('voxelEngine.placeSelected(hit)') &&
+      placementSource.includes('if (!currentDefinition.replaceable) return { status: \'occupied\'') &&
+      placementSource.includes('const mutation = world.setBlock(validation.target, blockId);') &&
+      placementSource.includes('if (!mutation.changed) return { status: \'no-change\''))) {
+  fail('Block placement must reject occupied targets and honor the authoritative world mutation result');
+} else pass('Block placement uses authoritative replaceability and transactional world mutation');
+if (!(source.includes('if (!id || !world.setBlock(hit.x, hit.y, hit.z, 0)) return;')) &&
+    !(source.includes('if (!world.setBlock(hit.x, hit.y, hit.z, 0))') &&
+      miningSource.includes('const mutation = world.setBlock(target, 0);') &&
+      miningSource.includes("if (!mutation.changed) return { status: 'target-changed' };"))) {
+  fail('Block breaking must honor the authoritative world mutation result');
+} else pass('Block breaking validates the mutation before awarding drops');
 
-if (!source.includes('if (!Number.isFinite(maxDist) || maxDist < 0) return null;') ||
-    !source.includes('if (!Number.isFinite(nextDist) || nextDist > maxDist) return null;')) {
+if (!(source.includes('if (!Number.isFinite(maxDist) || maxDist < 0) return null;') &&
+      source.includes('if (!Number.isFinite(nextDist) || nextDist > maxDist) return null;')) &&
+    !(raycastSource.includes('if (!Number.isFinite(maxDistance) || maxDistance < 0)') &&
+      raycastTestSource.includes('returns miss after max distance and validates ray inputs') &&
+      raycastTestSource.includes("0.2, id => id !== 0).status).toBe('miss')"))) {
   fail('Voxel raycast must reject invalid reach and stop before entering a voxel beyond max distance');
-} else pass('Voxel raycast validates reach and enforces the maximum interaction distance');
+} else pass('Voxel raycast validates reach and has boundary regression tests');
 
 if (!source.includes("const sprint = keys['ShiftLeft'] && !player.fly;") ||
     !source.includes('player.speed * (sprint ? 1.5 : 1)')) {
@@ -597,14 +611,13 @@ if (source.includes('for (let wx = baseX - 2; wx < baseX + CHUNK_X + 2; wx++)') 
 
 // Chunk-local storage uses a flat typed array, so x/z bounds must be checked
 // before indexing to avoid out-of-range coordinates aliasing adjacent voxel rows.
+const chunkIndexSource = source.match(/idx\(x, y, z\)\s*\{([\s\S]*?)\n\s*\}/)?.[1] || '';
 const chunkGetSource = source.match(/get\(x, y, z\)\s*\{([\s\S]*?)\n\s*\}/)?.[1] || '';
 const chunkSetSource = source.match(/set\(x, y, z, v\)\s*\{([\s\S]*?)\n\s*\}/)?.[1] || '';
-if (/x < 0 \|\| x >= CHUNK_X/.test(chunkGetSource) &&
-    /y < 0 \|\| y >= CHUNK_Y/.test(chunkGetSource) &&
-    /z < 0 \|\| z >= CHUNK_Z/.test(chunkGetSource) &&
-    /x < 0 \|\| x >= CHUNK_X/.test(chunkSetSource) &&
-    /y < 0 \|\| y >= CHUNK_Y/.test(chunkSetSource) &&
-    /z < 0 \|\| z >= CHUNK_Z/.test(chunkSetSource) &&
+if (/x < 0 \|\| x >= CHUNK_X/.test(chunkIndexSource) &&
+    /y < 0 \|\| y >= CHUNK_Y/.test(chunkIndexSource) &&
+    /z < 0 \|\| z >= CHUNK_Z/.test(chunkIndexSource) &&
+    /this\.idx\(x, y, z\)/.test(chunkSetSource) &&
     /!Number\.isInteger\(v\) \|\| v < 0 \|\| v > 255/.test(chunkSetSource) &&
     /return this\.data\[this\.idx\(x, y, z\)\];/.test(chunkGetSource)) {
   pass('Chunk voxel reads/writes guard local coordinates and byte-sized block ids');
