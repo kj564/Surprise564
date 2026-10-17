@@ -134,8 +134,8 @@ function textureFileFor(definition,nx,ny,nz){
   if(!definition)return null;
   if(definition.key==='minecraft:grass_block')return ny>.5?'grass_top.png':ny<-.5?'dirt.png':'grass_side_carried.png';
   if(definition.key==='minecraft:oak_log')return Math.abs(ny)>.5?'log_oak_top.png':'log_oak.png';
-  if(definition.key==='minecraft:crafting_table')return ny>.5?'crafting_table_top.png':Math.abs(nz)>.5?'crafting_table_front.png':'crafting_table_side.png';
-  if(definition.key==='minecraft:furnace')return Math.abs(nz)>.5?'furnace_front_off.png':'furnace_side.png';
+  if(definition.key==='minecraft:crafting_table')return ny>.5?'crafting_table_top.png':nz<-.5?'crafting_table_front.png':'crafting_table_side.png';
+  if(definition.key==='minecraft:furnace')return nz<-.5?'furnace_front_off.png':'furnace_side.png';
   return textureByBlock[definition.key]??null;
 }
 function getTexture(file){
