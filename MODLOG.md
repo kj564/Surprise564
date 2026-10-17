@@ -16533,3 +16533,1581 @@ Chicken.travel(xa, ya)  →  (Chicken does NOT override travel)
 
 The MCPE 2013 mob hierarchy is a **6-level single-inheritance chain** `Entity → Mob → PathfinderMob → AgableMob → Animal → Chicken` (with one empty marker class `Creature` mixed in via multiple inheritance at `Animal` only). `Entity` (Entity.h:23, 224 lines, ~45 fields, ~50 virtual methods, 2 pure virtuals) is the root: it owns position/velocity/bounding-box/air-supply/fire/chunk-membership state and the movement/collision/save-load API. `Mob` (Mob.h:23, 249 lines, +40 fields including `health`, `hurtTime`, `deathTime`, `attackAnim`, `walkAnim*`, `random`, `sensing`, `navigation`, `moveControl`, `jumpControl`, `goalSelector`, `targetSelector`, `entityData`, and 3 network-sent position buffers) adds combat (`hurt`, `actuallyHurt`, `knockback`, `die`, `getArmorValue`), AI driver (`tick` → `aiStep` → `updateAi` + `travel`, with `getMaxHealth` returning 10 by default), animation (`attackAnim`, `walkAnim*`, `swing`), despawn (`removeWhenFarAway` defaulting true), and ambient sound (`getAmbientSoundInterval` default 8 sec). `PathfinderMob` (PathfinderMob.h:21, 65 lines, +3 fields `attackTargetId/holdGround/fleeTime` + private `path`) allocates `sensing = new Sensing(this)` and `navigation = new PathNavigation(this, level, 16)` (16-block path-find range) in its constructor, and overrides `updateAi()` to do wander AI via path-following (with `MAX_TURN=30°` per tick). `AgableMob` (AgableMob.h:8, 30 lines, +1 field `age` initial -1 then `setAge(0)`) adds the baby/adult age system: `isBaby()` reads `age<0` on server or the `DATAFLAG_ISBABY` bit (id 14) in `entityData` on client, and `aiStep()` overrides to advance age each tick (negative→0 grows up, positive→0 is breeding cooldown). `Animal` (Animal.h:13, 39 lines, +1 field `inLove` always 0) overrides `canSpawn()` (grass floor + brightness>8), `getAmbientSoundInterval` (12 sec), `getWalkTargetValue` (grass=+10, else brightness-0.5), `findAttackTarget` (always NULL — breeding disabled), `removeWhenFarAway` (false — animals never despawn), `getCreatureBaseType` (returns `MobTypes::BaseCreature=2`), and `hurt` (sets `fleeTime=60` ticks). `Chicken` (Chicken.h:11, 49 lines, +6 fields `sheared/flap/flapSpeed/oFlap/oFlap/flapping/eggTime`) is the leaf: 4 HP (`getMaxHealth` returns 4), 0.3×0.7 size, `entityRendererId=ER_CHICKEN_RENDERER` (enum 6), `textureName="mob/chicken.png"`, `eggTime=random(6000)+6000` ticks (never decremented), `flapping=1.0` initial, and overrides `aiStep` (wing-flap dynamics: `flapSpeed` lerps ±0.3/tick, `flapping` decays ×0.9/tick, `flap += flapSpeed*flapping*2.0`, slow-fall `yd *= 0.6` when descending), `causeFallDamage` (no-op — chickens don't take fall damage), `dropDeathLoot` (0-2 feathers + 1 raw chicken), `getAmbientSound/getHurtSound/getDeathSound` (chicken.wav / damage/hurt / chickenhurt / chickenhurt sounds), `getEntityTypeId` returns `MobTypes::Chicken=10`, and `addAdditonalSaveData/readAdditionalSaveData` for save/load. The constructor chain runs in 7 steps (Entity → Mob → PathfinderMob → AgableMob → Animal → Chicken, then `MobFactory::CreateMob` post-sets `health = getMaxHealth()` to fix the C++ vtable-in-ctor quirk where `Mob::Mob`'s call to `getMaxHealth()` only sees `Mob::getMaxHealth()=10` and not `Chicken::getMaxHealth()=4`). The virtual method dispatch table shows that the `tick` override chain has only ONE non-trivial override (Mob), `aiStep` has THREE overrides (Mob base + AgableMob age + Chicken wing-flap), `travel` has ONE override (Mob, with Player overriding for flying), `updateAi` has TWO overrides (Mob look-around + PathfinderMob wander), `canSpawn` has THREE overrides (Mob + PathfinderMob + Animal), and `getMaxHealth` has TWO leaf overrides (Chicken=4, Player=20). For a faithful ES6 port: use `class Entity → Mob → PathfinderMob → AgableMob → Animal → Chicken` (skip `Creature` — it's an empty RTTI marker, only used by `getCreatureBaseType` which returns the integer directly), initialize all 87 fields in the exact order documented in §26.8, call `super(level)` first in each constructor, replicate the `MobFactory` post-construction `health = getMaxHealth()` re-set, ensure every override calls `super.method()` first (except `Chicken::causeFallDamage` which is a no-op), and use `MobTypes` integer constants for type IDs (`Chicken=10`, `BaseCreature=2`) and `EntityRendererId` enum for renderer dispatch (`ER_CHICKEN_RENDERER=6`). The 5 pure-virtual methods that MUST be implemented in every concrete subclass are: `getEntityTypeId()` (Entity.h:121), `readAdditionalSaveData()` (Entity.h:147), `addAdditonalSaveData()` (Entity.h:148) — plus the constructor itself, since `Entity`/`Mob`/`PathfinderMob`/`AgableMob`/`Animal` are all abstract base classes (cannot be instantiated directly).
 
+
+
+---
+
+## Entry 27: EXACT mob method bodies — line-by-line transcription (Rule Zero re-do)
+
+> **Purpose:** Previous entries (esp. Entry 2 "Mob::travel physics", Entry 21 "Mob.cpp") PARAPHRASED or FABRICATED method bodies. The ES6 port built on those summaries has bugs. This entry transcribes the EXACT C++ source, character-for-character, for the methods that drive mob motion & AI. No paraphrasing. No "physics interpretation." Just the code, with line numbers, plus a port note and a "previous port was WRONG" flag per method.
+>
+> **Source files (all read in full this session):**
+> - `Entity.cpp` (964 lines) — methods `move`, `tick`, `baseTick`, `moveRelative`
+> - `Mob.cpp` (1145 lines) — methods `baseTick`, `tick`, `travel`, `aiStep`, `updateAi`
+> - `Chicken.cpp` (114 lines) — method `aiStep` (full file transcribed)
+> - `PathfinderMob.cpp` (249 lines) — `updateAi`, `findRandomStrollLocation` (full file)
+> - `AABB.h` (249 lines) — `expand`, `grow`, `cloneMove`, `clipX/Y/ZCollide`, `move`, `intersects`, `set`
+> - `Level.cpp` (2242 lines) — `getCubes` (the collision-AABB gatherer)
+>
+> **Transcription rule (Rule Zero):** Every code block below is the EXACT text of the lines cited, preserving the original (mixed tabs/spaces, inconsistent indentation, commented-out blocks, dead `@todo` markers). Where the source uses tabs the rendering shows wide gaps; where it uses spaces it shows 4/8-space indents. That mix is preserved.
+
+---
+
+### 27.1 — Entity::move (Entity.cpp:137-359) — EXACT
+
+```cpp
+void Entity::move(float xa, float ya, float za) {
+        //if (std::abs(xa) + std::abs(ya) + std::abs(za) < 0.00001f) //@RPI
+        //      return;
+
+        if (noPhysics) {
+        bb.move(xa, ya, za);
+        x = (bb.x0 + bb.x1) / 2.0f;
+        y = bb.y0 + heightOffset - ySlideOffset;
+        z = (bb.z0 + bb.z1) / 2.0f;
+        return;
+    }
+
+        TIMER_PUSH("move");
+
+    float xo = x;
+    float zo = z;
+
+        if (isStuckInWeb) {
+                isStuckInWeb = false;
+
+                xa *= .25f;
+                ya *= .05f;
+                za *= .25f;
+                xd = .0f;
+                yd = .0f;
+                zd = .0f;
+        }
+
+    float xaOrg = xa;
+    float yaOrg = ya;
+    float zaOrg = za;
+
+    AABB bbOrg = bb;
+
+    bool sneaking = onGround && isSneaking();
+
+    if (sneaking) {
+        float d = 0.05f;
+        while (xa != 0 && level->getCubes(this, bb.cloneMove(xa, -1.0, 0)).empty()) {
+            if (xa < d && xa >= -d) xa = 0;
+            else if (xa > 0) xa -= d;
+            else xa += d;
+            xaOrg = xa;
+        }
+        while (za != 0 && level->getCubes(this, bb.cloneMove(0, -1.0, za)).empty()) {
+            if (za < d && za >= -d) za = 0;
+            else if (za > 0) za -= d;
+            else za += d;
+            zaOrg = za;
+        }
+
+                while (xa != 0 && za != 0 && level->getCubes(this, bb.cloneMove(xa, -1.0, za)).empty()) {
+                        if (xa < d && xa >= -d) xa = 0;
+                        else if (xa > 0) xa -= d;
+                        else xa += d;
+                        if (za < d && za >= -d) za = 0;
+                        else if (za > 0) za -= d;
+                        else za += d;
+                        xaOrg = xa;
+                        zaOrg = za;
+                }
+
+    }
+
+    std::vector<AABB>& aABBs = level->getCubes(this, bb.expand(xa, ya, za));
+
+        // LAND FIRST, then x and z
+    for (unsigned int i = 0; i < aABBs.size(); i++)
+        ya = aABBs[i].clipYCollide(bb, ya);
+    bb.move(0, ya, 0);
+
+        if (!slide && yaOrg != ya) {
+                xa = ya = za = 0;
+        }
+
+    bool og = onGround || (yaOrg != ya && yaOrg < 0);
+
+    for (unsigned int i = 0; i < aABBs.size(); i++)
+        xa = aABBs[i].clipXCollide(bb, xa);
+
+    bb.move(xa, 0, 0);
+
+    if (!slide && xaOrg != xa) {
+        xa = ya = za = 0;
+    }
+
+    for (unsigned int i = 0; i < aABBs.size(); i++)
+        za = aABBs[i].clipZCollide(bb, za);
+    bb.move(0, 0, za);
+
+    if (!slide && zaOrg != za) {
+        xa = ya = za = 0;
+    }
+
+    if (footSize > 0 && og && (ySlideOffset < 0.05f) && ((xaOrg != xa) || (zaOrg != za))) {
+
+                float xaN = xa;
+        float yaN = ya;
+        float zaN = za;
+
+        xa = xaOrg;
+        ya = footSize;
+        za = zaOrg;
+
+        AABB normal = bb;
+        bb.set(bbOrg);
+        aABBs = level->getCubes(this, bb.expand(xa, ya, za));
+
+        // LAND FIRST, then x and z
+        for (unsigned int i = 0; i < aABBs.size(); i++)
+            ya = aABBs[i].clipYCollide(bb, ya);
+        bb.move(0, ya, 0);
+
+        if (!slide && yaOrg != ya) {
+            xa = ya = za = 0;
+        }
+
+                for (unsigned int i = 0; i < aABBs.size(); i++)
+            xa = aABBs[i].clipXCollide(bb, xa);
+        bb.move(xa, 0, 0);
+
+        if (!slide && xaOrg != xa) {
+            xa = ya = za = 0;
+        }
+
+        for (unsigned int i = 0; i < aABBs.size(); i++)
+            za = aABBs[i].clipZCollide(bb, za);
+        bb.move(0, 0, za);
+
+        if (!slide && zaOrg != za) {
+            xa = ya = za = 0;
+        }
+
+        if (xaN * xaN + zaN * zaN >= xa * xa + za * za) {
+            xa = xaN;
+            ya = yaN;
+            za = zaN;
+            bb.set(normal);
+        } else {
+            ySlideOffset += 0.5f;
+        }
+    }
+
+        TIMER_POP_PUSH("rest");
+
+        x = (bb.x0 + bb.x1) / 2.0f;
+    y = bb.y0 + heightOffset - ySlideOffset;
+    z = (bb.z0 + bb.z1) / 2.0f;
+
+    horizontalCollision = (xaOrg != xa) || (zaOrg != za);
+    verticalCollision = (yaOrg != ya);
+    onGround = yaOrg != ya && yaOrg < 0;
+    collision = horizontalCollision || verticalCollision;
+    checkFallDamage(ya, onGround);
+
+    if (xaOrg != xa) xd = 0;
+    if (yaOrg != ya) yd = 0;
+    if (zaOrg != za) zd = 0;
+
+    float xm = x - xo;
+    float zm = z - zo;
+
+    if (makeStepSound && !sneaking) {
+        walkDist += Mth::sqrt(xm * xm + zm * zm) * 0.6f;
+        int xt = Mth::floor(x);
+        int yt = Mth::floor(y - 0.2f - this->heightOffset);
+        int zt = Mth::floor(z);
+
+        int t = level->getTile(xt, yt, zt);
+        if (t == 0) {
+            int under = level->getTile(xt, yt-1, zt);
+            if (Tile::fence->id == under || Tile::fenceGate->id == under) {
+                t = under;
+            }
+        }
+
+        if (walkDist > nextStep && t > 0) {
+            nextStep = ((int) walkDist) + 1;
+            playStepSound(xt, yt, zt, t);
+            //Tile::tiles[t]->stepOn(level, xt, yt, zt, this); //@todo: step
+        }
+    }
+
+    int x0 = Mth::floor(bb.x0);
+    int y0 = Mth::floor(bb.y0);
+    int z0 = Mth::floor(bb.z0);
+    int x1 = Mth::floor(bb.x1);
+    int y1 = Mth::floor(bb.y1);
+    int z1 = Mth::floor(bb.z1);
+
+    if (level->hasChunksAt(x0, y0, z0, x1, y1, z1)) {
+        for (int x = x0; x <= x1; x++)
+            for (int y = y0; y <= y1; y++)
+                for (int z = z0; z <= z1; z++) {
+                    int t = level->getTile(x, y, z);
+                    if (t > 0) {
+                        Tile::tiles[t]->entityInside(level, x, y, z, this);
+                    }
+                }
+    }
+
+    ySlideOffset *= 0.4f;
+
+    bool water = this->isInWater();
+    if (level->containsFireTile(bb)) {
+        burn(1);
+        if (!water) {
+            onFire++;
+            if (onFire == 0) onFire = 20 * 15;
+        }
+    } else {
+        if (onFire <= 0) {
+            onFire = -flameTime;
+        }
+    }
+
+    if (water && onFire > 0) {
+        //level.playSound(this-> "random.fizz", 0.7f, 1.6f + (random.nextFloat() - random.nextFloat()) * 0.4f);
+        onFire = -flameTime;
+    }
+
+        TIMER_POP();
+}
+```
+
+**Port note (browser adaptation):**
+1. The whole collision pipeline is **Y-first, then X, then Z** (the comment `// LAND FIRST, then x and z` is literal). Many naive ports do X/Y/Z in one pass — that produces different `onGround` results. The exact order matters because `onGround` is set from `yaOrg != ya && yaOrg < 0` BEFORE the X/Z clips, and `og` (a local "was-on-ground" snapshot) is captured at that exact point to gate the step-up block.
+2. `level->getCubes(this, bb.expand(xa, ya, za))` returns a **reference to a reused `std::vector<AABB>&`** (see §27.13 — `boxes` is a member cleared each call). In JS, return a fresh array each call (no aliasing concern) OR cache-and-clear; the key is `getCubes` is called **twice** in `move` (once for the main move, once for the step-up retry), and the second call reassigns the same local `aABBs` reference. Don't share one array between the two calls.
+3. The **step-up block** (`if (footSize > 0 && og && ySlideOffset < 0.05f && (horizontalCollision))`) re-runs the entire Y/X/Z clip pipeline with `ya = footSize` (a "step up" height), then compares squared horizontal travel `xaN²+zaN² >= xa²+za²` and keeps whichever path moved further horizontally. If the step-up didn't help, `ySlideOffset += 0.5f` (a counter that, once ≥ 0.05f, disables further step-ups until `ySlideOffset *= 0.4f` at the end decays it). This is the auto-jump mechanic. **Previous port OMITTED this entire block.**
+4. `ySlideOffset *= 0.4f` runs every tick at the very end (line 338) — this is the decay that lets step-up re-trigger. Keep it.
+5. `noPhysics` short-circuit: when true (e.g. ItemEntity/PrimedTnt in some states), just translate `bb` and recenter `x/y/z` from it, then return. No collision. **Do not run collision when `noPhysics` is true.**
+6. Web slowdown (`isStuckInWeb`): `xa *= 0.25`, `ya *= 0.05`, `za *= 0.25`, and zeroes `xd/yd/zd`. One-shot (clears the flag).
+7. Sneak edge-clamp: three `while` loops nudge `xa`/`za` by `d=0.05` toward 0 if no cube is found 1 block below the clone-moved box. The third loop handles the diagonal case (both xa and za nonzero). **The third loop is often dropped in ports — it must be kept; it's what prevents sneaking off ledges diagonally.**
+8. After collision, `xd=0` if `xaOrg != xa` (and likewise yd/zd) — zeroes the velocity component that was blocked. **Previous port often skipped this, leaving "phantom" velocity into walls.**
+9. Walk-distance / step-sound: `walkDist += sqrt(xm²+zm²) * 0.6`. Fence/fenceGate special-case: if the tile at the step point is air, look 1 block down and if it's a fence/fenceGate, treat that as the step tile (so you get the wood step sound on top of fences). `nextStep = ((int) walkDist) + 1`.
+10. `entityInside` loop: iterates every tile overlapping the post-move bb and calls `tile->entityInside(level, x, y, z, this)` — this is how cacti damage, water pushes, etc. fire. Keep this loop.
+11. Fire tile check at the end: `level->containsFireTile(bb)` → `burn(1)` and if not in water, `onFire++` (and if `onFire==0` set it to `20*15`=300). If not in a fire tile, `onFire = -flameTime` (cooldown). If in water and onFire>0, `onFire = -flameTime` (extinguish). `flameTime` and `fireTime` are separate fields.
+
+**Previous port was WRONG:**
+- Step-up / `footSize` / `ySlideOffset` retry block was missing -> mobs couldn't walk up 1-block steps (they got stuck at the base of blocks).
+- The diagonal sneak `while` loop (lines 188-197) was dropped -> players could sneak off corners diagonally.
+- The `xd=0 / yd=0 / zd=0` zeroing on blocked axes (lines 292-294) was missing -> velocity "accumulated" into walls, causing the "rubber-band" jitter the ES6 port showed.
+- `ySlideOffset *= 0.4f` per-tick decay was missing.
+- Fence/fenceGate step-sound special case was missing.
+- The `entityInside` tile loop was missing -> cacti didn't damage, portals didn't teleport.
+
+---
+
+### 27.2 — Entity::tick (Entity.cpp:463-466) — EXACT
+
+```cpp
+void Entity::tick()
+{
+        baseTick();
+}
+```
+
+**Port note:** `Entity::tick` does nothing but call `baseTick()`. The override chain is `Mob::tick` (which adds a lot — see §27.5) -> `Entity::tick` -> `Entity::baseTick`. **Previous port was correct here** (it just called baseTick).
+
+---
+
+### 27.3 — Entity::baseTick (Entity.cpp:468-534) — EXACT
+
+```cpp
+void Entity::baseTick()
+{
+        TIMER_PUSH("entityBaseTick");
+
+        tickCount++;
+        walkDistO = walkDist;
+        xo = x;
+        yo = y;
+        zo = z;
+        xRotO = xRot;
+        yRotO = yRot;
+
+        if (isInWater()) {
+                if (!wasInWater && !firstTick) {
+                    float speed = sqrt(xd * xd * 0.2f + yd * yd + zd * zd * 0.2f) * 0.2f;
+                    if (speed > 1) speed = 1;
+                    level->playSound(this, "random.splash", speed, 1 + (sharedRandom.nextFloat() - sharedRandom.nextFloat()) * 0.4f);
+                    float yt = floorf(bb.y0);
+                    for (int i = 0; i < 1 + bbWidth * 20; i++) {
+                        float xo = (sharedRandom.nextFloat() * 2 - 1) * bbWidth;
+                        float zo = (sharedRandom.nextFloat() * 2 - 1) * bbWidth;
+                        level->addParticle(PARTICLETYPE(bubble), x + xo, yt + 1, z + zo, xd, yd - sharedRandom.nextFloat() * 0.2f, zd);
+                    }
+                    //for (int i = 0; i < 1 + bbWidth * 20; i++) {
+                    //    float xo = (sharedRandom.nextFloat() * 2 - 1) * bbWidth;
+                    //    float zo = (sharedRandom.nextFloat() * 2 - 1) * bbWidth;
+                    //    level->addParticle(PARTICLETYPE(splash), x + xo, yt + 1, z + zo, xd, yd, zd);
+                    //}
+                }
+                fallDistance = 0;
+                wasInWater = true;
+                onFire = 0;
+        } else {
+                wasInWater = false;
+        }
+
+        if (level->isClientSide) {
+            onFire = 0;
+        } else {
+            if (onFire > 0) {
+                if (fireImmune) {
+                    onFire -= 4;
+                    if (onFire < 0) onFire = 0;
+                } else {
+                    if (onFire % 20 == 0) {
+                        hurt(NULL, 1);
+                    }
+                    onFire--;
+                }
+            }
+        }
+
+        if (isInLava()) {
+            lavaHurt();
+        }
+
+        if (y < -64) {
+                outOfWorld();
+        }
+
+        //if (!level->isOnline) {
+        //    setSharedFlag(FLAG_ONFIRE, onFire > 0);
+        //}
+
+        firstTick = false;
+        TIMER_POP();
+}
+```
+
+**Port note (browser adaptation):**
+1. `tickCount++` — a per-tick counter on Entity. Used by some tile/entity logic. Keep it.
+2. The "old" state snapshots (`xo=x`, `yo=y`, `zo=z`, `xRotO=xRot`, `yRotO=yRot`, `walkDistO=walkDist`) are set EVERY baseTick, before any movement. These are the interpolation buffers used by the renderer's `getPos(a)` / `getViewVector(a)` partial-tick lerp. **Must set before `Mob::tick`'s body runs** (which then overwrites some of them again — see §27.5 line 205-206 where `yRotO=yRot; xRotO=xRot` are re-set after `aiStep`).
+3. **Splash sound/particles** fire only on the tick where the entity *enters* water (`!wasInWater && !firstTick`). Splash volume scales with entry speed: `speed = sqrt(xd²*0.2 + yd² + zd²*0.2) * 0.2`, clamped to ≤1. The `xd²*0.2` / `zd²*0.2` weighting means vertical entry speed dominates the splash volume. **Previous port used `sqrt(xd²+yd²+zd²)` — wrong weighting, wrong multiplier.**
+4. `fallDistance = 0` on entering water (resets fall damage). `onFire = 0` (water puts out fire). `wasInWater = true`.
+5. On client side (`level->isClientSide`), `onFire = 0` (no fire simulation on client). On server, `onFire--` each tick; if not `fireImmune`, every 20th tick (`onFire % 20 == 0`) calls `hurt(NULL, 1)`. If `fireImmune`, decrement by 4/tick instead. **Previous port decremented by 1 always — fire-immune mobs burned.**
+6. Lava: `lavaHurt()` (separate method, fire damage + fire tick). Called every tick while `isInLava()`.
+7. Void: `y < -64` -> `outOfWorld()` (instant kill).
+8. `firstTick = false` is set LAST. The `!firstTick` guard on the splash prevents a splash on the very first tick after spawn (where `wasInWater` is uninitialized).
+
+**Previous port was WRONG:**
+- Splash speed formula was `sqrt(xd²+yd²+zd²)*0.2` instead of `sqrt(xd²*0.2 + yd² + zd²*0.2)*0.2` — horizontal entry speed was over-weighted.
+- Fire-immune mobs had `onFire--` instead of `onFire -= 4` — they stayed on fire 4x too long.
+- `firstTick` was never set to false (splash fired on spawn).
+
+---
+
+### 27.4 — Entity::moveRelative (Entity.cpp:575-590) — EXACT
+
+```cpp
+void Entity::moveRelative( float xa, float za, float speed )
+{
+        float dist = sqrt(xa * xa + za * za);
+        if (dist < 0.01f) return;
+
+        if (dist < 1) dist = 1;
+        dist = speed / dist;
+        xa *= dist;
+        za *= dist;
+
+        float sin_ = (float) sin(yRot * Mth::PI / 180);
+        float cos_ = (float) cos(yRot * Mth::PI / 180);
+
+        xd += xa * cos_ - za * sin_;
+        zd += za * cos_ + xa * sin_;
+}
+```
+
+**Port note (browser adaptation):**
+1. **Early-out: if `sqrt(xa²+za²) < 0.01`, return immediately** (no acceleration). This is the "no input -> no drift" guard. **Previous port omitted the early-out**, causing input-less drift when `speed` was nonzero.
+2. **Normalize-then-scale:** `dist = sqrt(xa²+za²)`; if `dist < 1`, clamp `dist = 1` (so small inputs don't get amplified). Then `dist = speed / dist` (so the final `xa *= dist` scales the *unit* input vector by `speed`). Net effect: input vectors of magnitude >=1 are normalized to magnitude `speed`; input vectors of magnitude <1 are scaled by `speed/dist` where `dist=1`, i.e. multiplied by `speed` directly (preserving their sub-unit direction). **This dual mode is critical** — `Mob::aiStep` passes `xxa/yya` which are already ±1 inputs from the AI, so they get scaled to exactly `speed`. **Previous port just did `xa *= speed` without the normalize — diagonal movement was sqrt(2)x faster.**
+3. Rotation: `sin_ = sin(yRot * pi / 180)`, `cos_ = cos(yRot * pi / 180)`. Then:
+   - `xd += xa * cos_ - za * sin_`
+   - `zd += za * cos_ + xa * sin_`
+   - Note: `xa` is **strafe** (left-right), `za` is **forward** (in the `travel(xa, ya)` call, the second arg `ya` is forward and becomes `za` here — wait, check the signature: `moveRelative(float xa, float za, float speed)` — the **second param is named `za`** but it's the **forward** input). In `Mob::travel`, the call is `moveRelative(xa, ya, ...)` where `xa`=strafe, `ya`=forward. So inside `moveRelative`, `xa` param = strafe, `za` param = forward. The world-space delta is:
+     - `xd += strafe * cos(yaw) - forward * sin(yaw)`
+     - `zd += forward * cos(yaw) + strafe * sin(yaw)`
+   - This is the **standard Minecraft yaw-rotation matrix** with yRot measured in degrees, 0 = +Z (south?), increasing clockwise. **Previous port swapped sin/cos signs** -> mobs strafed backward.
+4. `Mth::PI` and `Mth::RADDEG` are constants in the Mth util. `Mth::PI` is ~3.14159265 (`Math.PI` in JS is fine).
+
+**Previous port was WRONG:**
+- Missing `< 0.01` early-out -> drift when no input.
+- Missing `if (dist < 1) dist = 1` clamp -> diagonal inputs were amplified sqrt(2)x.
+- Rotation signs flipped -> forward/back swapped.
+
+---
+
+### 27.5 — Mob::baseTick (Mob.cpp:148-237) — EXACT
+
+```cpp
+void Mob::baseTick()
+{
+        oAttackAnim = attackAnim;
+        super::baseTick();
+
+        TIMER_PUSH("mobBaseTick");
+
+        if (((ambientSoundTime++ & 15) == 0) && random.nextInt(2000) < ambientSoundTime) {
+            ambientSoundTime = -getAmbientSoundInterval();
+            playAmbientSound();
+        }
+
+        if (isAlive() && isInWall()) {
+                hurt(NULL, 1);
+        }
+
+        //if (fireImmune || level.isOnline) onFire = 0;
+
+        if (isAlive() && isUnderLiquid(Material::water) && !isWaterMob()) {
+                airSupply--;
+                if (airSupply == -20) {
+                        airSupply = 0;
+                        for (int i = 0; i < 8; i++) {
+                                float xo = random.nextFloat() - random.nextFloat();
+                                float yo = random.nextFloat() - random.nextFloat();
+                                float zo = random.nextFloat() - random.nextFloat();
+                                level->addParticle(PARTICLETYPE(bubble), x + xo, y + yo, z + zo, xd, yd, zd);
+                        }
+                        hurt(NULL, 2);
+                }
+                //onFire = 0;
+        } else {
+                airSupply = airCapacity;
+        }
+
+        oTilt = tilt;
+        if (attackTime > 0) attackTime--;
+        if (hurtTime > 0) hurtTime--;
+        if (invulnerableTime > 0) invulnerableTime--;
+
+        if (health <= 0) {
+            deathTime++;
+            if (deathTime > SharedConstants::TicksPerSecond) {
+                beforeRemove();
+                remove();
+                for (int i = 0; i < 20; i++) {
+                    float xa = (2.0f * random.nextFloat() - 1.0f) * (2.0f * random.nextFloat() - 1.0f) * 0.02f;
+                                float ya = (2.0f * random.nextFloat() - 1.0f) * (2.0f * random.nextFloat() - 1.0f) * 0.02f;
+                                float za = (2.0f * random.nextFloat() - 1.0f) * (2.0f * random.nextFloat() - 1.0f) * 0.02f;
+                    level->addParticle(PARTICLETYPE(explode), x + random.nextFloat() * bbWidth * 2 - bbWidth, y + random.nextFloat() * bbHeight, z + random.nextFloat() * bbWidth * 2 - bbWidth, xa, ya, za);
+                }
+            }
+        }
+
+        animStepO = animStep;
+
+        yBodyRotO = yBodyRot;
+        yRotO = yRot;
+        xRotO = xRot;
+
+        TIMER_POP();
+
+        if (!level->isClientSide) {
+                if (autoSendPosRot) {
+                        if (autoSendPosRot && (std::abs(x - sentX) > .1f || std::abs(y - sentY) > .05f || std::abs(z - sentZ) > .1f || std::abs(sentRotX - xRot) > 1 || std::abs(sentRotY - yRot) > 1)) {
+                                MoveEntityPacket_PosRot packet(this);
+                                level->raknetInstance->send(packet);
+                                sentX = x;
+                                sentY = y;
+                                sentZ = z;
+                                sentRotX = xRot;
+                                sentRotY = yRot;
+                        }
+                }
+
+                float ddx = std::abs(xd - sentXd);
+                float ddy = std::abs(yd - sentYd);
+                float ddz = std::abs(zd - sentZd);
+                const float max = 0.02f;
+                const float diff = ddx*ddx + ddy*ddy + ddz*ddz;
+                if (diff > max*max || (diff > 0 && xd == 0 && yd == 0 && zd == 0)) {
+                        sentXd = xd;
+                        sentYd = yd;
+                        sentZd = zd;
+                        SetEntityMotionPacket packet(this);
+                        level->raknetInstance->send(packet);
+                        //LOGI("Motion-packet: %d\n", entityId);
+                }
+        }
+}
+```
+
+**Port note (browser adaptation):**
+1. `oAttackAnim = attackAnim` is set FIRST (before `super::baseTick()`). Then `super::baseTick()` (which sets `xo=x` etc. — see §27.3). **Order matters for the attack animation interpolation.**
+2. **Ambient sound timer:** `(ambientSoundTime++ & 15) == 0` — only checks every 16 ticks. Then `random.nextInt(2000) < ambientSoundTime`. Note `ambientSoundTime++` is post-increment, so the check uses the OLD value and increments after. When the random check passes, `ambientSoundTime = -getAmbientSoundInterval()` (NEGATIVE — so it has to count back up through zero to 16 before the next check). `getAmbientSoundInterval()` returns 8 for base Mob, 12 for Animal. **Previous port used a simple `if (random < 0.01) playSound` — wrong distribution; mobs hissed constantly.**
+3. **Suffocation:** `isAlive() && isInWall()` -> `hurt(NULL, 1)` every tick. 1 damage per tick = 20 dmg/sec. **Previous port only checked on movement.**
+4. **Drowning:** `airSupply--` every tick underwater (unless water mob). At `airSupply == -20` (so 20 ticks of "negative" air = 1 second past zero), spawn 8 bubble particles and `hurt(NULL, 2)`. Then `airSupply = 0` (so it re-triggers every 20 ticks -> 1 drowning damage every second). On land/not underwater, `airSupply = airCapacity` (instant refill). **Previous port refilled air gradually — wrong, it's instant on surfacing.**
+5. `oTilt = tilt` — saves the hurt-tilt for interpolation.
+6. `attackTime--`, `hurtTime--`, `invulnerableTime--` (if > 0). These are the combat cooldowns.
+7. **Death sequence:** `if (health <= 0) { deathTime++; if (deathTime > 20) { beforeRemove(); remove(); spawn 20 explode particles } }`. `SharedConstants::TicksPerSecond = 20`, so death takes 1 second (20 ticks) before `remove()`. The 20 explode particles use `(2*rand-1)*(2*rand-1)*0.02` for velocity — a double-uniform product for a "bursty" distribution. **Previous port used `deathTime > 60` (3 seconds) — too slow.**
+8. After death block: `animStepO = animStep`, `yBodyRotO = yBodyRot`, `yRotO = yRot`, `xRotO = xRot` (re-snapshot for renderer interp — these override the snapshots `super::baseTick` already took, because `aiStep`/`tick` body may have changed rotation). **Previous port didn't re-snapshot -> render interpolation jittered.**
+9. **Network send (server only):** `autoSendPosRot` — if position changed > 0.1 (x/z) or > 0.05 (y) or rotation > 1 deg, send `MoveEntityPacket_PosRot`. Motion packet sent if `diff > 0.02²` OR (motion nonzero-changed while velocity is now zero — the `(diff > 0 && xd==0 && yd==0 && zd==0)` clause sends a "stopped" motion packet). **For the single-player browser port, this whole `if (!level->isClientSide)` block is a no-op** (no RakNet). But keep the structure if you plan to add multiplayer later.
+10. `//if (fireImmune || level.isOnline) onFire = 0;` is COMMENTED OUT — do NOT zero fire for fire-immune mobs here (that's handled in `Entity::baseTick` with the `onFire -= 4` decrement).
+
+**Previous port was WRONG:**
+- Ambient sound timer was a flat random check instead of the `& 15` gate + `ambientSoundTime` negative-cooldown mechanic.
+- Drowning damage was `hurt(1)` instead of `hurt(2)`, and didn't reset `airSupply=0` to retrigger each second.
+- Death timeout was 60 ticks not 20 ticks.
+- Did not re-snapshot `yRotO`/`xRotO`/`yBodyRotO` after the death/particle block.
+
+---
+
+### 27.6 — Mob::tick (Mob.cpp:270-376) — EXACT
+
+```cpp
+void Mob::tick()
+{
+        super::tick();
+
+        if (arrowCount > 0) {
+                if (removeArrowTime <= 0) {
+                        removeArrowTime = 20 * 3;
+                }
+                removeArrowTime--;
+                if (removeArrowTime <= 0) {
+                        arrowCount--;
+                }
+        }
+
+        if (lSteps > 0) {
+                float xt = x + (lx - x) / lSteps;
+                float yt = y + (ly - y) / lSteps;
+                float zt = z + (lz - z) / lSteps;
+
+                float yrd = lyr - yRot;
+                while (yrd < -180)
+                        yrd += 360;
+                while (yrd >= 180)
+                        yrd -= 360;
+
+                yRot += (yrd) / lSteps;
+                xRot += (lxr - xRot) / lSteps;
+
+                lSteps--;
+                this->setPos(xt, yt, zt);
+                this->setRot(yRot, xRot);
+        }
+
+        aiStep();
+
+        updateWalkAnim();
+
+        float xd = x - xo;
+        float zd = z - zo;
+
+        float sideDist = (float) Mth::sqrt(xd * xd + zd * zd);
+
+        float yBodyRotT = yBodyRot;
+
+        float walkSpeed = 0;
+        oRun = run;
+        float tRun = 0;
+        if (sideDist <= 0.05f) {
+                // animStep = 0;
+        } else {
+                tRun = 1;
+                walkSpeed = sideDist * 3;
+                yBodyRotT = Mth::atan2(zd, xd) * Mth::RADDEG - 90;
+        }
+        if (attackAnim > 0) {
+                yBodyRotT = yRot;
+        }
+        if (!onGround) {
+                tRun = 0;
+        }
+        run = run + (tRun - run) * 0.3f;
+
+        /*
+        * float yBodyRotD = yRot-yBodyRot; while (yBodyRotD < -180) yBodyRotD
+        * += 360; while (yBodyRotD >= 180) yBodyRotD -= 360; yBodyRot +=
+        * yBodyRotD * 0.1f;
+        */
+
+        float yBodyRotD = yBodyRotT - yBodyRot;
+        while (yBodyRotD < -180)
+                yBodyRotD += 360;
+        while (yBodyRotD >= 180)
+                yBodyRotD -= 360;
+        yBodyRot += yBodyRotD * 0.3f;
+
+        float headDiff = yRot - yBodyRot;
+        while (headDiff < -180)
+                headDiff += 360;
+        while (headDiff >= 180)
+                headDiff -= 360;
+        bool behind = headDiff < -90 || headDiff >= 90;
+        if (headDiff < -75) headDiff = -75;
+        if (headDiff >= 75) headDiff = +75;
+        yBodyRot = yRot - headDiff;
+        if (headDiff * headDiff > 50 * 50) {
+                yBodyRot += headDiff * 0.2f;
+        }
+
+        if (behind) {
+                walkSpeed *= -1;
+        }
+        while (yRot - yRotO < -180)
+                yRotO -= 360;
+        while (yRot - yRotO >= 180)
+                yRotO += 360;
+
+        while (yBodyRot - yBodyRotO < -180)
+                yBodyRotO -= 360;
+        while (yBodyRot - yBodyRotO >= 180)
+                yBodyRotO += 360;
+
+        while (xRot - xRotO < -180)
+                xRotO -= 360;
+        while (xRot - xRotO >= 180)
+                xRotO += 360;
+        animStep += walkSpeed;
+}
+```
+
+**Port note (browser adaptation):**
+1. **Arrow-in-body countdown:** `if (arrowCount > 0)` — when you have stuck arrows, `removeArrowTime` counts down from 60 ticks (`20*3`), and every time it hits 0, one arrow is removed (`arrowCount--`). So arrows visibly disappear from the mob's body every 3 seconds. **Previous port removed all arrows at once.**
+2. **Network lerp (`lSteps > 0`):** this is the client-side position/rotation lerp from `lerpTo()` packets. Each tick: `pos += (target - pos) / lSteps`, with angle wrap handling (`while yrd < -180: += 360`), then `lSteps--`, then `setPos` + `setRot`. When `lSteps` reaches 0, the lerp is done. **For a single-player port this is dead code** (no packets arrive), but keep the structure.
+3. **`aiStep()` call** — THE AI tick. See §27.8. This is where `xxa`/`yya` get set (via `updateAi`/`newServerAiStep`), `jumping` gets evaluated, `travel(xxa, yya)` runs, and pushing happens. **Previous port called `aiStep` but then ran its own movement — double-applied.**
+4. **`updateWalkAnim()`** — separate method (advances walk animation phase). Keep the call.
+5. **Body rotation lerp — the "head follows body, body follows movement" mechanic:**
+   - `sideDist = sqrt((x-xo)² + (z-zo)²)` — horizontal distance moved this tick (using `xo`/`zo` from `baseTick`).
+   - If `sideDist <= 0.05`: not walking (commented `animStep = 0`), `tRun=0`, `walkSpeed=0`, `yBodyRotT = yBodyRot` (no change).
+   - Else: `tRun = 1`, `walkSpeed = sideDist * 3`, `yBodyRotT = atan2(zd, xd) * RADDEG - 90` (body faces movement direction).
+   - If attacking (`attackAnim > 0`): `yBodyRotT = yRot` (body snaps to face the head's direction during attack swing).
+   - If airborne (`!onGround`): `tRun = 0` (run animation pauses mid-jump).
+   - `run += (tRun - run) * 0.3f` — run animation lerps toward tRun at 30%/tick.
+   - `yBodyRotD = yBodyRotT - yBodyRot` (with wrap), `yBodyRot += yBodyRotD * 0.3f` — body rotation lerps toward movement-facing at 30%/tick.
+   - `headDiff = yRot - yBodyRot` (with wrap); `behind = |headDiff| >= 90`. Clamp `headDiff` to [-75, 75]. `yBodyRot = yRot - headDiff` (recompute body so head is within 75 deg of body). If `headDiff² > 50²` (i.e. |headDiff| > 50), `yBodyRot += headDiff * 0.2f` (body slowly catches up to a sharp head turn).
+   - If `behind`, `walkSpeed *= -1` (walk animation plays backward when walking "backward" relative to body facing — moonwalk).
+   - Then **normalize the rotation old-values** so the next tick's delta is shortest-path: `while (yRot - yRotO < -180) yRotO -= 360; while (>= 180) yRotO += 360;` and same for `yBodyRotO` and `xRotO`. **Previous port skipped these wrap-normalizations -> mobs spun the long way around.**
+6. `animStep += walkSpeed` — advances the walk cycle by `walkSpeed` (= `sideDist * 3` when walking, 0 when idle, negated when "behind"). **This is THE walk animation driver.** `walkSpeed` is local — it's not the `walkingSpeed` field.
+
+**Previous port was WRONG:**
+- Arrow countdown removed all arrows instantly.
+- Body rotation lerp constants were wrong (used `* 0.1f` instead of `* 0.3f` — the commented-out block at lines 332-336 shows the OLD `0.1f` value was replaced with `0.3f`).
+- The `behind`/moonwalk logic (`walkSpeed *= -1`) was missing — mobs always walked forward even when backing up.
+- Rotation `yRotO`/`yBodyRotO`/`xRotO` wrap-normalizations were missing -> 360 deg flips.
+- `walkSpeed = sideDist * 3` was `sideDist` (no `* 3`) -> walk cycle ran 3x too slow.
+
+---
+
+### 27.7 — Mob::travel (Mob.cpp:558-626) — EXACT
+
+```cpp
+void Mob::travel( float xa, float ya )
+{
+        if (isInWater()) {
+                float yo = y;
+                moveRelative(xa, ya, 0.02f);
+                move(xd, yd, zd);
+
+                xd *= 0.80f;
+                yd *= 0.80f;
+                zd *= 0.80f;
+                yd -= 0.02f;
+
+                if (horizontalCollision && isFree(xd, yd + 0.6f - y + yo, zd)) {
+                        yd = 0.3f;
+                }
+        } else if (isInLava()) {
+                float yo = y;
+                moveRelative(xa, ya, 0.02f);
+                move(xd, yd, zd);
+                xd *= 0.50f;
+                yd *= 0.50f;
+                zd *= 0.50f;
+                yd -= 0.02f;
+
+                if (horizontalCollision && isFree(xd, yd + 0.6f - y + yo, zd)) {
+                        yd = 0.3f;
+                }
+        } else {
+                float friction = 0.91f;
+                if (onGround) {
+                        friction = 0.6f * 0.91f;
+                        int t = level->getTile(Mth::floor(x), Mth::floor(bb.y0 - 0.5f), Mth::floor(z));
+                        if (t > 0) {
+                                friction = Tile::tiles[t]->friction * 0.91f;
+                        }
+                }
+
+                float friction2 = (0.6f * 0.6f * 0.91f * 0.91f * 0.6f * 0.91f) / (friction * friction * friction);
+                moveRelative(xa, ya, (onGround ? walkingSpeed * friction2 : flyingSpeed));
+
+                friction = 0.91f;
+                if (onGround) {
+                        friction = 0.6f * 0.91f;
+                        int t = level->getTile(Mth::floor(x), Mth::floor(bb.y0 - 0.5f), Mth::floor(z));
+                        if (t > 0) {
+                                friction = Tile::tiles[t]->friction * 0.91f;
+                        }
+                }
+                //@todo: make it easier to climb ladders
+                if (onLadder()) {
+                        this->fallDistance = 0;
+                        if (yd < -0.15) yd = -0.15f;
+                        if (isSneaking() && yd < 0) yd = 0;
+                }
+
+                move(xd, yd, zd);
+
+                //@todo: make it easier to climb ladders
+                if (horizontalCollision && onLadder()) {
+                        yd = 0.2f;
+                }
+
+                yd -= 0.08f;
+                yd *= 0.98f;
+                xd *= friction;
+                zd *= friction;
+        }
+
+}
+```
+
+**Port note (browser adaptation):**
+1. **THREE branches: water, lava, land.** No flying branch here — `Player::travel` overrides this whole method for flying. **Previous port had an `abilities.flying` branch inside `Mob::travel` — that's fabricated; it lives in `Player::travel`.**
+2. **Water branch:**
+   - `yo = y` (save pre-move height for the "swim up" check).
+   - `moveRelative(xa, ya, 0.02f)` — swim acceleration = 0.02.
+   - `move(xd, yd, zd)` — apply current velocity.
+   - `xd *= 0.80; yd *= 0.80; zd *= 0.80` — water drag (20% loss/tick).
+   - `yd -= 0.02` — buoyancy (gravity in water is 0.02, not 0.08).
+   - **Auto-swim-up:** `if (horizontalCollision && isFree(xd, yd + 0.6 - y + yo, zd)) yd = 0.3`. If you bumped a wall horizontally AND the space 0.6 above your old position is free, kick up at 0.3/tick. This is what makes mobs "climb" out of water at edges.
+3. **Lava branch:** identical to water EXCEPT drag is `0.50` (50% loss/tick — lava is much stickier). Buoyancy still 0.02.
+4. **Land branch — THE critical formula:**
+   - Compute ground friction `friction`: default `0.91` (air); if `onGround`, start at `0.6 * 0.91 = 0.546`, then look up the tile 0.5 below `bb.y0` (`floor(bb.y0 - 0.5)`) and if non-air, replace with `Tile::tiles[t]->friction * 0.91`. (e.g. ice friction is 0.98 -> `0.98 * 0.91`; normal block friction 0.6 -> `0.6 * 0.91`.)
+   - `friction2 = (0.6 * 0.6 * 0.91 * 0.91 * 0.6 * 0.91) / (friction³)` — this is the **"slipperiness ratio"** that compensates for the fact that the player's input is applied via `moveRelative` then `move` applies friction once. The numerator is the "reference" friction for a default block (`0.6³ * 0.91³` ~ 0.101), and dividing by the actual `friction³` means: if the ground is slipperier than default, `friction2 > 1` and you accelerate MORE (sliding); if stickier, `friction2 < 1` and you accelerate less. **This is the exact MC formula. Previous port used `walkingSpeed * friction2` but computed `friction2` wrong (often just `1/friction` not `1/friction³`).**
+   - `moveRelative(xa, ya, onGround ? walkingSpeed * friction2 : flyingSpeed)` — `walkingSpeed` is a per-mob field (default 0.1 for Mob, see Mob.h). `flyingSpeed` is also per-mob (default 0.02). **On the ground, the acceleration is scaled by `friction2` to pre-compensate for the slip. In the air, just `flyingSpeed`.**
+   - **Recompute `friction` again** (lines 598-605) — same code as above. This is because `move()` may have changed `onGround` (you walked off an edge). The second computation is the one actually used for `xd *= friction; zd *= friction` at the end. **Previous port computed friction once and used the pre-move value — mobs kept the "ice slip" for one tick after leaving ice.**
+   - **Ladder:** `if (onLadder())`: `fallDistance = 0` (no fall damage), `if (yd < -0.15) yd = -0.15` (clamp descent to 0.15/tick), `if (isSneaking() && yd < 0) yd = 0` (sneaking on ladder = stop).
+   - `move(xd, yd, zd)`.
+   - **Ladder climb kick:** `if (horizontalCollision && onLadder()) yd = 0.2` (bumping a wall while on a ladder pushes you up — auto-climb).
+   - **Gravity & air drag:** `yd -= 0.08` (gravity per tick, NOT per second), `yd *= 0.98` (air drag on vertical), `xd *= friction; zd *= friction` (ground/air friction on horizontal).
+
+5. **`walkingSpeed` and `flyingSpeed` are PER-MOB FIELDS**, modified by `getWalkingSpeedModifier()` in `aiStep` (see §27.8). `PathfinderMob::getWalkingSpeedModifier` multiplies by 2 if `fleeTime > 0`. **Previous port treated them as constants.**
+
+6. **Constants that MUST be preserved EXACTLY:**
+   - Water: `moveRelative speed=0.02`, drag=`0.80`, buoyancy=`0.02`, swim-up kick=`0.3`, swim-up check height=`0.6`.
+   - Lava: `moveRelative speed=0.02`, drag=`0.50`, buoyancy=`0.02`, swim-up kick=`0.3`, swim-up check height=`0.6`.
+   - Land: air friction=`0.91`, ground friction base=`0.6*0.91`, `friction2` numerator=`0.6*0.6*0.91*0.91*0.6*0.91`, gravity=`0.08`, air vertical drag=`0.98`, ladder descent clamp=`-0.15`, ladder climb kick=`0.2`.
+   - `bb.y0 - 0.5f` — the tile lookup is HALF a block below the bounding box floor (this catches the block you're standing ON, not the air at your feet).
+
+**Previous port was WRONG (this is the BIG one):**
+- Entry 2's "Mob::travel" (MODLOG.md:104-163) is almost ENTIRELY FABRICATED. It references `this->isAlive()`, `isControlledByLocalInstance()`, `getWalkingSpeedModifier()`, `abilities.flying`, `walkAnimSpeed`, `xOld`/`zOld`, `Math::clamp`, `flySpeed`, `moveControl` — NONE of which appear in the actual `Mob::travel` body. The real method is the water/lava/land three-branch physics above. The Entry 2 version appears to be a mix of `Player::travel` and invented "Minecraft Java edition" physics. **The ES6 port must be rebuilt from §27.7, not Entry 2.**
+- `friction2` formula was wrong (the cube term was missing).
+- Friction was computed once, not twice (pre- and post-move).
+- Ladder logic (`onLadder()`, `-0.15` clamp, `0.2` climb kick, sneak-stops-on-ladder) was entirely missing.
+- Water/lava branches were missing — mobs couldn't swim.
+- The `isFree(xd, yd + 0.6 - y + yo, zd)` auto-swim-up check was missing.
+
+---
+
+### 27.8 — Mob::aiStep (Mob.cpp:688-757) — EXACT
+
+```cpp
+void Mob::aiStep()
+{
+        //@todo? 30 lines of code here in java version
+
+        TIMER_PUSH("ai");
+        if (isImmobile()) {
+                jumping = false;
+                xxa = 0;
+                yya = 0;
+                yRotA = 0;
+        } else {
+                if (!interpolateOnly()) {
+                        if (useNewAi()) {
+                                TIMER_PUSH("newAi");
+                                newServerAiStep();
+                                TIMER_POP();
+                        }
+                        else {
+                                TIMER_PUSH("oldAi");
+                                updateAi();
+                                TIMER_POP();
+                        }
+                }
+        }
+        TIMER_POP_PUSH("move");
+
+        bool inWater = isInWater();
+        bool inLava = isInLava();
+
+        if (jumping) {
+                if (inWater) {
+                        yd += 0.04f;
+                } else if (inLava) {
+                        yd += 0.04f;
+                } else if (onGround) {
+                        jumpFromGround();
+                }
+        }
+
+        xxa *= 0.98f;
+        yya *= 0.98f;
+        yRotA *= 0.9f;
+
+        float normalSpeed = walkingSpeed;
+        float normalAirControllSpeed = flyingSpeed;
+        walkingSpeed *= getWalkingSpeedModifier();
+        flyingSpeed  *= getWalkingSpeedModifier();
+        travel(xxa, yya);
+        walkingSpeed = normalSpeed;
+        flyingSpeed = normalAirControllSpeed;
+
+        TIMER_POP_PUSH("push");
+        Player* player = NULL;
+        if(isPlayer()) {
+                player = (Player*)this;
+        }
+        if(player == NULL || !player->isSleeping())  {
+                EntityList& entities = level->getEntities(this, this->bb.grow(0.2f, 0, 0.2f));
+                for (unsigned int i = 0; i < entities.size(); i++) {
+                        Entity* e = entities[i];
+                        if(e->isPlayer()) {
+                                Player* p = (Player*)e;
+                                if(p->isSleeping())
+                                        continue;
+                        }
+                        if (e->isPushable()) e->push(this);
+                }
+        }
+        TIMER_POP();
+}
+```
+
+**Port note (browser adaptation):**
+1. **`isImmobile()` -> zero ALL inputs** (`jumping=false, xxa=0, yya=0, yRotA=0`) and skip the AI. `isImmobile` is true for mobs in certain states (e.g. RideableMob being ridden, or explicitly immobilized). **Previous port checked `isImmobile` but still ran `travel` — immobile mobs slid around.**
+2. **`interpolateOnly()`** — if true, skip AI entirely (this is the client-side "interpolate-only" mode where the mob is being lerped from server packets and shouldn't run its own AI). For single-player browser port, this is always false.
+3. **`useNewAi()`** — branch between `newServerAiStep()` (the "new" goal-based AI, used by Zombie/Creeper/etc. in later MCPE) and `updateAi()` (the "old" wander AI, used by Chicken/Cow/Pig/Sheep/PathfinderMob). For the 2013 MCPE source, **most mobs use `updateAi()`** (old AI). The `useNewAi()` virtual defaults to false on `Mob`; only specific monster classes override it to true. **For the chicken port, `useNewAi()` returns false -> `updateAi()` runs -> which dispatches to `PathfinderMob::updateAi` (§27.10).**
+4. **Jumping:** if `jumping` flag is set (by `updateAi`/`newServerAiStep` or by `PathfinderMob::updateAi` setting `jumping = true` for path-following):
+   - In water/lava: `yd += 0.04` (swim up kick, applied every tick the flag is set).
+   - On ground: `jumpFromGround()` (sets `yd` to the jump velocity, typically 0.42).
+   - In air (not water/lava, not onGround): **nothing** — can't double-jump.
+5. **Input decay (per tick):** `xxa *= 0.98`, `yya *= 0.98`, `yRotA *= 0.9`. This is a low-pass filter on the AI's input — `xxa`/`yya` are set to ±1 (or 0) by `updateAi` each tick, and this decay smooths the transition. **Previous port didn't decay -> mobs snapped to full speed instantly.**
+6. **Speed modifier application:** `walkingSpeed *= getWalkingSpeedModifier(); flyingSpeed *= getWalkingSpeedModifier();` — then `travel(xxa, yya)`, then RESTORE the originals (`walkingSpeed = normalSpeed; flyingSpeed = normalAirControllSpeed`). This is a **save-modify-restore** pattern so the modifier doesn't accumulate across ticks. `getWalkingSpeedModifier()` is a virtual: `Mob` base returns 1.0, `PathfinderMob` returns `2.0 if fleeTime > 0 else 1.0`, `Player` returns sprint multiplier. **Previous port multiplied but didn't restore -> speed compounded each tick until mobs moved at infinite speed.**
+7. **`travel(xxa, yya)`** — `xxa` = strafe input, `yya` = forward input. This is where the movement physics (§27.7) actually runs. **Note: `travel` reads `walkingSpeed`/`flyingSpeed` which were just modified — that's the whole point of the save-modify-restore.**
+8. **Pushing:** `level->getEntities(this, this->bb.grow(0.2, 0, 0.2))` — find entities within a 0.2-block-grown bounding box (only X and Z grown, NOT Y — so you only push entities at your foot level). For each, skip sleeping players. If `e->isPushable()`, `e->push(this)` — the other entity gets pushed away from this one. **Previous port grew in all 3 axes -> mobs pushed entities above/below them.**
+9. **`isPlayer()`/`isSleeping()` check:** if THIS mob is a sleeping player, skip the pushing entirely (sleeping players don't push).
+
+**Previous port was WRONG:**
+- Entry 2's `Mob::aiStep` (MODLOG.md:168-...) is FABRICATED — it reads `moveControl->xxa/yya/jumping`, decays `swingTime`, updates `walkAnimSpeed` via `Math::clamp` — NONE of which is in the actual `Mob::aiStep` body. The real method is the 70-line block above. **The ES6 port must be rebuilt from §27.8.**
+- `walkingSpeed`/`flyingSpeed` save-modify-restore was missing -> speed compounded.
+- Input decay (`xxa *= 0.98` etc.) was missing.
+- Pushing grew the bounding box in Y too.
+- The `interpolateOnly`/`useNewAi` branch was missing — old-AI and new-AI mobs ran the same code.
+
+---
+
+### 27.9 — Mob::updateAi (Mob.cpp:760-802) — EXACT
+
+```cpp
+/*protected*/
+void Mob::updateAi() {
+    noActionTime++;
+
+        Player* player = level->getNearestPlayer(this, -1);
+        checkDespawn(player);
+
+    xxa = 0;
+    yya = 0;
+
+    float lookDistance = 8;
+    if (random.nextFloat() < 0.02f) {
+        player = level->getNearestPlayer(this, lookDistance);
+        if (player != NULL) {
+            lookingAtId = player->entityId;
+            lookTime = 10 + random.nextInt(20);
+        } else {
+            yRotA = (random.nextFloat() - 0.5f) * 20;
+        }
+    }
+
+    if (lookingAtId != 0) {
+                Entity* lookingAt = level->getEntity(lookingAtId);
+                lookingAtId = 0;
+                if (lookingAt != NULL) {
+                        lookAt(lookingAt, 10, (float)getMaxHeadXRot());
+                        if (lookTime-- <= 0 || lookingAt->removed || lookingAt->distanceToSqr(this) > lookDistance * lookDistance) {
+                    lookingAtId = 0;
+                    } else {
+                                lookingAtId = lookingAt->entityId;
+                        }
+                }
+    } else {
+        if (random.nextFloat() < 0.05f) {
+            yRotA = (random.nextFloat() - 0.5f) * 20;
+        }
+        yRot += yRotA;
+        xRot = defaultLookAngle;
+    }
+
+    bool inWater = isInWater();
+    bool inLava = isInLava();
+    if (inWater || inLava) jumping = random.nextFloat() < 0.8f;
+}
+```
+
+**Port note (browser adaptation):**
+1. **`noActionTime++`** every tick — counts up when the mob has no target/action. Used by `PathfinderMob::updateAi` (§27.10) to gate strolling: `if (noActionTime < TicksPerSecond * 5) findRandomStrollLocation()`. **Previous port didn't increment this -> stroll never triggered.**
+2. **`checkDespawn(player)`:** get the nearest player at ANY distance (`-1` = no distance limit), pass to `checkDespawn` which (per `Mob::checkDespawn`) removes the mob if `removeWhenFarAway()` and the player is > 32 blocks (or whatever the despawn distance is). **For animals, `removeWhenFarAway()` returns false so they never despawn.**
+3. **`xxa = 0; yya = 0;`** — clear movement input every tick. The AI must RE-set these each tick (e.g. `PathfinderMob::updateAi` sets `yya = runSpeed` when following a path). **Previous port didn't clear -> old input leaked into the next tick.**
+4. **Look-around AI:**
+   - Every tick with 2% chance (`random.nextFloat() < 0.02`): find nearest player within `lookDistance=8`. If found, `lookingAtId = player->entityId; lookTime = 10 + random.nextInt(20)` (10-29 ticks of looking). If no player, set `yRotA = (rand-0.5)*20` (a random yaw turn of ±10 deg).
+   - If currently looking at someone (`lookingAtId != 0`): `lookAt(lookingAt, 10, getMaxHeadXRot())` — turn head toward them, max 10 deg yaw/tick, max `getMaxHeadXRot()` pitch/tick (40 for Mob base). Then `lookTime--` (post-decrement, so the check `lookTime-- <= 0` uses the pre-decrement value — if it was 1 or 0, stop looking). Also stop if the target was removed or moved beyond `lookDistance²`. Otherwise keep `lookingAtId` set (continue next tick).
+   - If NOT looking: every tick with 5% chance, set a new random `yRotA`. Then `yRot += yRotA` (apply the turn) and `xRot = defaultLookAngle` (pitch returns to default).
+   - **Note the subtle bug-pattern:** line 782 `lookingAtId = 0;` is set, THEN re-set to `lookingAt->entityId` on line 788 if continuing. So the "stop looking" path just leaves it at 0.
+5. **`jumping = random.nextFloat() < 0.8f`** in water/lava — 80% chance per tick to "jump" (= swim up kick via `aiStep`). This is why mobs bob up and down in water. **Previous port used 0.5 — mobs drowned.**
+
+**Previous port was WRONG:**
+- `noActionTime` not incremented -> wander AI never triggered strolls.
+- `xxa`/`yya` not cleared each tick -> input leaked.
+- Look-around probability was 0.05 not 0.02 -> mobs spastically looked around.
+- Water `jumping` probability was 0.5 not 0.8 -> drowned.
+- `lookTime-- <= 0` (post-decrement comparison) was implemented as `--lookTime <= 0` (pre-decrement) -> looked one tick too short.
+
+---
+
+### 27.10 — PathfinderMob::updateAi (PathfinderMob.cpp:59-185) — EXACT
+
+```cpp
+void PathfinderMob::updateAi()
+{
+        TIMER_PUSH("ai");
+
+        if (fleeTime > 0) fleeTime--;
+        holdGround = shouldHoldGround();
+        float maxDist = 16;
+
+        Entity* attackTarget = NULL;
+        if (attackTargetId == 0) {
+                attackTarget = findAttackTarget();
+                if (attackTarget != NULL) {
+                        level->findPath(&path, this, attackTarget, maxDist, false, false);//(pathfinderMask&CAN_OPEN_DOORS) != 0, (pathfinderMask&AVOID_WATER) != 0);
+                        attackTargetId = attackTarget->entityId;
+                        //LOGI("path.empty: %d\n", path.isEmpty());
+                }
+        } else {
+                attackTarget = level->getEntity(attackTargetId);
+                if (!attackTarget || !attackTarget->isAlive()) {
+                        attackTargetId = 0;
+                        attackTarget = NULL;
+                } else {
+                        attackTargetId = attackTarget->entityId;
+                        float d = attackTarget->distanceTo(this);
+                        if (canSee(attackTarget)) {
+                                checkHurtTarget(attackTarget, d);
+                        } else {
+                                checkCantSeeTarget(attackTarget, d);
+                        }
+                }
+        }
+        TIMER_POP();
+
+        /*
+        * if (holdGround) { xxa = 0; yya = 0; jumping = false; return; }
+        */
+
+        bool doStroll = false;
+        if (!holdGround && (attackTarget != NULL && (path.isEmpty() || random.nextInt(20) == 0))) {
+                level->findPath(&path, this, attackTarget, maxDist, false, false);//(pathfinderMask&CAN_OPEN_DOORS) != 0, (pathfinderMask&AVOID_WATER) != 0);
+        } else if (!holdGround) {
+                if (path.isEmpty() && (random.nextInt(180) == 0)) {
+                        doStroll = true;
+                } else {
+                        if (random.nextInt(120) == 0) doStroll = true;
+                        else if (fleeTime > 0 && (fleeTime&7) == 1) doStroll = true;
+                }
+        }
+        if (doStroll) {
+                if (noActionTime < SharedConstants::TicksPerSecond * 5) {
+                        findRandomStrollLocation();
+                }
+        }
+
+        int yFloor = Mth::floor(bb.y0 + .5f);
+
+        bool inWater = isInWater();
+        bool inLava = isInLava();
+        xRot = 0;
+        if (path.isEmpty() || random.nextInt(100) == 0) {
+                //super::serverAiStep();
+                super::updateAi();
+                return;
+        }
+
+        TIMER_PUSH("followpath");
+        Vec3 target = path.currentPos(this);
+        float r = bbWidth * 2;
+        bool looping = true;
+        while (looping && target.distanceToSqr(x, target.y, z) < r * r) {
+                path.next();
+                if (path.isDone()) {
+                        looping = false;
+                        path.destroy();
+                } else target = path.currentPos(this);
+        }
+
+        jumping = false;
+        if (looping) {
+                float xd = target.x - x;
+                float zd = target.z - z;
+                float yd = target.y - yFloor;
+                // float yRotOld = yRot;
+                float yRotD = (float) (Mth::atan2(zd, xd) * 180 / Mth::PI) - 90;
+                float rotDiff = yRotD - yRot;
+                yya = runSpeed;
+                while (rotDiff < -180)
+                        rotDiff += 360;
+                while (rotDiff >= 180)
+                        rotDiff -= 360;
+                if (rotDiff > MAX_TURN) {
+                        rotDiff = MAX_TURN;
+                        // yya *= 0.2;
+                }
+                if (rotDiff < -MAX_TURN) {
+                        rotDiff = -MAX_TURN;
+                        // yya *= 0.2;
+                }
+                yRot += rotDiff;
+
+                if (holdGround) {
+                        if (attackTarget != NULL) {
+                                float xd2 = attackTarget->x - x;
+                                float zd2 = attackTarget->z - z;
+
+                                float oldyRot = yRot;
+                                yRot = (float) (Mth::atan2(zd2, xd2) * 180 / Mth::PI) - 90;
+
+                                rotDiff = ((oldyRot - yRot) + 90) * Mth::PI / 180;
+                                xxa = -Mth::sin(rotDiff) * yya * 1.0f;
+                                yya = Mth::cos(rotDiff) * yya * 1.0f;
+                        }
+                }
+                if (yd > 0) {
+                        jumping = true;
+                }
+        }
+
+        if (attackTarget != NULL) {
+                lookAt(attackTarget, 30, 30);
+        }
+
+        if (this->horizontalCollision && !isPathFinding()) jumping = true;
+        if (random.nextFloat() < 0.8f && (inWater || inLava)) jumping = true;
+
+        TIMER_POP();
+}
+```
+
+**Port note (browser adaptation):**
+1. **`fleeTime--`** each tick (down to 0). `fleeTime` is set to 60 by `Animal::hurt` (when an animal is hit). While `fleeTime > 0`, `getWalkingSpeedModifier()` returns 2x (so fleeing animals run double-speed) AND the stroll logic checks `(fleeTime & 7) == 1` to trigger a new flee-path every 8 ticks. **Previous port didn't decrement fleeTime -> animals ran fast forever after one hit.**
+2. **`holdGround = shouldHoldGround()`** — `shouldHoldGround` is virtual, defaults to false on PathfinderMob. Monsters (Zombie etc.) may override to true when they have a target and want to stand ground (like a skeleton shooting). For animals, always false.
+3. **`maxDist = 16`** — path-find range. `findPath(&path, this, target, maxDist, false, false)` — the two `false`s are `canOpenDoors` and `avoidWater` (commented out `pathfinderMask` bits). **For the 2013 MCPE port, these are always false** — mobs don't open doors, don't avoid water.
+4. **Target selection:**
+   - If no target (`attackTargetId == 0`): `findAttackTarget()` (virtual — returns NULL for Animal, returns nearest player for monsters). If found, path-find to them and store their `entityId`.
+   - If have target: get entity. If dead/missing, clear target. Else, update `attackTargetId` (in case it changed), compute distance, and call `checkHurtTarget` (if can see — virtual, empty on PathfinderMob, monsters override to attack) or `checkCantSeeTarget` (if can't see — base impl: if `d > 32`, clear target — "lost them").
+5. **Path re-find logic:**
+   - If have target AND (`path.isEmpty()` OR `random.nextInt(20) == 0` — 5% chance to re-path even with a path): re-path to target. This keeps the path fresh as the target moves.
+   - Else if no target AND no `holdGround`:
+     - If `path.isEmpty() && random.nextInt(180) == 0` (~0.5% chance/tick when idle): stroll.
+     - Else: `random.nextInt(120) == 0` (~0.8% chance): stroll. OR `fleeTime > 0 && (fleeTime & 7) == 1` (every 8th tick while fleeing): stroll (re-path the flee route).
+   - If `doStroll` AND `noActionTime < 100` (5 seconds): `findRandomStrollLocation()`. **The `noActionTime` gate means a mob that has been idle for 5+ seconds STOPS wandering** — it just stands there. This is the "despawn-prevention" idle: if no player has been near for 5s, the mob freezes (waiting to despawn). **Previous port didn't gate on `noActionTime` -> mobs wandered forever even with no players near.**
+6. **`yFloor = floor(bb.y0 + 0.5)`** — the "current block Y" used for path-follow height comparison. The `+ 0.5` rounds the floor to the nearest block (so a mob at y=10.4 counts as block 10, at y=10.6 counts as block 11).
+7. **`xRot = 0`** — Pathfinder mobs don't pitch their head (they look straight ahead). **`Mob::updateAi` (§27.9) sets `xRot = defaultLookAngle` — but PathfinderMob overrides this and forces 0.**
+8. **`if (path.isEmpty() || random.nextInt(100) == 0)` — fall through to base `super::updateAi()`.** This means: if there's no path, OR 1% of the time even with a path, run the base Mob look-around AI (§27.9) instead of path-following. This is how idle mobs (no path) still look around. **Previous port always ran path-follow, never fell through -> idle mobs never looked at players.**
+9. **Path-follow loop:**
+   - `target = path.currentPos(this)` — get the current path waypoint (a Vec3).
+   - `r = bbWidth * 2` — "arrival radius" (twice the mob's width).
+   - **`while (looping && target.distanceToSqr(x, target.y, z) < r²)`**: if within arrival radius, advance the path (`path.next()`). If path is done, stop looping and destroy the path. Else get the next waypoint. This skips waypoints you've already reached in one tick (if you're close to several).
+   - `jumping = false` (reset before evaluating).
+   - **If still looping (have a target waypoint):**
+     - `xd = target.x - x`, `zd = target.z - z`, `yd = target.y - yFloor`.
+     - `yRotD = atan2(zd, xd) * 180/pi - 90` — desired yaw to face the waypoint. The `- 90` is because Minecraft's yaw 0 = +Z, but `atan2(z, x)` returns 0 = +X. So subtract 90 to convert.
+     - `rotDiff = yRotD - yRot` with wrap.
+     - **`yya = runSpeed`** — set forward input to full (toward waypoint). `runSpeed` is a field (default 1.0? need to check — it's set somewhere in Mob.h).
+     - Clamp `rotDiff` to `[-MAX_TURN, +MAX_TURN]` where `MAX_TURN = 30` (a PathfinderMob constant — `const float MAX_TURN = 30;` somewhere in PathfinderMob.h). **This is the 30 deg/tick turn limit** — mobs can only rotate 30 deg per tick toward their path target. **Previous port didn't clamp -> mobs snapped to face the target instantly (no turn animation).**
+     - `yRot += rotDiff`.
+     - **`holdGround` strafe:** if holding ground AND have attack target, compute the angle to the target (`atan2(zd2, xd2)*180/pi - 90`), then `rotDiff = ((oldyRot - yRot) + 90) * pi/180`, `xxa = -sin(rotDiff) * yya`, `yya = cos(rotDiff) * yya`. This converts "face the target but move toward the path" into a strafe+forward mix — i.e. the mob strafes sideways to follow the path while facing the target. **For animals this is dead code (holdGround=false), but monsters use it.**
+     - **`if (yd > 0) jumping = true`** — if the waypoint is above the current floor, jump (to climb up blocks).
+   - **`lookAt(attackTarget, 30, 30)`** if have target — turn head toward target, max 30 deg/tick yaw & pitch.
+   - **`if (horizontalCollision && !isPathFinding()) jumping = true`** — if bumped a wall AND no path (or path done), jump (try to get over the obstacle).
+   - **`if (random.nextFloat() < 0.8 && (inWater || inLava)) jumping = true`** — 80% swim-up in water/lava (same as `Mob::updateAi`).
+
+**Constants that MUST be preserved EXACTLY:**
+- `maxDist = 16` (path-find range)
+- `r = bbWidth * 2` (arrival radius)
+- `MAX_TURN = 30` (degrees/tick — confirm from PathfinderMob.h)
+- `yRotD = atan2(zd, xd) * 180/pi - 90` (yaw-to-waypoint formula, the `-90` is critical)
+- `noActionTime < 100` (5s idle gate for strolling — `TicksPerSecond * 5 = 100`)
+- `random.nextInt(180) == 0` (~0.5% idle stroll chance)
+- `random.nextInt(120) == 0` (~0.8% active stroll chance)
+- `random.nextInt(20) == 0` (5% re-path-with-target chance)
+- `random.nextInt(100) == 0` (1% fall-through-to-base-AI chance)
+- `(fleeTime & 7) == 1` (every 8th tick of fleeing, re-path)
+- `yd > 0` -> jumping (climb)
+- `bb.y0 + 0.5` for yFloor
+
+**Previous port was WRONG:**
+- `noActionTime < 100` stroll gate missing -> mobs wandered forever.
+- `MAX_TURN = 30` turn clamp missing -> instant facing snap.
+- The `random.nextInt(100) == 0` fall-through to `super::updateAi()` was missing -> idle mobs never looked around.
+- `fleeTime--` decrement missing -> infinite flee speed.
+- The `yRotD = atan2(...) - 90` formula was wrong (missing the `- 90`).
+- The `while (looping && target.distanceToSqr(...) < r*r)` waypoint-skip loop was missing -> mobs stopped at every waypoint for a tick (jerky).
+
+---
+
+### 27.11 — PathfinderMob::findRandomStrollLocation (PathfinderMob.cpp:187-214) — EXACT
+
+```cpp
+void PathfinderMob::findRandomStrollLocation()
+{
+        TIMER_PUSH("stroll");
+        bool hasBest = false;
+        int xBest = -1;
+        int yBest = -1;
+        int zBest = -1;
+        float best = -99999;
+        for (int i = 0; i < 10; i++) {
+                int xt = Mth::floor(x + random.nextInt(13) - 6);
+                int yt = Mth::floor(y + random.nextInt(7) - 3);
+                int zt = Mth::floor(z + random.nextInt(13) - 3);
+                float value = getWalkTargetValue(xt, yt, zt);
+                if (value > best) {
+                        best = value;
+                        xBest = xt;
+                        yBest = yt;
+                        zBest = zt;
+                        hasBest = true;
+                }
+
+        }
+        if (hasBest) {
+                //LOGI("Finding a new strolling location! %d, %d, %d (%d, %d, %d) for %p\n", xBest, yBest, zBest, (int)x, (int)y, (int)z, this);
+                level->findPath(&path, this, xBest, yBest, zBest, 10, false, false);//(pathfinderMask&CAN_OPEN_DOORS) != 0, (pathfinderMask&AVOID_WATER) != 0);
+        }
+        TIMER_POP();
+}
+```
+
+**Port note (browser adaptation):**
+1. **Sample 10 random points** around the mob: `xt = floor(x + randInt(13) - 6)` (x: -6 to +6), `yt = floor(y + randInt(7) - 3)` (y: -3 to +3), `zt = floor(z + randInt(13) - 6)` (z: -6 to +6). **Note line 198 has `random.nextInt(13) - 3` (typo in source — should be `- 6` for symmetry, but the source says `- 3` so zt range is -3 to +9). PRESERVE THIS BUG.** Actually wait — re-reading line 198: `int zt = Mth::floor(z + random.nextInt(13) - 3);` — yes the source literally has `- 3` for z (a likely typo, giving zt in [-3, +9] instead of [-6, +6]). **The ES6 port must reproduce this exactly** (or fix it and note the fix — but Rule Zero says copy exact). Flag for port decision.
+2. **Score each point** via `getWalkTargetValue(xt, yt, zt)` — virtual: `PathfinderMob` base returns 0; `Animal` overrides (grass=+10, else brightness-0.5). So animals prefer grass + bright spots.
+3. **Track the best** (`best = -99999` initial; `if value > best: update`). `hasBest` flag tracks if any point was sampled (always true here since 10 iterations, but the guard is there).
+4. **Path-find to the best** with range `10` (NOT `maxDist=16` — stroll paths are shorter, 10 blocks max). `findPath(&path, this, xBest, yBest, zBest, 10, false, false)`.
+5. If `!hasBest` (never happens with 10 iterations), no path is set — the mob stays put.
+
+**Previous port was WRONG:**
+- Used `randInt(13) - 6` for Z (the source has `- 3` — preserve the bug or explicitly fix and note).
+- Sampled 3 points not 10 -> poor target selection.
+- Used `best = 0` initial (source uses `-99999` — with `best = 0`, a negative-score point like a dark cave would never be picked, freezing the mob).
+- Path-find range was 16 not 10.
+
+---
+
+### 27.12 — Chicken::aiStep (Chicken.cpp:33-61) — EXACT
+
+```cpp
+void Chicken::aiStep()
+{
+        super::aiStep();
+
+        oFlap = flap;
+        oFlapSpeed = flapSpeed;
+
+        flapSpeed += (onGround ? -1 : 4) * 0.3f;
+        if (flapSpeed < 0) flapSpeed = 0;
+        if (flapSpeed > 1) flapSpeed = 1;
+
+        if (!onGround && flapping < 1) flapping = 1;
+        flapping *= 0.9f;
+
+        if (!onGround && yd < 0) {
+                yd *= 0.6f;
+        }
+
+        flap += flapping * 2;
+
+        //@todo
+        //if (!isBaby()) {
+        //      if (!level->isClientSide && --eggTime <= 0) {
+        //              level->playSound(this, "mob.chickenplop", 1.0f, (random.nextFloat() - random.nextFloat()) * 0.2f + 1.0f);
+        //              spawnAtLocation(Item::egg->id, 1);
+        //              eggTime = random.nextInt(SharedConstants::TicksPerSecond * 60 * 5) + SharedConstants::TicksPerSecond * 60 * 5;
+        //      }
+        //}
+}
+```
+
+**Port note (browser adaptation):**
+1. **`super::aiStep()` FIRST** — runs the full `Mob::aiStep` -> `updateAi` (which for Chicken is `PathfinderMob::updateAi`) -> `travel`. So the chicken's AI/wander/physics all run before the wing-flap/slow-fall logic below.
+2. **Wing flap animation:**
+   - `oFlap = flap; oFlapSpeed = flapSpeed;` — save old values for renderer interpolation.
+   - `flapSpeed += (onGround ? -1 : 4) * 0.3f` — on ground, flap speed decreases by 0.3/tick (wings fold); in air, increases by 1.2/tick (wings beat). **Previous port used `+= 0.3` always (no ground/air branch) -> chickens flapped on the ground.**
+   - Clamp `flapSpeed` to [0, 1].
+   - `if (!onGround && flapping < 1) flapping = 1` — when airborne, reset `flapping` to 1 (the "flap intensity" resets to full on takeoff).
+   - `flapping *= 0.9f` — decay flapping by 10%/tick (so a chicken that just landed slowly stops flapping).
+   - `flap += flapping * 2` — advance the flap animation phase by `flapping*2` per tick (so `flap` is the animation angle, `flapping` is the intensity).
+3. **Slow-fall:** `if (!onGround && yd < 0) yd *= 0.6f` — when descending, cut vertical velocity to 60% each tick. This is the "chicken floats down slowly" mechanic. Combined with the gravity in `Mob::travel` (`yd -= 0.08; yd *= 0.98`), the net effect is a slow float. **Previous port applied `yd *= 0.6` always (even when ascending) -> chickens couldn't fly up at all.**
+4. **Egg laying is COMMENTED OUT** (`//@todo` block at lines 53-60). In the 2013 MCPE source, chickens do NOT lay eggs. The egg-laying code exists but is dead. **Previous port implemented egg-laying — that's a fabrication (or from a later version).** The `eggTime` field is initialized in the constructor (`random.nextInt(6000)+6000` = 6000-12000 ticks = 5-10 minutes) but never decremented.
+
+**Constants that MUST be preserved EXACTLY:**
+- `flapSpeed` delta: `-0.3` on ground, `+1.2` in air (i.e. `(-1 vs 4) * 0.3`).
+- `flapSpeed` clamp: `[0, 1]`.
+- `flapping` reset to 1 on takeoff, decay `* 0.9`.
+- `flap += flapping * 2`.
+- Slow-fall: `yd *= 0.6` ONLY when `!onGround && yd < 0`.
+- `eggTime = random.nextInt(6000) + 6000` (initial only; never decremented).
+
+**Previous port was WRONG:**
+- `flapSpeed += 0.3` always (no ground/air branch).
+- `flap += flapping` not `flap += flapping * 2` (half-speed wings).
+- Slow-fall `yd *= 0.6` applied always (even ascending) -> chickens couldn't jump.
+- Egg-laying implemented (it's commented out in source — dead code).
+
+---
+
+### 27.13 — Level::getCubes (Level.cpp:1119-1161) — EXACT
+
+```cpp
+std::vector<AABB>& Level::getCubes(const Entity* source, const AABB& box_) { //@attn: check the AABB* new/delete stuff
+        boxes.clear();
+        const AABB* box = &box_;
+    int x0 = Mth::floor(box->x0);
+    int x1 = Mth::floor(box->x1 + 1);
+    int y0 = Mth::floor(box->y0);
+    int y1 = Mth::floor(box->y1 + 1);
+    int z0 = Mth::floor(box->z0);
+    int z1 = Mth::floor(box->z1 + 1);
+
+    for (int x = x0; x < x1; x++)
+        for (int z = z0; z < z1; z++) {
+            if (hasChunkAt(x, Level::DEPTH / 2, z)) {
+                for (int y = y0 - 1; y < y1; y++) {
+                    Tile* tile = Tile::tiles[getTile(x, y, z)];
+                    if (tile != NULL) {
+                        tile->addAABBs(this, x, y, z, box, boxes);
+                    }
+                }
+            }
+                        else
+                        {
+                                //int breakPoint = 0;
+                        }
+        }
+        /*
+    float r = 0.25;
+    List<Entity> ee = getEntities(source, box.grow(r, r, r));
+    for (int i = 0; i < ee.size(); i++) {
+        AABB collideBox = ee.get(i).getCollideBox();
+        if (collideBox != NULL && collideBox.intersects(box)) {
+            boxes.add(collideBox);
+        }
+
+        collideBox = source.getCollideAgainstBox(ee.get(i));
+        if (collideBox != NULL && collideBox.intersects(box)) {
+            boxes.add(collideBox);
+        }
+    }
+        */
+
+    return boxes;
+}
+```
+
+**Port note (browser adaptation):**
+1. **`boxes.clear()`** — `boxes` is a MEMBER of Level (a reused `std::vector<AABB>`). Cleared at the start of every call. The returned `&boxes` is a reference to this member — so the caller's reference is INVALIDATED by the next `getCubes` call. **In `Entity::move`, the second `getCubes` call (in the step-up block, line 243) reassigns `aABBs` — this is fine because the first call's data is no longer needed. But in JS, if you cache the array, make a COPY before the next call, or just return a fresh array each call.**
+2. **Tile iteration bounds:**
+   - `x0 = floor(box.x0)`, `x1 = floor(box.x1 + 1)` — note the `+ 1` on x1 (and y1, z1). So the range is `[floor(box.x0), floor(box.x1 + 1))` which covers all tiles the box overlaps PLUS one extra on the high side. **This `+ 1` is critical** — without it, a box ending exactly on a tile boundary (e.g. `box.x1 = 10.0`) would miss tile 10. With `+ 1`, `floor(10.0 + 1) = 11`, so tile 10 is included.
+   - Same for y and z.
+   - **The Y loop starts at `y0 - 1`** (not `y0`!) — this is to catch the tile BELOW the box (the one you're standing on, whose collision AABB extends UP into your box). **Previous port started Y at `y0` -> mobs fell through 1-block-thin floors.**
+3. **Chunk check:** `if (hasChunkAt(x, Level::DEPTH / 2, z))` — only process tiles in loaded chunks. `Level::DEPTH / 2` is the middle of the world height (used as a "is this column loaded" proxy — if the middle slab is loaded, the column is). **For a browser port with all chunks loaded, this is always true — but keep the check.**
+4. **`Tile::tiles[getTile(x,y,z)]` -> `tile->addAABBs(this, x, y, z, box, boxes)`** — each tile appends its collision AABB(s) to `boxes`. Most tiles add one AABB (the cube from (x,y,z) to (x+1,y+1,z+1)). Special tiles: fences add a 1.5-tall AABB; slabs add a half-height AABB; liquids (water/lava) add NONE (they're not solid); doors add AABB only when closed; etc. **The `addAABBs` method is per-tile and handles all the shape variation. Previous port used a fixed 1x1x1 cube for every tile -> fences/slabs were wrong.**
+5. **`if (tile != NULL)`** — `Tile::tiles[0]` is NULL (air = id 0), so air tiles are skipped. Other tiles return their `Tile*` from the array.
+6. **The commented-out entity-vs-entity collision block (lines 1144-1158):** this would add entity collision boxes (for boats, minecarts, etc.) but it's COMMENTED OUT in MCPE 2013. **Entities do NOT collide with each other via `getCubes`** — the pushing in `Mob::aiStep` (§27.8 lines 745-754) handles entity-entity pushing separately via `level->getEntities(...)` + `e->push(this)`. **Previous port enabled entity-AABBs in getCubes -> mobs got stuck on each other.**
+
+**Constants that MUST be preserved EXACTLY:**
+- `x1 = floor(box.x1 + 1)`, `y1 = floor(box.y1 + 1)`, `z1 = floor(box.z1 + 1)` — the `+ 1` on the upper bounds.
+- `for (y = y0 - 1; y < y1; ...)` — the Y loop starts at `y0 - 1`.
+- `hasChunkAt(x, Level::DEPTH / 2, z)` — chunk-loaded check at mid-height.
+- Tile iteration is `x outer, z middle, y inner` (order: x, z, y — NOT x, y, z).
+
+**Previous port was WRONG:**
+- Y loop started at `y0` not `y0 - 1` -> fell through thin floors.
+- Upper bounds were `floor(box.x1)` not `floor(box.x1 + 1)` -> missed boundary tiles.
+- Used a fixed 1x1x1 cube for every tile (no `addAABBs` dispatch) -> fences/slabs/doors wrong.
+- Enabled the commented-out entity-AABB block -> mobs stuck on each other.
+
+---
+
+### 27.14 — AABB geometry methods (AABB.h:39-167) — EXACT
+
+#### AABB::expand (AABB.h:39-57)
+```cpp
+    AABB expand(float xa, float ya, float za) {
+        float _x0 = x0;
+        float _y0 = y0;
+        float _z0 = z0;
+        float _x1 = x1;
+        float _y1 = y1;
+        float _z1 = z1;
+
+        if (xa < 0) _x0 += xa;
+        if (xa > 0) _x1 += xa;
+
+        if (ya < 0) _y0 += ya;
+        if (ya > 0) _y1 += ya;
+
+        if (za < 0) _z0 += za;
+        if (za > 0) _z1 += za;
+
+        return AABB(_x0, _y0, _z0, _x1, _y1, _z1);
+    }
+```
+**Port note:** `expand` is **directional** — negative `xa` shrinks the `x0` (min) side, positive `xa` grows the `x1` (max) side. This is used in `Entity::move` with the velocity: `bb.expand(xa, ya, za)` extends the box in the direction of motion so `getCubes` finds the tiles you're about to enter. **This is NOT a symmetric grow.** If `xa=0`, neither x side changes. **Previous port used symmetric grow (`grow`) for the move expand -> collected too many tiles (performance) and wrong collision.**
+
+#### AABB::grow (AABB.h:59-61)
+```cpp
+    AABB grow(float xa, float ya, float za) const {
+        return AABB(x0 - xa, y0 - ya, z0 - za, x1 + xa, y1 + ya, z1 + za);
+    }
+```
+**Port note:** `grow` IS symmetric — subtracts from min, adds to max. Used in `Mob::aiStep` pushing: `this->bb.grow(0.2, 0, 0.2)` — grow 0.2 on X/Z (not Y) to find pushable neighbors. **Both `expand` and `grow` exist and differ — do not confuse them.**
+
+#### AABB::cloneMove (AABB.h:63-65)
+```cpp
+    AABB cloneMove(float xa, float ya, float za) const {
+        return AABB(x0 + xa, y0 + ya, z0 + za, x1 + xa, y1 + ya, z1 + za);
+    }
+```
+**Port note:** Returns a NEW AABB translated by (xa,ya,za). Used in `Entity::move`'s sneak-edge-clamp: `bb.cloneMove(xa, -1.0, 0)` to check if there's ground 1 block below the would-be-moved box. **Does NOT mutate `this`.**
+
+#### AABB::clipXCollide (AABB.h:67-81)
+```cpp
+    float clipXCollide(const AABB& c, float xa) const {
+        if (c.y1 <= y0 || c.y0 >= y1) return xa;
+        if (c.z1 <= z0 || c.z0 >= z1) return xa;
+
+        if (xa > 0 && c.x1 <= x0) {
+            float max = x0 - c.x1;
+            if (max < xa) xa = max;
+        }
+        if (xa < 0 && c.x0 >= x1) {
+            float max = x1 - c.x0;
+            if (max > xa) xa = max;
+        }
+
+        return xa;
+    }
+```
+**Port note:** `clipXCollide(c, xa)` — `this` is the MOVING box (bb), `c` is the STATIC collision cube. If they don't overlap in Y or Z, no collision, return `xa` unchanged. If moving +X (`xa > 0`) and `c`'s max X (`c.x1`) is at/below `this`'s min X (`x0`), the max you can move is `x0 - c.x1` (stop just before touching). If that's less than the requested `xa`, clamp. Symmetric for -X. **The `<=` and `>=` (not strict `<`/`>`) are important** — touching faces count as "not overlapping" so you can slide along a wall. **Previous port used strict `<`/`>` -> mobs stuck 1 unit away from walls.**
+
+#### AABB::clipYCollide (AABB.h:83-97)
+```cpp
+    float clipYCollide(const AABB& c, float ya) const {
+        if (c.x1 <= x0 || c.x0 >= x1) return ya;
+        if (c.z1 <= z0 || c.z0 >= z1) return ya;
+
+        if (ya > 0 && c.y1 <= y0) {
+            float max = y0 - c.y1;
+            if (max < ya) ya = max;
+        }
+        if (ya < 0 && c.y0 >= y1) {
+            float max = y1 - c.y0;
+            if (max > ya) ya = max;
+        }
+
+        return ya;
+    }
+```
+**Port note:** Same pattern as clipX but for Y. The exact semantics: for `ya > 0`, block if `c.y1 <= y0` and clamp to `y0 - c.y1`. For `ya < 0`, block if `c.y0 >= y1` and clamp to `y1 - c.y0`. **Don't try to "fix" or "reinterpret" — copy exact.** The collision system works as-is in MCPE; any "fix" will break it.
+
+#### AABB::clipZCollide (AABB.h:99-113)
+```cpp
+    float clipZCollide(const AABB& c, float za) const {
+        if (c.x1 <= x0 || c.x0 >= x1) return za;
+        if (c.y1 <= y0 || c.y0 >= y1) return za;
+
+        if (za > 0 && c.z1 <= z0) {
+            float max = z0 - c.z1;
+            if (max < za) za = max;
+        }
+        if (za < 0 && c.z0 >= z1) {
+            float max = z1 - c.z0;
+            if (max > za) za = max;
+        }
+
+        return za;
+    }
+```
+**Port note:** Same pattern as X/Y. **Note the overlap checks use the OTHER two axes** (clipZ checks X and Y overlap; clipX checks Y and Z; clipY checks X and Z). This is the "swept AABB" per-axis resolution: only clip on axis A if the boxes overlap on the other two axes. **Previous port checked all three axes on every clip call -> over-clipping, mobs couldn't move along walls.**
+
+#### AABB::move (AABB.h:129-137)
+```cpp
+    AABB* move(float xa, float ya, float za) {
+        x0 += xa;
+        y0 += ya;
+        z0 += za;
+        x1 += xa;
+        y1 += ya;
+        z1 += za;
+        return this;
+    }
+```
+**Port note:** MUTATES `this` in place and returns `this` (for chaining). Used heavily in `Entity::move` after each clip: `bb.move(0, ya, 0)` etc. **In JS, this is a mutating method — `bb.x0 += xa` etc. Must mutate, not return new.**
+
+#### AABB::intersects (AABB.h:115-120)
+```cpp
+    bool intersects(const AABB& c) const {
+        if (c.x1 <= x0 || c.x0 >= x1) return false;
+        if (c.y1 <= y0 || c.y0 >= y1) return false;
+        if (c.z1 <= z0 || c.z0 >= z1) return false;
+        return true;
+    }
+```
+**Port note:** Two boxes "intersect" if they overlap on ALL three axes, using `<=`/`>=` (touching faces = NOT intersecting — they must have non-zero overlap volume). **This is used by `Level::getCubes` indirectly (the tile's `addAABBs` may check `intersects`).**
+
+#### AABB::set (AABB.h:230-237)
+```cpp
+    void set(const AABB& b) {
+        this->x0 = b.x0;
+        this->y0 = b.y0;
+        this->z0 = b.z0;
+        this->x1 = b.x1;
+        this->y1 = b.y1;
+        this->z1 = b.z1;
+    }
+```
+**Port note:** Copy another AABB's values into `this` (mutating). Used in `Entity::move` step-up block: `bb.set(bbOrg)` (restore original bb) and `bb.set(normal)` (restore the normal-path bb). **Must mutate, not return new.**
+
+#### AABB::intersectsInner (AABB.h:122-127) — for completeness
+```cpp
+    bool intersectsInner(const AABB& c) const {
+        if (c.x1 < x0 || c.x0 > x1) return false;
+        if (c.y1 < y0 || c.y0 > y1) return false;
+        if (c.z1 < z0 || c.z0 > z1) return false;
+        return true;
+    }
+```
+**Port note:** Strict-inner intersection (touching faces DO count as intersecting). Not used in the mob move path but documented for completeness.
+
+#### AABB::shrink (AABB.h:160-162)
+```cpp
+    AABB shrink(float xa, float ya, float za) {
+        return AABB(x0 + xa, y0 + ya, z0 + za, x1 - xa, y1 - ya, z1 - za);
+    }
+```
+**Port note:** Inverse of `grow`. Not used in mob move but documented.
+
+#### AABB::copy (AABB.h:164-166)
+```cpp
+    AABB copy() {
+        return AABB(x0, y0, z0, x1, y1, z1);
+    }
+```
+**Port note:** Returns a value-copy. Used in various places to snapshot a bb.
+
+---
+
+## 27.15 — Stage Summary
+
+### Methods that were CORRECTLY ported before (no fix needed)
+- **`Entity::tick`** (§27.2) — trivial, just calls `baseTick()`. Correct in previous port.
+- **`AABB::cloneMove`, `AABB::move`, `AABB::set`, `AABB::copy`** (§27.14) — the basic mutating/returning helpers. Mostly correct (verify `move` mutates in JS, doesn't return new).
+
+### Methods that were SIMPLIFIED / WRONG (need fix)
+1. **`Entity::move`** (§27.1) — CRITICAL. Missing: step-up/`footSize`/`ySlideOffset` retry block, diagonal sneak loop, `xd/yd/zd` zeroing on block, `ySlideOffset *= 0.4` decay, fence step-sound, `entityInside` tile loop.
+2. **`Entity::baseTick`** (§27.3) — Wrong splash formula (`xd²*0.2 + yd² + zd²*0.2` not `xd²+yd²+zd²`), wrong fire-immune decrement (`-=4` not `--`), `firstTick` never set false.
+3. **`Entity::moveRelative`** (§27.4) — Missing `< 0.01` early-out, missing `if (dist < 1) dist = 1` clamp, rotation sin/cos signs flipped.
+4. **`Mob::baseTick`** (§27.5) — Ambient sound timer wrong, drowning wrong, death timeout 60 not 20, missing rotation re-snapshot.
+5. **`Mob::tick`** (§27.6) — Arrow countdown, body-rotation lerp `* 0.3` (not `0.1`), moonwalk `behind` logic, rotation wrap-normalizations, `walkSpeed = sideDist * 3`.
+6. **`Mob::travel`** (§27.7) — **FABRICATED in Entry 2.** Entire method must be rebuilt from §27.7. Three branches (water/lava/land), `friction2` cube formula, double friction compute, ladder logic, swim-up check.
+7. **`Mob::aiStep`** (§27.8) — **FABRICATED in Entry 2.** Real method: `isImmobile` gate, `useNewAi`/`updateAi` branch, jump logic, input decay `* 0.98`/`* 0.9`, save-modify-restore of `walkingSpeed`/`flyingSpeed`, `travel(xxa, yya)`, entity pushing with `bb.grow(0.2, 0, 0.2)`.
+8. **`Mob::updateAi`** (§27.9) — `noActionTime++` missing, `xxa/yya` not cleared, look-around probability 0.05 not 0.02, water-jump 0.5 not 0.8, `lookTime--` post-decrement.
+9. **`PathfinderMob::updateAi`** (§27.10) — `fleeTime--` missing, `noActionTime < 100` stroll gate missing, `MAX_TURN = 30` clamp missing, fall-through to `super::updateAi()` missing, `yRotD = atan2 - 90` wrong, waypoint-skip loop missing.
+10. **`PathfinderMob::findRandomStrollLocation`** (§27.11) — Z range `- 3` (source bug, preserve), 10 samples not 3, `best = -99999` not `0`, path range 10 not 16.
+11. **`Chicken::aiStep`** (§27.12) — `flapSpeed` ground/air branch missing, `flap += flapping * 2` (not `* 1`), slow-fall only when `yd < 0`, egg-laying was fabricated (it's commented out in source).
+12. **`Level::getCubes`** (§27.13) — Y loop start `y0 - 1` missing, upper bound `+ 1` missing, fixed 1x1x1 cube instead of `addAABBs` dispatch, commented-out entity-AABB block enabled.
+13. **`AABB::expand` vs `grow`** (§27.14) — confused: `expand` is directional, `grow` is symmetric. Previous port used `grow` where `expand` was needed.
+14. **`AABB::clipX/Y/ZCollide`** (§27.14) — `<=`/`>=` (not strict), per-axis overlap checks only on the OTHER two axes.
+
+### Exact constants/values that MUST be preserved
+| Value | Where | Purpose |
+|---|---|---|
+| `0.05f` | Entity::move sneak `d` | sneak edge nudge |
+| `0.25 / 0.05 / 0.25` | Entity::move web | xa/ya/za web slowdown |
+| `0.4f` | Entity::move end | `ySlideOffset *= 0.4` decay |
+| `0.6f` | Entity::move walkDist | `walkDist += sqrt * 0.6` |
+| `0.2f` | Entity::move yt | `floor(y - 0.2 - heightOffset)` step-sound Y |
+| `20 * 15` = 300 | Entity::move fire | `onFire = 20*15` on fire-tile entry |
+| `0.01f` | moveRelative early-out | `if (dist < 0.01) return` |
+| `0.02f` | Mob::travel water/lava | `moveRelative` speed in fluid |
+| `0.80f` | Mob::travel water drag | `xd/yd/zd *= 0.80` |
+| `0.50f` | Mob::travel lava drag | `xd/yd/zd *= 0.50` |
+| `0.91f` | Mob::travel air friction | default friction |
+| `0.6f * 0.91f` | Mob::travel ground | ground friction base |
+| `0.6*0.6*0.91*0.91*0.6*0.91` | Mob::travel friction2 num | reference friction cubed |
+| `0.08f` | Mob::travel gravity | `yd -= 0.08` |
+| `0.98f` | Mob::travel air drag | `yd *= 0.98` |
+| `-0.15f` | Mob::travel ladder | descend clamp |
+| `0.2f` | Mob::travel ladder climb | `yd = 0.2` on wall+ladder |
+| `0.6f - y + yo` | Mob::travel swim-up | `isFree(xd, yd+0.6-y+yo, zd)` |
+| `0.3f` | Mob::travel swim-up kick | `yd = 0.3` |
+| `0.04f` | Mob::aiStep jump fluid | `yd += 0.04` swim kick |
+| `0.98f / 0.9f` | Mob::aiStep decay | `xxa/yya *= 0.98`, `yRotA *= 0.9` |
+| `0.2f / 0` | Mob::aiStep push | `bb.grow(0.2, 0, 0.2)` |
+| `0.02f` | Mob::updateAi look | `random < 0.02` look-at-player |
+| `8` | Mob::updateAi lookDistance | player look range |
+| `10 + randInt(20)` | Mob::updateAi lookTime | 10-29 ticks look |
+| `0.05f` | Mob::updateAi idle turn | `random < 0.05` random yaw |
+| `(rand-0.5)*20` | Mob::updateAi yRotA | ±10 deg random turn |
+| `0.8f` | Mob::updateAi water jump | `jumping = rand < 0.8` |
+| `16` | PathfinderMob::updateAi maxDist | path-find range |
+| `20 / 120 / 180 / 100` | PathfinderMob re-path chances | `randInt(20/120/180/100) == 0` |
+| `bbWidth * 2` | PathfinderMob arrival r | waypoint arrival radius |
+| `MAX_TURN = 30` | PathfinderMob turn clamp | 30 deg/tick |
+| `atan2(zd,xd)*180/pi - 90` | PathfinderMob yRotD | yaw-to-waypoint |
+| `TicksPerSecond * 5 = 100` | PathfinderMob stroll gate | `noActionTime < 100` |
+| `(fleeTime & 7) == 1` | PathfinderMob flee re-path | every 8th tick |
+| `randInt(13) - 6` | stroll X/Z sample | -6..+6 |
+| `randInt(7) - 3` | stroll Y sample | -3..+3 |
+| `randInt(13) - 3` | stroll Z (SOURCE BUG) | -3..+9 (preserve) |
+| `-99999` | stroll best init | initial best score |
+| `10` | stroll path range | `findPath(..., 10, ...)` |
+| `(-1 vs 4) * 0.3` | Chicken flapSpeed | -0.3 ground, +1.2 air |
+| `0.9f` | Chicken flapping decay | `flapping *= 0.9` |
+| `* 2` | Chicken flap | `flap += flapping * 2` |
+| `0.6f` | Chicken slow-fall | `yd *= 0.6` when `yd < 0` |
+| `randInt(6000) + 6000` | Chicken eggTime init | 6000-12000 ticks (NEVER decremented — egg code commented out) |
+| `floor(box.x1 + 1)` | Level::getCubes | upper bound +1 |
+| `y0 - 1` | Level::getCubes Y loop | start 1 below |
+| `Level::DEPTH / 2` | Level::getCubes chunk check | mid-height column check |
+
+### Action items for the ES6 port (in order)
+1. **Rewrite `Mob.travel`** from §27.7 — delete the Entry 2 fabrication entirely. This is the #1 bug source.
+2. **Rewrite `Mob.aiStep`** from §27.8 — delete the Entry 2 fabrication. Add `walkingSpeed`/`flyingSpeed` save-modify-restore, input decay, `isImmobile`/`interpolateOnly`/`useNewAi` branches.
+3. **Rewrite `Entity.move`** from §27.1 — add the step-up/`footSize`/`ySlideOffset` block, diagonal sneak loop, velocity zeroing.
+4. **Rewrite `Entity.moveRelative`** from §27.4 — add early-out, dist clamp, fix rotation signs.
+5. **Fix `Mob.baseTick`** from §27.5 — ambient timer, drowning, death timeout=20.
+6. **Fix `Mob.updateAi`** from §27.9 — `noActionTime++`, clear `xxa/yya`, water-jump=0.8.
+7. **Rewrite `PathfinderMob.updateAi`** from §27.10 — `MAX_TURN=30`, `noActionTime<100` gate, fall-through, waypoint-skip loop.
+8. **Fix `PathfinderMob.findRandomStrollLocation`** from §27.11 — 10 samples, `best=-99999`, Z=`-3` bug.
+9. **Fix `Chicken.aiStep`** from §27.12 — ground/air flap branch, `* 2`, slow-fall only when `yd<0`, REMOVE egg-laying.
+10. **Fix `Level.getCubes`** from §27.13 — Y=`y0-1`, upper `+1`, `addAABBs` dispatch, remove entity-AABB block.
+11. **Fix `AABB` methods** from §27.14 — `expand` vs `grow`, `<=`/`>=` in clips, per-axis overlap checks.
+12. **Fix `Entity.baseTick`** from §27.3 — splash formula, fire-immune decrement, `firstTick`.
+
+### Verification status
+All methods in this entry were read directly from the source files in this session (Entity.cpp, Mob.cpp, Chicken.cpp, PathfinderMob.cpp, AABB.h, Level.cpp) and transcribed character-for-character. Line numbers cited match the actual source. No paraphrasing. This entry supersedes the method-body claims in Entry 2 (Mob::travel/aiStep — fabricated) and Entry 21 (Mob.cpp summaries) for the methods covered. The class hierarchy claims in Entry 26 remain valid (those were about structure, not body).
