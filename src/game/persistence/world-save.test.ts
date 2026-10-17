@@ -48,6 +48,23 @@ describe('world save capture and restore', () => {
     expect(world.getBlock(-2, 1, 1)).toBe(3);
   });
 
+  test('round-trips per-block metadata and isolates restored state from the source', () => {
+    const world = new VoxelWorld({ chunkSizeX: 2, height: 2, chunkSizeZ: 2 });
+    world.loadChunk(0, 0);
+    world.setBlock({ x: 1, y: 1, z: 1 }, 17);
+    world.setBlockState({ x: 1, y: 1, z: 1 }, 6);
+    const save = createWorldSave(world, new Inventory(9), metadata, player);
+    expect(save.chunks[0].states[7]).toBe(6);
+
+    const restored = restoreWorldSave(JSON.parse(JSON.stringify(save)));
+    expect(restored.ok).toBe(true);
+    if (!restored.ok) return;
+    expect(restored.restored.world.getBlock(1, 1, 1)).toBe(17);
+    expect(restored.restored.world.getBlockState(1, 1, 1)).toBe(6);
+    restored.restored.world.setBlockState({ x: 1, y: 1, z: 1 }, 2);
+    expect(world.getBlockState(1, 1, 1)).toBe(6);
+  });
+
   test('returns validation errors without partially restoring invalid data', () => {
     const result = restoreWorldSave({ format: 'bad' });
     expect(result.ok).toBe(false);
