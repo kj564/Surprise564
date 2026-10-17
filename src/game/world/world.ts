@@ -50,14 +50,14 @@ export class VoxelWorld {
     return this.chunks.has(VoxelWorld.chunkKey(chunkX, chunkZ));
   }
 
-  loadChunk(chunkX: number, chunkZ: number, initialBlocks?: ArrayLike<number>): ChunkData {
+  loadChunk(chunkX: number, chunkZ: number, initialBlocks?: ArrayLike<number>, initialState?: ArrayLike<number>): ChunkData {
     const key = VoxelWorld.chunkKey(chunkX, chunkZ);
     if (this.chunks.has(key)) throw new Error('Chunk is already loaded: ' + key);
     const chunk = new ChunkData({
       sizeX: this.dimensions.chunkSizeX,
       height: this.dimensions.height,
       sizeZ: this.dimensions.chunkSizeZ,
-    }, initialBlocks);
+    }, initialBlocks, initialState);
     this.chunks.set(key, chunk);
     this.dirty.add(key);
     for (const neighbor of this.neighborKeys(chunkX, chunkZ)) {
@@ -119,6 +119,37 @@ export class VoxelWorld {
     };
   }
 
+  /** Read per-block metadata/state; undefined means the owning chunk is not loaded. */
+  getBlockState(x: number, y: number, z: number): number | undefined {
+    assertWorldCoordinate(x, 'x');
+    assertWorldCoordinate(y, 'y');
+    assertWorldCoordinate(z, 'z');
+    if (y < 0 || y >= this.dimensions.height) return undefined;
+    const chunkX = worldToChunk(x, this.dimensions.chunkSizeX);
+    const chunkZ = worldToChunk(z, this.dimensions.chunkSizeZ);
+    const chunk = this.chunks.get(VoxelWorld.chunkKey(chunkX, chunkZ));
+    if (!chunk) return undefined;
+    return chunk.getState(worldToLocal(x, this.dimensions.chunkSizeX), y, worldToLocal(z, this.dimensions.chunkSizeZ));
+  }
+
+  /** Mutate block metadata independently of the block ID and invalidate affected chunk meshes. */
+  setBlockState(position: BlockPosition, state: number): boolean {
+    assertWorldCoordinate(position.x, 'x');
+    assertWorldCoordinate(position.y, 'y');
+    assertWorldCoordinate(position.z, 'z');
+    if (position.y < 0 || position.y >= this.dimensions.height) throw new RangeError('y is outside the world height');
+    if (!Number.isInteger(state) || state < 0 || state > 0xff) throw new RangeError('state must be an integer from 0 to 255');
+    const chunkX = worldToChunk(position.x, this.dimensions.chunkSizeX);
+    const chunkZ = worldToChunk(position.z, this.dimensions.chunkSizeZ);
+    const chunk = this.chunks.get(VoxelWorld.chunkKey(chunkX, chunkZ));
+    if (!chunk) throw new Error('Cannot modify an unloaded chunk: ' + chunkX + ',' + chunkZ);
+    const localX = worldToLocal(position.x, this.dimensions.chunkSizeX);
+    const localZ = worldToLocal(position.z, this.dimensions.chunkSizeZ);
+    const changed = chunk.setState(localX, position.y, localZ, state);
+    if (changed) this.markAffectedChunksDirty(chunkX, chunkZ, localX, localZ);
+    return changed;
+  }
+
   /** Consume the current dirty set. Rendering systems can schedule derived-data rebuilds from it. */
   consumeDirtyChunks(): string[] {
     const result = [...this.dirty];
@@ -141,10 +172,10 @@ export class VoxelWorld {
   }
 
   /** Stable, detached snapshots for persistence; edits to returned arrays never affect the live world. */
-  exportChunks(): readonly { readonly x: number; readonly z: number; readonly blocks: Uint16Array }[] {
+  exportChunks(): readonly { readonly x: number; readonly z: number; readonly blocks: Uint16Array; readonly states: Uint8Array }[] {
     const chunks = [...this.chunks.entries()].map(([key, chunk]) => {
       const [xText, zText] = key.split(',');
-      return { x: Number(xText), z: Number(zText), blocks: chunk.toArray() };
+      return { x: Number(xText), z: Number(zText), blocks: chunk.toArray(), states: chunk.toStateArray() };
     });
     chunks.sort((a, b) => a.x - b.x || a.z - b.z);
     return Object.freeze(chunks.map(chunk => Object.freeze(chunk)));
