@@ -35,6 +35,8 @@ if (!html.includes("./VoxelCraft/textures/blocks/" ) || !html.includes('new THRE
 for (const texture of ['gold_block.png','iron_block.png','diamond_block.png','obsidian.png','ice.png','snow.png','water_still.png','crafting_table_top.png','crafting_table_front.png','furnace_front_off.png']) {
   if (!html.includes("'" + texture + "'")) throw new Error('Preview is missing expected vanilla texture mapping: ' + texture);
 }
+if (!html.includes('meshCache.syncDetailed()') || !html.includes('sync.rebuiltChunks') || !html.includes('sync.removedChunks')) throw new Error('Preview must incrementally rebuild only dirty chunk render groups');
+if (!html.includes('chunkRenderGroups=new Map()') || !html.includes('disposeChunkRenderGroup(key)')) throw new Error('Preview must retain unchanged chunk render groups and dispose removed geometry');
 if (!html.includes('textureFileFor(definition,nx,ny,nz)')) throw new Error('Preview must select face-specific textures using the face normal');
 const textureMap = html.match(/const textureByBlock=\{[\s\S]*?\n\};/);
 const faceTextureRules = html.match(/function textureFileFor\([\s\S]*?\n\}/);
