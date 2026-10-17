@@ -4,6 +4,8 @@ export interface SaveChunk {
   readonly x: number;
   readonly z: number;
   readonly blocks: readonly number[];
+  /** Per-block metadata byte. Missing on historical version-1 saves and normalized to zero. */
+  readonly states: readonly number[];
 }
 
 export interface WorldSaveV1 {
@@ -107,8 +109,30 @@ export function validateWorldSave(input: unknown): SaveValidationResult {
         }
         blocks.push(blockId);
       }
-      if (blocks.length === volume && chunk.blocks.length === volume) {
-        normalizedChunks.push(Object.freeze({ x: chunk.x as number, z: chunk.z as number, blocks: Object.freeze(blocks) }));
+
+      // The original version-1 contract had no state array. Treat those saves as state=0.
+      const rawStates = chunk.states === undefined ? Array.from({ length: volume }, () => 0) : chunk.states;
+      const states: number[] = [];
+      if (!Array.isArray(rawStates)) {
+        errors.push('chunks[' + index + '].states must be an array when provided');
+      } else {
+        if (rawStates.length !== volume) errors.push('chunks[' + index + '].states length does not match chunk volume');
+        for (let stateIndex = 0; stateIndex < Math.min(rawStates.length, volume); stateIndex += 1) {
+          const state = rawStates[stateIndex];
+          if (!isBoundedInteger(state, 0, 0xff)) {
+            errors.push('chunks[' + index + '].states[' + stateIndex + '] is not a valid state byte');
+            break;
+          }
+          states.push(state);
+        }
+      }
+      if (blocks.length === volume && chunk.blocks.length === volume && states.length === volume && rawStates.length === volume) {
+        normalizedChunks.push(Object.freeze({
+          x: chunk.x as number,
+          z: chunk.z as number,
+          blocks: Object.freeze(blocks),
+          states: Object.freeze(states),
+        }));
       }
     });
   }
