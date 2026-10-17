@@ -33,6 +33,25 @@ describe('world save schema', () => {
     expect(result.value.player.inventory[0]?.itemKey).toBe('minecraft:stone');
   });
 
+  test('normalizes historical saves without metadata and validates provided state bytes', () => {
+    const legacy = validSave();
+    const result = validateWorldSave(legacy);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.chunks[0].states).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
+
+    const withStates = validSave();
+    withStates.chunks[0].states = [0, 1, 2, 3, 4, 5, 6, 255];
+    const valid = validateWorldSave(withStates);
+    expect(valid.ok).toBe(true);
+    if (valid.ok) expect(valid.value.chunks[0].states[7]).toBe(255);
+
+    const malformed = validSave();
+    malformed.chunks[0].states = [0, 1, 2, 256, 4, 5, 6, 7];
+    const invalid = validateWorldSave(malformed);
+    expect(invalid.ok).toBe(false);
+    if (!invalid.ok) expect(invalid.errors.some(error => error.includes('valid state byte'))).toBe(true);
+  });
+
   test('round-trips valid JSON through serializer and parser', () => {
     const json = serializeWorldSave(validSave());
     const parsed = parseWorldSaveJson(json);
