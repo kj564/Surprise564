@@ -202,9 +202,15 @@ function shouldRenderSlabFace(
     return !(neighbor.renderLayer === 'opaque' &&
       (neighbor.shape !== 'slab' || (neighbor.shapeHeight ?? 0.5) >= 1));
   }
-  if (neighbor.renderLayer === 'opaque') return false;
+  if (neighbor.renderLayer === 'opaque') {
+    if (neighbor.shape !== 'slab') return false;
+    return (neighbor.shapeHeight ?? 0.5) < height;
+  }
   if (neighbor.key === current.key && neighbor.renderLayer === current.renderLayer) return false;
-  return neighbor.shape === 'slab' && (neighbor.shapeHeight ?? 0.5) >= height;
+  if (neighbor.shape === 'slab' && neighbor.renderLayer === current.renderLayer) {
+    return (neighbor.shapeHeight ?? 0.5) < height;
+  }
+  return true;
 }
 
 /** Narrow upright torch prism; lighting emission remains data-driven in the block registry. */
