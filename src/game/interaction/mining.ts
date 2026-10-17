@@ -113,7 +113,8 @@ export function finishBlockBreak(
   if (!definition) return { status: 'target-changed' };
   if (definition.hardness < 0) return { status: 'unbreakable' };
 
-  world.setBlock(target, 0);
+  const mutation = world.setBlock(target, 0);
+  if (!mutation.changed) return { status: 'target-changed' };
   const inserted: ItemStack[] = [];
   const remaining: ItemStack[] = [];
   for (const dropKey of definition.drops) {
