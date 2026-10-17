@@ -50,6 +50,7 @@ export function createWorldSave(
       x: chunk.x,
       z: chunk.z,
       blocks: Array.from(chunk.blocks),
+      states: Array.from(chunk.states),
     })),
     player: {
       position: { ...player.position },
@@ -73,7 +74,7 @@ export function restoreWorldSave(input: unknown): RestoreWorldResult {
   try {
     const world = new VoxelWorld(save.dimensions);
     for (const chunk of save.chunks) {
-      world.loadChunk(chunk.x, chunk.z, chunk.blocks);
+      world.loadChunk(chunk.x, chunk.z, chunk.blocks, chunk.states);
     }
     const inventory = new Inventory(Math.max(1, save.player.inventory.length));
     save.player.inventory.forEach((stack, index) => {
