@@ -2083,6 +2083,7 @@
     // ---- Inventory panel ----
     const inventoryEl = document.getElementById('inventory');
     const invGridEl = document.getElementById('invGrid');
+    const inventoryHintEl = document.querySelector('#inventory .inv-hint');
     const itemCatalogTools = document.getElementById('itemCatalogTools');
     const itemCatalogSearch = document.getElementById('itemCatalogSearch');
     const itemCatalogCategory = document.getElementById('itemCatalogCategory');
@@ -2173,7 +2174,7 @@
       if (!visible.length) { invGridEl.textContent = 'Tidak ada ikon yang cocok.'; return; }
       const fragment = document.createDocumentFragment();
       for (const item of visible) {
-        const slot = document.createElement('div'); slot.className = 'inv-slot item-catalog-slot'; slot.title = item.name;
+        const slot = document.createElement('div'); slot.className = 'inv-slot item-catalog-slot'; slot.title = item.name; slot.style.cursor = 'default';
         const img = document.createElement('img'); img.loading = 'lazy'; img.alt = item.name; img.width = 40; img.height = 40;
         img.src = './VoxelCraft/textures/items/' + encodeURIComponent(item.file);
         const label = document.createElement('div'); label.className = 'lbl'; label.textContent = item.name;
@@ -2183,6 +2184,9 @@
     }
     function buildInventory(filter = activeInventoryFilter) {
       activeInventoryFilter = filter;
+      inventoryHintEl.textContent = filter === 'items'
+        ? 'Katalog ini menampilkan ikon asli Resource Pack untuk referensi visual; ikon yang belum memiliki definisi gameplay tidak otomatis menjadi item yang bisa dipakai.'
+        : 'Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di bawah.';
       invGridEl.innerHTML = '';
       const allowedIds = inventoryFilterSets[filter];
       itemCatalogTools.classList.toggle('hidden', filter !== 'items');
@@ -2464,6 +2468,9 @@
           if (m.transparent) { scene.remove(m.transparent); m.transparent.geometry.dispose(); }
           chunkMeshes.delete(key);
           world.chunks.delete(key);
+          // Neighbor meshes may have culled faces against this chunk; expose those faces after unload.
+          world.invalidateChunk(kx - 1, kz); world.invalidateChunk(kx + 1, kz);
+          world.invalidateChunk(kx, kz - 1); world.invalidateChunk(kx, kz + 1);
         }
       }
       // generate up to a few per frame
