@@ -1304,12 +1304,17 @@
         const cx = Math.floor(x / CHUNK_X), cz = Math.floor(z / CHUNK_Z);
         const c = this.ensureChunk(cx, cz);
         const lx = x - cx * CHUNK_X, lz = z - cz * CHUNK_Z;
+        // Match the reference LevelChunk behavior: identical writes are no-ops.
         if (c.get(lx, y, lz) === v) return false;
-        if (!c.set(lx, y, lz, v)) return false;
         if (voxelEngine && voxelEngine.world.hasChunk(cx, cz)) {
-          const mutation = voxelEngine.world.setBlock({ x, y, z }, v);
-          if (!mutation.changed) return false;
+          // Mining/placement may already have committed this value to the engine world.
+          const engineValue = voxelEngine.world.getBlock(x, y, z);
+          if (engineValue !== v) {
+            const mutation = voxelEngine.world.setBlock({ x, y, z }, v);
+            if (!mutation.changed && mutation.previousId !== v) return false;
+          }
         }
+        if (!c.set(lx, y, lz, v)) return false;
 
         // A face at a chunk edge may become visible/hidden in both chunks.
         // Rebuild only already-loaded neighbors; unloaded chunks will mesh
