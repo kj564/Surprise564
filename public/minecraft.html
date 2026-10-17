@@ -2102,7 +2102,10 @@
         // Chicken fields (Chicken.h)
         flapSpeed: 0,
         flap: 0,
+        oFlap: 0,
+        oFlapSpeed: 0,
         flapping: 1,
+        isChicken: true,  // marker for Chicken::aiStep override
         // PathfinderMob AI fields
         xxa: 0,                        // strafe input
         yya: 0,                        // forward input
@@ -2303,24 +2306,72 @@
       }
       return false;
     }
-    // VERIFIED Chicken::aiStep — wing flap + slow fall (Chicken.cpp)
+    // (Old chickenAiStep + mobAiStep removed — replaced by the 1:1 versions
+    // defined below mobTick. The new versions match rujukan's exact call
+    // order: Chicken::aiStep calls super.aiStep (Mob::aiStep with travel)
+    // FIRST, then wing flap + slow fall AFTER.)
+    // VERIFIED Mob::tick (Mob.cpp:270-303) — call order 1:1 with rujukan:
+    //   1. super::tick() = Entity::tick() = Entity::baseTick()
+    //   2. aiStep()  (Chicken overrides this — calls super::aiStep() FIRST, then wing flap)
+    //   3. updateWalkAnim()
+    //
+    // VERIFIED Chicken::aiStep (Chicken.cpp:33-61) — 1:1 call order:
+    //   1. super::aiStep()  (Mob::aiStep: updateAi + jumping + xxa*=0.98 + travel)
+    //   2. oFlap = flap; oFlapSpeed = flapSpeed
+    //   3. flapSpeed += (onGround ? -1 : 4) * 0.3, clamp [0,1]
+    //   4. if (!onGround && flapping < 1) flapping = 1; flapping *= 0.9
+    //   5. if (!onGround && yd < 0) yd *= 0.6   <-- slow fall AFTER travel
+    //   6. flap += flapping * 2
+    //
+    // The slow-fall (yd *= 0.6) happens AFTER travel(), so it damps the yd
+    // that will be applied on the NEXT tick's gravity+travel. Doing it
+    // before travel (as the previous ad-hoc port did) was wrong: it
+    // damped the same-tick yd that travel was about to consume, breaking
+    // the chicken's glide physics.
+    function mobTick(m) {
+      // 1. Entity::baseTick (simplified — no fire/air in port)
+      // VERIFIED Entity::baseTick (Entity.cpp:468+): tickCount++, xo=x, yo=y, zo=z, yRotO=yRot
+      m.tickCount = (m.tickCount || 0) + 1;
+      m.xo = m.pos.x; m.yo = m.pos.y; m.zo = m.pos.z;
+      m.yRotO = m.yRot; m.xRotO = m.xRot;
+      // Mob::baseTick (Mob.cpp:148+): decay hurtTime, invulnerableTime
+      if (m.hurtTime > 0) m.hurtTime--;
+      if (m.invulnerableTime > 0) m.invulnerableTime--;
+      // 2. aiStep — Chicken overrides this; Chicken::aiStep calls
+      //    super.aiStep (Mob::aiStep = updateAi + travel) FIRST, then wing flap.
+      mobAiStep(m);  // this is Mob::aiStep; Chicken override adds wing flap inside
+      // 3. updateWalkAnim — VERIFIED Mob.cpp:628-637
+      mobUpdateWalkAnim(m);
+    }
+    // VERIFIED Chicken::aiStep (Chicken.cpp:33-61) — wing flap + slow fall
+    // AFTER super.aiStep (Mob::aiStep which contains travel).
     function chickenAiStep(m) {
-      // wing flap (Chicken.cpp aiStep)
+      // super::aiStep() was already called by mobAiStep above (in mobTick).
+      // Now Chicken's post-travel logic: wing flap + slow fall.
+      m.oFlap = m.flap;
+      m.oFlapSpeed = m.flapSpeed;
       m.flapSpeed += (m.onGround ? -1 : 4) * 0.3;
-      m.flapSpeed = Math.max(0, Math.min(1, m.flapSpeed));
-      m.flap += m.flapSpeed * 2;
+      if (m.flapSpeed < 0) m.flapSpeed = 0;
+      if (m.flapSpeed > 1) m.flapSpeed = 1;
+      if (!m.onGround && m.flapping < 1) m.flapping = 1;
       m.flapping *= 0.9;
-      // slow fall: yd *= 0.6 when airborne & descending
+      // slow fall: yd *= 0.6 when airborne & descending (AFTER travel)
       if (!m.onGround && m.vel.y < 0) {
         m.vel.y *= 0.6;
       }
+      m.flap += m.flapping * 2;
     }
-    // VERIFIED Mob::aiStep (Mob.cpp:688-757) — input decay, jumping, travel
+    // VERIFIED Mob::aiStep (Mob.cpp:688-757) — updateAi + jumping + travel
     function mobAiStep(m) {
-      if (m.hurtTime > 0) m.hurtTime--;
-      m.xxa *= 0.98;
-      m.yya *= 0.98;
-      m.yRotA *= 0.9;
+      // Mob::aiStep order:
+      // 1. isImmobile check (skip if immobile)
+      // 2. updateAi() (PathfinderMob for animals — wander + look-around)
+      // 3. jumping logic
+      // 4. xxa *= 0.98, yya *= 0.98, yRotA *= 0.9
+      // 5. walkingSpeed *= getWalkingSpeedModifier (0.7 for animals)
+      // 6. travel(xxa, yya)
+      // 7. (push other entities — skip for port)
+      pathfinderUpdateAi(m);
       // jumping
       if (m.jumping) {
         if (mobIsInWater(m)) m.vel.y += 0.04;
@@ -2328,21 +2379,24 @@
         else if (m.onGround) mobJumpFromGround(m);
       }
       m.jumping = false;
-      // travel (land branch uses walkingSpeed * 0.7 via friction2 already applied)
+      m.xxa *= 0.98;
+      m.yya *= 0.98;
+      m.yRotA *= 0.9;
+      // VERIFIED walkingSpeed *= getWalkingSpeedModifier (0.7 for Animal)
+      // The 0.7 factor is applied inside mobTravel's moveRelative speed arg.
       mobTravel(m, m.xxa, m.yya);
+      // Chicken-specific post-travel wing flap + slow fall (1:1 with rujukan)
+      if (m.isChicken) chickenAiStep(m);
     }
-    // VERIFIED Mob::tick — baseTick + aiStep + decay timers
-    function mobTick(m) {
-      // Entity::baseTick — tickCount, fire, fallDistance, air
-      // (simplified — no fire/air in port)
-      // aiStep calls updateAi (PathfinderMob for animals) then physics
-      pathfinderUpdateAi(m);
-      // Chicken-specific wing flap + slow fall BEFORE aiStep
-      chickenAiStep(m);
-      // Mob::aiStep
-      mobAiStep(m);
-      // hurt/death decay
-      if (m.hurtTime > 0) m.hurtTime--;
+    // VERIFIED Mob::updateWalkAnim (Mob.cpp:628-637)
+    function mobUpdateWalkAnim(m) {
+      m.walkAnimSpeedO = m.walkAnimSpeed || 0;
+      const dx = m.pos.x - m.xo, dz = m.pos.z - m.zo;
+      let wst = Math.sqrt(dx*dx + dz*dz) * 4;
+      if (wst > 1) wst = 1;
+      m.walkAnimSpeed = (m.walkAnimSpeed || 0) + (wst - (m.walkAnimSpeed || 0)) * 0.4;
+      m.walkAnimPos = (m.walkAnimPos || 0) + m.walkAnimSpeed;
+      m.run = (m.run || 0) + (Math.sqrt(dx*dx + dz*dz) - (m.run || 0)) * 0.1;
     }
     function updateMobs(dt) { window.__mobUpdateCount = (window.__mobUpdateCount || 0) + 1;
       // VERIFIED MobSpawner::tick — spawn rules
