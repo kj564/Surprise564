@@ -2,7 +2,7 @@ name: VoxelCraft rebuild checks
 
 on:
   push:
-    branches: ["main", "rebuild/voxelcraft-modern-engine"]
+    branches: ["main", "rebuild/voxelcraft-modern-engine", "rebuild/single-minecraft-entrypoint"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
@@ -39,10 +39,10 @@ jobs:
       - name: Build application
         run: bun run build
 
-      - name: Verify playable rebuild preview is exported
+      - name: Verify single minecraft.html runtime is exported
         run: |
           test -s public/voxelcraft-engine.bundle.js
           grep -q 'VoxelCraftEngine' public/voxelcraft-engine.bundle.js
           test -s out/voxelcraft-engine.bundle.js
-          test -s out/voxelcraft-rebuild.html
-          bun run validate:voxel-preview
+          test -s out/minecraft.html
+          bun run validate:minecraft-runtime
