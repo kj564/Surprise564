@@ -1354,8 +1354,8 @@
               const oreNoise = hash2(wx * 31 + 7, wz * 19 + y * 3);
               const oreNoise2 = hash2(wx * 53 + 17, wz * 29 + y * 5);
               if (y <= 10 && oreNoise < 0.0018) c.set(lx, y, lz, 23);       // diamond (deep, rare)
-              else if (y <= 10 && oreNoise2 < 0.0022) c.set(lx, y, lz, 28);  // lapis (deep)
-              else if (y <= 12 && oreNoise2 < 0.0028) c.set(lx, y, lz, 32);  // emerald (very rare)
+              else if (y <= 10 && oreNoise2 < 0.0022) c.set(lx, y, lz, 24);  // lapis ore (deep; BLOCKS[24])
+              else if (y <= 12 && oreNoise2 < 0.0028) c.set(lx, y, lz, 28);  // emerald ore (very rare; BLOCKS[28])
               else if (y <= 14 && oreNoise < 0.005) c.set(lx, y, lz, 22);    // gold
               else if (y <= 16 && oreNoise2 < 0.006) c.set(lx, y, lz, 26);   // redstone
               else if (y <= 18 && oreNoise2 < 0.008) c.set(lx, y, lz, 30);   // copper
