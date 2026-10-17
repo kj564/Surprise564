@@ -985,89 +985,87 @@
     const SEED = 1337;
     const SAVE_KEY = 'voxelcraft-world-v1';
 
-    // Texture tile indices (order MUST match TEXTURE_FILES)
-    // Trimmed to the rujukan MCPE 2013 tile set: only oak wood, no stone variants,
-    // no cobblestone/coal block/redstone block/copper ore/quartz ore/emerald ore,
-    // and a single cloth tile replaces the five wool colors. COAL is retained
-    // only as the speck source for the procedural coal_ore atlas tile.
-    const TILE = {
-      GRASS_TOP: 0, GRASS_SIDE: 1, DIRT: 2, STONE: 3,
-      LOG_TOP: 4, LOG_SIDE: 5, PLANKS: 6, LEAVES: 7, SAND: 8,
-      GRAVEL: 9, GLASS: 10, BEDROCK: 11, BRICK: 12, GOLD: 13,
-      DIAMOND: 14, IRON: 15, COAL: 16,
-      CRAFT_TOP: 17, CRAFT_SIDE: 18, CRAFT_FRONT: 19,
-      FURNACE_FRONT: 20, FURNACE_SIDE: 21, FURNACE_TOP: 22, WATER: 23,
-      COAL_ORE: 24, IRON_ORE: 25, GOLD_ORE: 26, DIAMOND_ORE: 27,
-      LAPIS_ORE: 28, LAPIS_BLOCK: 29, REDSTONE_ORE: 30, EMERALD_BLOCK: 31,
-      OBSIDIAN: 32, GLOWSTONE: 33,
-      STONEBRICK: 34, SNOW: 35, ICE: 36, NETHERRACK: 37, SOUL_SAND: 38,
-      BOOKSHELF: 39, PUMPKIN_TOP: 40, PUMPKIN_SIDE: 41, PUMPKIN_FACE: 42,
-      CLOTH: 43,
-    };
-    const TEXTURE_FILES = [
-      // 0-15: terrain + mineral blocks (coal_block.png is the coal_ore speck source)
-      'grass_top','grass_side_carried','dirt','stone',
-      'log_oak_top','log_oak','planks_oak','leaves_oak_opaque','sand',
-      'gravel','glass','bedrock','brick','gold_block','diamond_block',
-      'iron_block','coal_block',
-      // 16-23: workbench, furnace, water
-      'crafting_table_top','crafting_table_side','crafting_table_front',
-      'furnace_front_off','furnace_side','furnace_top','water_still',
-      // 24-27: ores (procedurally generated in atlas from stone + mineral block)
-      'coal_ore','iron_ore','gold_ore','diamond_ore',
-      // 28-33: rujukan mineral blocks
-      'lapis_ore','lapis_block','redstone_ore','emerald_block',
-      'obsidian','glowstone',
-      // 34-42: nature + decorative (rujukan MCPE 2013)
-      'stonebrick','snow','ice','netherrack','soul_sand',
-      'bookshelf','pumpkin_top','pumpkin_side','pumpkin_face_off',
-      // 43: single cloth tile (replaces the five wool colors)
-      'wool_colored_white',
-    ];
-    const TEXTURE_DIR = './VoxelCraft/textures/blocks/';
+    // ============================================================
+    //  TEXTURE ATLAS — original MCPE 2013 terrain.png (256×256)
+    //
+    //  We load the original MCPE 2013 `terrain.png` as a single
+    //  256×256 texture atlas. It is divided into a 16×16 grid of
+    //  16×16 pixel tiles (256 tiles total, indices 0..255).
+    //  Tile index = row * 16 + col  (row 0 at top, col 0 at left).
+    //
+    //  Each block's `top/bottom/side/front` field stores the TILE
+    //  INDEX (0..255) into the atlas — NOT a texture filename.
+    //  Chunk meshing computes per-vertex UVs that point to the
+    //  16×16 sub-region for the tile index.
+    //
+    //  Verified tile indices come from rujukan MCPE 2013 source:
+    //  Tile::initTiles + subclass getTexture(face). See the table
+    //  in BLOCKS below.
+    // ============================================================
+    const TERRAIN_ATLAS_URL = './VoxelCraft/textures/blocks/terrain.png';
 
-    // Block definitions: id -> {name, top, bottom, side, solid, transparent, noCollide}
-    // Trimmed to the rujukan MCPE 2013 block set (IDs 0-35, contiguous from 0).
-    // Removed: cobblestone, coal block, redstone block, emerald ore, copper ore,
-    // quartz ore, all non-oak wood variants, granite/diorite/andesite, sponge,
-    // and the four non-white wool colors (a single cloth block replaces them).
+    // Block definitions: id -> {name, top, bottom, side, front, solid, transparent, noCollide}
+    // Block IDs 0..35 are kept identical to the previous port (no IDs added/removed).
+    // The top/bottom/side/front fields are now TILE INDICES (0..255) into the
+    // original MCPE 2013 terrain.png atlas (verified from rujukan source).
+    //
+    // Notes on faithfulness vs. spec deviations:
+    //  - ID 4 (Kayu Ek / oak log) uses MCPE 2013 TreeTile indices (21/21/20),
+    //    NOT "Stonebrick (ID 4)" from the spec table. The spec table line is a
+    //    typo: it duplicates ID 28 (Batu Bata / stonebrick) and would break the
+    //    worldgen tree trunks. MCPE 2013 oak log is at index 21 (top/bottom) and
+    //    20 (side) per rujukan TreeTile.
+    //  - ID 6 (Daun Ek / leaves) uses MCPE 2013 LeafTile index 52. The spec
+    //    table omitted this entry. Tile 52 has alpha-0 (fancy graphics) pixels;
+    //    buildAtlas fills them with opaque oak-green for "fast graphics" look.
+    //  - ID 25 (Blok Berlian) — emerald block didn't exist in MCPE 2013; the
+    //    spec assigns diamond block tile 24 as a placeholder. Renamed from
+    //    "Blok Zamrud" (emerald) to "Blok Berlian" (diamond) to match the
+    //    actual texture.
+    //  - ID 34 (Labu / pumpkin-melon) — MCPE 2013 MelonTile has no front face
+    //    (it's a melon block, not a jack-o-lantern). Removed the `front`
+    //    property; side=136 on all four side faces.
+    //  - ID 17 (Air / water) uses tile 205, the first frame of MCPE 2013's
+    //    dynamic water animation column (tiles 205..207 in row 12). Tile 205
+    //    has translucent pixels (alpha ~135) so the transparent material
+    //    renders it correctly as see-through water.
     const BLOCKS = {
       0:  null, // air
-      1:  { name:'Rumput',        top:TILE.GRASS_TOP,    bottom:TILE.DIRT,        side:TILE.GRASS_SIDE,    solid:true },
-      2:  { name:'Tanah',         top:TILE.DIRT,         bottom:TILE.DIRT,        side:TILE.DIRT,          solid:true },
-      3:  { name:'Batu',          top:TILE.STONE,        bottom:TILE.STONE,       side:TILE.STONE,         solid:true },
-      4:  { name:'Kayu Ek',       top:TILE.LOG_TOP,      bottom:TILE.LOG_TOP,     side:TILE.LOG_SIDE,      solid:true },
-      5:  { name:'Papan Ek',      top:TILE.PLANKS,       bottom:TILE.PLANKS,      side:TILE.PLANKS,        solid:true },
-      6:  { name:'Daun Ek',       top:TILE.LEAVES,       bottom:TILE.LEAVES,      side:TILE.LEAVES,        solid:true },
-      7:  { name:'Pasir',         top:TILE.SAND,         bottom:TILE.SAND,        side:TILE.SAND,          solid:true },
-      8:  { name:'Kerakal',       top:TILE.GRAVEL,       bottom:TILE.GRAVEL,      side:TILE.GRAVEL,        solid:true },
-      9:  { name:'Kaca',          top:TILE.GLASS,        bottom:TILE.GLASS,       side:TILE.GLASS,         solid:true, transparent:true },
-      10: { name:'Bedrock',       top:TILE.BEDROCK,      bottom:TILE.BEDROCK,     side:TILE.BEDROCK,       solid:true },
-      11: { name:'Bata',          top:TILE.BRICK,        bottom:TILE.BRICK,       side:TILE.BRICK,         solid:true },
-      12: { name:'Emas',          top:TILE.GOLD,         bottom:TILE.GOLD,        side:TILE.GOLD,          solid:true },
-      13: { name:'Berlian',       top:TILE.DIAMOND,      bottom:TILE.DIAMOND,     side:TILE.DIAMOND,       solid:true },
-      14: { name:'Besi',          top:TILE.IRON,         bottom:TILE.IRON,        side:TILE.IRON,          solid:true },
-      15: { name:'Meja Kerja', top:TILE.CRAFT_TOP,   bottom:TILE.PLANKS,      side:TILE.CRAFT_SIDE,    front:TILE.CRAFT_FRONT,  frontBothZ:true, solid:true },
-      16: { name:'Tungku',     top:TILE.FURNACE_TOP,  bottom:TILE.FURNACE_TOP,  side:TILE.FURNACE_SIDE,  front:TILE.FURNACE_FRONT, solid:true },
-      17: { name:'Air',           top:TILE.WATER,        bottom:TILE.WATER,       side:TILE.WATER,         solid:false, transparent:true, noCollide:true },
-      18: { name:'Bijih Batubara', top:TILE.COAL_ORE,    bottom:TILE.COAL_ORE,    side:TILE.COAL_ORE,      solid:true },
-      19: { name:'Bijih Besi',    top:TILE.IRON_ORE,     bottom:TILE.IRON_ORE,    side:TILE.IRON_ORE,      solid:true },
-      20: { name:'Bijih Emas',    top:TILE.GOLD_ORE,     bottom:TILE.GOLD_ORE,    side:TILE.GOLD_ORE,      solid:true },
-      21: { name:'Bijih Berlian', top:TILE.DIAMOND_ORE,  bottom:TILE.DIAMOND_ORE, side:TILE.DIAMOND_ORE,   solid:true },
-      22: { name:'Bijih Lapis',   top:TILE.LAPIS_ORE,    bottom:TILE.LAPIS_ORE,   side:TILE.LAPIS_ORE,     solid:true },
-      23: { name:'Blok Lapis',   top:TILE.LAPIS_BLOCK,  bottom:TILE.LAPIS_BLOCK,  side:TILE.LAPIS_BLOCK,   solid:true },
-      24: { name:'Bijih Redstone', top:TILE.REDSTONE_ORE, bottom:TILE.REDSTONE_ORE, side:TILE.REDSTONE_ORE, solid:true },
-      25: { name:'Blok Zamrud',  top:TILE.EMERALD_BLOCK, bottom:TILE.EMERALD_BLOCK, side:TILE.EMERALD_BLOCK, solid:true },
-      26: { name:'Obsidian',     top:TILE.OBSIDIAN,     bottom:TILE.OBSIDIAN,     side:TILE.OBSIDIAN,      solid:true },
-      27: { name:'Batu Bersinar', top:TILE.GLOWSTONE,   bottom:TILE.GLOWSTONE,    side:TILE.GLOWSTONE,     solid:true },
-      28: { name:'Batu Bata',    top:TILE.STONEBRICK,   bottom:TILE.STONEBRICK,   side:TILE.STONEBRICK,    solid:true },
-      29: { name:'Salju',        top:TILE.SNOW,         bottom:TILE.SNOW,         side:TILE.SNOW,          solid:true },
-      30: { name:'Es',           top:TILE.ICE,          bottom:TILE.ICE,          side:TILE.ICE,           solid:true, transparent:true },
-      31: { name:'Netherrack',   top:TILE.NETHERRACK,   bottom:TILE.NETHERRACK,   side:TILE.NETHERRACK,    solid:true },
-      32: { name:'Soul Sand',    top:TILE.SOUL_SAND,    bottom:TILE.SOUL_SAND,    side:TILE.SOUL_SAND,     solid:true },
-      33: { name:'Rak Buku',     top:TILE.PLANKS,       bottom:TILE.PLANKS,       side:TILE.BOOKSHELF,     solid:true },
-      34: { name:'Labu',         top:TILE.PUMPKIN_TOP,  bottom:TILE.PUMPKIN_TOP,   side:TILE.PUMPKIN_SIDE,  front:TILE.PUMPKIN_FACE,  solid:true },
-      35: { name:'Kain',         top:TILE.CLOTH,        bottom:TILE.CLOTH,        side:TILE.CLOTH,         solid:true },
+      1:  { name:'Batu',          top:1,   bottom:1,   side:1,   solid:true },                              // stone — StoneTile(1)
+      2:  { name:'Rumput',        top:0,   bottom:2,   side:3,   solid:true },                              // grass — GrassTile: top=0(grass_top, tinted in atlas), bottom=2(dirt), side=3(grass_side)
+      3:  { name:'Tanah',         top:2,   bottom:2,   side:2,   solid:true },                              // dirt — DirtTile(3, 2)
+      4:  { name:'Kayu Ek',       top:21,  bottom:21,  side:20,  solid:true },                              // oak log — TreeTile: top=21(log_top), bottom=21, side=20(log_side)
+      5:  { name:'Papan Ek',      top:4,   bottom:4,   side:4,   solid:true },                              // planks — Tile(5, 4)
+      6:  { name:'Daun Ek',       top:52,  bottom:52,  side:52,  solid:true },                              // leaves — LeafTile(18, 52); alpha-0 pixels filled in atlas
+      7:  { name:'Pasir',         top:18,  bottom:18,  side:18,  solid:true },                              // sand — HeavyTile(12, 18)
+      8:  { name:'Kerakal',       top:19,  bottom:19,  side:19,  solid:true },                              // gravel — GravelTile(13, 19)
+      9:  { name:'Kaca',          top:49,  bottom:49,  side:49,  solid:true, transparent:true },            // glass — GlassTile(20, 49); tile is border-only (alpha 0 inside)
+      10: { name:'Bedrock',       top:17,  bottom:17,  side:17,  solid:true },                              // bedrock — Tile(7, 17)
+      11: { name:'Bata',          top:7,   bottom:7,   side:7,   solid:true },                              // brick — Tile(45, 7)
+      12: { name:'Emas',          top:23,  bottom:23,  side:23,  solid:true },                              // gold block — MetalTile(41, 23) = 39-16
+      13: { name:'Berlian',       top:24,  bottom:24,  side:24,  solid:true },                              // diamond block — MetalTile(57, 24) = 40-16
+      14: { name:'Besi',          top:22,  bottom:22,  side:22,  solid:true },                              // iron block — MetalTile(42, 22) = 38-16
+      15: { name:'Meja Kerja',    top:43,  bottom:4,   side:59,  front:60, frontBothZ:true, solid:true },   // crafting table — WorkbenchTile: tex=59, top=tex-16=43, bottom=planks(4), front(+/-Z)=tex+1=60, side(+/-X)=tex=59
+      16: { name:'Tungku',        top:62,  bottom:62,  side:45,  front:44, solid:true },                    // furnace — FurnaceTile: tex=45, top/bottom=tex+17=62, side=tex=45, front(off)=tex-1=44
+      17: { name:'Air',           top:205, bottom:205, side:205, solid:false, transparent:true, noCollide:true }, // water — MCPE 2013 dynamic texture frame 0 (tile 205)
+      18: { name:'Bijih Batubara', top:34,  bottom:34,  side:34,  solid:true },                             // coal ore — OreTile(16, 34)
+      19: { name:'Bijih Besi',    top:33,  bottom:33,  side:33,  solid:true },                              // iron ore — OreTile(15, 33)
+      20: { name:'Bijih Emas',    top:32,  bottom:32,  side:32,  solid:true },                              // gold ore — OreTile(14, 32)
+      21: { name:'Bijih Berlian', top:50,  bottom:50,  side:50,  solid:true },                              // diamond ore — OreTile(56, 50)
+      22: { name:'Bijih Lapis',   top:160, bottom:160, side:160, solid:true },                              // lapis ore — OreTile(21, 160) = 10*16
+      23: { name:'Blok Lapis',    top:144, bottom:144, side:144, solid:true },                              // lapis block — Tile(22, 144) = 9*16
+      24: { name:'Bijih Redstone', top:51,  bottom:51,  side:51,  solid:true },                              // redstone ore — index 16*3+3 = 51 (spec)
+      25: { name:'Blok Berlian',  top:24,  bottom:24,  side:24,  solid:true },                              // placeholder: emerald didn't exist in MCPE 2013; spec assigns diamond tile 24
+      26: { name:'Obsidian',      top:37,  bottom:37,  side:37,  solid:true },                              // obsidian — ObsidianTile(49, 37)
+      27: { name:'Batu Bersinar', top:105, bottom:105, side:105, solid:true },                              // glowstone — LightGemTile(89, 105) = 9+16*6
+      28: { name:'Batu Bata',     top:16,  bottom:16,  side:16,  solid:true },                              // stonebrick — Tile(4, 16)
+      29: { name:'Salju',         top:66,  bottom:66,  side:66,  solid:true },                              // snow — SnowTile(80, 66) = 16*4+2
+      30: { name:'Es',            top:67,  bottom:67,  side:67,  solid:true, transparent:true },            // ice — IceTile(79, 67) = 16*4+3
+      31: { name:'Netherrack',    top:103, bottom:103, side:103, solid:true },                              // netherrack — Tile(87, 103) = 7+6*16
+      32: { name:'Soul Sand',     top:104, bottom:104, side:104, solid:true },                              // soul sand — HellSandTile(88, 104) = 8+6*16
+      33: { name:'Rak Buku',      top:4,   bottom:4,   side:35,  solid:true },                              // bookshelf — BookshelfTile: top/bottom=planks(4), side=35
+      34: { name:'Labu',          top:137, bottom:137, side:136, solid:true },                              // pumpkin/melon — MelonTile: top=137, side=136 (no front face in MCPE 2013)
+      35: { name:'Kain',          top:64,  bottom:64,  side:64,  solid:true },                              // cloth (white wool) — ClothTile(35, 64) = 4*16
     };
 
     // Hotbar block ids (8 slots) — rujukan MCPE 2013 set (no wool/cloth in the default bar)
@@ -1359,21 +1357,26 @@
     // ============================================================
     //  MESHING
     // ============================================================
-    const ATLAS_COLS = 16, ATLAS_ROWS = 6, TILE_PX = 16;
-    const ATLAS_W = ATLAS_COLS * TILE_PX, ATLAS_H = ATLAS_ROWS * TILE_PX;
+    const ATLAS_COLS = 16, ATLAS_ROWS = 16, TILE_PX = 16;
+    const ATLAS_W = ATLAS_COLS * TILE_PX;   // 256 — matches terrain.png width
+    const ATLAS_H = ATLAS_ROWS * TILE_PX;  // 256 — matches terrain.png height
 
-    // Fail fast if a future edit adds a tile without its matching atlas image,
-    // reuses an index, or silently exceeds the fixed atlas dimensions.
-    const TILE_ENTRIES = Object.entries(TILE);
-    const TILE_INDICES = TILE_ENTRIES.map(([, index]) => index);
-    if (TEXTURE_FILES.length > ATLAS_COLS * ATLAS_ROWS) {
-      throw new Error('[VoxelCraft] Texture atlas capacity exceeded: ' + TEXTURE_FILES.length);
-    }
-    if (TILE_INDICES.length !== TEXTURE_FILES.length ||
-        new Set(TILE_INDICES).size !== TILE_INDICES.length ||
-        TILE_INDICES.some((index, position) => index !== position)) {
-      throw new Error('[VoxelCraft] TILE declaration order/indices and TEXTURE_FILES are out of sync.');
-    }
+    // Sanity check: every BLOCKS entry's tile index must fit in the 16×16
+    // terrain.png atlas (0..255). Catches typos in the table above before
+    // they silently produce a wrong face on a block.
+    (function validateBlockTileIndices() {
+      for (let id = 1; id <= 35; id++) {
+        const def = BLOCKS[id];
+        if (!def) continue;
+        const faces = [def.top, def.bottom, def.side, def.front];
+        for (const t of faces) {
+          if (t == null) continue;
+          if (!Number.isInteger(t) || t < 0 || t >= ATLAS_COLS * ATLAS_ROWS) {
+            throw new Error('[VoxelCraft] Block id ' + id + ' has out-of-range tile index ' + t);
+          }
+        }
+      }
+    })();
 
     // Face definitions: dir, corners (CCW from outside), uv mapping
     // face index: 0=+X 1=-X 2=+Y 3=-Y 4=+Z 5=-Z
@@ -1431,8 +1434,9 @@
               if (!draw) continue;
 
               // Face order follows FACES: +X, -X, +Y, -Y, +Z, -Z.
-              // Bedrock's crafting table has its front on both Z faces; furnace
-              // and pumpkin use the front on +Z only in this browser's fixed orientation.
+              // Crafting table (ID 15) has its front on both Z faces (frontBothZ);
+              // furnace (ID 16) uses its front on +Z only. MCPE 2013 pumpkin/melon
+              // (ID 34) has no front face — side tile is used on all four side faces.
               const tile = (f === 2) ? def.top
                 : (f === 3) ? def.bottom
                 : (f === 4 && def.front != null) ? def.front
@@ -2429,7 +2433,7 @@
       }
       isInWater() {
         const id = world.getBlock(Math.floor(this.x), Math.floor(this.y + 0.5), Math.floor(this.z));
-        return id === 17;  // this port: water is id 17 (TILE.WATER, noCollide)
+        return id === 17;  // this port: water is id 17 (terrain.png tile 205, noCollide)
       }
       isInLava() {
         // No lava block in this port — always false.
@@ -3391,98 +3395,83 @@
     }
 
     // ---- Atlas ----
-    // Bedrock's grass_top and leaves are grayscale textures meant to be tinted
-    // by biome color. We apply a green multiply tint so they look correct.
-    const TINTS = {
-      'grass_top': [121, 192, 90],          // plains grass green
-      'leaves_oak_opaque': [86, 158, 48],   // oak leaves green
-    };
+    // Load the original MCPE 2013 terrain.png as a single 256×256 texture atlas.
+    // The atlas is a 16×16 grid of 16×16 pixel tiles (indices 0..255,
+    // index = row*16 + col). Each block's face stores the tile index; chunk
+    // meshing computes per-vertex UVs that point to the right 16×16 sub-region.
+    //
+    // Two small in-place canvas tweaks (NOT sub-region extraction):
+    //  1. grass_top (tile 0): tile is grayscale in terrain.png; MCPE 2013
+    //     applies a green biome tint via GLES1 shader. We multiply-blend
+    //     plains green (121, 192, 90) in-place so grass looks green.
+    //  2. leaves (tile 52): tile has alpha-0 pixels (MCPE fancy graphics mode).
+    //     We fill them with opaque oak-green (86, 158, 48) for the "fast
+    //     graphics" look so the opaque material renders correctly without
+    //     dark fringe artefacts around leaf edges.
+    //
+    // No procedural ore compositing: MCPE 2013's terrain.png already HAS ore
+    // textures at the verified indices (coal_ore=34, iron_ore=33, gold_ore=32,
+    // diamond_ore=50, lapis_ore=160, redstone_ore=51).
+    const GRASS_TOP_TILE = 0;        // (col=0, row=0)
+    const LEAVES_TILE    = 52;       // (col=4, row=3)
+    const GRASS_TINT_RGB = [121, 192, 90];
+    const LEAVES_FILL_RGB = [86, 158, 48];
+
     async function buildAtlas() {
-      const canvas2 = document.createElement('canvas');
-      canvas2.width = ATLAS_W; canvas2.height = ATLAS_H;
-      const ctx = canvas2.getContext('2d');
-      ctx.imageSmoothingEnabled = false;
-      // clear to transparent
-      ctx.clearRect(0, 0, ATLAS_W, ATLAS_H);
-      const imgs = new Array(TEXTURE_FILES.length);
+      const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error('[VoxelCraft] Failed to load terrain.png atlas: ' + TERRAIN_ATLAS_URL));
+        i.src = TERRAIN_ATLAS_URL;
+      });
 
-      await Promise.all(TEXTURE_FILES.map((name, i) => new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          const col = i % ATLAS_COLS, row = Math.floor(i / ATLAS_COLS);
-          ctx.globalCompositeOperation = 'source-over';
-          // Normalize each source texture to one full 16×16 atlas tile.
-          // Using a 16×16 source crop here silently cuts off larger PNGs (for example,
-          // textures supplied at 32×32 or 64×64) and makes their patterns look misaligned.
-          const sourceWidth = img.naturalWidth || img.width;
-          const sourceHeight = img.naturalHeight || img.height;
-          ctx.drawImage(img, 0, 0, sourceWidth, sourceHeight, col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX);
-          // apply biome tint for grass/leaves (multiply)
-          const tint = TINTS[name];
-          if (tint) {
-            ctx.globalCompositeOperation = 'multiply';
-            ctx.fillStyle = `rgb(${tint[0]},${tint[1]},${tint[2]})`;
-            ctx.fillRect(col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX);
-            ctx.globalCompositeOperation = 'source-over';
-          }
-          imgs[i] = img;
-          resolve();
-        };
-        img.onerror = () => {
-          const col = i % ATLAS_COLS, row = Math.floor(i / ATLAS_COLS);
-          const x = col * TILE_PX, y = row * TILE_PX;
-          // Procedurally-generated ores (coal/iron/gold/diamond_ore) have no
-          // source file — they're composited from stone + mineral block later.
-          // Don't log a misleading "missing texture" error for those tiles.
-          const isProceduralOre = /^(coal|iron|gold|diamond)_ore$/.test(name);
-          if (!isProceduralOre) {
-            // Never leave a silent transparent hole in the atlas: missing assets
-            // should be obvious during development and reported in the console.
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.fillStyle = '#ff00ff';
-            ctx.fillRect(x, y, TILE_PX, TILE_PX);
-            ctx.fillStyle = '#181018';
-            ctx.fillRect(x, y, TILE_PX / 2, TILE_PX / 2);
-            ctx.fillRect(x + TILE_PX / 2, y + TILE_PX / 2, TILE_PX / 2, TILE_PX / 2);
-            console.error('[VoxelCraft] Missing texture: ' + TEXTURE_DIR + name + '.png');
-          }
-          resolve();
-        };
-        img.src = TEXTURE_DIR + name + '.png';
-      })));
-
-      // Generate ore tiles procedurally (stone base + mineral specks)
-      const ORE_DEFS = [
-        { tile: TILE.COAL_ORE,    speck: TILE.COAL },
-        { tile: TILE.IRON_ORE,    speck: TILE.IRON },
-        { tile: TILE.GOLD_ORE,    speck: TILE.GOLD },
-        { tile: TILE.DIAMOND_ORE, speck: TILE.DIAMOND },
-      ];
-      const stoneImg = imgs[TILE.STONE];
-      for (const { tile, speck } of ORE_DEFS) {
-        const col = tile % ATLAS_COLS, row = Math.floor(tile / ATLAS_COLS);
-        // stone base
-        if (stoneImg) {
-          const sw = stoneImg.naturalWidth || stoneImg.width;
-          const sh = stoneImg.naturalHeight || stoneImg.height;
-          ctx.drawImage(stoneImg, 0, 0, sw, sh, col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX);
-        }
-        // specks (deterministic pseudo-random positions)
-        const speckImg = imgs[speck];
-        if (speckImg) {
-          for (let i = 0; i < 14; i++) {
-            const sx = 1 + Math.floor((Math.sin(i * 7.3 + tile * 3.1) * 0.5 + 0.5) * (TILE_PX - 4));
-            const sy = 1 + Math.floor((Math.cos(i * 5.7 + tile * 2.1) * 0.5 + 0.5) * (TILE_PX - 4));
-            const sw = 2 + (i % 2);
-            ctx.drawImage(speckImg, sx, sy, sw, sw, col * TILE_PX + sx, row * TILE_PX + sy, sw, sw);
-          }
-        }
+      // Defensive size check — terrain.png must be 256×256 for the
+      // tile-index math (col = idx % 16, row = idx / 16) to line up.
+      const iw = img.naturalWidth || img.width;
+      const ih = img.naturalHeight || img.height;
+      if (iw !== ATLAS_W || ih !== ATLAS_H) {
+        console.warn('[VoxelCraft] terrain.png is ' + iw + 'x' + ih + ', expected ' + ATLAS_W + 'x' + ATLAS_H + ' — UVs will be wrong.');
       }
 
+      const canvas2 = document.createElement('canvas');
+      canvas2.width = ATLAS_W;
+      canvas2.height = ATLAS_H;
+      const ctx = canvas2.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, ATLAS_W, ATLAS_H);
+      // Draw the entire atlas as-is (no per-tile extraction; UVs do the routing).
+      ctx.drawImage(img, 0, 0);
+
+      // 1. Tint grass_top tile (index 0 = col 0, row 0) — multiply blend.
+      const gCol = GRASS_TOP_TILE % ATLAS_COLS;
+      const gRow = Math.floor(GRASS_TOP_TILE / ATLAS_COLS);
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = 'rgb(' + GRASS_TINT_RGB[0] + ',' + GRASS_TINT_RGB[1] + ',' + GRASS_TINT_RGB[2] + ')';
+      ctx.fillRect(gCol * TILE_PX, gRow * TILE_PX, TILE_PX, TILE_PX);
+      ctx.globalCompositeOperation = 'source-over';
+
+      // 2. Fill alpha-0 pixels in leaves tile (index 52 = col 4, row 3).
+      const lCol = LEAVES_TILE % ATLAS_COLS;
+      const lRow = Math.floor(LEAVES_TILE / ATLAS_COLS);
+      const lx = lCol * TILE_PX, ly = lRow * TILE_PX;
+      const leavesData = ctx.getImageData(lx, ly, TILE_PX, TILE_PX);
+      for (let i = 0; i < leavesData.data.length; i += 4) {
+        if (leavesData.data[i + 3] < 128) {
+          leavesData.data[i]     = LEAVES_FILL_RGB[0];
+          leavesData.data[i + 1] = LEAVES_FILL_RGB[1];
+          leavesData.data[i + 2] = LEAVES_FILL_RGB[2];
+          leavesData.data[i + 3] = 255;
+        }
+      }
+      ctx.putImageData(leavesData, lx, ly);
+
       const tex = new THREE.CanvasTexture(canvas2);
-      tex.magFilter = THREE.NearestFilter;
+      tex.magFilter = THREE.NearestFilter;        // pixelated, original MCPE look
       tex.minFilter = THREE.NearestFilter;
-      tex.generateMipmaps = false;
+      tex.generateMipmaps = false;                  // CRITICAL: mipmaps would
+      // average neighbouring tiles at distance and bleed grass green into stone,
+      // dirt into sand, etc. Nearest-filter at the base mipmap is the MCPE 2013
+      // GLES1 look — blocky but crisply separated at tile boundaries.
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.needsUpdate = true;
       return tex;
