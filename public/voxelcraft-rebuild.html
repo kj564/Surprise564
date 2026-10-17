@@ -123,12 +123,19 @@ const textureByBlock={
   'minecraft:cobblestone':'cobblestone.png','minecraft:oak_planks':'planks_oak.png','minecraft:bedrock':'bedrock.png',
   'minecraft:sand':'sand.png','minecraft:gravel':'gravel.png','minecraft:glass':'glass.png',
   'minecraft:lapis_ore':'lapis_ore.png','minecraft:sandstone':'sandstone.png','minecraft:bricks':'brick.png',
-  'minecraft:oak_log':'log_oak.png','minecraft:oak_leaves':'leaves_oak_opaque.png'
+  'minecraft:oak_log':'log_oak.png','minecraft:oak_leaves':'leaves_oak_opaque.png',
+  'minecraft:gold_block':'gold_block.png','minecraft:iron_block':'iron_block.png',
+  'minecraft:diamond_block':'diamond_block.png','minecraft:obsidian':'obsidian.png',
+  'minecraft:ice':'ice.png','minecraft:snow_layer':'snow.png','minecraft:water':'water_still.png',
+  'minecraft:stone_slab':'stone.png','minecraft:stone_stairs':'stone.png','minecraft:oak_stairs':'planks_oak.png',
+  'minecraft:crafting_table':'crafting_table_side.png','minecraft:furnace':'furnace_side.png'
 };
-function textureFileFor(definition,ny){
+function textureFileFor(definition,nx,ny,nz){
   if(!definition)return null;
-  if(definition.key==='minecraft:grass_block')return ny>0?'grass_top.png':ny<0?'dirt.png':'grass_side_carried.png';
+  if(definition.key==='minecraft:grass_block')return ny>.5?'grass_top.png':ny<-.5?'dirt.png':'grass_side_carried.png';
   if(definition.key==='minecraft:oak_log')return Math.abs(ny)>.5?'log_oak_top.png':'log_oak.png';
+  if(definition.key==='minecraft:crafting_table')return ny>.5?'crafting_table_top.png':Math.abs(nz)>.5?'crafting_table_front.png':'crafting_table_side.png';
+  if(definition.key==='minecraft:furnace')return Math.abs(nz)>.5?'furnace_front_off.png':'furnace_side.png';
   return textureByBlock[definition.key]??null;
 }
 function getTexture(file){
@@ -172,8 +179,8 @@ function rebuildWorldMeshes(){
         const vertex=face*4;
         const blockId=layer.blockIds[vertex];
         const definition=registry.getById(blockId);
-        const ny=layer.normals[vertex*3+1];
-        const file=textureFileFor(definition,ny);
+        const nx=layer.normals[vertex*3],ny=layer.normals[vertex*3+1],nz=layer.normals[vertex*3+2];
+        const file=textureFileFor(definition,nx,ny,nz);
         const key=layerName+':'+(file??'fallback')+':'+blockId;
         let group=groups.get(key);
         if(!group){group={blockId,file,positions:[],normals:[],uvs:[],indices:[]};groups.set(key,group)}
