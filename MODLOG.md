@@ -11887,3 +11887,103 @@ Stage Summary:
   progress break + fly disabled (mayfly=false). Chicken mob wanders with flap
   + slow fall. Start menu with Start/Mode-toggle/Options. Pause menu with
   Resume/Quit. Controls: WASD/mouse/Space/Shift/E/1-9/ESC/wheel.
+
+---
+
+## Entry 20: Cloud mechanics — LevelRenderer::renderClouds (verified line-by-line)
+
+**File**: `client/renderer/LevelRenderer.cpp:1021-1069`
+
+### Cloud rendering — VERIFIED EXACT
+```cpp
+void LevelRenderer::renderClouds(float alpha) {
+    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_CULL_FACE);
+    float yOffs = mc->player->yOld + (mc->player->y - mc->player->yOld) * alpha;
+    int s = 32;
+    int d = 256 / s;  // = 8
+    Tesselator& t = Tesselator::instance;
+
+    textures->loadAndBindTexture("environment/clouds.png");  // ORIGINAL ASSET
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    Vec3 cc = level->getCloudColor(alpha);  // see below
+    float cr = cc.x, cg = cc.y, cb = cc.z;
+
+    float scale = 1 / 2048.0f;  // texture scale: 2048 world units = 1 texture
+
+    float time = (ticks + alpha);
+    float xo = mc->player->xo + (mc->player->x - mc->player->xo) * alpha + time * 0.03f;  // drift 0.03/tick
+    float zo = mc->player->zo + (mc->player->z - mc->player->zo) * alpha;
+    int xOffs = Mth::floor(xo / 2048);
+    int zOffs = Mth::floor(zo / 2048);
+    xo -= xOffs * 2048;  // modulo 2048
+    zo -= zOffs * 2048;
+
+    float yy = 128 - yOffs + 0.33f;  // cloud height = 128, offset by player y + 0.33
+    float uo = xo * scale;
+    float vo = zo * scale;
+    t.begin();
+
+    t.color(cr, cg, cb, 0.8f);  // alpha = 0.8
+    for (int xx = -s * d; xx < +s * d; xx += s) {       // -256 .. +256
+        for (int zz = -s * d; zz < +s * d; zz += s) {   // -256 .. +256
+            t.vertexUV(xx, yy, zz + s, xx*scale + uo, (zz+s)*scale + vo);
+            t.vertexUV(xx + s, yy, zz + s, (xx+s)*scale + uo, (zz+s)*scale + vo);
+            t.vertexUV(xx + s, yy, zz, (xx+s)*scale + uo, zz*scale + vo);
+            t.vertexUV(xx, yy, zz, xx*scale + uo, zz*scale + vo);
+        }
+    }
+    t.endOverrideAndDraw();
+}
+```
+
+### Verified constants
+- **Cloud texture**: `environment/clouds.png` (256×256 RGBA, original RP asset, NOT procedural)
+- **Cloud height**: 128 (hardcoded, dimension.getCloudHeight() commented out)
+- **Texture scale**: 1/2048 (2048 world units span the 256-pixel texture once)
+- **Drift speed**: 0.03/tick on x-offset (wind)
+- **Tile size**: s=32, grid -s*d .. +s*d = -256 .. +256 with step s=32 → 16x16 grid of 32×32 quads
+- **Alpha**: 0.8
+- **y offset**: 128 - playerY + 0.33 (so clouds stay at fixed height 128 regardless of player)
+
+### getCloudColor — VERIFIED
+**File**: `world/level/Level.cpp:1194-1230`
+```cpp
+Vec3 Level::getCloudColor(float a) {
+    float td = getTimeOfDay(a);
+    float br = Mth::cos(td * Mth::PI * 2) * 2.0f + 0.5f;
+    if (br < 0) br = 0; if (br > 1) br = 1;
+    long cloudColor = 0xffffff;  // white base
+    float r = ((cloudColor >> 16) & 0xff) / 255.0f;  // 1.0
+    float g = ((cloudColor >> 8) & 0xff) / 255.0f;   // 1.0
+    float b = (cloudColor & 0xff) / 255.0f;          // 1.0
+    // rainLevel = 0, thunderLevel = 0 in MCPE 2013 (no weather) — skip those branches
+    r *= br * 0.90f + 0.10f;
+    g *= br * 0.90f + 0.10f;
+    b *= br * 0.85f + 0.15f;  // blue slightly brighter at night
+    return Vec3(r, g, b);
+}
+```
+**Color summary**: white modulated by day/night brightness `br = cos(timeOfDay * 2π) * 2 + 0.5` (clamped).
+- Day (br=1): r=g=b=1.0 (white)
+- Night (br=0): r=g=0.1, b=0.15 (dim, slightly blue)
+- Sunset (br=0.5): r=g=0.55, b=0.575
+
+### minecraft.html DEVIATION before this fix
+- Used procedural canvas with 14 random blobs (NOT the original clouds.png)
+- Cloud followed player x/z (correct in rujukan too — xo/zo derived from player)
+- No day/night color modulation (clouds were always 0.72 white)
+- RepeatWrapping 6×6 (not the rujukan 1/2048 scale)
+
+### Port plan
+1. Replace makeCloudTexture() with load from `./VoxelCraft/textures/environment/clouds.png`
+2. Use PlaneGeometry covering -256..+256 (16×16 grid of 32×32 quads, but PlaneGeometry handles this)
+3. Set texture.repeat to (256/2048, 256/2048) = 0.125 × 0.125? Actually rujukan's UV is world_pos * scale = world_pos / 2048, so over a 512×512 plane the UV spans 512/2048 = 0.25. The clouds.png is 256×256, so the visible pattern repeats every 2048 world units. Use texture.repeat.set(512/2048, 512/2048) = (0.25, 0.25) over a 512 plane? Simpler: keep plane 512×512, set repeat = (1, 1) but offset texture by xo/2048, zo/2048. Actually with a 256px texture and 2048 world units per pattern, we need repeat = planeSize / 2048. For a 512 plane: repeat = 0.25.
+4. Animate offset.x by time * 0.03 / 2048 per tick (drift 0.03/tick)
+5. Modulate cloud color by day/night br factor (R/G * br*0.9 + 0.1, B * br*0.85 + 0.15)
+6. Set cloud height to 128 (not 104 like minecraft.html had)
+7. Alpha 0.8 (not 0.72)
+8. Set texture.magFilter = NearestFilter (pixelated, original MCPE look)

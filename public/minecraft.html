@@ -1602,71 +1602,67 @@
     stars.frustumCulled = false;
     scene.add(stars);
 
-    // Drifting cloud layer: a single horizontal plane high above the world.
-    // The cloud pattern is generated procedurally (soft white blobs on a
-    // transparent canvas) and is NOT a Minecraft asset. The canvas is tiled
-    // with wrap seams hidden: every blob near an edge is also drawn mirrored
-    // on the opposite edge, so the RepeatWrapping texture has no visible
-    // grid lines. Scrolling the texture offset gives the illusion of
-    // wind-driven drift without moving meshes.
-    function makeCloudTexture() {
-      const size = 256;
-      const c = document.createElement('canvas');
-      c.width = c.height = size;
-      const ctx = c.getContext('2d');
-      ctx.clearRect(0, 0, size, size);
-      ctx.globalCompositeOperation = 'lighter';
-      // 14 blobs, twice as dense as the previous 7. Each blob that crosses an
-      // edge is also stamped at the wrapped position so the texture is seamless.
-      const drawBlob = (cx, cy, rx, ry) => {
-        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rx, ry));
-        g.addColorStop(0, 'rgba(255,255,255,0.85)');
-        g.addColorStop(0.6, 'rgba(255,255,255,0.32)');
-        g.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.scale(rx / Math.max(rx, ry), ry / Math.max(rx, ry));
-        ctx.translate(-cx, -cy);
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, size, size);
-        ctx.restore();
-      };
-      for (let i = 0; i < 14; i++) {
-        const cx = Math.random() * size, cy = Math.random() * size;
-        const rx = 30 + Math.random() * 44, ry = 18 + Math.random() * 28;
-        drawBlob(cx, cy, rx, ry);
-        // Wrap to opposite edges if the blob extends past them, so the
-        // RepeatWrapping seam has matching pixels on both sides.
-        if (cx + rx > size) drawBlob(cx - size, cy, rx, ry);
-        if (cx - rx < 0)    drawBlob(cx + size, cy, rx, ry);
-        if (cy + ry > size) drawBlob(cx, cy - size, rx, ry);
-        if (cy - ry < 0)    drawBlob(cx, cy + size, rx, ry);
-        // Corner wrap (both x and y overflow)
-        if (cx + rx > size && cy + ry > size) drawBlob(cx - size, cy - size, rx, ry);
-        if (cx - rx < 0    && cy - ry < 0)    drawBlob(cx + size, cy + size, rx, ry);
-        if (cx + rx > size && cy - ry < 0)    drawBlob(cx - size, cy + size, rx, ry);
-        if (cx - rx < 0    && cy + ry > size) drawBlob(cx + size, cy - size, rx, ry);
-      }
-      const tex = new THREE.CanvasTexture(c);
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(6, 6);
-      return tex;
-    }
-    const cloudTex = makeCloudTexture();
+    // ============================================================
+    //  Cloud layer — faithful port of rujukan LevelRenderer::renderClouds
+    //  (LevelRenderer.cpp:1021-1069) and Level::getCloudColor (Level.cpp:1194-1230)
+    //
+    //  VERIFIED constants from rujukan source:
+    //    texture:  environment/clouds.png (256x256 RGBA, original RP asset)
+    //    cloud height: 128 (hardcoded; dimension.getCloudHeight() commented out)
+    //    texture scale: 1/2048 (2048 world units = 1 texture pattern)
+    //    wind drift: 0.03/tick on x-offset
+    //    tile grid: s=32, d=8, plane -256..+256 (16x16 quads)
+    //    alpha: 0.8
+    //    color: white modulated by day/night brightness factor
+    //           br = cos(timeOfDay * 2pi) * 2 + 0.5, clamped [0,1]
+    //           r,g = base * (br*0.9 + 0.1)
+    //           b   = base * (br*0.85 + 0.15)  (slightly brighter blue at night)
+    //
+    //  DEVIATION: rujukan tessellates 16x16 32-unit quads; we use a single
+    //  PlaneGeometry(512, 512) which is equivalent in coverage. The texture
+    //  is loaded from the original RP asset (NOT procedural canvas).
+    // ============================================================
+    const cloudTex = new THREE.TextureLoader().load('./VoxelCraft/textures/environment/clouds.png');
+    cloudTex.wrapS = cloudTex.wrapT = THREE.RepeatWrapping;
+    cloudTex.magFilter = THREE.NearestFilter;   // pixelated, original MCPE look
+    cloudTex.minFilter = THREE.NearestFilter;
+    // Plane 512x512, texture pattern spans 2048 world units -> repeat = 512/2048 = 0.25
+    cloudTex.repeat.set(0.25, 0.25);
     const cloudMat = new THREE.MeshBasicMaterial({
-      map: cloudTex, transparent: true, opacity: 0.72,
+      map: cloudTex, transparent: true, opacity: 0.8,  // VERIFIED alpha 0.8
       depthWrite: false, fog: false, side: THREE.DoubleSide,
     });
-    const cloudMesh = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), cloudMat);
+    const cloudMesh = new THREE.Mesh(new THREE.PlaneGeometry(512, 512), cloudMat);
     cloudMesh.rotation.x = -Math.PI / 2;
-    cloudMesh.position.y = 104;
+    cloudMesh.position.y = 128;  // VERIFIED cloud height = 128
     cloudMesh.frustumCulled = false;
     scene.add(cloudMesh);
     function updateClouds(dt) {
-      cloudTex.offset.x = (cloudTex.offset.x + dt * 0.009) % 1;
-      // Keep the cloud layer centered above the player so clouds always feel overhead.
+      // VERIFIED drift: x-offset advances 0.03/tick. With 20 tps that's
+      // 0.6/s; over 2048 world units per pattern, the UV offset advance
+      // per tick = 0.03 / 2048. dt-based: 0.03 * 20 * dt / 2048.
+      cloudTex.offset.x = (cloudTex.offset.x + 0.03 * 20 * dt / 2048) % 1;
+      // Keep the cloud layer centered above the player (rujukan derives
+      // xo/zo from player position so clouds always feel overhead).
       cloudMesh.position.x = player.pos.x;
       cloudMesh.position.z = player.pos.z;
+    }
+    function getCloudColor(timeOfDay) {
+      // VERIFIED Level::getCloudColor + NormalDayCycleDimension::getTimeOfDay.
+      // rujukan transforms raw timeOfDay via a cosine curve before use:
+      //   tdo = (rawTime - 0.25) mod 1   (shift so 0 = midnight, 0.5 = noon)
+      //   td  = 1 - (cos(tdo * π) + 1) * 0.5
+      //   returned = tdo + (td - tdo) / 3
+      // Then getCloudColor applies: br = cos(returned * 2π) * 2 + 0.5, clamp [0,1]
+      const tdo = ((timeOfDay - 0.25) % 1 + 1) % 1;
+      const tdCurve = 1 - (Math.cos(tdo * Math.PI) + 1) * 0.5;
+      const td = tdo + (tdCurve - tdo) / 3.0;
+      const br = Math.max(0, Math.min(1, Math.cos(td * Math.PI * 2) * 2 + 0.5));
+      const base = 1.0;  // cloudColor = 0xffffff
+      const r = base * (br * 0.9 + 0.1);
+      const g = base * (br * 0.9 + 0.1);
+      const b = base * (br * 0.85 + 0.15);
+      return [r, g, b];
     }
 
     const world = new World();
@@ -3058,7 +3054,6 @@
         camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 8);
         camera.updateProjectionMatrix();
       }
-      updateClouds(dt);
 
       // ---- Day/night cycle with visible sun/moon + stars + sunset tint ----
       if (gameplayActive) worldTime = (worldTime + dt / 600) % 1;
@@ -3086,6 +3081,10 @@
       // night vignette darkens screen edges after sunset (kept gentle so night
       // gameplay stays readable; peaks around ~0.4 at deep night)
       vignetteEl.style.opacity = Math.max(0, 1 - daylight * 2.0) * 0.45;
+      // Clouds: drift + color modulation by day/night (rujukan Level::getCloudColor)
+      updateClouds(dt);
+      const [ccR, ccG, ccB] = getCloudColor(worldTime);
+      cloudMat.color.setRGB(ccR, ccG, ccB);
       // hemisphere light follows sky brightness
       const hemi = scene.children.find(c => c.isHemisphereLight);
       if (hemi) hemi.intensity = 0.25 + daylight * 0.55;
