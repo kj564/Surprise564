@@ -1637,6 +1637,11 @@
     cloudTex.wrapS = cloudTex.wrapT = THREE.RepeatWrapping;
     cloudTex.magFilter = THREE.NearestFilter;   // pixelated, original MCPE look
     cloudTex.minFilter = THREE.NearestFilter;
+    cloudTex.generateMipmaps = false;  // CRITICAL: mipmaps average the alpha
+    // channel and turn the blocky scattered squares into blurry round blobs.
+    // rujukan MCPE 2013 used GLES1 with no mipmaps on clouds.png; the blocky
+    // look comes from nearest-neighbor sampling at the base mipmap level only.
+    cloudTex.needsUpdate = true;
     // Plane 512x512, texture pattern spans 2048 world units -> repeat = 512/2048 = 0.25
     cloudTex.repeat.set(0.25, 0.25);
     const cloudMat = new THREE.MeshBasicMaterial({
