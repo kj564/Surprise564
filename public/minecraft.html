@@ -4196,7 +4196,10 @@
       }
 
       // ---- Day/night cycle with visible sun/moon + stars + sunset tint ----
-      if (gameplayActive) worldTime = (worldTime + dt / 600) % 1;
+      // VERIFIED MCPE 2013: time advances 1 tick per tick at 20 tps.
+      // TICKS_PER_DAY = 20 * 60 * 16 = 19200 → 960 seconds = 16 min per day.
+      // Previous code used dt/600 (10 min/day = 1.6x too fast).
+      if (gameplayActive) worldTime = (worldTime + dt / 960) % 1;
       const sunAngle = worldTime * Math.PI * 2 - Math.PI / 2;
       const daylight = Math.max(0.05, Math.sin(sunAngle) * 0.5 + 0.5);
       const sunDirX = Math.cos(sunAngle);
