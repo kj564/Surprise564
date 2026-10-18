@@ -26,7 +26,7 @@ var definitions = [
   block({ key: "minecraft:stone_slab", legacyId: 44, displayName: "Stone Slab", shape: "slab", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:stone_slab"] }),
   block({ key: "minecraft:bricks", legacyId: 45, displayName: "Bricks", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:bricks"] }),
   block({ key: "minecraft:obsidian", legacyId: 49, displayName: "Obsidian", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 10, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:obsidian"] }),
-  block({ key: "minecraft:torch", legacyId: 50, displayName: "Torch", shape: "torch", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "wood", hardness: 0, sound: "wood", lightOpacity: 0, lightEmission: 14, drops: ["minecraft:torch"] }),
+  block({ key: "minecraft:torch", legacyId: 50, displayName: "Torch", shape: "torch", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "decoration", hardness: 0, sound: "wood", lightOpacity: 0, lightEmission: 14, drops: ["minecraft:torch"] }),
   block({ key: "minecraft:oak_stairs", legacyId: 53, displayName: "Oak Stairs", shape: "stairs", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:oak_stairs"] }),
   block({ key: "minecraft:chest", legacyId: 54, displayName: "Chest", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2.5, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:chest"] }),
   block({ key: "minecraft:diamond_ore", legacyId: 56, displayName: "Diamond Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:diamond"] }),
@@ -34,7 +34,7 @@ var definitions = [
   block({ key: "minecraft:crafting_table", legacyId: 58, displayName: "Crafting Table", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2.5, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:crafting_table"] }),
   block({ key: "minecraft:farmland", legacyId: 60, displayName: "Farmland", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.6, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
   block({ key: "minecraft:furnace", legacyId: 61, displayName: "Furnace", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3.5, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:furnace"] }),
-  block({ key: "minecraft:ladder", legacyId: 65, displayName: "Ladder", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "wood", hardness: 0.4, sound: "wood", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:ladder"] }),
+  block({ key: "minecraft:ladder", legacyId: 65, displayName: "Ladder", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "decoration", hardness: 0.4, sound: "wood", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:ladder"] }),
   block({ key: "minecraft:stone_stairs", legacyId: 67, displayName: "Stone Stairs", shape: "stairs", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:stone_stairs"] }),
   block({ key: "minecraft:iron_door", legacyId: 71, displayName: "Iron Door", shape: "door", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 5, sound: "metal", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:iron_door"] }),
   block({ key: "minecraft:snow_layer", legacyId: 78, displayName: "Snow Layer", shape: "slab", renderLayer: "opaque", solid: false, selectable: true, replaceable: true, material: "topSnow", hardness: 0.1, sound: "cloth", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:snow_layer"] }),
@@ -456,7 +456,7 @@ function getPlayerDestroySpeed(material, blockKey, tool) {
     case "shovel":
       return shovelDestroySpeed(hasTile, tool.tierDef.speed);
     case "sword":
-      return 1;
+      return blockKey === "minecraft:web" ? 15 : 1.5;
     case "none":
       return 1;
   }

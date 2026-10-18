@@ -216,7 +216,7 @@ export function getPlayerDestroySpeed(
       case 'pickaxe': return PICKAXE_TILES.has(blockKey);
       case 'axe':     return AXE_TILES.has(blockKey);
       case 'shovel':  return SHOVEL_TILES.has(blockKey);
-      case 'sword':   return false;  // §WeaponItem: no mining bonus
+      case 'sword':   return false;  // §WeaponItem doesn't have a tile list (extends Item, not DiggerItem)
       case 'none':    return false;
     }
     return false;
@@ -225,7 +225,11 @@ export function getPlayerDestroySpeed(
     case 'pickaxe': return pickaxeDestroySpeed(material, hasTile, tool.tierDef.speed);
     case 'axe':     return axeDestroySpeed(material, hasTile, tool.tierDef.speed);
     case 'shovel':  return shovelDestroySpeed(hasTile, tool.tierDef.speed);
-    case 'sword':   return 1;  // §WeaponItem extends Item, no mining override
+    case 'sword':
+      // §WeaponItem.h:30-37 — getDestroySpeed:
+      //   if (tile->id == Tile::web->id) return 15;  // swords cut web fast
+      //   return 1.5f;  // (NOT 1 — sword has mining bonus)
+      return blockKey === 'minecraft:web' ? 15 : 1.5;
     case 'none':    return 1;
   }
   return 1;

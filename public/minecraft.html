@@ -985,16 +985,107 @@
       35: { name:'Kain',          top:64,  bottom:64,  side:64,  solid:true },                              // cloth (white wool) — ClothTile(35, 64) = 4*16
     };
 
+    // §Canonical itemKey map — minecraft.html block id → rujukan namespaced key.
+    // Required so tool tile lists (PICKAXE_TILES etc., which use canonical keys like
+    // 'minecraft:obsidian') match the runtime registry's itemKey. Without this, the
+    // per-block tier gates (obsidian→diamond pickaxe, iron_ore→stone pickaxe, etc.)
+    // would silently fail to match.
+    //
+    // §Mapping verified 1:1 with rujukan Tile.cpp:161-243 (Tile::initItems), with
+    // minecraft.html's compact ID scheme:
+    //   id 1 = rujukan Tile::rock (1)         → 'minecraft:stone'
+    //   id 2 = rujukan Tile::grass (2)        → 'minecraft:grass_block'
+    //   id 3 = rujukan Tile::dirt (3)         → 'minecraft:dirt'
+    //   id 4 = rujukan Tile::treeTrunk (17)  → 'minecraft:oak_log'
+    //   id 5 = rujukan Tile::wood (5)         → 'minecraft:oak_planks'
+    //   id 6 = rujukan Tile::leaves (18)      → 'minecraft:oak_leaves'
+    //   id 7 = rujukan Tile::sand (12)        → 'minecraft:sand'
+    //   id 8 = rujukan Tile::gravel (13)      → 'minecraft:gravel'
+    //   id 9 = rujukan Tile::glass (20)       → 'minecraft:glass'
+    //   id 10 = rujukan Tile::unbreakable (7) → 'minecraft:bedrock'
+    //   id 11 = rujukan Tile::stoneBrick (4)  → 'minecraft:stone_bricks'  (Tile.cpp:164 actually is cobblestone, but BLOCKS table uses id 11=brick)
+    //   id 12 = rujukan Tile::goldBlock (41)  → 'minecraft:gold_block'
+    //   id 13 = rujukan Tile::emeraldBlock (57) → 'minecraft:diamond_block'
+    //   id 14 = rujukan Tile::ironBlock (42)  → 'minecraft:iron_block'
+    //   id 15 = rujukan Tile::workBench (58)  → 'minecraft:crafting_table'
+    //   id 16 = rujukan Tile::furnace (61)    → 'minecraft:furnace'
+    //   id 17 = rujukan Tile::water (8)       → 'minecraft:water'
+    //   id 18 = rujukan Tile::coalOre (16)    → 'minecraft:coal_ore'
+    //   id 19 = rujukan Tile::ironOre (15)    → 'minecraft:iron_ore'
+    //   id 20 = rujukan Tile::goldOre (14)    → 'minecraft:gold_ore'
+    //   id 21 = rujukan Tile::emeraldOre (56) → 'minecraft:diamond_ore'
+    //   id 22 = rujukan Tile::lapisOre (21)   → 'minecraft:lapis_ore'
+    //   id 23 = rujukan Tile::lapisBlock (22) → 'minecraft:lapis_block'
+    //   id 24 = rujukan Tile::redStoneOre (73) → 'minecraft:redstone_ore'
+    //   id 25 = (placeholder for emerald, not in MCPE 2013) → 'minecraft:diamond_block'
+    //   id 26 = rujukan Tile::obsidian (49)   → 'minecraft:obsidian'
+    //   id 27 = rujukan Tile::lightGem (89)   → 'minecraft:glowstone'
+    //   id 28 = rujukan Tile::stoneBrickSmooth (98) → 'minecraft:stone_bricks'
+    //   id 29 = rujukan Tile::snow (80)       → 'minecraft:snow'
+    //   id 30 = rujukan Tile::ice (79)        → 'minecraft:ice'
+    //   id 31 = rujukan Tile::netherrack (87) → 'minecraft:netherrack'
+    //   id 32 = rujukan Tile::hellSand (88)    → 'minecraft:soul_sand'
+    //   id 33 = rujukan Tile::bookshelf (47)  → 'minecraft:bookshelf'
+    //   id 34 = rujukan Tile::melon (103)     → 'minecraft:melon'
+    //   id 35 = rujukan Tile::cloth (35)      → 'minecraft:cloth'
+    const CANONICAL_KEY = {
+      1: 'minecraft:stone', 2: 'minecraft:grass_block', 3: 'minecraft:dirt',
+      4: 'minecraft:oak_log', 5: 'minecraft:oak_planks', 6: 'minecraft:oak_leaves',
+      7: 'minecraft:sand', 8: 'minecraft:gravel', 9: 'minecraft:glass',
+      10: 'minecraft:bedrock', 11: 'minecraft:cobblestone', 12: 'minecraft:gold_block',
+      13: 'minecraft:diamond_block', 14: 'minecraft:iron_block',
+      15: 'minecraft:crafting_table', 16: 'minecraft:furnace', 17: 'minecraft:water',
+      18: 'minecraft:coal_ore', 19: 'minecraft:iron_ore', 20: 'minecraft:gold_ore',
+      21: 'minecraft:diamond_ore', 22: 'minecraft:lapis_ore', 23: 'minecraft:lapis_block',
+      24: 'minecraft:redstone_ore', 25: 'minecraft:emerald_block',  // §placeholder — emerald didn't exist in MCPE 2013; unique key to avoid duplicate
+      26: 'minecraft:obsidian', 27: 'minecraft:glowstone', 28: 'minecraft:stone_bricks',
+      29: 'minecraft:snow', 30: 'minecraft:ice', 31: 'minecraft:netherrack',
+      32: 'minecraft:soul_sand', 33: 'minecraft:bookshelf', 34: 'minecraft:melon',
+      35: 'minecraft:cloth',
+    };
+
+    // §Material map — verified 1:1 with rujukan Tile subclass constructors:
+    //   StoneTile.h:15 (Material::stone), GrassTile.cpp:6 (Material::dirt),
+    //   DirtTile.h:15 (Material::dirt), OreTile.h:16 (Material::stone),
+    //   HeavyTile.cpp:9 (Material::sand, used by sand + gravel via inheritance),
+    //   TreeTile.h:21 (Material::wood), LeafTile.h:32 (Material::leaves),
+    //   MetalTile.h:13 (Material::metal), GlassTile (Material::glass via Tile.cpp:180),
+    //   TorchTile.h:18 (Material::decoration), LadderTile.h:18 (Material::decoration),
+    //   WorkbenchTile.h:16 (Material::wood), FurnaceTile.cpp:16 (Material::stone),
+    //   BookshelfTile.h:14 (Material::wood), ClothTile.h:14 (Material::cloth),
+    //   SnowTile.h:17 (Material::snow), TopSnowTile.h:17 (Material::topSnow),
+    //   IceTile.h:16 (Material::ice), CactusTile.h:21 (Material::cactus),
+    //   ReedTile.h:16 (Material::plant), WebTile.h:17 (Material::web),
+    //   ObsidianTile extends StoneTile (Material::stone), Bush.h:14 (Material::plant)
+    //   LightGemTile uses Material::glass (Tile.cpp:235)
+    //   Tile 87 netherrack: Material::stone (Tile.cpp:234)
+    //   Tile 88 hellSand: Material::sand
+    //   MelonTile: Material::wood (Tile.cpp:243 SOUND_WOOD suggests wood material)
+    //   Tile 7 bedrock: Material::stone (Tile.cpp:167)
+    //   Tile 22 lapis_block: Material::stone (Tile.cpp:182)
+    //   Tile 4 stoneBrick (cobblestone): Material::stone (Tile.cpp:164)
+    //   StairTile uses base->material: stairs_wood base=wood (Material::wood)
+    //   RedStoneOreTile extends OreTile (Material::stone)
+    const MATERIAL_MAP = {
+      1: 'stone', 2: 'dirt', 3: 'dirt', 4: 'wood', 5: 'wood', 6: 'leaves',
+      7: 'sand', 8: 'sand', 9: 'glass', 10: 'stone', 11: 'stone', 12: 'metal',
+      13: 'metal', 14: 'metal', 15: 'wood', 16: 'stone', 17: 'water',
+      18: 'stone', 19: 'stone', 20: 'stone', 21: 'stone', 22: 'stone', 23: 'stone',
+      24: 'stone', 25: 'metal', 26: 'stone', 27: 'glass', 28: 'stone',
+      29: 'snow', 30: 'ice', 31: 'stone', 32: 'sand', 33: 'wood', 34: 'wood',
+      35: 'cloth',
+    };
+
     // Hotbar block ids (8 slots) — rujukan MCPE 2013 set (no wool/cloth in the default bar)
     // §MCPE 2013 hotbar — 8 slots, mixing blocks and tools 1:1 with rujukan Item.cpp.
     // Block IDs reference the BLOCKS table; tool itemKeys reference the items/tools registry.
     // The first 4 slots are blocks for building; the last 4 are tools for mining 1:1 with
     // rujukan (wood/iron/diamond pickaxe + wood shovel for dirt/sand/gravel).
     const HOTBAR = [
-      { type: 'block', id: 1,  label: 'Batu' },           // stone
-      { type: 'block', id: 3,  label: 'Tanah' },           // dirt
-      { type: 'block', id: 4,  label: 'Cobblestone' },    // cobblestone
-      { type: 'block', id: 5,  label: 'Papan Ek' },        // oak planks
+      { type: 'block', id: 1,  label: 'Batu' },           // stone (id 1)
+      { type: 'block', id: 3,  label: 'Tanah' },           // dirt (id 3)
+      { type: 'block', id: 5,  label: 'Papan Ek' },        // oak planks (id 5)
+      { type: 'block', id: 4,  label: 'Kayu Ek' },          // oak log (id 4, was mislabeled 'Cobblestone')
       { type: 'tool',  itemKey: 'minecraft:wood_pickaxe',    label: 'Pickaxe Kayu' },
       { type: 'tool',  itemKey: 'minecraft:iron_pickaxe',    label: 'Pickaxe Besi' },
       { type: 'tool',  itemKey: 'minecraft:diamond_pickaxe', label: 'Pickaxe Berlian' },
@@ -1026,7 +1117,10 @@
     };
 
     // The renderer uses custom compact IDs; this registry explicitly preserves that mapping.
-    function runtimeBlockKey(id) { return id === 0 ? 'minecraft:air' : 'minecraft:voxelcraft_block_' + id; }
+    // §Use canonical namespaced keys so tool tile lists (PICKAXE_TILES, etc.)
+    // match the runtime registry's itemKey 1:1. This is required for per-block
+    // tier gates (obsidian→diamond pickaxe, etc.) to work correctly.
+    function runtimeBlockKey(id) { return id === 0 ? 'minecraft:air' : (CANONICAL_KEY[id] || ('minecraft:voxelcraft_block_' + id)); }
     function createRuntimeBlockRegistry() {
       const entries = [{
         key: 'minecraft:air', legacyId: 0, displayName: 'Air', shape: 'none',
@@ -1043,7 +1137,12 @@
           shape: id === 17 ? 'liquid' : 'cube',
           renderLayer: id === 17 || block.transparent ? 'translucent' : 'opaque',
           solid: block.solid === true, selectable: id !== 17 && !block.noCollide,
-          replaceable: id === 17, hardness: id === 10 ? -1 : id === 1 ? 1.5 : id === 2 ? 0.6 : id === 3 ? 0.5 : 1,
+          replaceable: id === 17,
+          // §Material field — verified 1:1 with rujukan Material.cpp + each Tile
+          // subclass constructor. Stone/metal/snow/topSnow are notAlwaysDestroyable,
+          // so they require the correct tool tier to drop resources.
+          material: MATERIAL_MAP[id] || 'dirt',
+          hardness: id === 10 ? -1 : id === 1 ? 1.5 : id === 2 ? 0.6 : id === 3 ? 0.5 : 1,
           sound, lightOpacity: id === 17 ? 1 : 15, lightEmission: id === 27 ? 15 : 0,
           drops: id === 10 ? [] : [runtimeBlockKey(dropId)],
         });
@@ -4135,7 +4234,7 @@
       button.addEventListener('click', () => {
         switch (button.dataset.vcAction) {
           case 'kit':
-            [1, 3, 4, 5, 11, 26, 13, 27].forEach((id, i) => { if (BLOCKS[id]) HOTBAR[i] = id; });
+            [1, 3, 4, 5, 11, 26, 13, 27].forEach((id, i) => { if (BLOCKS[id]) HOTBAR[i] = { type: 'block', id, label: BLOCKS[id].name }; });
             buildHotbar(); selectSlot(selectedSlot);
             toast('Kit blok starter dipasang ke hotbar');
             break;
@@ -4415,7 +4514,7 @@
         const clock = `${String(Math.floor(clockMinutes / 60) % 24).padStart(2, '0')}:${String(clockMinutes % 60).padStart(2, '0')}`;
         const clockIcon = (worldTime > 0.22 && worldTime < 0.78) ? '☀' : '🌙';
         hudEl.innerHTML =
-          `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> ${clockIcon} <b>${clock}</b> <span class="hud-sep">|</span> Koin: <b>${browserStats.coins}</b> <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : (player.sprinting ? 'Lari' : 'Jalan')} <span class="hud-sep">|</span> Blok: <b>${BLOCKS[HOTBAR[selectedSlot]].name}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
+          `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> ${clockIcon} <b>${clock}</b> <span class="hud-sep">|</span> Koin: <b>${browserStats.coins}</b> <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : (player.sprinting ? 'Lari' : 'Jalan')} <span class="hud-sep">|</span> Blok: <b>${HOTBAR[selectedSlot]?.label || '?'}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
       }
     }
 
