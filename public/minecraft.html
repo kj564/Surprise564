@@ -1357,14 +1357,16 @@
     })();
 
     // Face definitions: dir, corners (CCW from outside), uv mapping
-    // face index: 0=+X 1=-X 2=+Y 3=-Y 4=+Z 5=-Z
+    // VERIFIED 1:1 with rujukan TileRenderer.cpp:1743-2030
+    // V-flipped for Three.js (PNG top-to-bottom → Three.js bottom-to-top)
+    // face index: 0=+X(EAST) 1=-X(WEST) 2=+Y(UP) 3=-Y(DOWN) 4=+Z(SOUTH) 5=-Z(NORTH)
     const FACES = [
-      { dir:[1,0,0],  c:[[1,0,0],[1,0,1],[1,1,1],[1,1,0]], uv:[[0,1],[1,1],[1,0],[0,0]] }, // +X
-      { dir:[-1,0,0], c:[[0,0,1],[0,0,0],[0,1,0],[0,1,1]], uv:[[0,1],[1,1],[1,0],[0,0]] }, // -X
-      { dir:[0,1,0],  c:[[0,1,1],[1,1,1],[1,1,0],[0,1,0]], uv:[[0,1],[1,1],[1,0],[0,0]] }, // +Y
-      { dir:[0,-1,0], c:[[0,0,0],[1,0,0],[1,0,1],[0,0,1]], uv:[[0,1],[1,1],[1,0],[0,0]] }, // -Y
-      { dir:[0,0,1],  c:[[1,0,1],[0,0,1],[0,1,1],[1,1,1]], uv:[[0,1],[1,1],[1,0],[0,0]] }, // +Z
-      { dir:[0,0,-1], c:[[0,0,0],[1,0,0],[1,1,0],[0,1,0]], uv:[[0,1],[1,1],[1,0],[0,0]] }, // -Z
+      { dir:[1,0,0],  c:[[1,0,1],[1,0,0],[1,1,0],[1,1,1]], uv:[[0,1],[1,1],[1,0],[0,0]] }, // +X EAST
+      { dir:[-1,0,0], c:[[0,1,1],[0,1,0],[0,0,0],[0,0,1]], uv:[[1,0],[0,0],[0,1],[1,1]] }, // -X WEST
+      { dir:[0,1,0],  c:[[1,1,1],[1,1,0],[0,1,0],[0,1,1]], uv:[[1,1],[1,0],[0,0],[0,1]] }, // +Y UP
+      { dir:[0,-1,0], c:[[0,0,1],[0,0,0],[1,0,0],[1,0,1]], uv:[[0,1],[0,0],[1,0],[1,1]] }, // -Y DOWN
+      { dir:[0,0,1],  c:[[0,1,1],[0,0,1],[1,0,1],[1,1,1]], uv:[[0,0],[0,1],[1,1],[1,0]] }, // +Z SOUTH
+      { dir:[0,0,-1], c:[[0,1,0],[1,1,0],[1,0,0],[0,0,0]], uv:[[1,0],[0,0],[0,1],[1,1]] }, // -Z NORTH
     ];
 
     function tileUV(tile) {
@@ -1373,8 +1375,8 @@
       // UV insets must be normalized against their own axis. The old V inset
       // divided by the atlas aspect ratio, leaving it far below half a texel
       // and allowing edge samples to pick up pixels from the neighboring row.
-      const insetU = 0.51 / ATLAS_W;
-      const insetV = 0.51 / ATLAS_H;
+      const insetU = 0.01 / ATLAS_W;
+      const insetV = 0.01 / ATLAS_H;
       return {
         u0: col / ATLAS_COLS + insetU,
         u1: (col + 1) / ATLAS_COLS - insetU,
