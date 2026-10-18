@@ -1,4 +1,4 @@
-import type { BlockMaterial } from '../../world/item/tools';
+import type { BlockMaterial } from '../../item/tools';
 
 export type RenderLayer = 'opaque' | 'cutout' | 'translucent' | 'invisible';
 export type BlockShape = 'cube' | 'slab' | 'stairs' | 'cross' | 'torch' | 'liquid' | 'door' | 'none';
