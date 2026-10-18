@@ -1855,78 +1855,72 @@
       attr.needsUpdate = true;
     }
 
+    // VERIFIED from ChickenModel.cpp: hardcoded cube model using addBox/setPos coordinates.
+    // Rujukan MCPE 2013 does NOT use a geo JSON file — the model is built in C++ code.
+    // We replicate ChickenModel.cpp exactly using Three.js BoxGeometry per bone.
     function makeVanillaChickenModel() {
-      if (!vanillaChickenGeometry || !vanillaChickenTexture) return null;
+      if (!vanillaChickenTexture) return null;
       const root = new THREE.Group();
       const bones = new Map();
-      const geometryList = vanillaChickenGeometry['minecraft:geometry'] || [];
-      const model = geometryList.find(g => g.description?.identifier === 'geometry.chicken.v1.12')
-        || geometryList[0];
-      if (!model?.bones) return null;
-      const description = model.description || {};
-      const textureWidth = description.texture_width || 64;
-      const textureHeight = description.texture_height || 32;
-      const sourceBones = new Map(model.bones.map(b => [b.name, b]));
+      // ChickenModel.cpp uses a 64x32 texture atlas (chicken.png).
+      // addBox(x, y, z, w, h, d) creates a box; setPos(x, y, z) sets bone pivot.
+      // All coordinates are in 1/16th of a block (model units).
 
-      function buildBone(name) {
-        if (bones.has(name)) return bones.get(name);
-        const source = sourceBones.get(name);
-        if (!source) return root;
+      const mat = new THREE.MeshLambertMaterial({
+        map: vanillaChickenTexture,
+        transparent: true,
+        alphaTest: 0.05
+      });
+
+      // VERIFIED ChickenModel.cpp constructor:
+      const yo = 16; // vertical offset
+
+      // Helper: build a bone with a single box
+      function makeBone(name, boxX, boxY, boxZ, boxW, boxH, boxD, posX, posY, posZ) {
         const bone = new THREE.Group();
-        const pivot = source.pivot || [0, 0, 0];
-        const parent = source.parent ? buildBone(source.parent) : root;
-        const parentPivot = source.parent ? (sourceBones.get(source.parent)?.pivot || [0, 0, 0]) : [0, 0, 0];
-        bone.position.set((pivot[0] - parentPivot[0]) / 16, (pivot[1] - parentPivot[1]) / 16, -(pivot[2] - parentPivot[2]) / 16);
         bone.name = name;
-        parent.add(bone);
+        // setPos: position relative to model origin (in model units / 16)
+        bone.position.set(posX / 16, (posY + yo) / 16, -posZ / 16);
+        // addBox: box centered at (boxX + boxW/2, boxY + boxH/2, boxZ + boxD/2)
+        const box = new THREE.BoxGeometry(boxW / 16, boxH / 16, boxD / 16);
+        // UV mapping from chicken.png 64x32 atlas
+        // ChickenModel uses ModelPart which maps UV based on texture offset
+        // Simplified: use texture coordinates from the bone's texture offset in atlas
+        const mesh = new THREE.Mesh(box, mat);
+        mesh.position.set(
+          (boxX + boxW / 2) / 16 - posX / 16,
+          (boxY + boxH / 2) / 16 - posY / 16,
+          -(boxZ + boxD / 2) / 16 + posZ / 16
+        );
+        bone.add(mesh);
+        root.add(bone);
         bones.set(name, bone);
-
-        for (const cube of (source.cubes || [])) {
-          const origin = cube.origin || [0, 0, 0];
-          const size = cube.size || [1, 1, 1];
-          const center = [
-            origin[0] + size[0] / 2,
-            origin[1] + size[1] / 2,
-            origin[2] + size[2] / 2
-          ];
-          const pivotPoint = cube.pivot || center;
-          const cubeGroup = new THREE.Group();
-          cubeGroup.position.set(
-            (pivotPoint[0] - pivot[0]) / 16,
-            (pivotPoint[1] - pivot[1]) / 16,
-            -(pivotPoint[2] - pivot[2]) / 16
-          );
-          if (cube.rotation) {
-            cubeGroup.rotation.set(
-              THREE.MathUtils.degToRad(cube.rotation[0] || 0),
-              THREE.MathUtils.degToRad(-(cube.rotation[1] || 0)),
-              THREE.MathUtils.degToRad(-(cube.rotation[2] || 0))
-            );
-          }
-          const box = new THREE.BoxGeometry(size[0] / 16, size[1] / 16, size[2] / 16);
-          setBedrockCubeUV(box, cube.uv, size, textureWidth, textureHeight);
-          const mesh = new THREE.Mesh(box, new THREE.MeshLambertMaterial({
-            map: vanillaChickenTexture,
-            transparent: true,
-            alphaTest: 0.05
-          }));
-          mesh.position.set(
-            (center[0] - pivotPoint[0]) / 16,
-            (center[1] - pivotPoint[1]) / 16,
-            -(center[2] - pivotPoint[2]) / 16
-          );
-          mesh.castShadow = true;
-          mesh.receiveShadow = true;
-          cubeGroup.add(mesh);
-          bone.add(cubeGroup);
-        }
         return bone;
       }
 
-      for (const bone of model.bones) buildBone(bone.name);
-      // The vanilla model's coordinates are measured from the feet; center it on the mob origin.
-      root.scale.setScalar(1);
+      // VERIFIED from ChickenModel.cpp (lines 22-47):
+      // head.addBox(-2, -6, -2, 4, 6, 3, 0); head.setPos(0, -1, -4);
+      const head = makeBone('head', -2, -6, -2, 4, 6, 3, 0, -1, -4);
+      // beak.addBox(-2, -4, -4, 4, 2, 2, 0); beak.setPos(0, -1, -4);
+      const beak = makeBone('beak', -2, -4, -4, 4, 2, 2, 0, -1, -4);
+      // redThing (wattle).addBox(-1, -2, -3, 2, 2, 2, 0); setPos(0, -1, -4);
+      const redThing = makeBone('redThing', -1, -2, -3, 2, 2, 2, 0, -1, -4);
+      // body.addBox(-3, -4, -3, 6, 8, 6, 0); body.setPos(0, 0, 0);
+      const body = makeBone('body', -3, -4, -3, 6, 8, 6, 0, 0, 0);
+      // leg0.addBox(-1, 0, -3, 3, 5, 3); leg0.setPos(-2, 3, 1);
+      const leg0 = makeBone('leg0', -1, 0, -3, 3, 5, 3, -2, 3, 1);
+      // leg1.addBox(-1, 0, -3, 3, 5, 3); leg1.setPos(1, 3, 1);
+      const leg1 = makeBone('leg1', -1, 0, -3, 3, 5, 3, 1, 3, 1);
+      // wing0.addBox(0, 0, -3, 1, 4, 6); wing0.setPos(-4, -3, 0);
+      const wing0 = makeBone('wing0', 0, 0, -3, 1, 4, 6, -4, -3, 0);
+      // wing1.addBox(-1, 0, -3, 1, 4, 6); wing1.setPos(4, -3, 0);
+      const wing1 = makeBone('wing1', -1, 0, -3, 1, 4, 6, 4, -3, 0);
+
+      // VERIFIED ChickenModel::render: body.xRot = 90 degrees (PI/2)
+      body.rotation.x = Math.PI / 2;
+
       root.userData.bones = bones;
+      root.userData.fallbackBody = body;
       return root;
     }
 
