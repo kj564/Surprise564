@@ -237,23 +237,70 @@
   }
   #inventory.hidden { display: none; }
   #inventory h2 { font-size: 18px; margin-bottom: 12px; text-shadow: 2px 2px 0 #000; letter-spacing: 1px; }
+  /* §TouchIngameBlockSelectionScreen.cpp:40-47 — BorderPixels=4, BlockPixels=24,
+     ItemSize=BlockPixels+2*BorderPixels=32, Bx=10, By=6 (frame border). */
   .inv-grid {
-    display: grid; grid-template-columns: repeat(8, 54px); gap: 4px; padding: 14px;
-    background: rgba(0,0,0,0.7); border: 2px solid #555; border-radius: 6px;
+    display: grid;
+    grid-template-columns: repeat(8, 32px);  /* ItemSize = 32 (BlockPixels 24 + 2*BorderPixels 4) */
+    gap: 0;
+    padding: 6px;  /* §By = 6 — frame border height (itemframe.png provides the border) */
+    background-image: url('./VoxelCraft/textures/gui/itemframe.png');
+    background-size: 100% 100%;  /* §TouchIngameBlockSelectionScreen.cpp:212 — blit itemframe across grid */
+    background-repeat: no-repeat;
+    background-color: rgba(20, 20, 20, 0.85);
+    border: 0;
+    border-radius: 0;
     max-height: 70vh; overflow-y: auto;
+    image-rendering: pixelated;
   }
   .inv-slot {
-    width: 54px; height: 54px; background: rgba(30,30,30,0.7);
-    border: 2px solid #444; border-radius: 4px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; position: relative;
+    width: 32px; height: 32px;  /* ItemSize = 32 */
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    padding: 4px;  /* §BorderPixels = 4 */
+    box-sizing: border-box;
   }
-  .inv-slot:hover { border-color: #fff; background: rgba(60,60,60,0.85); }
-  .inv-slot canvas, .inv-slot img { width: 40px; height: 40px; image-rendering: pixelated; object-fit: contain; }
+  .inv-slot:hover { background: rgba(255,255,255,0.12); border: 0; }
+  .inv-slot canvas, .inv-slot img {
+    width: 24px; height: 24px;  /* §BlockPixels = 24 */
+    image-rendering: pixelated; object-fit: contain;
+  }
   .inv-slot .lbl { position: absolute; bottom: -14px; font-size: 9px; opacity: 0; pointer-events: none; white-space: nowrap; }
   .inv-slot:hover .lbl { opacity: 1; }
   .inv-hint { margin-top: 14px; font-size: 12px; opacity: 0.8; text-shadow: 1px 1px 0 #000; }
-  #invClose { margin-top: 16px; padding: 8px 22px; background: #4a9a3a; border: 2px solid #fff; color: #fff; border-radius: 4px; cursor: pointer; font-size: 14px; }
-  #invClose:hover { background: #5cb84a; }
+  /* §TouchIngameBlockSelectionScreen.cpp:100-109 — Done button (top-right, 18x18
+     image button in rujukan). Browser port: small × button at top-right of dialog. */
+  #invClose {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 32px; height: 32px;
+    padding: 0;
+    background-color: #2c2c2c;
+    background-image: none;
+    border: 2px solid #000;
+    border-radius: 0;
+    color: #fff;
+    font-size: 20px;
+    line-height: 28px;
+    text-align: center;
+    text-shadow: 1px 1px #000;
+    cursor: pointer;
+    z-index: 12;
+  }
+  #invClose:hover {
+    background-color: #3c3c3c;
+    background-image: none;
+    color: #ffffa0;
+  }
+  #invClose:active {
+    background-image: none;
+    color: #a0a0a0;
+    transform: translateY(1px);
+  }
 
 
   /* (Legacy VoxelCraft RP hotbar/hud/toast/button overrides removed in favour of
@@ -368,32 +415,43 @@
     text-shadow: 2px 2px #000;
     font-size: 14px;
   }
+  /* §TouchIngameBlockSelectionScreen.cpp:81-86 — grid rect: 8 columns, ItemSize=32,
+     BlockPixels=24, BorderPixels=4. Rujukan uses itemframe.png border. */
   .inv-grid {
-    /* Nine columns matches the nine-slot hotbar. */
-    grid-template-columns: repeat(9, minmax(38px, 52px));
-    gap: 3px;
-    width: min(100%, 620px);
-    padding: 10px;
-    background-color: #1d1d1d;
-    border: 2px solid #000;
+    grid-template-columns: repeat(8, 32px);  /* §ItemSize = 32 */
+    gap: 0;
+    width: auto;
+    padding: 6px;  /* §By = 6 */
+    background-image: url('./VoxelCraft/textures/gui/itemframe.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-color: rgba(20, 20, 20, 0.85);
+    border: 0;
     border-radius: 0;
-    box-shadow: 0 4px 0 rgba(0,0,0,.4);
+    box-shadow: none;
+    image-rendering: pixelated;
   }
   .inv-slot {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1;
-    background-color: #2a2a2a;
-    border: 1px solid #000;
+    width: 32px;  /* §ItemSize = 32 */
+    height: 32px;
+    aspect-ratio: auto;
+    background: transparent;
+    border: 0;
     border-radius: 0;
-    box-shadow: inset 1px 1px rgba(255,255,255,.06);
+    box-shadow: none;
+    padding: 4px;  /* §BorderPixels = 4 */
+    box-sizing: border-box;
     image-rendering: pixelated;
   }
   .inv-slot:hover {
-    background-color: #4a4a4a;
-    border-color: #fff;
+    background: rgba(255,255,255,0.12);
+    border-color: transparent;
   }
-  .inv-slot canvas { width: 80%; height: 80%; image-rendering: pixelated; }
+  .inv-slot canvas {
+    width: 24px;  /* §BlockPixels = 24 */
+    height: 24px;
+    image-rendering: pixelated;
+  }
   .inv-hint {
     width: min(100%, 590px);
     margin: 8px 0 0;
@@ -405,13 +463,38 @@
     font-size: 12px;
     text-shadow: 1px 1px #000;
   }
+  /* §TouchIngameBlockSelectionScreen.cpp:100-109 — Done button is a small 18x18
+     image button at the top-right of the screen. Browser port: small × glyph. */
   #invClose {
-    min-width: 160px;
-    margin-top: 10px;
-    padding: 1px 16px;
+    position: absolute;
+    top: 14px; right: 14px;
+    min-width: 0;
+    width: 32px; height: 32px;
+    margin: 0;
+    padding: 0;
+    background-color: #2c2c2c;
+    background-image: none;
+    border: 2px solid #000;
+    border-radius: 0;
+    color: #fff;
+    font-size: 20px;
+    line-height: 28px;
+    text-align: center;
+    cursor: pointer;
+    z-index: 12;
+  }
+  #invClose:hover {
+    background-color: #3c3c3c;
+    background-image: none;
+    color: #ffffa0;
+  }
+  #invClose:active {
+    background-image: none;
+    color: #a0a0a0;
+    transform: translateY(1px);
   }
   @media (max-width: 600px) {
-    .inv-grid { grid-template-columns: repeat(6, minmax(34px, 1fr)); max-height: 56vh; overflow-y: auto; }
+    .inv-grid { grid-template-columns: repeat(6, 32px); max-height: 56vh; overflow-y: auto; }
     .inv-slot { min-width: 0; }
     #inventory { padding: 10px; }
     #hud { max-width: 65vw; font-size: 10px; }
@@ -893,7 +976,8 @@
   <div id="toast"></div>
 
   <div id="inventory" class="hidden" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
-    <h2 id="inventoryTitle">Inventaris — pilih blok untuk slot hotbar aktif</h2>
+    <button id="invClose" class="inv-done" title="Done" aria-label="Done">×</button>
+    <h2 id="inventoryTitle">Select blocks</h2>
     <div class="inv-tabs" role="tablist" aria-label="Kategori inventaris">
       <button type="button" id="inventoryTabAll" role="tab" aria-selected="true" aria-controls="invGrid" class="active" data-inv-filter="all">Semua</button>
       <button type="button" id="inventoryTabNature" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="nature">Alam</button>
@@ -901,8 +985,7 @@
       <button type="button" id="inventoryTabMinerals" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="minerals">Mineral</button>
     </div>
     <div class="inv-grid" id="invGrid" role="tabpanel" aria-labelledby="inventoryTabAll" tabindex="0"></div>
-    <p class="inv-hint">Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di bawah.</p>
-    <button id="invClose">Tutup (E)</button>
+    <p class="inv-hint">Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di pojok kanan atas.</p>
   </div>
 
 
@@ -4104,7 +4187,7 @@
     // renderItemCatalog removed — MCPE 2013 has no item icon catalog, only block inventory.
     function buildInventory(filter = activeInventoryFilter) {
       activeInventoryFilter = filter;
-      inventoryHintEl.textContent = 'Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di bawah.';
+      inventoryHintEl.textContent = 'Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di pojok kanan atas.';
       invGridEl.innerHTML = '';
       const allowedIds = inventoryFilterSets[filter];
       invGridEl.removeAttribute('aria-label');
@@ -4113,17 +4196,22 @@
         if (!def || (allowedIds && !allowedIds.has(id))) continue;
         const slot = document.createElement('div');
         slot.className = 'inv-slot';
+        // §TouchIngameBlockSelectionScreen.cpp:41 — BlockPixels = 24 (icon size).
+        // Canvas is drawn at 24x24 then CSS scales 1:1 (no upscale) to fit the
+        // 24px content area inside the 32px slot (24 + 2*BorderPixels=4).
         const c = document.createElement('canvas');
-        c.width = 40; c.height = 40;
+        c.width = 24; c.height = 24;
         const cx = c.getContext('2d');
         cx.imageSmoothingEnabled = false;
-        drawTilePreview(cx, def.side, 40);
+        drawTilePreview(cx, def.side, 24);
         slot.appendChild(c);
         const lbl = document.createElement('div');
         lbl.className = 'lbl'; lbl.textContent = def.name;
         slot.appendChild(lbl);
         slot.title = def.name;
         slot.addEventListener('click', () => {
+          // §TouchIngameBlockSelectionScreen.cpp:169-189 — addItem: moveToSelectionSlot(0, itemId) + play sound.
+          // Browser port: assign to the selected hotbar slot + toast (no audio).
           HOTBAR[selectedSlot] = { type: 'block', id, label: BLOCKS[id]?.name || 'Blok' };
           voxelEngine.inventory.setSlot(selectedSlot, { itemKey: runtimeBlockKey(id), count: 64, maxStackSize: 64 });
           buildHotbar();
