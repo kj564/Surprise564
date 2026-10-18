@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { defaultBlockRegistry } from '../blocks/registry';
 import { Inventory } from '../inventory/inventory';
 import { VoxelWorld } from '../world/world';
-import { beginMining, finishBlockBreak } from './mining';
+import { beginMining, finishBlockBreak, type GameMode } from './mining';
 
 const target = { x: 1, y: 2, z: 1 };
 
@@ -13,26 +13,40 @@ function makeWorld(blockId = 1) {
   return world;
 }
 
+/** Compute the exact tick count needed for a session to break, using the same
+ *  per-tick increment as MiningSession.tick() — accounting for FP rounding
+ *  the way rujukan C++ would. */
+function ticksToBreak(hardness: number, speed = 1): number {
+  const perTick = (speed / hardness) / 30;
+  let progress = 0;
+  let ticks = 0;
+  while (progress < 1) { progress += perTick; ticks++; }
+  return ticks;
+}
+
 describe('block mining', () => {
-  test('tracks deterministic progress and refuses early completion', () => {
+  test('survival: tracks deterministic progress and refuses early completion', () => {
     const world = makeWorld();
-    const started = beginMining(world, target, defaultBlockRegistry);
+    const started = beginMining(world, target, defaultBlockRegistry, { mode: 'survival' });
     expect(started.status).toBe('started');
     if (started.status !== 'started') return;
-    expect(started.session.totalSeconds).toBe(1.5);
-    const progress = started.session.advance(0.75, target, 1);
+    expect(started.session.hardness).toBe(1.5);
+    expect(started.session.mode).toBe('survival');
+    const ticksTotal = ticksToBreak(1.5);
+    // Mine 1 tick less than total — still mining
+    const progress = started.session.tick(ticksTotal - 1, target, 1);
     expect(progress.status).toBe('mining');
-    if (progress.status === 'mining') expect(progress.progress).toBeCloseTo(0.5);
     const inventory = new Inventory(2);
     expect(finishBlockBreak(world, started.session, defaultBlockRegistry, inventory).status).toBe('not-ready');
     expect(world.getBlock(target.x, target.y, target.z)).toBe(1);
   });
 
-  test('breaks only after mining completes and stores the correct drop', () => {
+  test('survival: breaks only after mining completes and stores the correct drop', () => {
     const world = makeWorld();
-    const started = beginMining(world, target, defaultBlockRegistry);
+    const started = beginMining(world, target, defaultBlockRegistry, { mode: 'survival' });
     if (started.status !== 'started') throw new Error('expected mining to start');
-    expect(started.session.advance(1.5, target, 1).status).toBe('completed');
+    const ticksTotal = ticksToBreak(1.5);
+    expect(started.session.tick(ticksTotal, target, 1).status).toBe('completed');
     const inventory = new Inventory(2);
     const result = finishBlockBreak(world, started.session, defaultBlockRegistry, inventory);
     expect(result.status).toBe('broken');
@@ -42,16 +56,16 @@ describe('block mining', () => {
 
   test('cancels if the player changes target or the block changes', () => {
     const world = makeWorld();
-    const started = beginMining(world, target, defaultBlockRegistry);
+    const started = beginMining(world, target, defaultBlockRegistry, { mode: 'survival' });
     if (started.status !== 'started') throw new Error('expected mining to start');
-    expect(started.session.advance(0.2, { x: 2, y: 2, z: 1 }, 1).status).toBe('cancelled');
+    expect(started.session.tick(1, { x: 2, y: 2, z: 1 }, 1).status).toBe('cancelled');
     expect(started.session.isCancelled).toBe(true);
     expect(finishBlockBreak(world, started.session, defaultBlockRegistry, new Inventory(1)).status).toBe('target-changed');
 
-    const second = beginMining(world, target, defaultBlockRegistry);
+    const second = beginMining(world, target, defaultBlockRegistry, { mode: 'survival' });
     if (second.status !== 'started') throw new Error('expected second mining to start');
     world.setBlock(target, 3);
-    expect(second.session.advance(0.2, target, world.getBlock(target.x, target.y, target.z)).status).toBe('cancelled');
+    expect(second.session.tick(1, target, world.getBlock(target.x, target.y, target.z)).status).toBe('cancelled');
   });
 
   test('rejects air, unloaded, unknown and unbreakable blocks', () => {
@@ -65,11 +79,11 @@ describe('block mining', () => {
     expect(beginMining(unknown, target, defaultBlockRegistry).status).toBe('unknown-block');
   });
 
-  test('returns drops that do not fit instead of losing them', () => {
+  test('survival: returns drops that do not fit instead of losing them', () => {
     const world = makeWorld();
-    const started = beginMining(world, target, defaultBlockRegistry);
+    const started = beginMining(world, target, defaultBlockRegistry, { mode: 'survival' });
     if (started.status !== 'started') throw new Error('expected mining to start');
-    started.session.advance(1.5, target, 1);
+    started.session.tick(ticksToBreak(1.5), target, 1);
     const inventory = new Inventory(1);
     inventory.insert('minecraft:dirt', 64);
     const result = finishBlockBreak(world, started.session, defaultBlockRegistry, inventory);
@@ -79,13 +93,35 @@ describe('block mining', () => {
     expect(inventory.getSlot(0)?.count).toBe(64);
   });
 
-  test('does not break a target changed after mining finished', () => {
+  test('survival: does not break a target changed after mining finished', () => {
     const world = makeWorld();
-    const started = beginMining(world, target, defaultBlockRegistry);
+    const started = beginMining(world, target, defaultBlockRegistry, { mode: 'survival' });
     if (started.status !== 'started') throw new Error('expected mining to start');
-    started.session.advance(1.5, target, 1);
+    started.session.tick(ticksToBreak(1.5), target, 1);
     world.setBlock(target, 3);
     expect(finishBlockBreak(world, started.session, defaultBlockRegistry, new Inventory(1)).status).toBe('target-changed');
     expect(world.getBlock(target.x, target.y, target.z)).toBe(3);
+  });
+
+  test('creative: instant break on first tick (rujukan CreativeMode.cpp)', () => {
+    const world = makeWorld();
+    const started = beginMining(world, target, defaultBlockRegistry, { mode: 'creative' });
+    if (started.status !== 'started') throw new Error('expected mining to start');
+    expect(started.session.mode).toBe('creative');
+    // First tick: instant break
+    expect(started.session.tick(1, target, 1).status).toBe('completed');
+    expect(started.session.isComplete).toBe(true);
+  });
+
+  test('creative: bedrock still unbreakable (beginMining rejects before session)', () => {
+    const world = makeWorld(7);
+    expect(beginMining(world, target, defaultBlockRegistry, { mode: 'creative' }).status).toBe('unbreakable');
+  });
+
+  test('game mode default is creative (matches MCPE 2013 default for new worlds in browser)', () => {
+    const world = makeWorld();
+    const started = beginMining(world, target, defaultBlockRegistry);
+    if (started.status !== 'started') throw new Error('expected mining to start');
+    expect(started.session.mode).toBe('creative');
   });
 });

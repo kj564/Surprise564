@@ -297,25 +297,38 @@ function sameStack(a, b) {
 }
 
 // src/game/interaction/mining.ts
+var SURVIVAL_DESTROY_DELAY = 5;
+var CREATIVE_DESTRUCTION_TICK_DELAY = 10;
+var DESTROY_PROGRESS_DIVISOR = 30;
+
 class MiningSession {
   target;
   blockId;
-  totalSeconds;
-  elapsedSeconds = 0;
+  hardness;
+  mode;
+  playerDestroySpeed;
+  destroyProgress = 0;
+  destroyTicks = 0;
+  destroyDelay = 0;
   completed = false;
   cancelled = false;
-  constructor(target, blockId, totalSeconds) {
+  constructor(target, blockId, hardness, mode, playerDestroySpeed) {
     if (!Number.isSafeInteger(target.x) || !Number.isSafeInteger(target.y) || !Number.isSafeInteger(target.z)) {
       throw new TypeError("Mining target coordinates must be safe integers");
     }
     if (!Number.isSafeInteger(blockId) || blockId <= 0 || blockId > 65535)
       throw new RangeError("Mining blockId must be between 1 and 65535");
-    if (!Number.isFinite(totalSeconds) || totalSeconds < 0)
-      throw new RangeError("totalSeconds must be finite and non-negative");
+    if (!Number.isFinite(hardness))
+      throw new RangeError("hardness must be finite");
+    if (mode !== "survival" && mode !== "creative")
+      throw new RangeError("mode must be survival or creative");
+    if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0)
+      throw new RangeError("playerDestroySpeed must be finite and positive");
     this.target = Object.freeze({ ...target });
     this.blockId = blockId;
-    this.totalSeconds = totalSeconds;
-    this.completed = totalSeconds === 0;
+    this.hardness = hardness;
+    this.mode = mode;
+    this.playerDestroySpeed = playerDestroySpeed;
   }
   get isComplete() {
     return this.completed;
@@ -326,13 +339,21 @@ class MiningSession {
   get progress() {
     if (this.completed)
       return 1;
-    if (this.totalSeconds === 0)
-      return 1;
-    return Math.min(1, this.elapsedSeconds / this.totalSeconds);
+    return Math.min(1, this.destroyProgress);
   }
-  advance(deltaSeconds, currentTarget, currentBlockId) {
-    if (!Number.isFinite(deltaSeconds) || deltaSeconds < 0)
-      throw new RangeError("deltaSeconds must be finite and non-negative");
+  get remainingTicks() {
+    if (this.completed)
+      return 0;
+    if (this.hardness <= 0)
+      return 0;
+    const perTick = this.playerDestroySpeed / this.hardness / DESTROY_PROGRESS_DIVISOR;
+    if (perTick <= 0)
+      return Infinity;
+    return Math.max(0, Math.ceil((1 - this.destroyProgress) / perTick));
+  }
+  tick(ticks, currentTarget, currentBlockId) {
+    if (!Number.isFinite(ticks) || ticks < 0)
+      throw new RangeError("ticks must be finite and non-negative");
     if (this.cancelled)
       return { status: "cancelled" };
     if (!samePosition(this.target, currentTarget) || currentBlockId !== this.blockId) {
@@ -341,21 +362,58 @@ class MiningSession {
     }
     if (this.completed)
       return { status: "completed", progress: 1 };
-    this.elapsedSeconds = Math.min(this.totalSeconds, this.elapsedSeconds + deltaSeconds);
-    if (this.elapsedSeconds >= this.totalSeconds) {
-      this.completed = true;
-      return { status: "completed", progress: 1 };
+    let remaining = Math.floor(ticks);
+    if (remaining <= 0) {
+      return { status: "mining", progress: this.progress, remainingTicks: this.remainingTicks };
     }
-    return {
-      status: "mining",
-      progress: this.progress,
-      remainingSeconds: Math.max(0, this.totalSeconds - this.elapsedSeconds)
-    };
+    if (this.mode === "creative") {
+      if (this.destroyDelay <= 0) {
+        this.completed = true;
+        this.destroyDelay = CREATIVE_DESTRUCTION_TICK_DELAY;
+        return { status: "completed", progress: 1 };
+      }
+      const consume = Math.min(remaining, this.destroyDelay);
+      this.destroyDelay -= consume;
+      remaining -= consume;
+      if (remaining > 0) {
+        if (this.destroyDelay <= 0) {
+          this.completed = true;
+          this.destroyDelay = CREATIVE_DESTRUCTION_TICK_DELAY;
+          return { status: "completed", progress: 1 };
+        }
+      }
+      return { status: "cooldown", progress: 1, cooldownTicks: this.destroyDelay };
+    }
+    while (remaining > 0) {
+      if (this.destroyDelay > 0) {
+        const consume = Math.min(remaining, this.destroyDelay);
+        this.destroyDelay -= consume;
+        remaining -= consume;
+        continue;
+      }
+      remaining -= 1;
+      const perTick = this.playerDestroySpeed / this.hardness / DESTROY_PROGRESS_DIVISOR;
+      this.destroyProgress += perTick;
+      this.destroyTicks += 1;
+      if (this.destroyProgress >= 1) {
+        this.completed = true;
+        this.destroyDelay = SURVIVAL_DESTROY_DELAY;
+        return { status: "completed", progress: 1 };
+      }
+    }
+    return { status: "mining", progress: this.progress, remainingTicks: this.remainingTicks };
+  }
+  cancel() {
+    this.cancelled = true;
   }
 }
-function beginMining(world, target, registry, miningSpeed = 1) {
-  if (!Number.isFinite(miningSpeed) || miningSpeed <= 0)
-    throw new RangeError("miningSpeed must be finite and positive");
+function beginMining(world, target, registry, options = {}) {
+  const mode = options.mode ?? "creative";
+  const playerDestroySpeed = options.playerDestroySpeed ?? 1;
+  if (mode !== "survival" && mode !== "creative")
+    throw new RangeError("mode must be survival or creative");
+  if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0)
+    throw new RangeError("playerDestroySpeed must be finite and positive");
   const blockId = world.getBlock(target.x, target.y, target.z);
   if (blockId === undefined)
     return { status: "unloaded" };
@@ -368,7 +426,7 @@ function beginMining(world, target, registry, miningSpeed = 1) {
     return { status: "unbreakable" };
   return {
     status: "started",
-    session: new MiningSession(target, blockId, definition.hardness / miningSpeed)
+    session: new MiningSession(target, blockId, definition.hardness, mode, playerDestroySpeed)
   };
 }
 function finishBlockBreak(world, session, registry, inventory) {
@@ -1302,6 +1360,8 @@ class VoxelCraftEngine {
   player;
   registry;
   clock;
+  gameMode;
+  playerDestroySpeed;
   miningSession = null;
   selectedSlotValue = 0;
   static fromSave(input) {
@@ -1334,6 +1394,8 @@ class VoxelCraftEngine {
     this.inventory = new Inventory(options.inventorySlots ?? 36);
     this.player = new PlayerPhysics(options.spawn ?? { x: 0.5, y: 2, z: 0.5 });
     this.clock = new FixedStepClock;
+    this.gameMode = options.gameMode ?? "creative";
+    this.playerDestroySpeed = options.playerDestroySpeed ?? 1;
   }
   get selectedSlot() {
     return this.selectedSlotValue;
@@ -1358,24 +1420,27 @@ class VoxelCraftEngine {
   target(origin, direction, reach = 6) {
     return raycastVoxels(this.world, origin, direction, reach, (id) => this.registry.getById(id)?.selectable ?? false);
   }
-  startMining(target, miningSpeed = 1) {
-    const result = beginMining(this.world, target, this.registry, miningSpeed);
+  startMining(target) {
+    const result = beginMining(this.world, target, this.registry, {
+      mode: this.gameMode,
+      playerDestroySpeed: this.playerDestroySpeed
+    });
     this.miningSession = result.status === "started" ? result.session : null;
     return result;
   }
   cancelMining() {
     if (!this.miningSession)
       return false;
-    this.miningSession.advance(0, null, undefined);
+    this.miningSession.cancel();
     this.miningSession = null;
     return true;
   }
-  advanceMining(deltaSeconds, currentTarget) {
+  tickMining(ticks, currentTarget) {
     const session = this.miningSession;
     if (!session)
       return { status: "no-session" };
     const currentBlockId = this.world.getBlock(session.target.x, session.target.y, session.target.z);
-    const progress = session.advance(deltaSeconds, currentTarget, currentBlockId);
+    const progress = session.tick(ticks, currentTarget, currentBlockId);
     if (progress.status === "cancelled") {
       this.miningSession = null;
       return progress;

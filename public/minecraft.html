@@ -1627,6 +1627,12 @@
       dimensions: { chunkSizeX: CHUNK_X, height: CHUNK_Y, chunkSizeZ: CHUNK_Z },
       spawn: { x: 8, y: WATER_LEVEL + 2, z: 8 }, inventorySlots: 36,  // VERIFIED rujukan: spawn at waterHeight + 2 = 66
       registry: createRuntimeBlockRegistry(),
+      // §MCPE 2013 GameMode port (rujukan CreativeMode.cpp + SurvivalMode.cpp):
+      //   creative: instant break + 10-tick cooldown between breaks
+      //   survival: per-tick destroyProgress = (1/hardness)/30, break at >=1, 5-tick delay
+      // Browser port defaults to creative (matches canHurtPlayer=false, no hearts).
+      gameMode: 'creative',
+      playerDestroySpeed: 1.0,  // bare hand (rujukan Inventory::getDestroySpeed returns 1.0 when no tool held)
     });
     HOTBAR.forEach((id, slot) => voxelEngine.inventory.setSlot(slot, { itemKey: runtimeBlockKey(id), count: 64, maxStackSize: 64 }));
     let miningHeld = false;
@@ -3847,7 +3853,12 @@
       miningHeld = true;
       beginMiningTarget(hit);
     }
-    function tickMining(deltaSeconds) {
+    // §MCPE 2013 mining tick (rujukan SurvivalMode::continueDestroyBlock + CreativeMode::continueDestroyBlock).
+    // Mining advances per PHYSICS TICK (20 tps), NOT per render frame. This is 1:1 with
+    // rujukan: the C++ Minecraft.tick() calls gameMode.tick -> continueDestroyBlock once
+    // per 50ms tick. The browser port's fixed-timestep accumulator calls this from the
+    // physics tick loop, never from the 60fps render loop.
+    function tickMiningTick() {
       if (!miningHeld) return;
       const hit = currentEngineHit(6);
       if (!hit) { voxelEngine.cancelMining(); miningTargetKey = null; return; }
@@ -3856,12 +3867,15 @@
         voxelEngine.cancelMining(); miningTargetKey = null; beginMiningTarget(hit); return;
       }
       const blockId = hit.blockId;
-      const result = voxelEngine.advanceMining(deltaSeconds, hit.block);
+      // Advance exactly 1 physics tick. The engine handles the rujukan destroyProgress
+      // formula (survival) or creative instant-break + 10-tick cooldown internally.
+      const result = voxelEngine.tickMining(1, hit.block);
       if (result.status === 'broken') {
         miningTargetKey = null;
         handleBlockBroken({ x: hit.block.x, y: hit.block.y, z: hit.block.z }, blockId);
         if (miningHeld) beginMiningTarget(currentEngineHit(6));
       } else if (result.status === 'cancelled' || result.status === 'no-session') miningTargetKey = null;
+      // 'mining', 'cooldown' statuses: keep holding, do nothing else this tick.
     }
     function placeBlock() {
       const hit = currentEngineHit(6);
@@ -4162,12 +4176,15 @@
           nTicks++;
           player.prevPos.copy(player.pos);
           movePlayerTick();
+          // §MCPE 2013 tick order: gameMode.tick -> continueDestroyBlock runs inside
+          // the same 20 tps tick as player physics. Mining MUST advance here, not
+          // in the 60fps render loop, or it runs 3x too fast.
+          tickMiningTick();
         }
       }
 
       // Visual systems stay at 60fps (dt-based) — particles, mobs, day/night.
       if (gameplayActive) {
-        tickMining(dt);
         updateParticles(dt);
         updateMobs(dt);
       }

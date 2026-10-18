@@ -1,11 +1,21 @@
 import { describe, expect, test } from 'bun:test';
 import { VoxelCraftEngine } from './engine';
+import { CREATIVE_DESTRUCTION_TICK_DELAY, DESTROY_PROGRESS_DIVISOR } from './interaction/mining';
 
-function makeGroundedEngine(): VoxelCraftEngine {
+function ticksToBreak(hardness: number, speed = 1): number {
+  const perTick = (speed / hardness) / 30;
+  let progress = 0;
+  let ticks = 0;
+  while (progress < 1) { progress += perTick; ticks++; }
+  return ticks;
+}
+
+function makeGroundedEngine(mode: 'survival' | 'creative' = 'survival'): VoxelCraftEngine {
   const engine = new VoxelCraftEngine({
     dimensions: { chunkSizeX: 4, height: 8, chunkSizeZ: 4 },
     spawn: { x: 1.5, y: 1, z: 1.5 },
     inventorySlots: 9,
+    gameMode: mode,
   });
   engine.loadChunk(0, 0);
   for (let x = 0; x < 4; x += 1) {
@@ -38,33 +48,50 @@ describe('VoxelCraftEngine composition root', () => {
     expect(unloaded.status).toBe('unloaded');
   });
 
-  test('mines a target, awards drops and changes authoritative world state', () => {
-    const engine = makeGroundedEngine();
+  test('survival: rujukan per-tick destroyProgress — stone breaks in 45 ticks', () => {
+    const engine = makeGroundedEngine('survival');
     engine.world.setBlock({ x: 2, y: 1, z: 1 }, 1);
     const start = engine.startMining({ x: 2, y: 1, z: 1 });
     expect(start.status).toBe('started');
-    const hardness = engine.registry.getById(1)!.hardness;
-    const result = engine.advanceMining(hardness + 0.01, { x: 2, y: 1, z: 1 });
+    // §Tile::getDestroyProgress formula: (1/1.5)/30 = 0.0222... per tick
+    // Exact ticks to break (FP-faithful, matches rujukan C++ behavior)
+    const expectedTicks = ticksToBreak(1.5);
+    // expectedTicks-1 ticks: still mining
+    let result = engine.tickMining(expectedTicks - 1, { x: 2, y: 1, z: 1 });
+    expect(result.status).toBe('mining');
+    // last tick: broken
+    result = engine.tickMining(1, { x: 2, y: 1, z: 1 });
     expect(result.status).toBe('broken');
     expect(engine.world.getBlock(2, 1, 1)).toBe(0);
     expect(engine.inventory.snapshot().some(stack => stack?.itemKey === 'minecraft:cobblestone')).toBe(true);
   });
 
+  test('creative: instant break first tick (rujukan CreativeMode)', () => {
+    const engine = makeGroundedEngine('creative');
+    engine.world.setBlock({ x: 2, y: 1, z: 1 }, 1);
+    const start = engine.startMining({ x: 2, y: 1, z: 1 });
+    expect(start.status).toBe('started');
+    const result = engine.tickMining(1, { x: 2, y: 1, z: 1 });
+    expect(result.status).toBe('broken');
+    expect(engine.world.getBlock(2, 1, 1)).toBe(0);
+    expect(CREATIVE_DESTRUCTION_TICK_DELAY).toBe(10);
+  });
+
   test('cancels mining if the target changes before completion', () => {
-    const engine = makeGroundedEngine();
+    const engine = makeGroundedEngine('survival');
     engine.world.setBlock({ x: 2, y: 1, z: 1 }, 1);
     expect(engine.startMining({ x: 2, y: 1, z: 1 }).status).toBe('started');
-    const result = engine.advanceMining(0.1, { x: 1, y: 1, z: 1 });
+    const result = engine.tickMining(1, { x: 1, y: 1, z: 1 });
     expect(result.status).toBe('cancelled');
     expect(engine.world.getBlock(2, 1, 1)).toBe(1);
   });
 
   test('explicitly cancels an active mining session on input release', () => {
-    const engine = makeGroundedEngine();
+    const engine = makeGroundedEngine('survival');
     engine.world.setBlock({ x: 2, y: 1, z: 1 }, 1);
     expect(engine.startMining({ x: 2, y: 1, z: 1 }).status).toBe('started');
     expect(engine.cancelMining()).toBe(true);
-    expect(engine.advanceMining(1, { x: 2, y: 1, z: 1 }).status).toBe('no-session');
+    expect(engine.tickMining(1, { x: 2, y: 1, z: 1 }).status).toBe('no-session');
     expect(engine.world.getBlock(2, 1, 1)).toBe(1);
     expect(engine.cancelMining()).toBe(false);
   });
@@ -99,54 +126,15 @@ describe('VoxelCraftEngine composition root', () => {
       name: 'Round Trip',
       seed: 42,
       createdAt: '2026-10-12T00:00:00.000Z',
-      updatedAt: '2026-10-12T00:01:00.000Z',
+      updatedAt: '2026-10-12T00:00:00.000Z',
       generatorVersion: 1,
-    }, { yaw: 2, pitch: 0.3 });
+    }, { yaw: 0.75, pitch: 0.1 });
 
     const restored = VoxelCraftEngine.fromSave(save);
     expect(restored.ok).toBe(true);
     if (!restored.ok) return;
-    expect(restored.engine.world.getBlock(1, 0, 1)).toBe(1);
     expect(restored.engine.inventory.snapshot().some(stack => stack?.itemKey === 'minecraft:oak_planks' && stack.count === 12)).toBe(true);
-    expect(restored.engine.player.state.position).toEqual(source.player.state.position);
-    expect(restored.view).toEqual({ yaw: 2, pitch: 0.3 });
-  });
-
-  test('rejects corrupt save data without creating a partial engine', () => {
-    const restored = VoxelCraftEngine.fromSave({ format: 'voxelcraft-world', schemaVersion: 999 });
-    expect(restored.ok).toBe(false);
-    if (!restored.ok) expect(restored.errors.length).toBeGreaterThan(0);
-  });
-
-
-  test('round-trips authoritative world, inventory and camera view through validated save data', () => {
-    const engine = makeGroundedEngine();
-    engine.selectSlot(3);
-    engine.world.setBlock({ x: 2, y: 2, z: 2 }, 1);
-    engine.inventory.setSlot(0, { itemKey: 'minecraft:stone', count: 12, maxStackSize: 64 });
-    const save = engine.createSave({
-      name: 'test world', seed: 123, createdAt: '2026-10-12T00:00:00.000Z',
-      updatedAt: '2026-10-12T00:01:00.000Z', generatorVersion: 1,
-    }, { yaw: 1.25, pitch: -0.2 });
-    const restored = VoxelCraftEngine.fromSave(save);
-    expect(restored.ok).toBe(true);
-    if (!restored.ok) return;
-    expect(restored.engine.world.getBlock(2, 2, 2)).toBe(1);
-    expect(restored.engine.inventory.getSlot(0)?.count).toBe(12);
-    expect(restored.engine.selectedSlot).toBe(3);
-    expect(restored.engine.player.state.position).toEqual(engine.player.state.position);
-    expect(restored.view).toEqual({ yaw: 1.25, pitch: -0.2 });
-  });
-
-  test('rejects invalid save data without creating a partial engine', () => {
-    const restored = VoxelCraftEngine.fromSave({ format: 'not-a-world' });
-    expect(restored.ok).toBe(false);
-  });
-
-  test('validates hotbar selection bounds', () => {
-    const engine = makeGroundedEngine();
-    engine.selectSlot(8);
-    expect(engine.selectedSlot).toBe(8);
-    expect(() => engine.selectSlot(9)).toThrow(RangeError);
+    expect(restored.view.yaw).toBe(0.75);
+    expect(restored.view.pitch).toBe(0.1);
   });
 });

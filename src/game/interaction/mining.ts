@@ -2,6 +2,32 @@ import type { BlockRegistry } from '../blocks/registry';
 import type { VoxelWorld, BlockPosition } from '../world/world';
 import type { Inventory, ItemStack } from '../inventory/inventory';
 
+// §MCPE 2013 mining model — 1:1 port from rujukan C++ source.
+//   Tile::getDestroyProgress(Player* player)            (Tile.cpp:391-395)
+//     if (destroySpeed < 0) return 0;                   // unbreakable
+//     if (!player->canDestroy(this)) return 1 / destroySpeed / 100.0f;
+//     return (player->getDestroySpeed(this) / destroySpeed) / 30.0f;
+//   Player::getDestroySpeed(Tile*)                       (Player.cpp:556-561)
+//     return inventory->getDestroySpeed(tile);           // bare hand = 1.0
+//   SurvivalMode::continueDestroyBlock                    (SurvivalMode.cpp:18-50)
+//     if (destroyDelay > 0) { destroyDelay--; return; }
+//     destroyProgress += tile->getDestroyProgress(player)
+//     if ((++destroyTicks & 3) == 1) step-sound;
+//     if (destroyProgress >= 1) { destroyBlock; reset; destroyDelay = 5; }
+//   CreativeMode::startDestroyBlock                        (CreativeMode.cpp:11-19)
+//     creativeDestroyBlock(x,y,z,face);  // instant break
+//     destroyDelay = DestructionTickDelay;  // = 10
+//   CreativeMode::continueDestroyBlock                     (CreativeMode.cpp:28-33)
+//     destroyDelay--;
+//     if (destroyDelay <= 0) { destroyDelay = DestructionTickDelay; creativeDestroyBlock(); }
+
+export const TICKS_PER_SECOND = 20;
+export const SURVIVAL_DESTROY_DELAY = 5;          // ticks after break before next break
+export const CREATIVE_DESTRUCTION_TICK_DELAY = 10; // ticks between creative breaks
+export const DESTROY_PROGRESS_DIVISOR = 30;        // rujukan Tile::getDestroyProgress divisor
+
+export type GameMode = 'survival' | 'creative';
+
 export type MiningStartResult =
   | { readonly status: 'started'; readonly session: MiningSession }
   | { readonly status: 'unloaded' }
@@ -10,29 +36,39 @@ export type MiningStartResult =
   | { readonly status: 'unbreakable' };
 
 export type MiningProgressResult =
-  | { readonly status: 'mining'; readonly progress: number; readonly remainingSeconds: number }
+  | { readonly status: 'mining'; readonly progress: number; readonly remainingTicks: number }
   | { readonly status: 'completed'; readonly progress: 1 }
-  | { readonly status: 'cancelled' };
+  | { readonly status: 'cancelled' }
+  // Creative-only: a break happened this tick and a cooldown delay is now active
+  | { readonly status: 'cooldown'; readonly progress: 1; readonly cooldownTicks: number };
 
-/** Time-based mining state. Tool tiers and game-mode modifiers are explicit future inputs. */
+/** Tick-based mining state — 1:1 with rujukan SurvivalMode/CreativeMode.
+ *  Caller advances one or more ticks per physics step (20 tps fixed-timestep). */
 export class MiningSession {
   readonly target: BlockPosition;
   readonly blockId: number;
-  readonly totalSeconds: number;
-  private elapsedSeconds = 0;
-  private completed = false;
+  readonly hardness: number;
+  readonly mode: GameMode;
+  readonly playerDestroySpeed: number;
+  private destroyProgress = 0;
+  private destroyTicks = 0;
+  private destroyDelay = 0;
+  private completed = false;     // survival: destroyProgress>=1 reached this tick
   private cancelled = false;
 
-  constructor(target: BlockPosition, blockId: number, totalSeconds: number) {
+  constructor(target: BlockPosition, blockId: number, hardness: number, mode: GameMode, playerDestroySpeed: number) {
     if (!Number.isSafeInteger(target.x) || !Number.isSafeInteger(target.y) || !Number.isSafeInteger(target.z)) {
       throw new TypeError('Mining target coordinates must be safe integers');
     }
     if (!Number.isSafeInteger(blockId) || blockId <= 0 || blockId > 0xffff) throw new RangeError('Mining blockId must be between 1 and 65535');
-    if (!Number.isFinite(totalSeconds) || totalSeconds < 0) throw new RangeError('totalSeconds must be finite and non-negative');
+    if (!Number.isFinite(hardness)) throw new RangeError('hardness must be finite');
+    if (mode !== 'survival' && mode !== 'creative') throw new RangeError('mode must be survival or creative');
+    if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0) throw new RangeError('playerDestroySpeed must be finite and positive');
     this.target = Object.freeze({ ...target });
     this.blockId = blockId;
-    this.totalSeconds = totalSeconds;
-    this.completed = totalSeconds === 0;
+    this.hardness = hardness;
+    this.mode = mode;
+    this.playerDestroySpeed = playerDestroySpeed;
   }
 
   get isComplete(): boolean {
@@ -45,38 +81,103 @@ export class MiningSession {
 
   get progress(): number {
     if (this.completed) return 1;
-    if (this.totalSeconds === 0) return 1;
-    return Math.min(1, this.elapsedSeconds / this.totalSeconds);
+    return Math.min(1, this.destroyProgress);
   }
 
-  advance(deltaSeconds: number, currentTarget: BlockPosition | null, currentBlockId: number | undefined): MiningProgressResult {
-    if (!Number.isFinite(deltaSeconds) || deltaSeconds < 0) throw new RangeError('deltaSeconds must be finite and non-negative');
+  /** Ticks of mining remaining until the block breaks (survival only; creative is instant). */
+  get remainingTicks(): number {
+    if (this.completed) return 0;
+    if (this.hardness <= 0) return 0;
+    const perTick = (this.playerDestroySpeed / this.hardness) / DESTROY_PROGRESS_DIVISOR;
+    if (perTick <= 0) return Infinity;
+    return Math.max(0, Math.ceil((1 - this.destroyProgress) / perTick));
+  }
+
+  /** Advance mining by `ticks` physics ticks (1 tick = 1/20 s). The caller must
+   *  confirm the same target is still selected, otherwise the session cancels. */
+  tick(ticks: number, currentTarget: BlockPosition | null, currentBlockId: number | undefined): MiningProgressResult {
+    if (!Number.isFinite(ticks) || ticks < 0) throw new RangeError('ticks must be finite and non-negative');
     if (this.cancelled) return { status: 'cancelled' };
     if (!samePosition(this.target, currentTarget) || currentBlockId !== this.blockId) {
       this.cancelled = true;
       return { status: 'cancelled' };
     }
     if (this.completed) return { status: 'completed', progress: 1 };
-    this.elapsedSeconds = Math.min(this.totalSeconds, this.elapsedSeconds + deltaSeconds);
-    if (this.elapsedSeconds >= this.totalSeconds) {
-      this.completed = true;
-      return { status: 'completed', progress: 1 };
+
+    let remaining = Math.floor(ticks);
+    if (remaining <= 0) {
+      return { status: 'mining', progress: this.progress, remainingTicks: this.remainingTicks };
     }
-    return {
-      status: 'mining',
-      progress: this.progress,
-      remainingSeconds: Math.max(0, this.totalSeconds - this.elapsedSeconds),
-    };
+
+    // Creative: instant break on first tick, then cooldown of CREATIVE_DESTRUCTION_TICK_DELAY.
+    if (this.mode === 'creative') {
+      // First tick that arrives while not on cooldown = instant break.
+      if (this.destroyDelay <= 0) {
+        this.completed = true;
+        this.destroyDelay = CREATIVE_DESTRUCTION_TICK_DELAY; // for next break
+        return { status: 'completed', progress: 1 };
+      }
+      // Consume ticks by cooldown. Each tick decrements destroyDelay.
+      const consume = Math.min(remaining, this.destroyDelay);
+      this.destroyDelay -= consume;
+      remaining -= consume;
+      if (remaining > 0) {
+        // Cooldown elapsed this very call — break the (new) block now.
+        if (this.destroyDelay <= 0) {
+          this.completed = true;
+          this.destroyDelay = CREATIVE_DESTRUCTION_TICK_DELAY;
+          return { status: 'completed', progress: 1 };
+        }
+      }
+      return { status: 'cooldown', progress: 1, cooldownTicks: this.destroyDelay };
+    }
+
+    // Survival: rujukan SurvivalMode::continueDestroyBlock
+    while (remaining > 0) {
+      // destroyDelay blocks the tick entirely (rujukan: `destroyDelay--; return;`).
+      if (this.destroyDelay > 0) {
+        const consume = Math.min(remaining, this.destroyDelay);
+        this.destroyDelay -= consume;
+        remaining -= consume;
+        continue;
+      }
+      // One tick of mining progress.
+      remaining -= 1;
+      // §Tile::getDestroyProgress: (playerDestroySpeed / hardness) / 30
+      // hardness<0 is filtered by beginMining (unbreakable), so safe here.
+      const perTick = (this.playerDestroySpeed / this.hardness) / DESTROY_PROGRESS_DIVISOR;
+      this.destroyProgress += perTick;
+      this.destroyTicks += 1;
+      if (this.destroyProgress >= 1) {
+        this.completed = true;
+        this.destroyDelay = SURVIVAL_DESTROY_DELAY;
+        return { status: 'completed', progress: 1 };
+      }
+    }
+    return { status: 'mining', progress: this.progress, remainingTicks: this.remainingTicks };
+  }
+
+  /** Force-cancel the session (input release). */
+  cancel(): void {
+    this.cancelled = true;
   }
 }
+
+export type BeginMiningOptions = {
+  readonly mode?: GameMode;
+  readonly playerDestroySpeed?: number;
+};
 
 export function beginMining(
   world: Pick<VoxelWorld, 'getBlock'>,
   target: BlockPosition,
   registry: BlockRegistry,
-  miningSpeed = 1,
+  options: BeginMiningOptions = {},
 ): MiningStartResult {
-  if (!Number.isFinite(miningSpeed) || miningSpeed <= 0) throw new RangeError('miningSpeed must be finite and positive');
+  const mode = options.mode ?? 'creative';
+  const playerDestroySpeed = options.playerDestroySpeed ?? 1;
+  if (mode !== 'survival' && mode !== 'creative') throw new RangeError('mode must be survival or creative');
+  if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0) throw new RangeError('playerDestroySpeed must be finite and positive');
   const blockId = world.getBlock(target.x, target.y, target.z);
   if (blockId === undefined) return { status: 'unloaded' };
   if (blockId === 0) return { status: 'air' };
@@ -85,7 +186,7 @@ export function beginMining(
   if (definition.hardness < 0) return { status: 'unbreakable' };
   return {
     status: 'started',
-    session: new MiningSession(target, blockId, definition.hardness / miningSpeed),
+    session: new MiningSession(target, blockId, definition.hardness, mode, playerDestroySpeed),
   };
 }
 

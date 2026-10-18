@@ -1,7 +1,7 @@
 import { defaultBlockRegistry, type BlockRegistry } from './blocks/registry';
 import { FixedStepClock, type FixedStepResult } from './core/fixed-step';
 import { Inventory } from './inventory/inventory';
-import { beginMining, finishBlockBreak, type MiningProgressResult, type MiningSession, type MiningStartResult } from './interaction/mining';
+import { beginMining, finishBlockBreak, type GameMode, type MiningProgressResult, type MiningSession, type MiningStartResult } from './interaction/mining';
 import { placeBlockFromInventory } from './interaction/placement';
 import { raycastVoxels, type RayVector, type VoxelRayHit, type VoxelRayResult } from './interaction/raycast';
 import { Aabb } from './physics/aabb';
@@ -16,6 +16,12 @@ export interface VoxelCraftEngineOptions {
   readonly spawn?: PlayerPosition;
   readonly inventorySlots?: number;
   readonly registry?: BlockRegistry;
+  /** MCPE 2013 game mode (default: creative). Survival uses per-tick destroyProgress;
+   *  Creative instantly breaks with a 10-tick cooldown between breaks. */
+  readonly gameMode?: GameMode;
+  /** Bare-hand destroy speed = 1.0 (rujukan Player::getDestroySpeed → Inventory::getDestroySpeed
+   *  returns 1.0 when no tool is held). Future tools override this. */
+  readonly playerDestroySpeed?: number;
 }
 
 /** Renderer-independent composition root for the new VoxelCraft mechanics. */
@@ -25,6 +31,8 @@ export class VoxelCraftEngine {
   readonly player: PlayerPhysics;
   readonly registry: BlockRegistry;
   readonly clock: FixedStepClock;
+  readonly gameMode: GameMode;
+  readonly playerDestroySpeed: number;
   private miningSession: MiningSession | null = null;
   private selectedSlotValue = 0;
 
@@ -61,6 +69,8 @@ export class VoxelCraftEngine {
     this.inventory = new Inventory(options.inventorySlots ?? 36);
     this.player = new PlayerPhysics(options.spawn ?? { x: 0.5, y: 2, z: 0.5 });
     this.clock = new FixedStepClock();
+    this.gameMode = options.gameMode ?? 'creative';
+    this.playerDestroySpeed = options.playerDestroySpeed ?? 1;
   }
 
   get selectedSlot(): number {
@@ -94,25 +104,34 @@ export class VoxelCraftEngine {
     return raycastVoxels(this.world, origin, direction, reach, id => this.registry.getById(id)?.selectable ?? false);
   }
 
-  startMining(target: BlockPosition, miningSpeed = 1): MiningStartResult {
-    const result = beginMining(this.world, target, this.registry, miningSpeed);
+  startMining(target: BlockPosition): MiningStartResult {
+    const result = beginMining(this.world, target, this.registry, {
+      mode: this.gameMode,
+      playerDestroySpeed: this.playerDestroySpeed,
+    });
     this.miningSession = result.status === 'started' ? result.session : null;
     return result;
   }
 
-  /** Advance mining only while the caller confirms the same currently targeted block. */
+  /** Force-cancel an active mining session (input release). */
   cancelMining(): boolean {
     if (!this.miningSession) return false;
-    this.miningSession.advance(0, null, undefined);
+    this.miningSession.cancel();
     this.miningSession = null;
     return true;
   }
 
-  advanceMining(deltaSeconds: number, currentTarget: BlockPosition | null): MiningProgressResult | { readonly status: 'no-session' } | { readonly status: 'broken'; readonly dropsRemaining: readonly { readonly itemKey: string; readonly count: number; readonly maxStackSize: number }[] } {
+  /** Advance mining by `ticks` physics ticks (1 tick = 1/20 s). Caller must
+   *  confirm the same currently targeted block, otherwise the session cancels.
+   *  Returns the per-tick outcome and (on completion) the drop remainder. */
+  tickMining(ticks: number, currentTarget: BlockPosition | null):
+    | MiningProgressResult
+    | { readonly status: 'no-session' }
+    | { readonly status: 'broken'; readonly dropsRemaining: readonly { readonly itemKey: string; readonly count: number; readonly maxStackSize: number }[] } {
     const session = this.miningSession;
     if (!session) return { status: 'no-session' };
     const currentBlockId = this.world.getBlock(session.target.x, session.target.y, session.target.z);
-    const progress = session.advance(deltaSeconds, currentTarget, currentBlockId);
+    const progress = session.tick(ticks, currentTarget, currentBlockId);
     if (progress.status === 'cancelled') {
       this.miningSession = null;
       return progress;
