@@ -33,36 +33,20 @@ jobs:
       - name: Stage original MCPE 2013 textures from rujukan source
         run: |
           RUJUKAN=rujukan/pocket-edition-2013/mcpe-source/handheld/project/android/assets
-          mkdir -p public/VoxelCraft/textures/blocks public/VoxelCraft/textures/gui public/VoxelCraft/font
+          mkdir -p public/VoxelCraft/textures/blocks public/VoxelCraft/textures/gui \
+                   public/VoxelCraft/font public/VoxelCraft/textures/environment \
+                   public/VoxelCraft/textures/mob
           cp "$RUJUKAN/terrain.png" public/VoxelCraft/textures/blocks/terrain.png
           cp "$RUJUKAN/gui/gui.png" public/VoxelCraft/textures/gui/gui.png
           cp "$RUJUKAN/gui/icons.png" public/VoxelCraft/textures/gui/icons.png
+          cp "$RUJUKAN/gui/items.png" public/VoxelCraft/textures/gui/items.png
+          cp "$RUJUKAN/gui/gui_blocks.png" public/VoxelCraft/textures/gui/gui_blocks.png
+          cp "$RUJUKAN/gui/title.png" public/VoxelCraft/textures/gui/title.png
+          cp "$RUJUKAN/gui/background.png" public/VoxelCraft/textures/gui/background.png
           cp "$RUJUKAN/font/default8.png" public/VoxelCraft/font/default8.png
-          test -f public/VoxelCraft/textures/blocks/terrain.png || { echo "Missing terrain.png"; exit 1; }
-          test -f public/VoxelCraft/textures/gui/gui.png || { echo "Missing gui.png"; exit 1; }
-          test -f public/VoxelCraft/textures/gui/icons.png || { echo "Missing icons.png"; exit 1; }
-          test -f public/VoxelCraft/font/default8.png || { echo "Missing default8.png"; exit 1; }
-
-      - name: Stage gui_buttons.png
-        run: |
-          test -f public/VoxelCraft/textures/gui/gui_buttons.png || { echo "Missing gui_buttons.png"; exit 1; }
-
-      - name: Stage clouds and chicken
-        run: |
-          mkdir -p public/VoxelCraft/textures/environment public/VoxelCraft/models/entity public/VoxelCraft/textures/entity/chicken
-          cp rujukan/pocket-edition-2013/mcpe-source/handheld/project/android/assets/environment/clouds.png public/VoxelCraft/textures/environment/clouds.png
-          cp VoxelCraft/models/entity/chicken.geo.json public/VoxelCraft/models/entity/chicken.geo.json
-          cp VoxelCraft/textures/entity/chicken/chicken.png public/VoxelCraft/textures/entity/chicken/chicken.png
-          test -f public/VoxelCraft/textures/environment/clouds.png || { echo "Missing clouds.png"; exit 1; }
-          test -f public/VoxelCraft/models/entity/chicken.geo.json || { echo "Missing chicken model"; exit 1; }
-          test -f public/VoxelCraft/textures/entity/chicken/chicken.png || { echo "Missing chicken texture"; exit 1; }
-
-      - name: Stage item icons
-        run: |
-          mkdir -p public/VoxelCraft/textures/items
-          for name in book_writable apple feather clock_item bed_red compass_item book_normal brick diamond; do
-            cp "VoxelCraft/textures/items/${name}.png" "public/VoxelCraft/textures/items/${name}.png"
-          done
+          cp "$RUJUKAN/environment/clouds.png" public/VoxelCraft/textures/environment/clouds.png
+          cp "$RUJUKAN/mob/chicken.png" public/VoxelCraft/textures/mob/chicken.png
+          cp "$RUJUKAN/particles.png" public/VoxelCraft/textures/particles.png
 
       - name: Build voxel engine bundle
         run: |
@@ -88,7 +72,12 @@ jobs:
           test -f out/VoxelCraft/textures/blocks/terrain.png || { echo "Missing terrain.png"; exit 1; }
           test -f out/VoxelCraft/textures/gui/gui.png || { echo "Missing gui.png"; exit 1; }
           test -f out/VoxelCraft/textures/gui/icons.png || { echo "Missing icons.png"; exit 1; }
+          test -f out/VoxelCraft/textures/gui/items.png || { echo "Missing items.png"; exit 1; }
+          test -f out/VoxelCraft/textures/gui/title.png || { echo "Missing title.png"; exit 1; }
           test -f out/VoxelCraft/textures/environment/clouds.png || { echo "Missing clouds.png"; exit 1; }
+          test -f out/VoxelCraft/textures/mob/chicken.png || { echo "Missing chicken.png"; exit 1; }
+          test -f out/VoxelCraft/textures/particles.png || { echo "Missing particles.png"; exit 1; }
+          test -f out/VoxelCraft/font/default8.png || { echo "Missing default8.png"; exit 1; }
           touch out/.nojekyll
 
       - name: Upload Pages artifact
