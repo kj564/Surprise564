@@ -80,7 +80,8 @@
     z-index: 1;
   }
   .slot canvas { width: 16px; height: 16px; image-rendering: pixelated; }
-  .slot .num { position: absolute; top: 0; left: 1px; font-size: 7px; color: #fff; text-shadow: 1px 1px 0 #000; line-height: 1; }
+  /* §Slot numbers removed — not in rujukan Gui::renderSlot (Gui.cpp:293-302) */
+  .slot .num { display: none; }
   /* §Rujukan Gui::renderOnSelectItemNameText (Gui.cpp:652-668): item name
      shown as TEMPORARY overlay ABOVE hotbar, not persistent under each slot.
      Hidden here to match rujukan. The item name overlay feature can be added later. */
@@ -95,6 +96,9 @@
   .slot .dur > i { display:block; height:100%; background:#7fdc4b; }
   .slot .dur.warn > i { background:#f0a020; }
   .slot .dur.crit > i { background:#e04848; }
+  /* §"..." button slot — §Gui.cpp:187 opens block selection (inventory) */
+  .slot.more-slot { display:flex; align-items:center; justify-content:center; }
+  .slot.more-slot .more-dots { font-size:14px; color:#fff; text-shadow:1px 1px #000; line-height:1; }
 
   /* HUD — plain text, no background panel (MCPE 2013 draws HUD text directly
      onto the framebuffer with the default8.png font, no toast background).
@@ -120,10 +124,17 @@
   #overlay .keys { margin-top: 22px; display: grid; grid-template-columns: auto auto; gap: 4px 18px; font-size: 13px; text-align: left; }
   #overlay .keys b { display: inline-block; min-width: 78px; color: #ffe082; }
   #overlay.hidden { display: none; }
-  #loading { position: fixed; inset: 0; z-index: 20; background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
+  /* §ProgressScreen.cpp:24-57 — dirt background (gui/background.png)
+     + 100x2px progress bar at center+16. Gray bg (0x808080), green fill (0x80ff80). */
+  #loading { position: fixed; inset: 0; z-index: 20; 
+    background: url('./VoxelCraft/textures/gui/background.png') repeat;
+    background-size: 64px 64px; background-color: #404040;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
   #loading.hidden { display: none; }
-  .spinner { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #7ee76a; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 14px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* §ProgressScreen.cpp:44-57 — progress bar: 100px wide, 2px tall,
+     centered, 16px below center. Gray bg, green fill. */
+  .progress-bar { width: 100px; height: 2px; background: #808080; margin-top: 16px; position: relative; }
+  .progress-bar > i { display: block; height: 100%; background: #80ff80; }
 
   #toast {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -859,8 +870,8 @@
   </div>
 
   <div id="loading">
-    <div class="spinner"></div>
-    <div>Memuat dunia VoxelCraft...</div>
+    <!-- §ProgressScreen.cpp:24-57 — dirt background + progress bar -->
+    <div class="progress-bar"><i style="width: 0%"></i></div>
     <div id="loadingDetail" style="margin-top:8px;font-size:12px;opacity:0.7">menyiapkan tekstur</div>
   </div>
 
@@ -1116,15 +1127,19 @@
     // Block IDs reference the BLOCKS table; tool itemKeys reference the items/tools registry.
     // The first 4 slots are blocks for building; the last 4 are tools for mining 1:1 with
     // rujukan (wood/iron/diamond pickaxe + wood shovel for dirt/sand/gravel).
+    // §Gui.cpp:187-189 — last slot (N-1) opens SCREEN_BLOCKSELECTION (inventory).
+    // §Gui.cpp:756 — renderToolBar loops N-1 item slots, the Nth is the "..." button.
+    // §Inventory.h:20 — MAX_SELECTION_SIZE = 9, so 9 total slots (8 items + 1 "...").
     const HOTBAR = [
       { type: 'block', id: 1,  label: 'Batu' },           // stone (id 1)
       { type: 'block', id: 3,  label: 'Tanah' },           // dirt (id 3)
       { type: 'block', id: 5,  label: 'Papan Ek' },        // oak planks (id 5)
-      { type: 'block', id: 4,  label: 'Kayu Ek' },          // oak log (id 4, was mislabeled 'Cobblestone')
+      { type: 'block', id: 4,  label: 'Kayu Ek' },          // oak log (id 4)
       { type: 'tool',  itemKey: 'minecraft:wood_pickaxe',    label: 'Pickaxe Kayu' },
       { type: 'tool',  itemKey: 'minecraft:iron_pickaxe',    label: 'Pickaxe Besi' },
       { type: 'tool',  itemKey: 'minecraft:diamond_pickaxe', label: 'Pickaxe Berlian' },
       { type: 'tool',  itemKey: 'minecraft:wood_shovel',     label: 'Sekop Kayu' },
+      { type: 'more',  label: '...' },   // §Gui.cpp:187 — opens block selection (inventory)
     ];
     // §Tool itemKey → icon (col,row) in items.png 256x256 atlas (16x16 tiles).
     // Verified from rujukan Item.cpp:168-198 (setIcon(col,row) calls).
@@ -1809,6 +1824,7 @@
       // canDestroy per rujukan Inventory.cpp:307-323.
     });
     HOTBAR.forEach((entry, slot) => {
+      if (entry.type === 'more') return;  // "..." slot is not an inventory item
       if (entry.type === 'block') {
         voxelEngine.inventory.setSlot(slot, { itemKey: runtimeBlockKey(entry.id), count: 64, maxStackSize: 64 });
       } else {
@@ -3686,6 +3702,19 @@
         const slot = document.createElement('div');
         slot.className = 'slot' + (i === 0 ? ' active' : '');
         slot.dataset.index = i;
+        if (entry.type === 'more') {
+          // §Gui.cpp:187-189 — last slot opens SCREEN_BLOCKSELECTION (inventory).
+          // §Gui.cpp:765 — blits 14x4 indicator from gui.png (242, 252).
+          // Browser: clicking opens the inventory panel (toggleInventory).
+          slot.classList.add('more-slot');
+          const dots = document.createElement('div');
+          dots.className = 'more-dots';
+          dots.textContent = '⋯';
+          slot.appendChild(dots);
+          slot.addEventListener('click', () => toggleInventory());
+          hotbarEl.appendChild(slot);
+          return;  // skip icon/count/dur rendering for "..." slot
+        }
         // Canvas internal resolution matches the MCPE 2013 tile size (16x16).
         const c = document.createElement('canvas');
         c.width = 16; c.height = 16;
@@ -3701,9 +3730,8 @@
           if (icon) drawItemPreview(cx, icon.col, icon.row, 16);
         }
         slot.appendChild(c);
-        const num = document.createElement('div');
-        num.className = 'num'; num.textContent = (i + 1);
-        slot.appendChild(num);
+        // §Gui.cpp:293-302 — renderSlot renders ONLY the item icon, no slot number.
+        // Slot numbers (1-8) were a browser addition, removed for 1:1 with rujukan.
         const nm = document.createElement('div');
         nm.className = 'name'; nm.textContent = entry.label;
         slot.appendChild(nm);
@@ -4123,6 +4151,11 @@
       // Use the bundled getTool() from voxelcraft-engine.bundle.js (exposed on window)
       return (window.VoxelCraftGetTool && window.VoxelCraftGetTool(entry.itemKey)) || null;
     }
+    // §Check if the selected slot is the "..." block-selection button
+    function isMoreSlotSelected() {
+      const entry = HOTBAR[selectedSlot];
+      return entry && entry.type === 'more';
+    }
     function beginMiningTarget(hit) {
       if (!hit) return;
       // §Pass the equipped tool to voxelEngine.startMining. The engine uses it
@@ -4186,6 +4219,7 @@
       // §Tools can't be placed as blocks (rujukan Item::use → no block placement).
       const entry = HOTBAR[selectedSlot];
       if (entry && entry.type === 'tool') { toast('Slot aktif adalah alat, bukan blok'); return; }
+      if (entry && entry.type === 'more') { toast('Buka inventaris untuk pilih blok'); return; }
       voxelEngine.player.teleport({ x: player.pos.x, y: player.pos.y, z: player.pos.z });
       const result = voxelEngine.placeSelected(hit);
       if (result.status !== 'placed') {
