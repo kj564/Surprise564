@@ -830,6 +830,57 @@
     #hearts { top: 32px; }
   }
 
+  /* ================================================================
+     §Touch controls — MCPE 2013 TouchscreenInput.cpp + TouchInputHolder.h
+     D-pad: 3x3 grid bottom-left, gui.png sprites at (0,107) 26x26 each
+     Turn/Build: right side of screen (drag=look, tap=place, hold=break)
+     ================================================================ */
+
+  /* §TouchscreenInput.cpp:120-145 — D-pad layout:
+     Bw = w * 0.11 (capped at 14mm ≈ ~100px), Bh = Bw
+     BaseX = 8 (left side), BaseY = h - 3*Bh - 8
+     3x3 grid: N(top-center), S(bottom-center), W(left), E(right), C(jump,center) */
+  #dpad {
+    position: fixed; bottom: calc(8px + 50px); left: 8px;
+    z-index: 6; display: none;
+    transform-origin: bottom left;
+    --bw: min(11vw, 80px);
+    width: calc(var(--bw) * 3); height: calc(var(--bw) * 3);
+    touch-action: none; -webkit-touch-callout: none; user-select: none;
+  }
+  #dpad.visible { display: block; }
+  #dpad .btn {
+    position: absolute; width: var(--bw); height: var(--bw);
+    background: url('./VoxelCraft/textures/gui/gui.png') no-repeat;
+    background-size: calc(256px * var(--bw) / 26px);
+    image-rendering: pixelated; opacity: 0.5;
+    touch-action: none;
+  }
+  /* §TouchscreenInput.cpp:433-441 — gui.png sprite positions (26x26 each):
+     N (forward): (0, 107), S (backward): (52, 107),
+     W (left): (26, 107), E (right): (78, 107),
+     C (jump): (104, 107)
+     When flying: N=(52,133), S=(78,133), C=(104,133) */
+  #dpad .btn.n { left: var(--bw); top: 0; background-position: calc(0px * var(--bw) / 26px) calc(-107px * var(--bw) / 26px); }
+  #dpad .btn.s { left: var(--bw); top: calc(var(--bw) * 2); background-position: calc(-52px * var(--bw) / 26px) calc(-107px * var(--bw) / 26px); }
+  #dpad .btn.w { left: 0; top: var(--bw); background-position: calc(-26px * var(--bw) / 26px) calc(-107px * var(--bw) / 26px); }
+  #dpad .btn.e { left: calc(var(--bw) * 2); top: var(--bw); background-position: calc(-78px * var(--bw) / 26px) calc(-107px * var(--bw) / 26px); }
+  #dpad .btn.c { left: var(--bw); top: var(--bw); background-position: calc(-104px * var(--bw) / 26px) calc(-107px * var(--bw) / 26px); }
+  /* §TouchscreenInput.cpp:85-87 — pressed = 0xc0c0c0 a128, released = 0xffffff a128 */
+  #dpad .btn.pressed { opacity: 0.8; filter: brightness(0.75); }
+  /* §TouchscreenInput.cpp:467-470 — flying mode: different sprites */
+  #dpad.flying .btn.n { background-position: calc(-52px * var(--bw) / 26px) calc(-133px * var(--bw) / 26px); }
+  #dpad.flying .btn.s { background-position: calc(-78px * var(--bw) / 26px) calc(-133px * var(--bw) / 26px); }
+  #dpad.flying .btn.c { background-position: calc(-104px * var(--bw) / 26px) calc(-133px * var(--bw) / 26px); }
+
+  /* §TouchInputHolder.h — turn/build overlay (transparent, covers screen
+     except D-pad and hotbar areas). Touch here = look/break/place. */
+  #touchArea {
+    position: fixed; inset: 0; z-index: 4; display: none;
+    touch-action: none; -webkit-touch-callout: none;
+  }
+  #touchArea.visible { display: block; }
+
 </style>
 </head>
 <body>
@@ -939,6 +990,16 @@
     </div>
   </div>
 
+  <!-- §TouchscreenInput.cpp — D-pad for mobile controls -->
+  <div id="dpad">
+    <div class="btn n" data-key="n"></div>
+    <div class="btn w" data-key="w"></div>
+    <div class="btn c" data-key="c"></div>
+    <div class="btn e" data-key="e"></div>
+    <div class="btn s" data-key="s"></div>
+  </div>
+  <!-- §TouchInputHolder.h — unified turn/build area (transparent) -->
+  <div id="touchArea"></div>
   <script type="importmap">
   {
     "imports": {
@@ -4511,6 +4572,192 @@
       selectSlot(i);
     });
 
+    // ============================================================
+    // §Touch controls — MCPE 2013 TouchscreenInput.cpp + TouchInputHolder.h
+    // D-pad: 3x3 grid, left-bottom, gui.png sprites at (0,107) 26x26
+    // Turn/Build: right side, drag=look, tap=place, hold=break
+    // ============================================================
+    const dpadEl = document.getElementById('dpad');
+    const touchAreaEl = document.getElementById('touchArea');
+    const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+    // §Show touch controls only on touch devices
+    if (isTouchDevice) {
+      dpadEl.classList.add('visible');
+      touchAreaEl.classList.add('visible');
+    }
+
+    // §TouchscreenInput.cpp:230-310 — D-pad touch handling
+    // Track which buttons are pressed by which touch IDs
+    const dpadButtons = {};  // touchId -> button element
+    const dpadKeys = { n: false, s: false, w: false, e: false, c: false };
+
+    function updateDpadKeys() {
+      // §TouchscreenInput.cpp:260-290 — tick logic:
+      // N: ya += 1 (forward), S: ya -= 1 (backward)
+      // W: xa += 1 (left), E: xa -= 1 (right)
+      // C: jump (or fly up/down)
+      keys['KeyW'] = dpadKeys.n;
+      keys['KeyS'] = dpadKeys.s;
+      keys['KeyA'] = dpadKeys.w;
+      keys['KeyD'] = dpadKeys.e;
+      keys['Space'] = dpadKeys.c;
+    }
+
+    dpadEl.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      for (const touch of e.changedTouches) {
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (el && el.dataset && el.dataset.key) {
+          dpadButtons[touch.identifier] = el;
+          dpadKeys[el.dataset.key] = true;
+          el.classList.add('pressed');
+          updateDpadKeys();
+        }
+      }
+    }, { passive: false });
+
+    dpadEl.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      for (const touch of e.changedTouches) {
+        // Re-evaluate which button the finger is over
+        const oldEl = dpadButtons[touch.identifier];
+        const newEl = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (oldEl !== newEl) {
+          if (oldEl && oldEl.dataset && oldEl.dataset.key) {
+            dpadKeys[oldEl.dataset.key] = false;
+            oldEl.classList.remove('pressed');
+          }
+          if (newEl && newEl.dataset && newEl.dataset.key) {
+            dpadButtons[touch.identifier] = newEl;
+            dpadKeys[newEl.dataset.key] = true;
+            newEl.classList.add('pressed');
+          }
+          updateDpadKeys();
+        }
+      }
+    }, { passive: false });
+
+    function endDpadTouch(e) {
+      for (const touch of e.changedTouches) {
+        const el = dpadButtons[touch.identifier];
+        if (el && el.dataset && el.dataset.key) {
+          dpadKeys[el.dataset.key] = false;
+          el.classList.remove('pressed');
+        }
+        delete dpadButtons[touch.identifier];
+        updateDpadKeys();
+      }
+    }
+    dpadEl.addEventListener('touchend', endDpadTouch, { passive: false });
+    dpadEl.addEventListener('touchcancel', endDpadTouch, { passive: false });
+
+    // §TouchInputHolder.h:108-280 — Unified Turn/Build system
+    // The entire screen (except D-pad and hotbar areas) is the turn/build zone.
+    // §TouchInputHolder.h:236-250 — State machine:
+    //   State_None → touch start → State_Deciding
+    //   State_Deciding + movement > 20px → State_Turn (look around)
+    //   State_Deciding + time > 400ms → State_Destroy (break block)
+    //   State_Deciding + release < 250ms → BUILD (place block)
+    const turnBuildTouches = {};  // touchId -> { startX, startY, startTime, state, totalDelta }
+    const STATE_NONE = 0, STATE_DECIDING = 1, STATE_TURN = 2, STATE_DESTROY = 3;
+    const MaxBuildMovement = 20;  // §TouchInputHolder.h:228
+    const RemovalMilliseconds = 400;  // §TouchInputHolder.h:229
+    const BuildTapMs = 250;  // §TouchInputHolder.h:253 — quick tap = build
+
+    touchAreaEl.addEventListener('touchstart', (e) => {
+      if (!gameStarted || locked || inventoryOpen) return;
+      e.preventDefault();
+      for (const touch of e.changedTouches) {
+        turnBuildTouches[touch.identifier] = {
+          startX: touch.clientX,
+          startY: touch.clientY,
+          startTime: performance.now(),
+          state: STATE_DECIDING,
+          totalDelta: 0,
+          lastX: touch.clientX,
+          lastY: touch.clientY,
+          destroyStarted: false,
+        };
+      }
+    }, { passive: false });
+
+    touchAreaEl.addEventListener('touchmove', (e) => {
+      if (!gameStarted || locked || inventoryOpen) return;
+      e.preventDefault();
+      for (const touch of e.changedTouches) {
+        const t = turnBuildTouches[touch.identifier];
+        if (!t) continue;
+        const dx = touch.clientX - t.lastX;
+        const dy = touch.clientY - t.lastY;
+        t.lastX = touch.clientX;
+        t.lastY = touch.clientY;
+        t.totalDelta += Math.abs(dx) + Math.abs(dy);
+
+        // §TouchInputHolder.h:155 — sensitivity * linearTransform(delta, DeadZone=0)
+        // = sensitivity * delta (DeadZone=0 means no deadzone)
+        const sens = 0.004;  // browser approximation of rujukan sensitivity
+        player.yaw -= dx * sens;
+        player.pitch -= dy * sens;
+        player.pitch = Math.max(-Math.PI / 2 + 0.001, Math.min(Math.PI / 2 - 0.001, player.pitch));
+
+        // §TouchInputHolder.h:165 — if totalDelta > MaxBuildMovement (20): switch to TURN
+        if (t.state === STATE_DECIDING && t.totalDelta >= MaxBuildMovement) {
+          t.state = STATE_TURN;
+        }
+      }
+    }, { passive: false });
+
+    touchAreaEl.addEventListener('touchend', (e) => {
+      if (!gameStarted || locked || inventoryOpen) return;
+      e.preventDefault();
+      for (const touch of e.changedTouches) {
+        const t = turnBuildTouches[touch.identifier];
+        if (!t) continue;
+        const elapsed = performance.now() - t.startTime;
+
+        if (t.state === STATE_DESTROY) {
+          // Was breaking — stop mining
+          stopMining();
+        } else if (t.state === STATE_DECIDING && elapsed < BuildTapMs) {
+          // §TouchInputHolder.h:253 — quick tap = BUILD (place block)
+          placeBlock();
+        } else if (t.state === STATE_TURN) {
+          // Was looking — nothing to do on release
+        }
+        delete turnBuildTouches[touch.identifier];
+      }
+    }, { passive: false });
+
+    touchAreaEl.addEventListener('touchcancel', (e) => {
+      for (const touch of e.changedTouches) {
+        const t = turnBuildTouches[touch.identifier];
+        if (t && t.state === STATE_DESTROY) stopMining();
+        delete turnBuildTouches[touch.identifier];
+      }
+    }, { passive: false });
+
+    // §TouchInputHolder.h:190-200 — check for long-press destroy every frame
+    // If a touch has been held > 400ms without moving > 20px, start breaking
+    function checkTouchDestroy() {
+      const now = performance.now();
+      for (const [id, t] of Object.entries(turnBuildTouches)) {
+        if (t.state === STATE_DECIDING) {
+          const elapsed = now - t.startTime;
+          // §TouchInputHolder.h:191 — if time >= RemovalMilliseconds (400ms)
+          // AND totalDelta <= MaxBuildMovement (20): switch to DESTROY
+          if (elapsed >= RemovalMilliseconds && t.totalDelta < MaxBuildMovement) {
+            t.state = STATE_DESTROY;
+            // Start breaking the block being looked at
+            if (!t.destroyStarted) {
+              t.destroyStarted = true;
+              breakBlock();
+            }
+          }
+        }
+      }
+    }
+
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -4540,7 +4787,12 @@
       // Integer-millisecond accumulator avoids floating-point precision loss
       // that occurred with dt≈TICK_DT (Math.floor(0.05/0.05) returned 0 on some
       // frames, halving the effective tick rate). Integer ms is exact.
-      if (gameplayActive) {
+      // §Touch devices: gameplay is active when gameStarted && !inventoryOpen
+      // (no pointer lock needed — TouchscreenInput.cpp has no pointer lock concept)
+      // §Touch gameplay: active when touch area is visible (touch device) or forced.
+      // No pointer lock needed on touch devices (TouchscreenInput.cpp has no lock concept).
+      const touchGameplayActive = touchAreaEl.classList.contains('visible') && gameStarted && !inventoryOpen;
+      if (gameplayActive || touchGameplayActive) {
         physicsAccumMs += dt * 1000;
         let nTicks = 0;
         while (physicsAccumMs >= TICK_MS && nTicks < MAX_TICKS_PER_UPDATE) {
@@ -4552,6 +4804,7 @@
           // the same 20 tps tick as player physics. Mining MUST advance here, not
           // in the 60fps render loop, or it runs 3x too fast.
           tickMiningTick();
+          checkTouchDestroy();
         }
       }
 
