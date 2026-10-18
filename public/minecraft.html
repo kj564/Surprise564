@@ -1637,6 +1637,13 @@
     HOTBAR.forEach((id, slot) => voxelEngine.inventory.setSlot(slot, { itemKey: runtimeBlockKey(id), count: 64, maxStackSize: 64 }));
     let miningHeld = false;
     let miningTargetKey = null;
+    // §LocalPlayer::aiStep state — VERIFIED rujukan fields (LocalPlayer.cpp:168-217):
+    //   jumpTriggerTime: 7-tick window for double-jump fly toggle (was 280ms in browser)
+    //   lastSpaceDown: edge-detect Space key (replaces input->wasJumping)
+    //   mayfly: abilities.mayfly (true in creative-like modes, default true here)
+    let jumpTriggerTime = 0;
+    let lastSpaceDown = false;
+    const mayfly = true;  // browser port: creative-style, no survival mayfly gating
     let atlasTexture = null;
     let opaqueMat = null, transparentMat = null;
     const chunkMeshes = new Map(); // key -> {opaque, transparent}
@@ -1699,8 +1706,7 @@
     let gameStarted = false;
     // Expose closure state for Agent Browser testing (pointer lock fails in headless)
     window.__setGameState = (l, g) => { locked = l; gameStarted = g; };
-    let lastSpaceTime = 0;
-    let lastBreak = 0, lastPlace = 0;
+        let lastBreak = 0, lastPlace = 0;
     let worldTime = 0.28;
 
     // debug exports
@@ -3754,18 +3760,67 @@
       xxa *= 0.98;
       yya *= 0.98;
 
-      // VERIFIED Mob::aiStep:717-725 — jumping
+      // §LocalPlayer::aiStep (LocalPlayer.cpp:168-217) — VERIFIED 1:1 with rujukan:
+      //   1. decrement jumpTriggerTime (7-tick window for double-jump fly toggle)
+      //   2. read keyboard
+      //   3. handle fly toggle: if !wasJumping && input.jumping:
+      //        if jumpTriggerTime <= 0: jumpTriggerTime = 7
+      //        else: abilities.flying = !abilities.flying; jumpTriggerTime = 0
+      //   4. if flying: yd += 0.15 (wantUp=Space), yd -= 0.15 (wantDown=Shift)
+      //   5. Mob::aiStep: xxa *= 0.98, yya *= 0.98, yRotA *= 0.9, then travel
+      //
+      // The jumpTriggerTime is a per-tick counter, NOT a real-time ms window.
+      // Browser port previously used 280ms real time which is NOT 1:1 with rujukan.
+      // Now uses 7 ticks (350ms at 20 tps) — exact rujukan value.
+      if (jumpTriggerTime > 0) jumpTriggerTime--;
+      const wasSpaceDown = lastSpaceDown;
+      lastSpaceDown = !!keys['Space'];
+      if (!wasSpaceDown && keys['Space']) {
+        if (mayfly) {
+          if (jumpTriggerTime <= 0) jumpTriggerTime = 7;
+          else {
+            player.fly = !player.fly;
+            player.vel.y = 0;
+            jumpTriggerTime = 0;
+            toast(player.fly ? 'Mode terbang ON' : 'Mode terbang OFF');
+          }
+        }
+      }
+
+      // §Mob::aiStep:717-725 — jumping (only when not flying and on ground)
       if (keys['Space'] && player.onGround && !player.fly) {
-        player.vel.y = 0.42;
+        player.vel.y = 0.42;  // §Mob::jumpFromGround (Mob.cpp:844-847)
         player.onGround = false;
       }
 
+      // §LocalPlayer::aiStep:197-200 — fly vertical thrust
+      // rujukan: if (abilities.flying) {
+      //            if (input->wantUp) yd += 0.15f;
+      //            if (input->wantDown) yd -= 0.15f;
+      //          }
+      // This was MISSING in the browser port — fly mode had no vertical control.
       if (player.fly) {
-        // VERIFIED Player::travel (Player.cpp:364-375):
-        // flyingSpeed = 0.05, call super.travel (land branch), then yd *= 0.6
+        if (keys['Space']) player.vel.y += 0.15;
+        if (keys['ShiftLeft'] || keys['ShiftRight']) player.vel.y -= 0.15;
+      }
+
+      if (player.fly) {
+        // §Player::travel (Player.cpp:364-375) — VERIFIED 1:1:
+        //   float ydo = yd;              // save current yd
+        //   flyingSpeed = 0.05f;
+        //   super::travel(xa, ya);       // runs Mob::travel land branch (modifies yd)
+        //   yd = ydo * 0.6f;              // OVERWRITE yd with old_yd * 0.6
+        //   flyingSpeed = ofs;
+        // CRITICAL FIX: rujukan does `yd = ydo * 0.6`, NOT `yd *= 0.6`.
+        // The old code applied gravity+drag THEN multiplied by 0.6, which
+        // accumulated downward velocity. The correct rujukan behavior:
+        // super.travel runs, but its yd changes are DISCARDED — yd is
+        // replaced by `old_yd * 0.6` (pure damping of input velocity,
+        // no gravity/drag while flying).
+        const ydo = player.vel.y;  // save current yd BEFORE super.travel
         const savedFlySpeed = player.flySpeed;
         player.flySpeed = 0.05;
-        // land branch of Mob::travel (Mob.cpp:558-626)
+        // §Mob::travel land branch (Mob.cpp:558-626)
         let friction = 0.91;
         if (player.onGround) friction = 0.6 * 0.91;
         const friction2 = (0.6*0.6*0.91*0.91*0.6*0.91) / (friction*friction*friction);
@@ -3774,12 +3829,14 @@
         friction = 0.91;
         if (player.onGround) friction = 0.6 * 0.91;
         moveWithCollision();
-        player.vel.y -= 0.08;
-        player.vel.y *= 0.98;
+        player.vel.y -= 0.08;   // §Mob::travel:619 gravity
+        player.vel.y *= 0.98;   // §Mob::travel:620 airDrag
         player.vel.x *= friction;
         player.vel.z *= friction;
-        // Player::travel: yd = ydo * 0.6 (damp vertical for flying)
-        player.vel.y *= 0.6;
+        // §Player::travel:370 — yd = ydo * 0.6 (OVERWRITE, not multiply)
+        // This discards the gravity+drag changes from super.travel and applies
+        // pure damping to the input yd (which already includes Space/Shift thrust).
+        player.vel.y = ydo * 0.6;
         player.flySpeed = savedFlySpeed;
       } else {
         // VERIFIED Mob::travel land branch (Mob.cpp:558-626)
@@ -4058,8 +4115,10 @@
     function clearPressedKeys() {
       for (const code of Object.keys(keys)) keys[code] = false;
       stopMining();
-      // A Space tap before focus loss must not combine with a tap after refocus.
-      lastSpaceTime = 0;
+      // §LocalPlayer state reset on focus loss — a Space tap before focus loss
+      // must not combine with a tap after refocus to falsely trigger fly toggle.
+      lastSpaceDown = false;
+      jumpTriggerTime = 0;
     }
     document.addEventListener('pointerlockchange', () => {
       locked = document.pointerLockElement === canvas;
@@ -4095,15 +4154,10 @@
           return;
         }
       }
-      if (e.code === 'Space' && !e.repeat && !wasDown) {
-        const now = performance.now();
-        if (now - lastSpaceTime < 280) {
-          player.fly = !player.fly;
-          player.vel.y = 0;
-          toast(player.fly ? '✈ Mode terbang ON' : 'Mode terbang OFF');
-        }
-        lastSpaceTime = now;
-      }
+      // §LocalPlayer::aiStep double-jump fly toggle is now handled in
+      // movePlayerTick via the 7-tick jumpTriggerTime counter (1:1 with rujukan).
+      // The old 280ms real-time window was a browser-only approximation.
+      // Keydown just sets keys['Space']=true; the tick loop handles the rest.
       if (e.code === 'KeyK' && !e.repeat && !wasDown) {
         if (world.save()) toast('Dunia disimpan di browser ini');
       }
