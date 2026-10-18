@@ -253,21 +253,29 @@
      no rest-of-atlas bleeding between tiles. State changes are pure
      background-position shifts, matching Gui.cpp's button render. */
   #overlay .menu-buttons { gap: 6px; }
+  /* §Button.cpp:75-80 — text colors:
+       disabled: 0xffa0a0a0 = #a0a0a0 (gray)
+       normal:   0xe0e0e0   = #e0e0e0 (light gray)
+       hover:    0xffffa0   = #ffffa0 (light yellow)
+     §Button.cpp:82-84 — background sprites in gui.png:
+       y=46 (disabled, yImage=0), y=66 (normal, yImage=1), y=86 (hover, yImage=2)
+       each 200px wide, 20px tall. background-size 200px 256px shows full atlas
+       at correct scale; background-position shifts to the correct sprite row. */
   #overlay button,
   #invClose,
   #pauseOverlay .pause-buttons button,
   #inventory .inv-tabs button,
   #vcGuide button {
-    min-height: 22px;
+    min-height: 20px;
     padding: 1px 8px;
-    color: #fff;
+    color: #e0e0e0;  /* §Button.cpp:80 — normal text color */
     font-size: 11px;
     line-height: 20px;
     text-shadow: 1px 1px #222;
     background-color: #2c2c2c;
     background-image: url('./VoxelCraft/textures/gui/gui.png');
-    background-position: 0 0;
-    background-size: 200px 60px;
+    background-position: 0 -66px;  /* §Button.cpp:83 — normal: y=46+1*20=66 */
+    background-size: 200px 256px;  /* full atlas, 200px wide */
     background-repeat: repeat-x;
     border: 0;
     border-radius: 0;
@@ -275,6 +283,7 @@
     image-rendering: pixelated;
     cursor: pointer;
   }
+  /* §Button.cpp:78 — hover: 0xffffa0 text, y=46+2*20=86 background */
   #overlay button:hover,
   #overlay button:focus-visible,
   #invClose:hover,
@@ -284,14 +293,22 @@
   #inventory .inv-tabs button:focus-visible,
   #vcGuide button:hover,
   #vcGuide button:focus-visible {
-    background-position: 0 -20px;
+    color: #ffffa0;  /* §Button.cpp:78 — hovered text color */
+    background-position: 0 -86px;  /* §Button.cpp:83 — hover: y=46+2*20=86 */
   }
+  /* §Button.cpp:75 — active/disabled: 0xffa0a0a0 text, y=46+0*20=46 background */
   #overlay button:active,
   #invClose:active,
   #pauseOverlay .pause-buttons button:active,
   #vcGuide button:active {
-    background-position: 0 -40px;
+    color: #a0a0a0;  /* §Button.cpp:75 — disabled text color */
+    background-position: 0 -46px;  /* §Button.cpp:83 — disabled: y=46+0*20=46 */
     transform: translateY(1px);
+  }
+  #overlay button:disabled {
+    color: #a0a0a0;  /* §Button.cpp:75 — disabled text color */
+    background-position: 0 -46px;  /* §Button.cpp:83 — disabled: y=46 */
+    cursor: default;
   }
   #overlay .settings-panel {
     background-color: #1d1d1d;
