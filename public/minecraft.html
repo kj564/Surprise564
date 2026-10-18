@@ -891,11 +891,12 @@
     // ============================================================
     //  CONFIG
     // ============================================================
-    const CHUNK_X = 16, CHUNK_Z = 16, CHUNK_Y = 40;
-    const WATER_LEVEL = 16;
+    const CHUNK_X = 16, CHUNK_Z = 16;
+    const CHUNK_Y = 128;            // VERIFIED LevelConstants.h: LEVEL_HEIGHT = 128
+    const WATER_LEVEL = 64;         // VERIFIED: waterHeight = DEPTH - 64 = 128 - 64 = 64
     const RENDER_RADIUS = 4;        // chunks around player
-    const SEA_BASE = 14;            // base terrain height
-    const SEA_AMP = 14;
+    const SEA_BASE = 56;            // base terrain height (8 below water → oceans)
+    const SEA_AMP = 36;             // terrain amplitude (mountains reach 92, snow line at 80)
     const SEED = 1337;
     const SAVE_KEY = 'voxelcraft-world-v1';
 
@@ -1003,7 +1004,7 @@
           shape: id === 17 ? 'liquid' : 'cube',
           renderLayer: id === 17 || block.transparent ? 'translucent' : 'opaque',
           solid: block.solid === true, selectable: id !== 17 && !block.noCollide,
-          replaceable: id === 17, hardness: id === 10 ? -1 : id === 3 ? 1.5 : id === 1 ? 0.6 : id === 2 ? 0.5 : 1,
+          replaceable: id === 17, hardness: id === 10 ? -1 : id === 1 ? 1.5 : id === 2 ? 0.6 : id === 3 ? 0.5 : 1,
           sound, lightOpacity: id === 17 ? 1 : 15, lightEmission: id === 27 ? 15 : 0,
           drops: id === 10 ? [] : [runtimeBlockKey(dropId)],
         });
@@ -1190,49 +1191,66 @@
       }
       generate(c) {
         const baseX = c.cx * CHUNK_X, baseZ = c.cz * CHUNK_Z;
+        // === prepareHeights + buildSurfaces (RandomLevelSource.cpp) ===
+        // Simplified: per-column heightmap → stone column with bedrock bottom,
+        // then surface dressing (grass/sand top, dirt below, water fill, snow caps).
+        // Block IDs match the BLOCKS table (1=stone, 2=grass, 3=dirt, 7=sand,
+        // 8=gravel, 10=bedrock, 17=water, 29=snow) so the world renders like
+        // rujukan MCPE 2013 (green grass on top, brown dirt below, gray stone).
         for (let lx = 0; lx < CHUNK_X; lx++) {
           for (let lz = 0; lz < CHUNK_Z; lz++) {
             const wx = baseX + lx, wz = baseZ + lz;
-            const h = terrainHeight(wx, wz);
-            const hf = Math.floor(h);
-            const beachy = hf <= WATER_LEVEL + 1;
+            const hf = Math.floor(terrainHeight(wx, wz));
+            if (hf < 0 || hf >= CHUNK_Y) continue;
+
+            // VERIFIED bedrock: y <= random.nextInt(5) → 0..4 (RandomLevelSource.cpp:178).
+            // hash2 gives a deterministic per-column random in [0,1) so the bedrock
+            // layer is 1..5 blocks thick, matching rujukan.
+            const bedrockDepth = Math.floor(hash2(wx * 911, wz * 853) * 5);
+
+            // Stone column with bedrock bottom (val > 0 → stone, id=1).
             for (let y = 0; y <= hf; y++) {
-              let b = 3; // stone
-              if (y === 0) b = 10; // bedrock
-              else if (y === hf) b = beachy ? 7 : 1; // grass/sand top
-              else if (y > hf - 4) b = beachy ? 7 : 2; // dirt/sand
-              c.set(lx, y, lz, b);
+              c.set(lx, y, lz, y <= bedrockDepth ? 10 : 1); // bedrock / stone
             }
-            // ores in stone layer (depth-based) — rujukan MCPE 2013 set
-            for (let y = 1; y < hf - 4; y++) {
-              if (c.get(lx, y, lz) !== 3) continue; // only stone
-              const oreNoise = hash2(wx * 31 + 7, wz * 19 + y * 3);
-              const oreNoise2 = hash2(wx * 53 + 17, wz * 29 + y * 5);
-              if (y <= 10 && oreNoise < 0.0018) c.set(lx, y, lz, 21);       // diamond ore (deep, rare)
-              else if (y <= 10 && oreNoise2 < 0.0022) c.set(lx, y, lz, 22);  // lapis ore (deep; BLOCKS[22])
-              else if (y <= 14 && oreNoise < 0.005) c.set(lx, y, lz, 20);    // gold ore
-              else if (y <= 16 && oreNoise2 < 0.006) c.set(lx, y, lz, 24);   // redstone ore (BLOCKS[24])
-              else if (y <= 22 && oreNoise < 0.015) c.set(lx, y, lz, 19);   // iron ore
-              else if (y <= 30 && oreNoise < 0.025) c.set(lx, y, lz, 18);   // coal ore
+
+            // Surface dressing (buildSurfaces): grass/sand top, dirt/sand below.
+            const beachy = hf <= WATER_LEVEL + 1;
+            const topId = beachy ? 7 : 2;   // sand near water, grass above
+            const subId = beachy ? 7 : 3;   // sand or dirt below top
+            c.set(lx, hf, lz, topId);
+            // 3..4 blocks of dirt/sand below the top block (rujukan MCPE 2013
+            // uses a small per-column noise for the sub-surface depth).
+            const subDepth = 3 + Math.floor(hash2(wx * 13 + 7, wz * 17 + 11) * 2);
+            for (let dy = 1; dy <= subDepth; dy++) {
+              const y = hf - dy;
+              if (y < 0) break;
+              if (c.get(lx, y, lz) === 1) c.set(lx, y, lz, subId); // only replace stone
             }
-            // water fill
+
+            // Water fill from hf+1 to WATER_LEVEL (calmWater, id=17).
             if (hf < WATER_LEVEL) {
               for (let y = hf + 1; y <= WATER_LEVEL; y++) c.set(lx, y, lz, 17);
             }
-            // snow caps on high terrain
-            if (hf >= WATER_LEVEL + 10) {
-              c.set(lx, hf, lz, 29); // snow on top of mountains
-            }
+
+            // Snow caps on high terrain (simplified: hf >= WATER_LEVEL + 16 = 80).
+            // rujukan uses temperature noise; we use a height threshold.
+            if (hf >= WATER_LEVEL + 16) c.set(lx, hf, lz, 29); // snow overrides top
             // Tree placement is deferred until all terrain columns are generated.
           }
         }
-        // Generate canopies from neighboring tree origins in world coordinates, without loading adjacent chunks.
+        // === postProcess: ore deposits (RandomLevelSource.cpp:266-337) ===
+        // Deposit-based placement (counts/sizes per 16×16 chunk) instead of
+        // per-block probability, so ore distribution matches rujukan.
+        this.placeOreDeposits(c);
+        // Generate canopies from neighboring tree origins in world coordinates,
+        // without loading adjacent chunks.
         for (let wx = baseX - 2; wx < baseX + CHUNK_X + 2; wx++) {
           for (let wz = baseZ - 2; wz < baseZ + CHUNK_Z + 2; wz++) {
             const hf = Math.floor(terrainHeight(wx, wz));
-            if (hf <= WATER_LEVEL + 1 || hash2(wx * 7 + 13, wz * 11 + 5) <= 0.985) continue;
-            const wt = Math.floor(hash2(wx * 91, wz * 83) * 6);
-            this.plantTree(c, wx, hf + 1, wz, wt);
+            if (hf <= WATER_LEVEL + 1) continue;
+            // Tree probability is biome-dependent (simplified: hash2 noise).
+            if (hash2(wx * 7 + 13, wz * 11 + 5) <= 0.985) continue;
+            this.plantTree(c, wx, hf + 1, wz, 0);
           }
         }
         const chunkEdits = this.chunkOverrides.get(chunkKey(c.cx, c.cz));
@@ -1243,6 +1261,52 @@
           }
         }
         c.dirty = true;
+      }
+      placeOreDeposits(c) {
+        // Deterministic chunk-seeded LCG. rujukan uses Java Random seeded by
+        // level seed + chunk coords; the browser port regenerates chunks on
+        // demand (only player overrides are saved), so determinism is required
+        // for ore layouts to stay stable across chunk load/unload cycles.
+        let state = ((c.cx * 73856093) ^ (c.cz * 19349663) ^ Math.imul(SEED, 83492791)) >>> 0;
+        const rand = () => {
+          state = (Math.imul(state, 1103515245) + 12345) >>> 0;
+          return state / 0x100000000; // [0, 1)
+        };
+        // rujukan MCPE 2013 postProcess deposit table (per 16×16 chunk):
+        //   Dirt:     20 deposits, y=0-128, size=32
+        //   Gravel:   10 deposits, y=0-128, size=32
+        //   Coal:     20 deposits, y=0-128, size=16
+        //   Iron:     20 deposits, y=0-64,  size=8
+        //   Gold:      2 deposits, y=0-32,  size=8
+        //   Redstone:  8 deposits, y=0-16,  size=7
+        //   Diamond:   1 deposit,  y=0-16,  size=7
+        //   Lapis:      1 deposit,  y=0-32,  size=6 (y = rand(16) + rand(16), so 0-30)
+        // Clay (10/y=0-128/size=32) is skipped — no clay block in our BLOCKS table.
+        const deposits = [
+          [3,  20, 128, 32], // dirt (id 3 per BLOCKS)
+          [8,  10, 128, 32], // gravel
+          [18, 20, 128, 16], // coal ore
+          [19, 20,  64,  8], // iron ore
+          [20,  2,  32,  8], // gold ore
+          [24,  8,  16,  7], // redstone ore
+          [21,  1,  16,  7], // diamond ore
+          [22,  1,  32,  6], // lapis ore
+        ];
+        for (const [oreId, count, maxY, size] of deposits) {
+          for (let i = 0; i < count; i++) {
+            const ox = Math.floor(rand() * CHUNK_X);
+            const oy = Math.floor(rand() * maxY);
+            const oz = Math.floor(rand() * CHUNK_Z);
+            for (let j = 0; j < size; j++) {
+              const dx = Math.floor(rand() * 3) - 1;
+              const dy = Math.floor(rand() * 3) - 1;
+              const dz = Math.floor(rand() * 3) - 1;
+              const x = ox + dx, y = oy + dy, z = oz + dz;
+              if (x < 0 || x >= CHUNK_X || y < 0 || y >= CHUNK_Y || z < 0 || z >= CHUNK_Z) continue;
+              if (c.get(x, y, z) === 1) c.set(x, y, z, oreId); // only replace stone (id 1)
+            }
+          }
+        }
       }
       plantTree(c, worldX, ly, worldZ, woodType = 0) {
         // rujukan MCPE 2013: only oak trees (woodType ignored — birch/spruce/jungle/acacia/dark oak don't exist).
@@ -1554,7 +1618,7 @@
     const world = new World();
     voxelEngine = new window.VoxelCraftEngine({
       dimensions: { chunkSizeX: CHUNK_X, height: CHUNK_Y, chunkSizeZ: CHUNK_Z },
-      spawn: { x: 8, y: WATER_LEVEL + 16, z: 8 }, inventorySlots: 36,
+      spawn: { x: 8, y: WATER_LEVEL + 2, z: 8 }, inventorySlots: 36,  // VERIFIED rujukan: spawn at waterHeight + 2 = 66
       registry: createRuntimeBlockRegistry(),
     });
     HOTBAR.forEach((id, slot) => voxelEngine.inventory.setSlot(slot, { itemKey: runtimeBlockKey(id), count: 64, maxStackSize: 64 }));
@@ -1594,8 +1658,8 @@
     //   flyingSpeed  = 0.05 (Player::travel flying override scales 0.02→0.05)
     // prevPos used for camera interpolation between physics ticks.
     const player = {
-      pos: new THREE.Vector3(8, WATER_LEVEL + 16, 8),
-      prevPos: new THREE.Vector3(8, WATER_LEVEL + 16, 8),
+      pos: new THREE.Vector3(8, WATER_LEVEL + 2, 8),
+      prevPos: new THREE.Vector3(8, WATER_LEVEL + 2, 8),  // VERIFIED rujukan: waterHeight + 2 = 66
       vel: new THREE.Vector3(),
       yaw: 0, pitch: 0,
       onGround: false,
@@ -2992,7 +3056,7 @@
         const below = world.getBlock(x, y - 1, z);
         if (here || above) return -1;
         if (!below) return -1;
-        if (below === 1) return 10;  // grass (this port: id 1)
+        if (below === 2) return 10;  // grass (this port: id 2 per BLOCKS table)
         return 0.5;  // bright spot — simplified
       }
 
@@ -3725,7 +3789,7 @@
 
       // prevent falling forever
       if (player.pos.y < -10) {
-        player.pos.set(8, WATER_LEVEL + 16, 8);
+        player.pos.set(8, WATER_LEVEL + 2, 8);  // VERIFIED rujukan: waterHeight + 2 = 66
         player.vel.set(0, 0, 0);
       }
     }
