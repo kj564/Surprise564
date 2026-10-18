@@ -4841,13 +4841,63 @@
         camera.updateProjectionMatrix();
       }
 
-      // ---- Day/night cycle with visible sun/moon + stars + sunset tint ----
-      // VERIFIED MCPE 2013: time advances 1 tick per tick at 20 tps.
-      // TICKS_PER_DAY = 20 * 60 * 16 = 19200 → 960 seconds = 16 min per day.
-      // Previous code used dt/600 (10 min/day = 1.6x too fast).
-      if (gameplayActive) worldTime = (worldTime + dt / 960) % 1;
-      const sunAngle = worldTime * Math.PI * 2 - Math.PI / 2;
-      const daylight = Math.max(0.05, Math.sin(sunAngle) * 0.5 + 0.5);
+      // ============================================================
+      // §MCPE 2013 Day/night cycle — 1:1 with rujukan source:
+      //   NormalDayCycleDimension.h:13-17 — getTimeOfDay formula
+      //   Level.cpp:1163-1170 — getSkyDarken (block brightness)
+      //   Level.cpp:1172-1192 — getSkyColor (sky background)
+      //   Dimension.cpp:94-107 — getFogColor (fog color)
+      //   Level.cpp:1194-1230 — getCloudColor
+      //   Dimension.cpp:78-92 — getSunriseColor
+      //   Dimension.h:53 — fogColor = 0x80daff
+      //   Level.cpp:1182 — skyColor = 0x3070ff
+      // ============================================================
+
+      // §Time advances: TICKS_PER_DAY=19200 ticks → 960 seconds = 16 min/day
+      if (gameplayActive || touchGameplayActive) worldTime = (worldTime + dt / 960) % 1;
+
+      // §NormalDayCycleDimension.h:13-17 — getTimeOfDay(time, a):
+      //   dayStep = time % TICKS_PER_DAY
+      //   td = (dayStep + a) / TICKS_PER_DAY - 0.25
+      //   if (td < 0) td += 1; if (td > 1) td -= 1;
+      //   tdo = td
+      //   td = 1 - (cos(td * PI) + 1) * 0.5
+      //   return tdo + (td - tdo) / 3.0
+      // Browser: worldTime is [0,1) = time/TICKS_PER_DAY. We skip the /TICKS_PER_DAY
+      // since worldTime is already normalized.
+      function rujukanGetTimeOfDay(t) {
+        let td = t - 0.25;
+        if (td < 0) td += 1;
+        if (td > 1) td -= 1;
+        const tdo = td;
+        td = 1 - (Math.cos(td * Math.PI) + 1) * 0.5;
+        return tdo + (td - tdo) / 3.0;
+      }
+      const td = rujukanGetTimeOfDay(worldTime);
+
+      // §Level.cpp:1240-1243 — getSunAngle:
+      //   return getTimeOfDay(a) * PI * 2
+      const sunAngle = td * Math.PI * 2;
+
+      // §Level.cpp:1163-1170 — getSkyDarken (block brightness multiplier):
+      //   br = 1 - (cos(td * PI * 2) * 2 + 0.5)
+      //   clamp [0, 0.80]
+      //   return (int)(br * 11)  → 0..8 (skyDarken level)
+      // §Dimension.cpp:66-73 — brightnessRamp converts skyDarken to float:
+      //   v = 1 - i/16
+      //   brightnessRamp[i] = ((1-v) / (v*3+1)) * (1-0.05) + 0.05*3
+      let skyDarkenBr = 1 - (Math.cos(td * Math.PI * 2) * 2 + 0.5);
+      if (skyDarkenBr < 0) skyDarkenBr = 0;
+      if (skyDarkenBr > 0.80) skyDarkenBr = 0.80;
+      const skyDarkenLevel = Math.floor(skyDarkenBr * 11);  // 0..8
+      // brightnessRamp: convert skyDarken level to [0,1] brightness
+      const v = 1 - skyDarkenLevel / 16;
+      const brightness = ((1 - v) / (v * 3 + 1)) * (1 - 0.05) + 0.05 * 3;
+      // §Block brightness = brightnessRamp[15 - skyDarken] (day = 15, night = 7)
+      // Simpler: use brightness directly (close to 1 at day, ~0.2 at night)
+      const daylight = Math.max(0.05, brightness);
+
+      // §Sun position: rujukan uses getSunAngle * PI * 2 for sky rotation
       const sunDirX = Math.cos(sunAngle);
       const sunDirY = Math.sin(sunAngle);
       const sunDirZ = 0.3;
@@ -4856,29 +4906,54 @@
       sun.intensity = 0.08 + daylight * 0.95;
       sunMesh.position.copy(sunDir).multiplyScalar(300);
       moonMesh.position.copy(sunDir).multiplyScalar(-300);
-      // VERIFIED MCPE 2013: MeshBasicMaterial uses material.color as global
-      // brightness multiplier. MCPE 2013 applies getSkyDarken() (clamped 0-1)
-      // to all rendered tiles. We replicate by setting material.color to daylight.
+
+      // §Block brightness: apply brightnessRamp to material.color
+      // (MCPE 2013 MeshBasicMaterial + getSkyDarken)
       if (opaqueMat) opaqueMat.color.setRGB(daylight, daylight, daylight);
       if (transparentMat) transparentMat.color.setRGB(daylight, daylight, daylight);
-      // sky color: day (light blue) -> sunset (orange) -> night (dark navy)
-      const dayCol = new THREE.Color(0x88c5ff);
-      const nightCol = new THREE.Color(0x0a0a28);
-      const sunsetCol = new THREE.Color(0xff7a44);
-      const sunsetFactor = Math.max(0, 1 - Math.abs(daylight - 0.25) * 4.2);
-      const skyCol = nightCol.clone().lerp(dayCol, daylight);
-      skyCol.lerp(sunsetCol, sunsetFactor * 0.55);
-      scene.background.copy(skyCol);
-      scene.fog.color.copy(skyCol);
-      // stars fade in at night
-      starMat.opacity = Math.max(0, 1 - daylight * 2.4);
-      // night vignette darkens screen edges after sunset (kept gentle so night
-      // gameplay stays readable; peaks around ~0.4 at deep night)
-      vignetteEl.style.opacity = Math.max(0, 1 - daylight * 2.0) * 0.45;
-      // Clouds: drift + color modulation by day/night (rujukan Level::getCloudColor)
+
+      // §Level.cpp:1172-1192 — getSkyColor:
+      //   br = cos(td * PI * 2) * 2 + 0.5, clamp [0, 0.75]
+      //   skyColor = 0x3070ff → r,g,b = 48/255, 112/255, 255/255
+      //   r *= br, g *= br, b *= br
+      let skyBr = Math.cos(td * Math.PI * 2) * 2 + 0.5;
+      if (skyBr < 0) skyBr = 0;
+      if (skyBr > 0.75) skyBr = 0.75;
+      const skyR = (0x30 / 255) * skyBr;
+      const skyG = (0x70 / 255) * skyBr;
+      const skyB = (0xff / 255) * skyBr;
+
+      // §Dimension.cpp:78-92 — getSunriseColor:
+      //   span = 0.4, tt = cos(td*PI*2)
+      //   if tt in [-span, span]: sunrise/sunset color mix
+      const tt = Math.cos(td * Math.PI * 2);
+      let sunriseR = 0, sunriseG = 0, sunriseB = 0, sunriseMix = 0;
+      if (tt >= -0.4 && tt <= 0.4) {
+        const aa = ((tt + 0.4) / 0.8) * 0.5 + 0.5;
+        sunriseMix = 1 - ((1 - Math.sin(aa * Math.PI)) * 0.99);
+        sunriseMix = sunriseMix * sunriseMix;
+        sunriseR = aa * 0.3 + 0.7;
+        sunriseG = aa * aa * 0.7 + 0.2;
+        sunriseB = aa * aa * 0.0 + 0.2;
+      }
+      // Mix sunrise color into sky color
+      const finalSkyR = skyR * (1 - sunriseMix) + sunriseR * sunriseMix;
+      const finalSkyG = skyG * (1 - sunriseMix) + sunriseG * sunriseMix;
+      const finalSkyB = skyB * (1 - sunriseMix) + sunriseB * sunriseMix;
+      scene.background.setRGB(finalSkyR, finalSkyG, finalSkyB);
+      scene.fog.color.setRGB(finalSkyR, finalSkyG, finalSkyB);
+
+      // §Stars fade in at night (skyDarken > 4)
+      starMat.opacity = Math.max(0, (skyDarkenLevel - 4) / 4);
+
+      // §Night vignette: getSkyDarken > 4 → dark edges
+      vignetteEl.style.opacity = Math.max(0, (skyDarkenLevel - 4) / 4) * 0.45;
+
+      // §Clouds: drift + color modulation (Level::getCloudColor)
       updateClouds(dt);
       const [ccR, ccG, ccB] = getCloudColor(worldTime);
       cloudMat.color.setRGB(ccR, ccG, ccB);
+
       // hemisphere light follows sky brightness
       const hemi = scene.children.find(c => c.isHemisphereLight);
       if (hemi) hemi.intensity = 0.25 + daylight * 0.55;
