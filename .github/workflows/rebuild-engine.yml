@@ -1,8 +1,13 @@
 name: VoxelCraft rebuild checks
 
+# Verifies the in-repo VoxelCraft engine (src/game) and the published
+# minecraft.html stay green on every push to main. Stages kitab-suci
+# assets from rujukan/ only (no modern RP mixing, per user directive:
+# "struktur dan asset 1:1 dengan minecraft 2013").
+
 on:
   push:
-    branches: ["main", "rebuild/voxelcraft-modern-engine"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
@@ -24,27 +29,25 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Stage original MCPE 2013 textures from rujukan source
+      - name: Stage kitab-suci assets from rujukan source
         run: |
-          # Stage the original MCPE 2013 textures that minecraft.html uses.
-          # These come from rujukan/ source code, NOT from the VoxelCraft RP mirror.
+          set -euo pipefail
           RUJUKAN=rujukan/pocket-edition-2013/mcpe-source/handheld/project/android/assets
-          mkdir -p public/VoxelCraft/textures/blocks public/VoxelCraft/textures/gui public/VoxelCraft/font \
-                   public/VoxelCraft/textures/environment public/VoxelCraft/textures/items \
-                   public/VoxelCraft/models/entity public/VoxelCraft/textures/entity/chicken
-          cp "$RUJUKAN/terrain.png" public/VoxelCraft/textures/blocks/terrain.png
-          cp "$RUJUKAN/gui/gui.png" public/VoxelCraft/textures/gui/gui.png
-          cp "$RUJUKAN/gui/icons.png" public/VoxelCraft/textures/gui/icons.png
-          cp "$RUJUKAN/font/default8.png" public/VoxelCraft/font/default8.png
+          mkdir -p public/VoxelCraft/textures/blocks public/VoxelCraft/textures/gui \
+                   public/VoxelCraft/font public/VoxelCraft/textures/environment \
+                   public/VoxelCraft/textures/mob
+          cp "$RUJUKAN/terrain.png"        public/VoxelCraft/textures/blocks/terrain.png
+          cp "$RUJUKAN/gui/gui.png"         public/VoxelCraft/textures/gui/gui.png
+          cp "$RUJUKAN/gui/icons.png"       public/VoxelCraft/textures/gui/icons.png
+          cp "$RUJUKAN/gui/items.png"       public/VoxelCraft/textures/gui/items.png
+          cp "$RUJUKAN/gui/gui_blocks.png"  public/VoxelCraft/textures/gui/gui_blocks.png
+          cp "$RUJUKAN/gui/title.png"       public/VoxelCraft/textures/gui/title.png
+          cp "$RUJUKAN/gui/background.png"  public/VoxelCraft/textures/gui/background.png
+          cp "$RUJUKAN/font/default8.png"   public/VoxelCraft/font/default8.png
           cp "$RUJUKAN/environment/clouds.png" public/VoxelCraft/textures/environment/clouds.png
-          # gui_buttons.png is pre-sliced from gui.png (already committed)
-          # Chicken model + texture from VoxelCraft RP
-          cp VoxelCraft/models/entity/chicken.geo.json public/VoxelCraft/models/entity/chicken.geo.json
-          cp VoxelCraft/textures/entity/chicken/chicken.png public/VoxelCraft/textures/entity/chicken/chicken.png
-          # Item icons from VoxelCraft RP
-          for name in book_writable apple feather clock_item bed_red compass_item book_normal brick diamond; do
-            cp "VoxelCraft/textures/items/${name}.png" "public/VoxelCraft/textures/items/${name}.png"
-          done
+          cp "$RUJUKAN/mob/chicken.png"     public/VoxelCraft/textures/mob/chicken.png
+          cp "$RUJUKAN/particles.png"       public/VoxelCraft/textures/particles.png
+          echo "Staged 11 kitab-suci assets from rujukan/"
 
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
@@ -53,6 +56,8 @@ jobs:
         run: |
           if [ -f src/game/browser-entry.ts ]; then
             bun build src/game/browser-entry.ts --target browser --outfile public/voxelcraft-engine.bundle.js
+          else
+            echo "No src/game/browser-entry.ts, using committed bundle"
           fi
 
       - name: Test game-core mechanics
@@ -63,14 +68,21 @@ jobs:
 
       - name: Verify build output
         run: |
+          set -euo pipefail
           test -s out/index.html
           test -s out/minecraft.html
-          test -s out/VoxelCraft/textures/blocks/terrain.png
-          test -s out/VoxelCraft/textures/gui/gui.png
-          test -s out/VoxelCraft/textures/gui/icons.png
-          test -s out/VoxelCraft/font/default8.png
-          test -s out/VoxelCraft/textures/environment/clouds.png
+          # The 6 assets minecraft.html actually references (kitab suci):
+          for f in \
+            out/VoxelCraft/textures/blocks/terrain.png \
+            out/VoxelCraft/textures/gui/gui.png \
+            out/VoxelCraft/textures/gui/icons.png \
+            out/VoxelCraft/textures/gui/items.png \
+            out/VoxelCraft/textures/environment/clouds.png \
+            out/VoxelCraft/textures/mob/chicken.png ; do
+            test -s "$f" || { echo "FAIL: missing $f"; exit 1; }
+          done
           if [ -f public/voxelcraft-engine.bundle.js ]; then
             test -s out/voxelcraft-engine.bundle.js
             grep -q 'VoxelCraftEngine' out/voxelcraft-engine.bundle.js
           fi
+          echo "Rebuild checks: OK"

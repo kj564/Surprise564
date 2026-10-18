@@ -1,27 +1,134 @@
-name: Pocket Engine CI
+name: Kitab Suci integrity check
+
+# Rule Zero (RE skill): "read the real thing, don't guess".
+# The rujukan/ source tree IS the source of truth for this project.
+# We do NOT try to cmake-build the decompiled C++ tree — it is reference
+# code for reading, not a buildable project (no top-level CMakeLists.txt).
+#
+# Instead, this workflow verifies that the kitab suci is intact:
+#   1. The C++ source tree is present and has the expected file count
+#   2. The MCPE 2013 asset files used by minecraft.html exist and are non-empty
+#   3. The committed copies in public/VoxelCraft/ match the kitab suci byte-for-byte
+# This catches accidental damage to the source of truth before anyone
+# builds features on top of a corrupted reference.
 
 on:
   push:
+    branches: ["main"]
     paths:
       - "rujukan/pocket-edition-2013/mcpe-source/**"
       - ".github/workflows/pocket-engine-ci.yml"
+      - "public/VoxelCraft/**"
+      - "public/minecraft.html"
   pull_request:
     paths:
       - "rujukan/pocket-edition-2013/mcpe-source/**"
       - ".github/workflows/pocket-engine-ci.yml"
+      - "public/VoxelCraft/**"
+      - "public/minecraft.html"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  build-and-test:
+  verify-kitab-suci:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: rujukan/pocket-edition-2013/mcpe-source
     steps:
-      - uses: actions/checkout@v4
-      - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-      - name: Build
-        run: cmake --build build --parallel 2
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify C++ source tree integrity
+        run: |
+          set -euo pipefail
+          SRC=rujukan/pocket-edition-2013/mcpe-source
+          test -d "$SRC" || { echo "FAIL: rujukan source tree missing"; exit 1; }
+          # Count .cpp and .h files (the actual kitab suci for RE)
+          CPP_COUNT=$(find "$SRC" -type f \( -name '*.cpp' -o -name '*.h' \) | wc -l)
+          echo "C++/header file count: $CPP_COUNT"
+          test "$CPP_COUNT" -ge 1000 || { echo "FAIL: expected >=1000 cpp/h files, got $CPP_COUNT"; exit 1; }
+          # Spot-check a few canonical MCPE 2013 source files used by MODLOG
+          for f in \
+            "$SRC/handheld/src/world/entity/Entity.cpp" \
+            "$SRC/handheld/src/world/entity/Mob.cpp" \
+            "$SRC/handheld/src/world/level/tile/Tile.cpp" \
+            "$SRC/handheld/src/world/level/Level.cpp" \
+            "$SRC/handheld/src/world/entity/animal/Chicken.cpp" \
+            "$SRC/handheld/src/client/renderer/TileRenderer.cpp" \
+            "$SRC/handheld/src/client/Timer.h" ; do
+            test -s "$f" || { echo "FAIL: missing or empty $f"; exit 1; }
+            echo "OK  $f ($(wc -c < "$f") bytes)"
+          done
+
+      - name: Verify MCPE 2013 asset integrity
+        run: |
+          set -euo pipefail
+          ASSETS=rujukan/pocket-edition-2013/mcpe-source/handheld/project/android/assets
+          test -d "$ASSETS" || { echo "FAIL: android/assets missing"; exit 1; }
+          # Each entry: <path>:<min_size_bytes>
+          for spec in \
+            "terrain.png:1000" \
+            "gui/gui.png:1000" \
+            "gui/icons.png:1000" \
+            "gui/items.png:1000" \
+            "gui/gui_blocks.png:1000" \
+            "gui/title.png:100" \
+            "gui/background.png:100" \
+            "environment/clouds.png:1000" \
+            "mob/chicken.png:100" \
+            "font/default8.png:100" \
+            "particles.png:100" ; do
+            path="${spec%%:*}"
+            minsz="${spec##*:}"
+            full="$ASSETS/$path"
+            test -s "$full" || { echo "FAIL: missing or empty $full"; exit 1; }
+            actual=$(wc -c < "$full")
+            test "$actual" -ge "$minsz" || { echo "FAIL: $full too small ($actual < $minsz)"; exit 1; }
+            echo "OK  $path ($actual bytes)"
+          done
+
+      - name: Verify public/VoxelCraft mirrors kitab suci
+        run: |
+          set -euo pipefail
+          ASSETS=rujukan/pocket-edition-2013/mcpe-source/handheld/project/android/assets
+          # minecraft.html uses exactly these 6 files. They MUST match the
+          # kitab suci byte-for-byte so the game is 1:1 with MCPE 2013.
+          for spec in \
+            "terrain.png:VoxelCraft/textures/blocks/terrain.png" \
+            "gui/gui.png:VoxelCraft/textures/gui/gui.png" \
+            "gui/icons.png:VoxelCraft/textures/gui/icons.png" \
+            "gui/items.png:VoxelCraft/textures/gui/items.png" \
+            "environment/clouds.png:VoxelCraft/textures/environment/clouds.png" \
+            "mob/chicken.png:VoxelCraft/textures/mob/chicken.png" ; do
+            src="$ASSETS/${spec%%:*}"
+            dst="public/${spec##*:}"
+            test -s "$dst" || { echo "FAIL: missing committed asset $dst"; exit 1; }
+            if ! cmp -s "$src" "$dst"; then
+              echo "FAIL: $dst does NOT match kitab suci $src"
+              echo "  kitab suci sha: $(sha256sum "$src" | cut -d' ' -f1)"
+              echo "  committed  sha: $(sha256sum "$dst" | cut -d' ' -f1)"
+              exit 1
+            fi
+            echo "OK  ${spec##*:} == kitab suci ${spec%%:*}"
+          done
+
+      - name: Verify minecraft.html references only kitab-suci assets
+        run: |
+          set -euo pipefail
+          # Every VoxelCraft/...png reference in minecraft.html must point to
+          # a file we just verified above. This catches phantom asset refs.
+          refs=$(grep -oE 'VoxelCraft/[A-Za-z0-9_/.-]+\.png' public/minecraft.html | sort -u)
+          echo "Asset references in minecraft.html:"
+          echo "$refs"
+          for r in $refs; do
+            test -s "public/$r" || { echo "FAIL: minecraft.html references $r but it's missing from public/"; exit 1; }
+          done
+          echo "All minecraft.html asset references resolve."
+
+      - name: Summary
+        run: |
+          echo "Kitab Suci integrity: OK"
+          echo "  - C++ source tree: $(find rujukan/pocket-edition-2013/mcpe-source -type f \( -name '*.cpp' -o -name '*.h' \) | wc -l) files"
+          echo "  - MCPE 2013 assets: 11 verified"
+          echo "  - public/VoxelCraft mirrors kitab suci: 6/6 byte-identical"
+          echo "Rule Zero respected: source of truth intact."
