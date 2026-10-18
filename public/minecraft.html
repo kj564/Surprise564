@@ -1991,7 +1991,8 @@
     let jumpTriggerTime = 0;
     let lastSpaceDown = false;
     const mayfly = true;  // browser port: creative-style, no survival mayfly gating
-    let showDebugHud = false;  // §F3 toggles debug HUD (not in rujukan, browser addition)
+    let showDebugHud = false;  // §F3 toggles debug HUD
+    let skyDarkenLevel = 0;  // §Global sky darken for per-block lighting (updated in animate)
     let atlasTexture = null;
     let opaqueMat = null, transparentMat = null;
     const chunkMeshes = new Map(); // key -> {opaque, transparent}
@@ -2039,10 +2040,15 @@
       // Browser port defaults to creative-like play (canHurtPlayer=false) so the
       // hearts container stays hidden until a future survival mode enables it.
       health: 20,
-      maxHealth: 20,           // Player::getMaxHealth() = MAX_HEALTH = 20
-      invulnerableTime: 0,     // i-frame ticks remaining after taking damage
-      invulnerableDuration: 10, // Mob.h default
-      canHurtPlayer: false,    // survival mode toggle (false = creative-style, no hearts)
+      maxHealth: 20,           // §Player.h:43 — MAX_HEALTH = 20
+      invulnerableTime: 0,
+      invulnerableDuration: 20,  // §Mob.cpp:29 — 20 ticks i-frames
+      hurtTime: 0,
+      hurtDuration: 10,       // §Mob.cpp:411
+      fallDistance: 0,        // §Entity.h:197
+      lastHealth: 20,          // §Mob.cpp:174
+      lastHurt: 0,             // §Mob.cpp:226
+      canHurtPlayer: true,    // §Survival mode active
     };
     // Base FOV follows the menu option; sprinting temporarily widens it. The
     // initial 72 matches the PerspectiveCamera constructor so the kick lerps cleanly.
@@ -4284,10 +4290,50 @@
         player.vel.z *= friction;
       }
 
-      // prevent falling forever
+      // §Entity::checkFallDamage (Entity.cpp:534-563)
+      if (player.canHurtPlayer) {
+        if (player.onGround) {
+          if (player.fallDistance > 0) {
+            const fallDmg = Math.ceil(player.fallDistance - 3);
+            if (fallDmg > 0) hurtPlayer(fallDmg);
+            player.fallDistance = 0;
+          }
+        } else if (player.vel.y < 0) {
+          player.fallDistance -= player.vel.y;
+        }
+      }
+
       if (player.pos.y < -10) {
         player.pos.set(8, WATER_LEVEL + 2, 8);
         player.vel.set(0, 0, 0);
+      }
+    }
+
+    // §Mob::hurt + actuallyHurt (Mob.cpp:391-447)
+    function hurtPlayer(dmg) {
+      if (!player.canHurtPlayer || player.health <= 0) return;
+      if (player.invulnerableTime > player.invulnerableDuration / 2) {
+        if (dmg <= player.lastHurt) return;
+        player.health -= (dmg - player.lastHurt);
+        player.lastHurt = dmg;
+      } else {
+        player.lastHurt = dmg;
+        player.lastHealth = player.health;
+        player.invulnerableTime = player.invulnerableDuration;
+        player.health -= dmg;
+        player.hurtTime = player.hurtDuration;
+      }
+      if (player.health <= 0) {
+        player.health = 0;
+        toast('Anda mati! Respawn...');
+        setTimeout(() => {
+          player.health = player.maxHealth;
+          player.pos.set(8, WATER_LEVEL + 2, 8);
+          player.vel.set(0, 0, 0);
+          player.invulnerableTime = 0;
+          player.fallDistance = 0;
+          toast('Respawn!');
+        }, 2000);
       }
     }
 
@@ -4963,7 +5009,7 @@
       let skyDarkenBr = 1 - (Math.cos(td * Math.PI * 2) * 2 + 0.5);
       if (skyDarkenBr < 0) skyDarkenBr = 0;
       if (skyDarkenBr > 0.80) skyDarkenBr = 0.80;
-      const skyDarkenLevel = Math.floor(skyDarkenBr * 11);  // 0..8
+      skyDarkenLevel = Math.floor(skyDarkenBr * 11);  // 0..8
       // brightnessRamp: convert skyDarken level to [0,1] brightness
       const v = 1 - skyDarkenLevel / 16;
       const brightness = ((1 - v) / (v * 3 + 1)) * (1 - 0.05) + 0.05 * 3;
@@ -5053,6 +5099,9 @@
       // physics tick). The hearts UI reads this in updateHearts().
       if (player.invulnerableTime > 0) {
         player.invulnerableTime = Math.max(0, player.invulnerableTime - dt * 20);
+      }
+      if (player.hurtTime > 0) {
+        player.hurtTime = Math.max(0, player.hurtTime - dt * 20);
       }
       updateHearts();
       hudTimer += dt;
