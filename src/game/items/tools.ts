@@ -122,6 +122,9 @@ function pickaxeCanDestroy(material: BlockMaterial, blockKey: string, tierLevel:
   if (blockKey === 'minecraft:gold_block' || blockKey === 'minecraft:gold_ore') return tierLevel >= 2;
   if (blockKey === 'minecraft:iron_block' || blockKey === 'minecraft:iron_ore') return tierLevel >= 1;
   if (blockKey === 'minecraft:lapis_block' || blockKey === 'minecraft:lapis_ore') return tierLevel >= 1;
+  // §PickaxeItem.cpp:41 — redstone ore requires iron pickaxe (tier >= 2)
+  // (this was missing in the initial Task 15 port — Rule Zero fix)
+  if (blockKey === 'minecraft:redstone_ore' || blockKey === 'minecraft:redstone_ore_lit') return tierLevel >= 2;
   // Material fallback — §PickaxeItem.cpp:50-51
   if (material === 'stone' || material === 'metal') return true;
   return false;

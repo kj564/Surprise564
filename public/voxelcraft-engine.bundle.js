@@ -358,6 +358,8 @@ function pickaxeCanDestroy(material, blockKey, tierLevel) {
     return tierLevel >= 1;
   if (blockKey === "minecraft:lapis_block" || blockKey === "minecraft:lapis_ore")
     return tierLevel >= 1;
+  if (blockKey === "minecraft:redstone_ore" || blockKey === "minecraft:redstone_ore_lit")
+    return tierLevel >= 2;
   if (material === "stone" || material === "metal")
     return true;
   return false;

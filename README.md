@@ -55,6 +55,58 @@ Buka `http://localhost:3000/` atau langsung `http://localhost:3000/minecraft.htm
 
 **Controls:** WASD move · Mouse look · Space jump · Double-Space fly · Shift sprint · E inventory · G VoxelCraft menu · T advance time · K save · 1–8 hotbar · Left-click break · Right-click place
 
+## Documentation
+
+VoxelCraft follows the **spec-driven methodology** inspired by two reference projects:
+
+1. **[weltendaemmerung](https://github.com/s-macke/weltendaemmerung)** — a C64 game ported to
+   web with AI assistance using a spec-driven methodology: one `docs/` file per system,
+   explicit verification, clear separation of concerns (game logic vs rendering vs UI).
+
+2. **[awesome-rea](https://github.com/yibie/awesome-rea)** — a curated list of AI-assisted
+   reverse-engineering projects. Every entry states an **acceptance test that is
+   machine-decidable** — a byte comparison, a hash match, a build that stays green. The
+   core question each port asks: **"how does this project define done?"**
+
+We adopt both principles for VoxelCraft:
+
+- **One spec file per system** in [`docs/`](docs/) — each file is self-contained with
+  Overview -> Constants (citing rujukan source with `§File:line`) -> Formulas ->
+  Acceptance test (machine-decidable claim) -> Verification (link to the test that
+  checks it).
+- **A central [`ACCEPTANCE.md`](ACCEPTANCE.md)** that states the machine-decidable
+  acceptance test for every ported system, with status (tested / untested) for each.
+
+### System spec files
+
+| File | System | Status |
+|------|--------|--------|
+| [`docs/mining.md`](docs/mining.md) | Survival + Creative mining (SurvivalMode + CreativeMode + Tile::getDestroyProgress) | ✅ 23-tick test passes |
+| [`docs/tools.md`](docs/tools.md) | Tool tiers, 20 tools, canDestroy tier gates, per-tool getDestroySpeed | ✅ 19 tests pass |
+| [`docs/durability.md`](docs/durability.md) | ItemInstance::hurt, DiggerItem::mineBlock, sword hurt(2), strict `>` | ✅ 13 tests pass |
+| [`docs/physics.md`](docs/physics.md) | Mob::travel, Player::travel, jumpFromGround, fly thrust, friction2 formula | ⚠ TS engine tests only — rujukan per-tick constants UNTESTED |
+| [`docs/day-night.md`](docs/day-night.md) | TICKS_PER_DAY=19200, NormalDayCycleDimension formula, SEA_LEVEL vs waterHeight | ⚠ UNTESTED |
+| [`docs/world-gen.md`](docs/world-gen.md) | Level dimensions (16×16×128), 41 block hardness values | ⚠ UNTESTED directly (exercised via mining) |
+| [`docs/rendering.md`](docs/rendering.md) | TileRenderer c10/c11/c2/c3 per-face brightness, FACES vertex order, texture atlas | ⚠ UNTESTED (browser-side constants) |
+| [`docs/materials.md`](docs/materials.md) | 27 materials, 4 notAlwaysDestroyable, per-block material assignments | ✅ isAlwaysDestroyable + canDestroy tests pass |
+
+### Acceptance tests
+
+[`ACCEPTANCE.md`](ACCEPTANCE.md) is the single source of truth for **machine-decidable
+definitions of done**. Each system has:
+
+- A one-line **definition of done** (e.g. "survival-mode mining of stone with a wood
+  pickaxe takes exactly 23 physics ticks").
+- An **acceptance test** — a TypeScript snippet asserting a numeric value, status
+  string, or tick count.
+- A **Verified by** list linking to the test(s) that check it (or an UNTESTED note
+  with a suggested test for the next agent).
+- A **Rujukan source** citation with `§File:line` for every constant.
+
+Test suite at time of writing: `bun run test:game-core` -> 163 pass / 0 fail / 2318
+expect() calls.
+
+
 ## Reverse engineering
 
 Semua reverse engineering dilakukan dengan disiplin **Rule Zero: read the real thing, don't guess** — baca source code rujukan line-by-line, transkripsi exact, bukan dari ingatan atau summary.

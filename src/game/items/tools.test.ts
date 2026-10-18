@@ -89,6 +89,12 @@ describe('MCPE 2013 tool system (rujukan 1:1)', () => {
     expect(canDestroyBlock('stone', 'minecraft:iron_ore', getTool('minecraft:stone_pickaxe'))).toBe(true);
     expect(canDestroyBlock('stone', 'minecraft:lapis_ore', getTool('minecraft:wood_pickaxe'))).toBe(false);
     expect(canDestroyBlock('stone', 'minecraft:lapis_ore', getTool('minecraft:stone_pickaxe'))).toBe(true);
+    // §PickaxeItem.cpp:41 — redstone ore requires iron pickaxe (tier >= 2)
+    expect(canDestroyBlock('stone', 'minecraft:redstone_ore', getTool('minecraft:wood_pickaxe'))).toBe(false);
+    expect(canDestroyBlock('stone', 'minecraft:redstone_ore', getTool('minecraft:stone_pickaxe'))).toBe(false);
+    expect(canDestroyBlock('stone', 'minecraft:redstone_ore', getTool('minecraft:iron_pickaxe'))).toBe(true);
+    expect(canDestroyBlock('stone', 'minecraft:redstone_ore_lit', getTool('minecraft:stone_pickaxe'))).toBe(false);
+    expect(canDestroyBlock('stone', 'minecraft:redstone_ore_lit', getTool('minecraft:iron_pickaxe'))).toBe(true);
   });
 
   test('canDestroyBlock: snow/topSnow require shovel (rujukan ShovelItem.cpp:25-30)', () => {
