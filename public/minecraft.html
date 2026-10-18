@@ -132,17 +132,28 @@
   #toast.show { opacity: 1; }
 
   /* Minecraft-inspired main menu */
+  /* §Screen.cpp:130-141 — renderDirtBackground uses gui/background.png
+     tiled at 32px scale with color 0x404040 tint. */
   #overlay {
-    background: linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.42));
+    background: url('./VoxelCraft/textures/gui/background.png') repeat;
+    background-size: 64px 64px;
+    background-color: #404040;
     backdrop-filter: none; cursor: default; padding: 24px; overflow-y: auto;
   }
   #overlay .menu-wrap { width: min(440px, 94vw); display:flex; flex-direction:column; align-items:center; margin:auto; }
   /* Browser adaptation of VoxelCraftResourcePack/ui/main_menu.json branding. */
-  #overlay .brand { position:relative; margin-bottom:26px; transform:none; }
-  #overlay h1 { font-family:'Segoe UI', system-ui, sans-serif; font-size:clamp(36px, 6vw, 54px); font-weight:800; line-height:1; letter-spacing:1px; color:#bfff7a; -webkit-text-stroke:0; text-shadow:2px 2px 0 #252525, 4px 4px 0 rgba(0,0,0,.45); margin:0; }
-  #overlay h1 span { color:#bfff7a; }
-  #overlay .edition { font-size:12px; letter-spacing:3px; margin-top:8px; color:#fff; text-shadow:2px 2px #222; }
+  /* §StartMenuScreen.cpp:155-173 — title.png image instead of text.
+     Rujukan renders gui/title.png at center top with y=4, scaled to width/2. */
+  #overlay .brand { position:relative; margin-bottom:26px; transform:none; text-align:center; }
+  #overlay .brand .title-img {
+    width: min(50vw, 256px); height: auto; image-rendering: pixelated;
+    display: block; margin: 0 auto;
+  }
+  #overlay h1 { display:none; }  /* text title replaced by title.png image */
+  #overlay h1 span { display:none; }
+  #overlay .edition { display:none; }  /* no edition text in rujukan */
   #overlay .splash { display:none; }
+
   #overlay .menu-buttons { width:100%; display:grid; gap:8px; }
   #overlay .menu-buttons.hidden { display:none; }
   #overlay .help-options-panel {
@@ -180,7 +191,6 @@
   #overlay .button-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   #overlay .menu-foot { display:flex; justify-content:space-between; gap:12px; width:100%; margin-top:22px; font-size:11px; color:#eee; text-shadow:1px 1px #222; }
   #overlay .menu-foot span:last-child { text-align:right; }
-  #overlay .menu-subtitle { font-size:12px; color:#f1f1f1; margin:0 0 18px; text-shadow:1px 2px #222; }
   #overlay .keys { display:none; }
   #overlay .cta { display:none; }
   #overlay .settings-panel { display:none; width:100%; margin-top:12px; padding:12px; background:#1d1d1d; border:2px solid #000; color:#fff; }
@@ -492,19 +502,8 @@
   }
 
 
-  /* Main menu backdrop — MCPE 2013 title screen uses a panorama; we don't have
-     that texture, so fall back to a dark dirt-block gradient that matches the
-     in-game block palette. */
-  #overlay {
-    background-color: #202020;
-    background-image:
-      linear-gradient(rgba(0, 0, 0, .30), rgba(0, 0, 0, .56)),
-      radial-gradient(ellipse at center, #3a2a1a 0%, #1a1a1a 70%);
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    image-rendering: pixelated;
-  }
+  /* §Screen.cpp:130-141 — renderDirtBackground uses gui/background.png.
+     The gradient fallback has been replaced with the actual rujukan dirt texture. */
   #overlay .menu-wrap {
     padding: 18px;
     background: rgba(20, 20, 20, .18);
@@ -862,11 +861,16 @@
 
   <div id="overlay" class="hidden">
     <div class="menu-wrap">
+      <!-- §StartMenuScreen.cpp:155-173 — title.png image, NOT text.
+           Rujukan loads gui/title.png (256×64) and renders it at center top, y=4.
+           The title is scaled to fit width/2, maintaining aspect ratio. -->
       <div class="brand">
-        <h1>VOXEL<span>CRAFT</span></h1>
-        <div class="edition">BROWSER EDITION</div>
+        <img src="./VoxelCraft/textures/gui/title.png" alt="Minecraft" class="title-img" />
       </div>
-      <p class="menu-subtitle">A world of blocks awaits.</p>
+      <!-- §StartMenuScreen.cpp:75-89 — rujukan button layout:
+           bHost (Start Game) 160×24 at y=yBase-28
+           bJoin (Join Game)  160×24 at y=yBase
+           bOptions (Options)  78×22 at y=yBase+30 -->
       <div id="mainMenuButtons" class="menu-buttons">
         <button id="playButton">Play Game</button>
         <button id="helpOptionsButton">Help &amp; Options</button>
