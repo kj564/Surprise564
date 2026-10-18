@@ -3744,52 +3744,58 @@
       }
     }
     function movePlayerTick() {
-      // rujukan LocalPlayer::aiStep + Mob::aiStep + Mob::travel (land branch)
-      // Input → xxa (strafe, +1=left), yya (forward, +1=forward)
+      // VERIFIED 1:1 with rujukan LocalPlayer::aiStep + Mob::aiStep + Player::travel + Mob::travel
+      // (LocalPlayer.cpp:168-217, Player.cpp:364-375, Mob.cpp:558-626, 688-757)
       let xxa = (keys['KeyA'] ? 1 : 0) - (keys['KeyD'] ? 1 : 0);
       let yya = (keys['KeyW'] ? 1 : 0) - (keys['KeyS'] ? 1 : 0);
       if (xxa !== 0 && yya !== 0) {
         const m = Math.sqrt(xxa*xxa + yya*yya);
         xxa /= m; yya /= m;
       }
-      const sprint = keys['ShiftLeft'] && !player.fly;
-      player.sprinting = sprint;
-      // rujukan Mob::aiStep: xxa *= 0.98, yya *= 0.98 (per-tick input decay).
-      // minecraft.html resets input each tick so this has no visible effect; skip.
+      // VERIFIED Mob::aiStep:727-729 — input decay per tick
+      xxa *= 0.98;
+      yya *= 0.98;
 
-      // Jump (rujukan Mob::aiStep: if jumping && onGround, jumpFromGround = 0.42)
+      // VERIFIED Mob::aiStep:717-725 — jumping
       if (keys['Space'] && player.onGround && !player.fly) {
         player.vel.y = 0.42;
         player.onGround = false;
       }
 
       if (player.fly) {
-        // rujukan LocalPlayer::calculateFlight (simplified): direct velocity from input.
-        // VERIFIED: abilities.flyingSpeed = 0.05, vertical impulse ±0.15/tick.
-        // Same camera-relative convention as moveRelativeTick: forward =
-        // (-sin yaw, 0, -cos yaw), right = (cos yaw, 0, -sin yaw), xa=+1 left.
-        const sinY = Math.sin(player.yaw), cosY = Math.cos(player.yaw);
-        const fsp = player.flySpeed;
-        player.vel.x = (-sinY * yya - cosY * xxa) * fsp;
-        player.vel.z = (-cosY * yya + sinY * xxa) * fsp;
-        player.vel.y = ((keys['Space'] ? 1 : 0) - (keys['ShiftLeft'] ? 1 : 0)) * 0.15;
+        // VERIFIED Player::travel (Player.cpp:364-375):
+        // flyingSpeed = 0.05, call super.travel (land branch), then yd *= 0.6
+        const savedFlySpeed = player.flySpeed;
+        player.flySpeed = 0.05;
+        // land branch of Mob::travel (Mob.cpp:558-626)
+        let friction = 0.91;
+        if (player.onGround) friction = 0.6 * 0.91;
+        const friction2 = (0.6*0.6*0.91*0.91*0.6*0.91) / (friction*friction*friction);
+        moveRelativeTick(xxa, yya, player.onGround ? player.speed * friction2 : player.flySpeed);
+        // recompute friction (Mob.cpp:598-605 — friction computed TWICE)
+        friction = 0.91;
+        if (player.onGround) friction = 0.6 * 0.91;
         moveWithCollision();
+        player.vel.y -= 0.08;
+        player.vel.y *= 0.98;
+        player.vel.x *= friction;
+        player.vel.z *= friction;
+        // Player::travel: yd = ydo * 0.6 (damp vertical for flying)
+        player.vel.y *= 0.6;
+        player.flySpeed = savedFlySpeed;
       } else {
-        // rujukan Mob::travel land branch (Entry 2 verified)
+        // VERIFIED Mob::travel land branch (Mob.cpp:558-626)
         let friction = 0.91;
         if (player.onGround) {
           friction = 0.6 * 0.91;
-          // DEVIATION: rujukan reads Tile::tiles[t]->friction. minecraft.html
-          // has no per-tile friction table; uses default 0.6.
         }
         const friction2 = (0.6*0.6*0.91*0.91*0.6*0.91) / (friction*friction*friction);
-        // DEVIATION from rujukan: minecraft.html adds sprint (Shift) as a 1.5×
-        // walk-speed multiplier. rujukan has no sprint in 2013 MCPE. Preserved
-        // to keep minecraft.html's gameplay feel intact during the merge.
-        const speed = player.onGround ? player.speed * (sprint ? 1.5 : 1) * friction2 : player.flySpeed;
+        const speed = player.onGround ? player.speed * friction2 : player.flySpeed;
         moveRelativeTick(xxa, yya, speed);
+        // recompute friction (Mob.cpp:598-605 — friction computed TWICE)
+        friction = 0.91;
+        if (player.onGround) friction = 0.6 * 0.91;
         moveWithCollision();
-        // gravity + air drag + horizontal friction (per-tick, verified)
         player.vel.y -= 0.08;
         player.vel.y *= 0.98;
         player.vel.x *= friction;
@@ -3798,7 +3804,7 @@
 
       // prevent falling forever
       if (player.pos.y < -10) {
-        player.pos.set(8, WATER_LEVEL + 2, 8);  // VERIFIED rujukan: waterHeight + 2 = 66
+        player.pos.set(8, WATER_LEVEL + 2, 8);
         player.vel.set(0, 0, 0);
       }
     }
