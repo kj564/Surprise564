@@ -94,12 +94,12 @@ jobs:
           # minecraft.html uses exactly these 6 files. They MUST match the
           # kitab suci byte-for-byte so the game is 1:1 with MCPE 2013.
           for spec in \
-            "terrain.png:terrain.png" \
-            "gui/gui.png:gui/gui.png" \
-            "gui/icons.png:gui/icons.png" \
-            "gui/items.png:gui/items.png" \
-            "environment/clouds.png:environment/clouds.png" \
-            "mob/chicken.png:mob/chicken.png" ; do
+            "terrain.png:assets/terrain.png" \
+            "gui/gui.png:assets/gui/gui.png" \
+            "gui/icons.png:assets/gui/icons.png" \
+            "gui/items.png:assets/gui/items.png" \
+            "environment/clouds.png:assets/environment/clouds.png" \
+            "mob/chicken.png:assets/mob/chicken.png" ; do
             src="$ASSETS/${spec%%:*}"
             dst="public/${spec##*:}"
             test -s "$dst" || { echo "FAIL: missing committed asset $dst"; exit 1; }
