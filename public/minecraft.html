@@ -4363,7 +4363,13 @@
       if (settingsPanel) settingsPanel.classList.remove('open');
       gameStarted = true;
       syncMenuVisibility();
-      if (!locked && canvas.requestPointerLock) {
+      // §Touch devices: no pointer lock needed (TouchscreenInput.cpp has no lock concept)
+      // Just show touch controls and start playing
+      if (isTouchDevice) {
+        dpadEl.classList.add('visible');
+        touchAreaEl.classList.add('visible');
+        locked = true;  // treat as "locked" for gameplay logic
+      } else if (!locked && canvas.requestPointerLock) {
         const result = canvas.requestPointerLock();
         if (result && typeof result.catch === 'function') {
           result.catch((err) => {
