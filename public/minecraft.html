@@ -81,8 +81,11 @@
   }
   .slot canvas { width: 16px; height: 16px; image-rendering: pixelated; }
   .slot .num { position: absolute; top: 0; left: 1px; font-size: 7px; color: #fff; text-shadow: 1px 1px 0 #000; line-height: 1; }
-  .slot .name { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); font-size: 8px; color: #fff; text-shadow: 1px 1px 0 #000; white-space: nowrap; opacity: 0; transition: opacity .15s; }
-  .slot.active .name { opacity: 1; }
+  /* §Rujukan Gui::renderOnSelectItemNameText (Gui.cpp:652-668): item name
+     shown as TEMPORARY overlay ABOVE hotbar, not persistent under each slot.
+     Hidden here to match rujukan. The item name overlay feature can be added later. */
+  .slot .name { display: none; }
+  .slot.active .name { display: none; }
   .slot .count { position:absolute; right:1px; bottom:0; color:#fff; font-size:7px; line-height:1; text-shadow:1px 1px #000; pointer-events:none; }
   /* §Durability bar — visual indicator of ItemInstance::auxValue wear.
      Shows a thin colored bar under the tool icon, shrinking as auxValue
@@ -1820,6 +1823,7 @@
     let jumpTriggerTime = 0;
     let lastSpaceDown = false;
     const mayfly = true;  // browser port: creative-style, no survival mayfly gating
+    let showDebugHud = false;  // §F3 toggles debug HUD (not in rujukan, browser addition)
     let atlasTexture = null;
     let opaqueMat = null, transparentMat = null;
     const chunkMeshes = new Map(); // key -> {opaque, transparent}
@@ -4402,6 +4406,11 @@
       // movePlayerTick via the 7-tick jumpTriggerTime counter (1:1 with rujukan).
       // The old 280ms real-time window was a browser-only approximation.
       // Keydown just sets keys['Space']=true; the tick loop handles the rest.
+      // §F3 toggles debug HUD (browser addition, not in rujukan)
+      if (e.code === 'F3' && !e.repeat && !wasDown) {
+        e.preventDefault();
+        showDebugHud = !showDebugHud;
+      }
       if (e.code === 'KeyK' && !e.repeat && !wasDown) {
         if (world.save()) toast('Dunia disimpan di browser ini');
       }
@@ -4574,11 +4583,18 @@
       hudTimer += dt;
       if (hudTimer >= 0.2) {
         hudTimer = 0;
-        const clockMinutes = Math.floor((((worldTime % 1) + 1) % 1) * 1440);
-        const clock = `${String(Math.floor(clockMinutes / 60) % 24).padStart(2, '0')}:${String(clockMinutes % 60).padStart(2, '0')}`;
-        const clockIcon = (worldTime > 0.22 && worldTime < 0.78) ? '☀' : '🌙';
-        hudEl.innerHTML =
-          `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> ${clockIcon} <b>${clock}</b> <span class="hud-sep">|</span> Koin: <b>${browserStats.coins}</b> <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : (player.sprinting ? 'Lari' : 'Jalan')} <span class="hud-sep">|</span> Blok: <b>${HOTBAR[selectedSlot]?.label || '?'}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
+        // §Rujukan MCPE 2013 Gui::render: in-game HUD shows ONLY hotbar + hearts +
+        // crosshair + vignette + item-name overlay. The big debug text bar is a
+        // browser addition — hidden by default to match rujukan, toggle with F3.
+        if (showDebugHud) {
+          const clockMinutes = Math.floor((((worldTime % 1) + 1) % 1) * 1440);
+          const clock = `${String(Math.floor(clockMinutes / 60) % 24).padStart(2, '0')}:${String(clockMinutes % 60).padStart(2, '0')}`;
+          const clockIcon = (worldTime > 0.22 && worldTime < 0.78) ? '☀' : '🌙';
+          hudEl.innerHTML =
+            `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> ${clockIcon} <b>${clock}</b> <span class="hud-sep">|</span> Koin: <b>${browserStats.coins}</b> <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : (player.sprinting ? 'Lari' : 'Jalan')} <span class="hud-sep">|</span> Blok: <b>${HOTBAR[selectedSlot]?.label || '?'}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
+        } else {
+          hudEl.innerHTML = '';
+        }
       }
     }
 
