@@ -3,47 +3,47 @@ function block(definition) {
   return Object.freeze({ ...definition, legacyAliases: definition.legacyAliases ? Object.freeze([...definition.legacyAliases]) : undefined, drops: Object.freeze([...definition.drops]) });
 }
 var definitions = [
-  block({ key: "minecraft:air", displayName: "Air", shape: "none", renderLayer: "invisible", solid: false, selectable: false, replaceable: true, hardness: 0, sound: "silent", lightOpacity: 0, lightEmission: 0, drops: [] }),
-  block({ key: "minecraft:stone", legacyId: 1, displayName: "Stone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 1.5, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:cobblestone"] }),
-  block({ key: "minecraft:grass_block", legacyId: 2, displayName: "Grass Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 0.6, sound: "grass", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
-  block({ key: "minecraft:dirt", legacyId: 3, displayName: "Dirt", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 0.5, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
-  block({ key: "minecraft:cobblestone", legacyId: 4, displayName: "Cobblestone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:cobblestone"] }),
-  block({ key: "minecraft:oak_planks", legacyId: 5, displayName: "Oak Planks", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:oak_planks"] }),
-  block({ key: "minecraft:bedrock", legacyId: 7, displayName: "Bedrock", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: -1, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [] }),
-  block({ key: "minecraft:sand", legacyId: 12, displayName: "Sand", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 0.5, sound: "sand", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:sand"] }),
-  block({ key: "minecraft:gravel", legacyId: 13, displayName: "Gravel", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 0.6, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:gravel"] }),
-  block({ key: "minecraft:gold_ore", legacyId: 14, displayName: "Gold Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:gold_ore"] }),
-  block({ key: "minecraft:iron_ore", legacyId: 15, displayName: "Iron Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:iron_ore"] }),
-  block({ key: "minecraft:coal_ore", legacyId: 16, displayName: "Coal Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:coal"] }),
-  block({ key: "minecraft:oak_log", legacyId: 17, displayName: "Oak Log", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:oak_log"] }),
-  block({ key: "minecraft:oak_leaves", legacyId: 18, displayName: "Oak Leaves", shape: "cube", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, hardness: 0.2, sound: "grass", lightOpacity: 1, lightEmission: 0, drops: ["minecraft:oak_leaves"] }),
-  block({ key: "minecraft:glass", legacyId: 20, displayName: "Glass", shape: "cube", renderLayer: "translucent", solid: true, selectable: true, replaceable: false, hardness: 0.3, sound: "glass", lightOpacity: 0, lightEmission: 0, drops: [] }),
-  block({ key: "minecraft:lapis_ore", legacyId: 21, displayName: "Lapis Lazuli Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:lapis_lazuli"] }),
-  block({ key: "minecraft:sandstone", legacyId: 24, displayName: "Sandstone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 0.8, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:sandstone"] }),
-  block({ key: "minecraft:web", legacyId: 30, displayName: "Cobweb", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: false, hardness: 4, sound: "cloth", lightOpacity: 1, lightEmission: 0, drops: ["minecraft:string"] }),
-  block({ key: "minecraft:gold_block", legacyId: 41, displayName: "Gold Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 3, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:gold_block"] }),
-  block({ key: "minecraft:iron_block", legacyId: 42, displayName: "Iron Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 5, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:iron_block"] }),
-  block({ key: "minecraft:stone_slab", legacyId: 44, displayName: "Stone Slab", shape: "slab", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:stone_slab"] }),
-  block({ key: "minecraft:bricks", legacyId: 45, displayName: "Bricks", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:bricks"] }),
-  block({ key: "minecraft:obsidian", legacyId: 49, displayName: "Obsidian", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 10, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:obsidian"] }),
-  block({ key: "minecraft:torch", legacyId: 50, displayName: "Torch", shape: "torch", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, hardness: 0, sound: "wood", lightOpacity: 0, lightEmission: 14, drops: ["minecraft:torch"] }),
-  block({ key: "minecraft:oak_stairs", legacyId: 53, displayName: "Oak Stairs", shape: "stairs", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:oak_stairs"] }),
-  block({ key: "minecraft:chest", legacyId: 54, displayName: "Chest", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 2.5, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:chest"] }),
-  block({ key: "minecraft:diamond_ore", legacyId: 56, displayName: "Diamond Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:diamond"] }),
-  block({ key: "minecraft:diamond_block", legacyId: 57, displayName: "Diamond Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 5, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:diamond_block"] }),
-  block({ key: "minecraft:crafting_table", legacyId: 58, displayName: "Crafting Table", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 2.5, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:crafting_table"] }),
-  block({ key: "minecraft:farmland", legacyId: 60, displayName: "Farmland", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 0.6, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
-  block({ key: "minecraft:furnace", legacyId: 61, displayName: "Furnace", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 3.5, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:furnace"] }),
-  block({ key: "minecraft:ladder", legacyId: 65, displayName: "Ladder", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, hardness: 0.4, sound: "wood", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:ladder"] }),
-  block({ key: "minecraft:stone_stairs", legacyId: 67, displayName: "Stone Stairs", shape: "stairs", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:stone_stairs"] }),
-  block({ key: "minecraft:iron_door", legacyId: 71, displayName: "Iron Door", shape: "door", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, hardness: 5, sound: "metal", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:iron_door"] }),
-  block({ key: "minecraft:snow_layer", legacyId: 78, displayName: "Snow Layer", shape: "slab", renderLayer: "opaque", solid: false, selectable: true, replaceable: true, hardness: 0.1, sound: "cloth", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:snow_layer"] }),
-  block({ key: "minecraft:ice", legacyId: 79, displayName: "Ice", shape: "cube", renderLayer: "translucent", solid: true, selectable: true, replaceable: false, hardness: 0.5, sound: "glass", lightOpacity: 3, lightEmission: 0, drops: ["minecraft:ice"] }),
-  block({ key: "minecraft:cactus", legacyId: 81, displayName: "Cactus", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, hardness: 0.4, sound: "cloth", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:cactus"] }),
-  block({ key: "minecraft:reeds", legacyId: 83, displayName: "Sugar Cane", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, hardness: 0, sound: "grass", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:reeds"] }),
-  block({ key: "minecraft:oak_fence", legacyId: 85, displayName: "Oak Fence", shape: "cube", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, hardness: 2, sound: "wood", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:oak_fence"] }),
-  block({ key: "minecraft:water", legacyId: 8, legacyAliases: [9], displayName: "Water", shape: "liquid", renderLayer: "translucent", solid: false, selectable: true, replaceable: true, hardness: 100, sound: "silent", lightOpacity: 3, lightEmission: 0, drops: [] }),
-  block({ key: "minecraft:lava", legacyId: 10, legacyAliases: [11], displayName: "Lava", shape: "liquid", renderLayer: "translucent", solid: false, selectable: true, replaceable: true, hardness: 100, sound: "silent", lightOpacity: 15, lightEmission: 15, drops: [] })
+  block({ key: "minecraft:air", displayName: "Air", shape: "none", renderLayer: "invisible", solid: false, selectable: false, replaceable: true, material: "air", hardness: 0, sound: "silent", lightOpacity: 0, lightEmission: 0, drops: [] }),
+  block({ key: "minecraft:stone", legacyId: 1, displayName: "Stone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 1.5, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:cobblestone"] }),
+  block({ key: "minecraft:grass_block", legacyId: 2, displayName: "Grass Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.6, sound: "grass", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
+  block({ key: "minecraft:dirt", legacyId: 3, displayName: "Dirt", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.5, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
+  block({ key: "minecraft:cobblestone", legacyId: 4, displayName: "Cobblestone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:cobblestone"] }),
+  block({ key: "minecraft:oak_planks", legacyId: 5, displayName: "Oak Planks", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:oak_planks"] }),
+  block({ key: "minecraft:bedrock", legacyId: 7, displayName: "Bedrock", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: -1, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [] }),
+  block({ key: "minecraft:sand", legacyId: 12, displayName: "Sand", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "sand", hardness: 0.5, sound: "sand", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:sand"] }),
+  block({ key: "minecraft:gravel", legacyId: 13, displayName: "Gravel", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "sand", hardness: 0.6, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:gravel"] }),
+  block({ key: "minecraft:gold_ore", legacyId: 14, displayName: "Gold Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:gold_ore"] }),
+  block({ key: "minecraft:iron_ore", legacyId: 15, displayName: "Iron Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:iron_ore"] }),
+  block({ key: "minecraft:coal_ore", legacyId: 16, displayName: "Coal Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:coal"] }),
+  block({ key: "minecraft:oak_log", legacyId: 17, displayName: "Oak Log", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:oak_log"] }),
+  block({ key: "minecraft:oak_leaves", legacyId: 18, displayName: "Oak Leaves", shape: "cube", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, material: "leaves", hardness: 0.2, sound: "grass", lightOpacity: 1, lightEmission: 0, drops: ["minecraft:oak_leaves"] }),
+  block({ key: "minecraft:glass", legacyId: 20, displayName: "Glass", shape: "cube", renderLayer: "translucent", solid: true, selectable: true, replaceable: false, material: "glass", hardness: 0.3, sound: "glass", lightOpacity: 0, lightEmission: 0, drops: [] }),
+  block({ key: "minecraft:lapis_ore", legacyId: 21, displayName: "Lapis Lazuli Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:lapis_lazuli"] }),
+  block({ key: "minecraft:sandstone", legacyId: 24, displayName: "Sandstone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 0.8, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:sandstone"] }),
+  block({ key: "minecraft:web", legacyId: 30, displayName: "Cobweb", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: false, material: "web", hardness: 4, sound: "cloth", lightOpacity: 1, lightEmission: 0, drops: ["minecraft:string"] }),
+  block({ key: "minecraft:gold_block", legacyId: 41, displayName: "Gold Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 3, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:gold_block"] }),
+  block({ key: "minecraft:iron_block", legacyId: 42, displayName: "Iron Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 5, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:iron_block"] }),
+  block({ key: "minecraft:stone_slab", legacyId: 44, displayName: "Stone Slab", shape: "slab", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:stone_slab"] }),
+  block({ key: "minecraft:bricks", legacyId: 45, displayName: "Bricks", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:bricks"] }),
+  block({ key: "minecraft:obsidian", legacyId: 49, displayName: "Obsidian", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 10, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:obsidian"] }),
+  block({ key: "minecraft:torch", legacyId: 50, displayName: "Torch", shape: "torch", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "wood", hardness: 0, sound: "wood", lightOpacity: 0, lightEmission: 14, drops: ["minecraft:torch"] }),
+  block({ key: "minecraft:oak_stairs", legacyId: 53, displayName: "Oak Stairs", shape: "stairs", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:oak_stairs"] }),
+  block({ key: "minecraft:chest", legacyId: 54, displayName: "Chest", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2.5, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:chest"] }),
+  block({ key: "minecraft:diamond_ore", legacyId: 56, displayName: "Diamond Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:diamond"] }),
+  block({ key: "minecraft:diamond_block", legacyId: 57, displayName: "Diamond Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 5, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:diamond_block"] }),
+  block({ key: "minecraft:crafting_table", legacyId: 58, displayName: "Crafting Table", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2.5, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:crafting_table"] }),
+  block({ key: "minecraft:farmland", legacyId: 60, displayName: "Farmland", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.6, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
+  block({ key: "minecraft:furnace", legacyId: 61, displayName: "Furnace", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3.5, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:furnace"] }),
+  block({ key: "minecraft:ladder", legacyId: 65, displayName: "Ladder", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "wood", hardness: 0.4, sound: "wood", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:ladder"] }),
+  block({ key: "minecraft:stone_stairs", legacyId: 67, displayName: "Stone Stairs", shape: "stairs", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:stone_stairs"] }),
+  block({ key: "minecraft:iron_door", legacyId: 71, displayName: "Iron Door", shape: "door", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 5, sound: "metal", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:iron_door"] }),
+  block({ key: "minecraft:snow_layer", legacyId: 78, displayName: "Snow Layer", shape: "slab", renderLayer: "opaque", solid: false, selectable: true, replaceable: true, material: "topSnow", hardness: 0.1, sound: "cloth", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:snow_layer"] }),
+  block({ key: "minecraft:ice", legacyId: 79, displayName: "Ice", shape: "cube", renderLayer: "translucent", solid: true, selectable: true, replaceable: false, material: "ice", hardness: 0.5, sound: "glass", lightOpacity: 3, lightEmission: 0, drops: ["minecraft:ice"] }),
+  block({ key: "minecraft:cactus", legacyId: 81, displayName: "Cactus", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "cactus", hardness: 0.4, sound: "cloth", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:cactus"] }),
+  block({ key: "minecraft:reeds", legacyId: 83, displayName: "Sugar Cane", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "plant", hardness: 0, sound: "grass", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:reeds"] }),
+  block({ key: "minecraft:oak_fence", legacyId: 85, displayName: "Oak Fence", shape: "cube", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:oak_fence"] }),
+  block({ key: "minecraft:water", legacyId: 8, legacyAliases: [9], displayName: "Water", shape: "liquid", renderLayer: "translucent", solid: false, selectable: true, replaceable: true, material: "dirt", hardness: 100, sound: "silent", lightOpacity: 3, lightEmission: 0, drops: [] }),
+  block({ key: "minecraft:lava", legacyId: 10, legacyAliases: [11], displayName: "Lava", shape: "liquid", renderLayer: "translucent", solid: false, selectable: true, replaceable: true, material: "dirt", hardness: 100, sound: "silent", lightOpacity: 15, lightEmission: 15, drops: [] })
 ];
 
 class BlockRegistry {
@@ -296,6 +296,174 @@ function sameStack(a, b) {
   return a === b || a !== null && b !== null && a.itemKey === b.itemKey && a.count === b.count && a.maxStackSize === b.maxStackSize;
 }
 
+// src/game/items/tools.ts
+var TIERS = Object.freeze({
+  wood: Object.freeze({ level: 0, uses: 59, speed: 2, damage: 0 }),
+  stone: Object.freeze({ level: 1, uses: 131, speed: 4, damage: 1 }),
+  iron: Object.freeze({ level: 2, uses: 250, speed: 6, damage: 2 }),
+  diamond: Object.freeze({ level: 3, uses: 1561, speed: 8, damage: 3 }),
+  gold: Object.freeze({ level: 0, uses: 32, speed: 12, damage: 0 }),
+  none: Object.freeze({ level: 0, uses: 0, speed: 1, damage: 0 })
+});
+var TOOL_TABLE = Object.freeze({
+  "minecraft:iron_shovel": makeTool("shovel", "iron", 2, 5),
+  "minecraft:iron_pickaxe": makeTool("pickaxe", "iron", 2, 6),
+  "minecraft:iron_axe": makeTool("axe", "iron", 2, 7),
+  "minecraft:wood_shovel": makeTool("shovel", "wood", 0, 5),
+  "minecraft:wood_pickaxe": makeTool("pickaxe", "wood", 0, 6),
+  "minecraft:wood_axe": makeTool("axe", "wood", 0, 7),
+  "minecraft:stone_shovel": makeTool("shovel", "stone", 1, 5),
+  "minecraft:stone_pickaxe": makeTool("pickaxe", "stone", 1, 6),
+  "minecraft:stone_axe": makeTool("axe", "stone", 1, 7),
+  "minecraft:diamond_shovel": makeTool("shovel", "diamond", 3, 5),
+  "minecraft:diamond_pickaxe": makeTool("pickaxe", "diamond", 3, 6),
+  "minecraft:diamond_axe": makeTool("axe", "diamond", 3, 7),
+  "minecraft:gold_shovel": makeTool("shovel", "gold", 4, 5),
+  "minecraft:gold_pickaxe": makeTool("pickaxe", "gold", 4, 6),
+  "minecraft:gold_axe": makeTool("axe", "gold", 4, 7),
+  "minecraft:wood_sword": makeTool("sword", "wood", 0, 4),
+  "minecraft:stone_sword": makeTool("sword", "stone", 1, 4),
+  "minecraft:iron_sword": makeTool("sword", "iron", 2, 4),
+  "minecraft:diamond_sword": makeTool("sword", "diamond", 3, 4),
+  "minecraft:gold_sword": makeTool("sword", "gold", 4, 4)
+});
+function makeTool(kind, tier, iconCol, iconRow) {
+  return Object.freeze({ kind, tier, tierDef: TIERS[tier], iconCol, iconRow });
+}
+function getTool(itemKey) {
+  if (!itemKey)
+    return null;
+  return TOOL_TABLE[itemKey] ?? null;
+}
+var NOT_ALWAYS_DESTROYABLE = new Set([
+  "stone",
+  "metal",
+  "snow",
+  "topSnow"
+]);
+function isAlwaysDestroyable(material) {
+  return !NOT_ALWAYS_DESTROYABLE.has(material);
+}
+function pickaxeCanDestroy(material, blockKey, tierLevel) {
+  if (blockKey === "minecraft:obsidian")
+    return tierLevel === 3;
+  if (blockKey === "minecraft:diamond_block" || blockKey === "minecraft:diamond_ore")
+    return tierLevel >= 2;
+  if (blockKey === "minecraft:gold_block" || blockKey === "minecraft:gold_ore")
+    return tierLevel >= 2;
+  if (blockKey === "minecraft:iron_block" || blockKey === "minecraft:iron_ore")
+    return tierLevel >= 1;
+  if (blockKey === "minecraft:lapis_block" || blockKey === "minecraft:lapis_ore")
+    return tierLevel >= 1;
+  if (material === "stone" || material === "metal")
+    return true;
+  return false;
+}
+function shovelCanDestroy(material) {
+  return material === "topSnow" || material === "snow";
+}
+function pickaxeDestroySpeed(material, hasTile, tierSpeed) {
+  if (material === "stone" || material === "metal")
+    return tierSpeed;
+  return hasTile ? tierSpeed : 1;
+}
+function axeDestroySpeed(material, hasTile, tierSpeed) {
+  if (material === "wood")
+    return tierSpeed;
+  return hasTile ? tierSpeed : 1;
+}
+function shovelDestroySpeed(hasTile, tierSpeed) {
+  return hasTile ? tierSpeed : 1;
+}
+var PICKAXE_TILES = new Set([
+  "minecraft:cobblestone",
+  "minecraft:stone_bricks",
+  "minecraft:stone_slab",
+  "minecraft:stone",
+  "minecraft:sandstone",
+  "minecraft:moss_stone",
+  "minecraft:iron_ore",
+  "minecraft:iron_block",
+  "minecraft:coal_ore",
+  "minecraft:gold_block",
+  "minecraft:gold_ore",
+  "minecraft:diamond_block",
+  "minecraft:diamond_ore",
+  "minecraft:ice",
+  "minecraft:lapis_ore",
+  "minecraft:lapis_block"
+]);
+var AXE_TILES = new Set([
+  "minecraft:oak_planks",
+  "minecraft:bookshelf",
+  "minecraft:oak_log",
+  "minecraft:chest",
+  "minecraft:stone_slab",
+  "minecraft:oak_stairs",
+  "minecraft:crafting_table",
+  "minecraft:oak_fence"
+]);
+var SHOVEL_TILES = new Set([
+  "minecraft:grass_block",
+  "minecraft:dirt",
+  "minecraft:sand",
+  "minecraft:gravel",
+  "minecraft:snow_layer",
+  "minecraft:snow",
+  "minecraft:clay",
+  "minecraft:farmland"
+]);
+function canDestroyBlock(material, blockKey, tool) {
+  if (isAlwaysDestroyable(material))
+    return true;
+  if (!tool)
+    return false;
+  switch (tool.kind) {
+    case "pickaxe":
+      return pickaxeCanDestroy(material, blockKey, tool.tierDef.level);
+    case "shovel":
+      return shovelCanDestroy(material);
+    case "axe":
+    case "sword":
+    case "none":
+      return false;
+  }
+  return false;
+}
+function getPlayerDestroySpeed(material, blockKey, tool) {
+  if (!tool)
+    return 1;
+  const hasTile = (() => {
+    switch (tool.kind) {
+      case "pickaxe":
+        return PICKAXE_TILES.has(blockKey);
+      case "axe":
+        return AXE_TILES.has(blockKey);
+      case "shovel":
+        return SHOVEL_TILES.has(blockKey);
+      case "sword":
+        return false;
+      case "none":
+        return false;
+    }
+    return false;
+  })();
+  switch (tool.kind) {
+    case "pickaxe":
+      return pickaxeDestroySpeed(material, hasTile, tool.tierDef.speed);
+    case "axe":
+      return axeDestroySpeed(material, hasTile, tool.tierDef.speed);
+    case "shovel":
+      return shovelDestroySpeed(hasTile, tool.tierDef.speed);
+    case "sword":
+      return 1;
+    case "none":
+      return 1;
+  }
+  return 1;
+}
+var TOOL_KEYS = Object.freeze(Object.keys(TOOL_TABLE));
+
 // src/game/interaction/mining.ts
 var SURVIVAL_DESTROY_DELAY = 5;
 var CREATIVE_DESTRUCTION_TICK_DELAY = 10;
@@ -307,12 +475,13 @@ class MiningSession {
   hardness;
   mode;
   playerDestroySpeed;
+  canDestroy;
   destroyProgress = 0;
   destroyTicks = 0;
   destroyDelay = 0;
   completed = false;
   cancelled = false;
-  constructor(target, blockId, hardness, mode, playerDestroySpeed) {
+  constructor(target, blockId, hardness, mode, playerDestroySpeed, canDestroy = true) {
     if (!Number.isSafeInteger(target.x) || !Number.isSafeInteger(target.y) || !Number.isSafeInteger(target.z)) {
       throw new TypeError("Mining target coordinates must be safe integers");
     }
@@ -329,6 +498,7 @@ class MiningSession {
     this.hardness = hardness;
     this.mode = mode;
     this.playerDestroySpeed = playerDestroySpeed;
+    this.canDestroy = canDestroy;
   }
   get isComplete() {
     return this.completed;
@@ -346,7 +516,7 @@ class MiningSession {
       return 0;
     if (this.hardness <= 0)
       return 0;
-    const perTick = this.playerDestroySpeed / this.hardness / DESTROY_PROGRESS_DIVISOR;
+    const perTick = this.canDestroy ? this.playerDestroySpeed / this.hardness / DESTROY_PROGRESS_DIVISOR : 1 / this.hardness / (DESTROY_PROGRESS_DIVISOR * 100);
     if (perTick <= 0)
       return Infinity;
     return Math.max(0, Math.ceil((1 - this.destroyProgress) / perTick));
@@ -392,7 +562,7 @@ class MiningSession {
         continue;
       }
       remaining -= 1;
-      const perTick = this.playerDestroySpeed / this.hardness / DESTROY_PROGRESS_DIVISOR;
+      const perTick = this.canDestroy ? this.playerDestroySpeed / this.hardness / DESTROY_PROGRESS_DIVISOR : 1 / this.hardness / (DESTROY_PROGRESS_DIVISOR * 100);
       this.destroyProgress += perTick;
       this.destroyTicks += 1;
       if (this.destroyProgress >= 1) {
@@ -409,11 +579,8 @@ class MiningSession {
 }
 function beginMining(world, target, registry, options = {}) {
   const mode = options.mode ?? "creative";
-  const playerDestroySpeed = options.playerDestroySpeed ?? 1;
   if (mode !== "survival" && mode !== "creative")
     throw new RangeError("mode must be survival or creative");
-  if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0)
-    throw new RangeError("playerDestroySpeed must be finite and positive");
   const blockId = world.getBlock(target.x, target.y, target.z);
   if (blockId === undefined)
     return { status: "unloaded" };
@@ -424,9 +591,14 @@ function beginMining(world, target, registry, options = {}) {
     return { status: "unknown-block", blockId };
   if (definition.hardness < 0)
     return { status: "unbreakable" };
+  const tool = options.tool ?? null;
+  const playerDestroySpeed = options.playerDestroySpeed ?? getPlayerDestroySpeed(definition.material, definition.key, tool);
+  if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0)
+    throw new RangeError("playerDestroySpeed must be finite and positive");
+  const canDestroy = canDestroyBlock(definition.material, definition.key, tool);
   return {
     status: "started",
-    session: new MiningSession(target, blockId, definition.hardness, mode, playerDestroySpeed)
+    session: new MiningSession(target, blockId, definition.hardness, mode, playerDestroySpeed, canDestroy)
   };
 }
 function finishBlockBreak(world, session, registry, inventory) {
@@ -1361,7 +1533,7 @@ class VoxelCraftEngine {
   registry;
   clock;
   gameMode;
-  playerDestroySpeed;
+  tool;
   miningSession = null;
   selectedSlotValue = 0;
   static fromSave(input) {
@@ -1395,7 +1567,7 @@ class VoxelCraftEngine {
     this.player = new PlayerPhysics(options.spawn ?? { x: 0.5, y: 2, z: 0.5 });
     this.clock = new FixedStepClock;
     this.gameMode = options.gameMode ?? "creative";
-    this.playerDestroySpeed = options.playerDestroySpeed ?? 1;
+    this.tool = options.tool ?? null;
   }
   get selectedSlot() {
     return this.selectedSlotValue;
@@ -1420,10 +1592,10 @@ class VoxelCraftEngine {
   target(origin, direction, reach = 6) {
     return raycastVoxels(this.world, origin, direction, reach, (id) => this.registry.getById(id)?.selectable ?? false);
   }
-  startMining(target) {
+  startMining(target, tool = this.tool) {
     const result = beginMining(this.world, target, this.registry, {
       mode: this.gameMode,
-      playerDestroySpeed: this.playerDestroySpeed
+      tool
     });
     this.miningSession = result.status === "started" ? result.session : null;
     return result;
@@ -1733,3 +1905,4 @@ window.VoxelCraftBlockRegistry = BlockRegistry;
 window.VoxelCraftCreateMeshCache = (engine) => new ChunkMeshCache(engine.world, engine.registry);
 window.VoxelCraftGenerateTerrainChunk = generateTerrainChunk;
 window.VoxelCraftEnsureTerrainNeighborhood = ensureTerrainNeighborhood;
+window.VoxelCraftGetTool = getTool;

@@ -3,6 +3,7 @@ import type { Inventory } from '../inventory/inventory';
 import type { Aabb } from '../physics/aabb';
 import type { VoxelWorld, BlockPosition } from '../world/world';
 import { beginMining, finishBlockBreak, type BreakBlockResult, type GameMode, type MiningProgressResult, type MiningSession, type MiningStartResult } from './mining';
+import type { Tool } from '../items/tools';
 import { placeBlockFromInventory, type PlaceBlockResult, type PlacementValidation } from './placement';
 import { raycastVoxels, type RayVector, type VoxelRayHit, type VoxelRayResult } from './raycast';
 
@@ -22,10 +23,10 @@ export class BlockInteractionController {
     private readonly registry: BlockRegistry,
     private readonly inventory: Inventory,
     private readonly mode: GameMode = 'creative',
-    private readonly playerDestroySpeed = 1,
+    /** §MCPE 2013: tool equipped in the selected hotbar slot. Bare hand = null. */
+    private readonly tool: Tool | null = null,
   ) {
     if (mode !== 'survival' && mode !== 'creative') throw new RangeError('mode must be survival or creative');
-    if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0) throw new RangeError('playerDestroySpeed must be finite and positive');
   }
 
   get isMining(): boolean {
@@ -36,11 +37,11 @@ export class BlockInteractionController {
     return raycastVoxels(this.world, origin, direction, reach, id => this.registry.getById(id)?.selectable ?? false);
   }
 
-  startMining(hit: VoxelRayHit): MiningStartResult {
+  startMining(hit: VoxelRayHit, tool: Tool | null = this.tool): MiningStartResult {
     this.miningSession = null;
     const result = beginMining(this.world, hit.block, this.registry, {
       mode: this.mode,
-      playerDestroySpeed: this.playerDestroySpeed,
+      tool,
     });
     if (result.status === 'started') this.miningSession = result.session;
     return result;

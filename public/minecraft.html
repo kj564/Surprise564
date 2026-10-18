@@ -986,7 +986,44 @@
     };
 
     // Hotbar block ids (8 slots) — rujukan MCPE 2013 set (no wool/cloth in the default bar)
-    const HOTBAR = [1, 3, 4, 5, 11, 26, 13, 27]; // grass, stone, oak log, planks, brick, obsidian, diamond block, glowstone
+    // §MCPE 2013 hotbar — 8 slots, mixing blocks and tools 1:1 with rujukan Item.cpp.
+    // Block IDs reference the BLOCKS table; tool itemKeys reference the items/tools registry.
+    // The first 4 slots are blocks for building; the last 4 are tools for mining 1:1 with
+    // rujukan (wood/iron/diamond pickaxe + wood shovel for dirt/sand/gravel).
+    const HOTBAR = [
+      { type: 'block', id: 1,  label: 'Batu' },           // stone
+      { type: 'block', id: 3,  label: 'Tanah' },           // dirt
+      { type: 'block', id: 4,  label: 'Cobblestone' },    // cobblestone
+      { type: 'block', id: 5,  label: 'Papan Ek' },        // oak planks
+      { type: 'tool',  itemKey: 'minecraft:wood_pickaxe',    label: 'Pickaxe Kayu' },
+      { type: 'tool',  itemKey: 'minecraft:iron_pickaxe',    label: 'Pickaxe Besi' },
+      { type: 'tool',  itemKey: 'minecraft:diamond_pickaxe', label: 'Pickaxe Berlian' },
+      { type: 'tool',  itemKey: 'minecraft:wood_shovel',     label: 'Sekop Kayu' },
+    ];
+    // §Tool itemKey → icon (col,row) in items.png 256x256 atlas (16x16 tiles).
+    // Verified from rujukan Item.cpp:168-198 (setIcon(col,row) calls).
+    const TOOL_ICONS = {
+      'minecraft:wood_pickaxe':    { col: 0, row: 6 },
+      'minecraft:stone_pickaxe':   { col: 1, row: 6 },
+      'minecraft:iron_pickaxe':    { col: 2, row: 6 },
+      'minecraft:diamond_pickaxe': { col: 3, row: 6 },
+      'minecraft:gold_pickaxe':    { col: 4, row: 6 },
+      'minecraft:wood_axe':        { col: 0, row: 7 },
+      'minecraft:stone_axe':       { col: 1, row: 7 },
+      'minecraft:iron_axe':        { col: 2, row: 7 },
+      'minecraft:diamond_axe':      { col: 3, row: 7 },
+      'minecraft:gold_axe':        { col: 4, row: 7 },
+      'minecraft:wood_shovel':     { col: 0, row: 5 },
+      'minecraft:stone_shovel':    { col: 1, row: 5 },
+      'minecraft:iron_shovel':     { col: 2, row: 5 },
+      'minecraft:diamond_shovel':  { col: 3, row: 5 },
+      'minecraft:gold_shovel':     { col: 4, row: 5 },
+      'minecraft:wood_sword':      { col: 0, row: 4 },
+      'minecraft:stone_sword':     { col: 1, row: 4 },
+      'minecraft:iron_sword':      { col: 2, row: 4 },
+      'minecraft:diamond_sword':   { col: 3, row: 4 },
+      'minecraft:gold_sword':      { col: 4, row: 4 },
+    };
 
     // The renderer uses custom compact IDs; this registry explicitly preserves that mapping.
     function runtimeBlockKey(id) { return id === 0 ? 'minecraft:air' : 'minecraft:voxelcraft_block_' + id; }
@@ -1632,9 +1669,19 @@
       //   survival: per-tick destroyProgress = (1/hardness)/30, break at >=1, 5-tick delay
       // Browser port defaults to creative (matches canHurtPlayer=false, no hearts).
       gameMode: 'creative',
-      playerDestroySpeed: 1.0,  // bare hand (rujukan Inventory::getDestroySpeed returns 1.0 when no tool held)
+      // §Tool is passed per-call to voxelEngine.startMining(target, tool) based on
+      // the currently selected hotbar slot. The engine reads tool metadata from
+      // the items/tools registry (getTool(itemKey)) and computes destroySpeed +
+      // canDestroy per rujukan Inventory.cpp:307-323.
     });
-    HOTBAR.forEach((id, slot) => voxelEngine.inventory.setSlot(slot, { itemKey: runtimeBlockKey(id), count: 64, maxStackSize: 64 }));
+    HOTBAR.forEach((entry, slot) => {
+      if (entry.type === 'block') {
+        voxelEngine.inventory.setSlot(slot, { itemKey: runtimeBlockKey(entry.id), count: 64, maxStackSize: 64 });
+      } else {
+        // §Tools don't stack in rujukan (Item::getMaxStackSize returns 1 for tools).
+        voxelEngine.inventory.setSlot(slot, { itemKey: entry.itemKey, count: 1, maxStackSize: 1 });
+      }
+    });
     let miningHeld = false;
     let miningTargetKey = null;
     // §LocalPlayer::aiStep state — VERIFIED rujukan fields (LocalPlayer.cpp:168-217):
@@ -1716,6 +1763,10 @@
     window.__cam = camera;
     window.__keys = keys;
     window.__moveTick = movePlayerTick;
+    window.__voxelEngine = voxelEngine;
+    window.__getEquippedTool = getEquippedTool;
+    window.__HOTBAR = HOTBAR;
+    window.__selectedSlot = () => selectedSlot;
     // debug helpers for in-game testing (not gameplay-affecting)
     window.__raycast = raycastVoxel;
     window.__breakBlock = breakBlock;
@@ -3355,7 +3406,7 @@
         slot.appendChild(lbl);
         slot.title = def.name;
         slot.addEventListener('click', () => {
-          HOTBAR[selectedSlot] = id;
+          HOTBAR[selectedSlot] = { type: 'block', id, label: BLOCKS[id]?.name || 'Blok' };
           voxelEngine.inventory.setSlot(selectedSlot, { itemKey: runtimeBlockKey(id), count: 64, maxStackSize: 64 });
           buildHotbar();
           selectSlot(selectedSlot);
@@ -3485,33 +3536,41 @@
       // GLES1 look — blocky but crisply separated at tile boundaries.
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.needsUpdate = true;
+      // Also load items.png atlas for tool icons (hotbar + inventory display).
+      // §Rujukan MCPE 2013: items.png is 256x256, 16x16 tiles (same format as terrain.png).
+      const itemsImg = new Image();
+      itemsImg.onload = () => { itemsAtlasImg = itemsImg; buildHotbar(); selectSlot(selectedSlot); };
+      itemsImg.src = './VoxelCraft/textures/gui/items.png';
       return tex;
     }
 
     // ---- Hotbar UI ----
     function buildHotbar() {
       hotbarEl.innerHTML = '';
-      HOTBAR.forEach((id, i) => {
-        const def = BLOCKS[id];
+      HOTBAR.forEach((entry, i) => {
         const slot = document.createElement('div');
         slot.className = 'slot' + (i === 0 ? ' active' : '');
         slot.dataset.index = i;
-        // Canvas internal resolution matches the MCPE 2013 block tile size
-        // (16x16). The .slot CSS displays it at 16x16 (logical, before the
-        // 2x hotbar transform) so each pixel maps 1:1 to an atlas texel —
-        // pixel-perfect block previews, no scaling blur.
+        // Canvas internal resolution matches the MCPE 2013 tile size (16x16).
         const c = document.createElement('canvas');
         c.width = 16; c.height = 16;
         const cx = c.getContext('2d');
         cx.imageSmoothingEnabled = false;
-        // draw the side texture tile as preview
-        drawTilePreview(cx, def.side, 16);
+        // Render block (terrain.png atlas) or tool (items.png atlas) per slot type
+        if (entry.type === 'block') {
+          const def = BLOCKS[entry.id];
+          if (def) drawTilePreview(cx, def.side, 16);
+        } else {
+          // §Tools render from items.png 256x256 atlas (col,row) per rujukan Item.cpp
+          const icon = TOOL_ICONS[entry.itemKey];
+          if (icon) drawItemPreview(cx, icon.col, icon.row, 16);
+        }
         slot.appendChild(c);
         const num = document.createElement('div');
         num.className = 'num'; num.textContent = (i + 1);
         slot.appendChild(num);
         const nm = document.createElement('div');
-        nm.className = 'name'; nm.textContent = def.name;
+        nm.className = 'name'; nm.textContent = entry.label;
         slot.appendChild(nm);
         const count = document.createElement('div');
         count.className = 'count';
@@ -3525,6 +3584,13 @@
       if (!atlasTexture || !atlasTexture.image) return;
       const col = tile % ATLAS_COLS, row = Math.floor(tile / ATLAS_COLS);
       ctx.drawImage(atlasTexture.image, col * TILE_PX, row * TILE_PX, TILE_PX, TILE_PX, 0, 0, size, size);
+    }
+    // §Tool icon preview — renders from items.png 256x256 atlas (16x16 tiles).
+    // §Verified coordinates from rujukan Item.cpp:168-198 (setIcon(col,row)).
+    let itemsAtlasImg = null;
+    function drawItemPreview(ctx, col, row, size) {
+      if (!itemsAtlasImg) return;
+      ctx.drawImage(itemsAtlasImg, col * 16, row * 16, 16, 16, 0, 0, size, size);
     }
     function selectSlot(i) {
       selectedSlot = i;
@@ -3879,9 +3945,20 @@
       if (!hit) return null;
       return { x: hit.block.x, y: hit.block.y, z: hit.block.z, face: [hit.face.x, hit.face.y, hit.face.z], blockId: hit.blockId, distance: hit.distance };
     }
+    // §Get the equipped tool from the currently selected hotbar slot.
+    // Returns null if the slot is a block (bare-hand mining) or empty.
+    // §Inventory.cpp:316-323 — getDestroySpeed returns 1.0 when no tool is held.
+    function getEquippedTool() {
+      const entry = HOTBAR[selectedSlot];
+      if (!entry || entry.type !== 'tool') return null;
+      // Use the bundled getTool() from voxelcraft-engine.bundle.js (exposed on window)
+      return (window.VoxelCraftGetTool && window.VoxelCraftGetTool(entry.itemKey)) || null;
+    }
     function beginMiningTarget(hit) {
       if (!hit) return;
-      const result = voxelEngine.startMining(hit.block);
+      // §Pass the equipped tool to voxelEngine.startMining. The engine uses it
+      // to compute playerDestroySpeed + canDestroy per rujukan formulas.
+      const result = voxelEngine.startMining(hit.block, getEquippedTool());
       if (result.status === 'started') miningTargetKey = hit.block.x + ',' + hit.block.y + ',' + hit.block.z;
       else if (result.status === 'unbreakable') { miningTargetKey = null; toast('Bedrock tidak bisa dihancurkan'); }
       else miningTargetKey = null;
@@ -3937,6 +4014,9 @@
     function placeBlock() {
       const hit = currentEngineHit(6);
       if (!hit || (hit.face.x === 0 && hit.face.y === 0 && hit.face.z === 0)) return;
+      // §Tools can't be placed as blocks (rujukan Item::use → no block placement).
+      const entry = HOTBAR[selectedSlot];
+      if (entry && entry.type === 'tool') { toast('Slot aktif adalah alat, bukan blok'); return; }
       voxelEngine.player.teleport({ x: player.pos.x, y: player.pos.y, z: player.pos.z });
       const result = voxelEngine.placeSelected(hit);
       if (result.status !== 'placed') {
@@ -4018,7 +4098,8 @@
       const clock = Math.floor((((worldTime % 1) + 1) % 1) * 24).toString().padStart(2, '0') + ':00';
       if (showStats) {
         const pos = player.pos;
-        const selected = BLOCKS[HOTBAR[selectedSlot]];
+        const entry = HOTBAR[selectedSlot];
+        const selected = entry ? { name: entry.label } : null;
         vcGuideBody.textContent = 'Statistik VoxelCraft\n' +
           'Koin: ' + browserStats.coins + '\n' +
           'Kunjungan browser: ' + browserStats.joins + '\n' +

@@ -6,13 +6,14 @@ import { VoxelWorld } from '../world/world';
 import { BlockInteractionController } from './controller';
 import type { VoxelRayHit } from './raycast';
 import { CREATIVE_DESTRUCTION_TICK_DELAY, DESTROY_PROGRESS_DIVISOR, SURVIVAL_DESTROY_DELAY, TICKS_PER_SECOND } from './mining';
+import { getTool } from '../items/tools';
 
 function setup(mode: 'survival' | 'creative' = 'survival') {
   const world = new VoxelWorld({ chunkSizeX: 4, height: 8, chunkSizeZ: 4 });
   world.loadChunk(0, 0);
   world.setBlock({ x: 1, y: 1, z: 1 }, 1);
   const inventory = new Inventory(4);
-  const controller = new BlockInteractionController(world, defaultBlockRegistry, inventory, mode);
+  const controller = new BlockInteractionController(world, defaultBlockRegistry, inventory, mode, getTool('minecraft:wood_pickaxe'));
   const hit: VoxelRayHit = {
     status: 'hit',
     blockId: 1,
@@ -38,15 +39,16 @@ describe('BlockInteractionController', () => {
     expect(controller.target({ x: 3.5, y: 1.5, z: 1.5 }, { x: 1, y: 0, z: 0 }, 5).status).toBe('unloaded');
   });
 
-  test('survival: rujukan destroyProgress formula — stone (hardness 1.5) breaks in 45 ticks', () => {
+  test('survival: rujukan destroyProgress formula — stone with wood pickaxe breaks in 23 ticks', () => {
     const { world, inventory, controller, hit } = setup('survival');
     expect(controller.startMining(hit).status).toBe('started');
     // §Tile::getDestroyProgress = (playerDestroySpeed / hardness) / 30
-    // Stone: hardness=1.5, bare hand speed=1 → perTick = 1/1.5/30 = 0.0222...
-    // Ticks to break = ceil(1 / perTick) = 45 (since 45 * 0.0222 = 1.0)
-    const expectedTicks = ticksToBreak(1.5);
-    // Mine 44 ticks — still mining, progress close to 1
-    let result = controller.tickMining(44, hit);
+    // Stone: hardness=1.5, wood pickaxe speed=2 → perTick = 2/1.5/30 = 0.0444...
+    // Ticks to break = ceil(1 / perTick) = 23
+    const expectedTicks = ticksToBreak(1.5, 2);
+    expect(expectedTicks).toBe(23);
+    // Mine expectedTicks-1 ticks — still mining
+    let result = controller.tickMining(expectedTicks - 1, hit);
     expect(result.status).toBe('mining');
     if (result.status === 'mining') {
       expect(result.progress).toBeCloseTo((expectedTicks - 1) / expectedTicks, 1);
@@ -61,10 +63,11 @@ describe('BlockInteractionController', () => {
   });
 
   test('survival: 5-tick destroyDelay after break (rujukan SurvivalMode.cpp)', () => {
+    // §SurvivalMode.cpp:48 — destroyDelay = 5 after break
     const { controller, hit } = setup('survival');
     controller.startMining(hit);
-    // Break stone: 45 ticks
-    expect(controller.tickMining(45, hit).status).toBe('completed');
+    // Break stone with wood pickaxe: 23 ticks
+    expect(controller.tickMining(23, hit).status).toBe('completed');
     // Replace block and try to mine again immediately. The session is gone
     // after completion; a new startMining should be allowed by the engine
     // because the browser port re-arms mining on input. The destroyDelay

@@ -1,4 +1,5 @@
-import type { BlockRegistry } from '../blocks/registry';
+import type { BlockRegistry, BlockDefinition } from '../blocks/registry';
+import { canDestroyBlock, getPlayerDestroySpeed, getTool, type Tool } from '../items/tools';
 import type { VoxelWorld, BlockPosition } from '../world/world';
 import type { Inventory, ItemStack } from '../inventory/inventory';
 
@@ -50,13 +51,15 @@ export class MiningSession {
   readonly hardness: number;
   readonly mode: GameMode;
   readonly playerDestroySpeed: number;
+  /** §Inventory::canDestroy — false means 100x slower fallback (no drops). */
+  readonly canDestroy: boolean;
   private destroyProgress = 0;
   private destroyTicks = 0;
   private destroyDelay = 0;
   private completed = false;     // survival: destroyProgress>=1 reached this tick
   private cancelled = false;
 
-  constructor(target: BlockPosition, blockId: number, hardness: number, mode: GameMode, playerDestroySpeed: number) {
+  constructor(target: BlockPosition, blockId: number, hardness: number, mode: GameMode, playerDestroySpeed: number, canDestroy = true) {
     if (!Number.isSafeInteger(target.x) || !Number.isSafeInteger(target.y) || !Number.isSafeInteger(target.z)) {
       throw new TypeError('Mining target coordinates must be safe integers');
     }
@@ -69,6 +72,7 @@ export class MiningSession {
     this.hardness = hardness;
     this.mode = mode;
     this.playerDestroySpeed = playerDestroySpeed;
+    this.canDestroy = canDestroy;
   }
 
   get isComplete(): boolean {
@@ -88,7 +92,9 @@ export class MiningSession {
   get remainingTicks(): number {
     if (this.completed) return 0;
     if (this.hardness <= 0) return 0;
-    const perTick = (this.playerDestroySpeed / this.hardness) / DESTROY_PROGRESS_DIVISOR;
+    const perTick = this.canDestroy
+      ? (this.playerDestroySpeed / this.hardness) / DESTROY_PROGRESS_DIVISOR
+      : (1 / this.hardness) / (DESTROY_PROGRESS_DIVISOR * 100);
     if (perTick <= 0) return Infinity;
     return Math.max(0, Math.ceil((1 - this.destroyProgress) / perTick));
   }
@@ -143,9 +149,13 @@ export class MiningSession {
       }
       // One tick of mining progress.
       remaining -= 1;
-      // §Tile::getDestroyProgress: (playerDestroySpeed / hardness) / 30
+      // §Tile::getDestroyProgress (Tile.cpp:391-395):
+      //   if (!canDestroy) return 1 / destroySpeed / 100.0f;  // 100x slower fallback
+      //   return (playerDestroySpeed / destroySpeed) / 30.0f;
       // hardness<0 is filtered by beginMining (unbreakable), so safe here.
-      const perTick = (this.playerDestroySpeed / this.hardness) / DESTROY_PROGRESS_DIVISOR;
+      const perTick = this.canDestroy
+        ? (this.playerDestroySpeed / this.hardness) / DESTROY_PROGRESS_DIVISOR
+        : (1 / this.hardness) / (DESTROY_PROGRESS_DIVISOR * 100);
       this.destroyProgress += perTick;
       this.destroyTicks += 1;
       if (this.destroyProgress >= 1) {
@@ -165,6 +175,11 @@ export class MiningSession {
 
 export type BeginMiningOptions = {
   readonly mode?: GameMode;
+  /** Optional tool equipped in the selected hotbar slot. When omitted, the
+   *  engine computes destroySpeed from the bare hand (= 1, rujukan Inventory.cpp:322). */
+  readonly tool?: Tool | null;
+  /** Optional override for player destroy speed (rujukan Player::getDestroySpeed).
+   *  When omitted, computed from `tool` + block material via §Player::getDestroySpeed. */
   readonly playerDestroySpeed?: number;
 };
 
@@ -175,18 +190,34 @@ export function beginMining(
   options: BeginMiningOptions = {},
 ): MiningStartResult {
   const mode = options.mode ?? 'creative';
-  const playerDestroySpeed = options.playerDestroySpeed ?? 1;
   if (mode !== 'survival' && mode !== 'creative') throw new RangeError('mode must be survival or creative');
-  if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0) throw new RangeError('playerDestroySpeed must be finite and positive');
   const blockId = world.getBlock(target.x, target.y, target.z);
   if (blockId === undefined) return { status: 'unloaded' };
   if (blockId === 0) return { status: 'air' };
   const definition = registry.getById(blockId);
   if (!definition) return { status: 'unknown-block', blockId };
   if (definition.hardness < 0) return { status: 'unbreakable' };
+
+  // §Player::getDestroySpeed → tool-aware destroy speed multiplier (1 if bare hand).
+  const tool = options.tool ?? null;
+  const playerDestroySpeed = options.playerDestroySpeed ?? getPlayerDestroySpeed(definition.material, definition.key, tool);
+  if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0) throw new RangeError('playerDestroySpeed must be finite and positive');
+
+  // §Player::canDestroy → §Inventory::canDestroy (Inventory.cpp:307-313):
+  //   if tile.material.isAlwaysDestroyable() → true (always drops)
+  //   else if tool != null → tool.canDestroySpecial(tile)
+  //   else false
+  // §Tile::getDestroyProgress (Tile.cpp:391-395):
+  //   if (destroySpeed < 0) return 0;                          // bedrock
+  //   if (!player->canDestroy(this)) return 1 / destroySpeed / 100.0f;  // 100x slower
+  //   return (player->getDestroySpeed(this) / destroySpeed) / 30.0f;
+  // canDestroy=false still lets the player break the block, just 100x slower
+  // and with no drops. We model this with the `canDestroy` flag on the session.
+  const canDestroy = canDestroyBlock(definition.material, definition.key, tool);
+
   return {
     status: 'started',
-    session: new MiningSession(target, blockId, definition.hardness, mode, playerDestroySpeed),
+    session: new MiningSession(target, blockId, definition.hardness, mode, playerDestroySpeed, canDestroy),
   };
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { VoxelCraftEngine } from './engine';
 import { CREATIVE_DESTRUCTION_TICK_DELAY, DESTROY_PROGRESS_DIVISOR } from './interaction/mining';
+import { getTool } from './items/tools';
 
 function ticksToBreak(hardness: number, speed = 1): number {
   const perTick = (speed / hardness) / 30;
@@ -16,6 +17,8 @@ function makeGroundedEngine(mode: 'survival' | 'creative' = 'survival'): VoxelCr
     spawn: { x: 1.5, y: 1, z: 1.5 },
     inventorySlots: 9,
     gameMode: mode,
+    // §Tests use wood_pickaxe so stone mining works (matches browser hotbar slot)
+    tool: getTool('minecraft:wood_pickaxe'),
   });
   engine.loadChunk(0, 0);
   for (let x = 0; x < 4; x += 1) {
@@ -48,14 +51,15 @@ describe('VoxelCraftEngine composition root', () => {
     expect(unloaded.status).toBe('unloaded');
   });
 
-  test('survival: rujukan per-tick destroyProgress — stone breaks in 45 ticks', () => {
+  test('survival: rujukan per-tick destroyProgress — stone with wood pickaxe breaks in 23 ticks', () => {
     const engine = makeGroundedEngine('survival');
     engine.world.setBlock({ x: 2, y: 1, z: 1 }, 1);
     const start = engine.startMining({ x: 2, y: 1, z: 1 });
     expect(start.status).toBe('started');
-    // §Tile::getDestroyProgress formula: (1/1.5)/30 = 0.0222... per tick
+    // §Tile::getDestroyProgress formula: (2/1.5)/30 = 0.0444... per tick (wood pickaxe speed=2)
     // Exact ticks to break (FP-faithful, matches rujukan C++ behavior)
-    const expectedTicks = ticksToBreak(1.5);
+    const expectedTicks = ticksToBreak(1.5, 2);
+    expect(expectedTicks).toBe(23);
     // expectedTicks-1 ticks: still mining
     let result = engine.tickMining(expectedTicks - 1, { x: 2, y: 1, z: 1 });
     expect(result.status).toBe('mining');
