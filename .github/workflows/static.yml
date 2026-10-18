@@ -87,6 +87,11 @@ jobs:
             echo "No src/game/browser-entry.ts found, skipping engine build"
           fi
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
