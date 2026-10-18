@@ -167,7 +167,7 @@
   #overlay .help-options-panel .menu-back {
     margin-top:3px;
   }
-  /* #overlay button base styling comes from the shared gui_buttons.png rule below. */
+  /* #overlay button base styling comes from the shared gui.png button rule below. */
   #overlay .button-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   #overlay .menu-foot { display:flex; justify-content:space-between; gap:12px; width:100%; margin-top:22px; font-size:11px; color:#eee; text-shadow:1px 1px #222; }
   #overlay .menu-foot span:last-child { text-align:right; }
@@ -238,7 +238,7 @@
     image-rendering: pixelated;
   }
 
-  /* Buttons — gui_buttons.png (200x60, three states stacked) extracted from
+  /* Buttons — gui.png (256x256 atlas, button states at y=46/66/86) */
      gui.png at (0,46)/(0,66)/(0,86). background-size 200px 60px keeps the
      sprite at 1:1 scale and `repeat-x` tiles it cleanly across any width —
      no rest-of-atlas bleeding between tiles. State changes are pure
@@ -256,7 +256,7 @@
     line-height: 20px;
     text-shadow: 1px 1px #222;
     background-color: #2c2c2c;
-    background-image: url('./VoxelCraft/textures/gui/gui_buttons.png');
+    background-image: url('./VoxelCraft/textures/gui/gui.png');
     background-position: 0 0;
     background-size: 200px 60px;
     background-repeat: repeat-x;
@@ -395,7 +395,7 @@
   #vcGuide .vc-body { margin: 0 0 14px; padding: 8px 10px; color: #ddd; background: #0e0e0e; border: 1px solid #000; font-size: 12px; line-height: 1.5; white-space: pre-line; text-shadow: 1px 1px #000; }
   /* Bedrock ActionFormData stacks its action buttons vertically. */
   #vcGuide .vc-actions { display: grid; grid-template-columns: 1fr; gap: 6px; }
-  /* #vcGuide button styling is inherited from the shared gui_buttons.png rule above. */
+  /* #vcGuide button styling is inherited from the shared gui.png button rule above. */
   #vcGuide button:disabled { opacity: .55; cursor: not-allowed; }
   #vcGuide button .vc-small { display: block; margin-top: 2px; color: #bcbcbc; font-size: 9px; font-weight: normal; }
   #vcGuide .vc-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
@@ -438,13 +438,15 @@
     grid-row: 2;
     align-self: start;
   }
-  #vcGuide [data-vc-action="kit"]::before { background-image: url('./VoxelCraft/textures/items/book_writable.png'); }
-  #vcGuide [data-vc-action="heal"]::before { background-image: url('./VoxelCraft/textures/items/apple.png'); }
-  #vcGuide [data-vc-action="fly"]::before { background-image: url('./VoxelCraft/textures/items/feather.png'); }
-  #vcGuide [data-vc-action="day"]::before { background-image: url('./VoxelCraft/textures/items/clock_item.png'); }
-  #vcGuide [data-vc-action="night"]::before { background-image: url('./VoxelCraft/textures/items/bed_red.png'); }
-  #vcGuide [data-vc-action="weather"]::before { background-image: url('./VoxelCraft/textures/items/compass_item.png'); }
-  #vcGuide [data-vc-action="stats"]::before { background-image: url('./VoxelCraft/textures/items/book_normal.png'); }
+  /* vcGuide icons from rujukan items.png atlas (256x256, 16x16 grid) */
+  /* VERIFIED from Item.cpp setIcon(col, row) coordinates */
+  #vcGuide [data-vc-action="kit"]::before { background: url('./VoxelCraft/textures/gui/items.png') -176px -48px / 256px 256px; }
+  #vcGuide [data-vc-action="heal"]::before { background: url('./VoxelCraft/textures/gui/items.png') -160px 0px / 256px 256px; }
+  #vcGuide [data-vc-action="fly"]::before { background: url('./VoxelCraft/textures/gui/items.png') -128px -16px / 256px 256px; }
+  #vcGuide [data-vc-action="day"]::before { background: url('./VoxelCraft/textures/gui/items.png') -96px -64px / 256px 256px; }
+  #vcGuide [data-vc-action="night"]::before { background: url('./VoxelCraft/textures/gui/items.png') -208px -32px / 256px 256px; }
+  #vcGuide [data-vc-action="weather"]::before { background: url('./VoxelCraft/textures/gui/items.png') -96px -48px / 256px 256px; }
+  #vcGuide [data-vc-action="stats"]::before { background: url('./VoxelCraft/textures/gui/items.png') -176px -48px / 256px 256px; }
   #vcGuide .vc-close::before {
     content: "\2715";  /* plain Unicode X — no RP cursor/cancel sprite needed */
     display: inline-block;
@@ -597,7 +599,7 @@
     text-shadow: 1px 1px #000;
   }
   #pauseOverlay .pause-buttons { display: grid; grid-template-columns: 1fr; gap: 6px; }
-  /* #pauseOverlay button styling is inherited from the shared gui_buttons.png rule above. */
+  /* #pauseOverlay button styling is inherited from the shared gui.png button rule above. */
   @media (max-width: 600px) {
     #pauseOverlay { padding: 12px; }
     #pauseOverlay .pause-wrap { padding: 10px; }
@@ -616,7 +618,7 @@
     border: 2px solid #000;
     border-radius: 0;
   }
-  /* inv-tabs button base styling inherited from the shared gui_buttons.png rule above. */
+  /* inv-tabs button base styling inherited from shared gui.png button rule above. */
   #inventory .inv-tabs button.active,
   #inventory .inv-tabs button[aria-selected="true"] {
     background-position: 0 -40px;
@@ -664,13 +666,13 @@
     filter: none;
   }
   #inventory .inv-tabs button[data-inv-filter="nature"]::before {
-    background-image: url('./VoxelCraft/textures/items/apple.png');
+    background: url('./VoxelCraft/textures/gui/items.png') -160px 0px / 256px 256px;
   }
   #inventory .inv-tabs button[data-inv-filter="building"]::before {
-    background-image: url('./VoxelCraft/textures/items/brick.png');
+    background: url('./VoxelCraft/textures/gui/items.png') -96px -16px / 256px 256px;
   }
   #inventory .inv-tabs button[data-inv-filter="minerals"]::before {
-    background-image: url('./VoxelCraft/textures/items/diamond.png');
+    background: url('./VoxelCraft/textures/gui/items.png') -112px -48px / 256px 256px;
   }
   @media (max-width: 460px) {
     #inventory .inv-tabs button {
@@ -719,11 +721,11 @@
 
 
   /* (legacy VoxelCraft RP tab sprite overrides removed — MCPE 2013 uses the
-     shared gui_buttons.png button background declared above) */
+     shared gui.png button background declared above) */
 
 
   /* (legacy VoxelCraft RP newgui button overrides removed — MCPE 2013 uses
-     the shared gui_buttons.png button background declared above) */
+     the shared gui.png button background declared above) */
 
 
 
@@ -1818,8 +1820,10 @@
 
     // ---- Mobs (vanilla Bedrock chicken model + texture) ----
     const mobs = [];
-    const CHICKEN_GEOMETRY_URL = new URL('./VoxelCraft/models/entity/chicken.geo.json', window.location.href).href;
-    const CHICKEN_TEXTURE_URL = new URL('./VoxelCraft/textures/entity/chicken/chicken.png', window.location.href).href;
+    // Rujukan MCPE 2013 uses ChickenModel.cpp (hardcoded cube model), not a geo JSON file.
+    // The VoxelCraft RP chicken.geo.json was a modern Bedrock format not in rujukan.
+    // makeVanillaChickenModel now builds the chicken from ChickenModel.cpp coordinates.
+    const CHICKEN_TEXTURE_URL = new URL('./VoxelCraft/textures/mob/chicken.png', window.location.href).href;
     let vanillaChickenGeometry = null;
     let vanillaChickenTexture = null;
 
@@ -1961,28 +1965,22 @@
       return true;
     }
 
-    // Assets are copied from the repository's vanilla Bedrock resource pack during setup/build.
-    // Keep a visible fallback if a local preview is opened without running setup first.
-    Promise.all([
-      fetch(CHICKEN_GEOMETRY_URL).then(response => {
-        if (!response.ok) throw new Error('Chicken geometry HTTP ' + response.status);
-        return response.json();
-      }),
-      new Promise((resolve, reject) => {
-        new THREE.TextureLoader().load(CHICKEN_TEXTURE_URL, resolve, undefined, reject);
-      })
-    ]).then(([geometry, texture]) => {
-      vanillaChickenGeometry = geometry;
+    // Rujukan MCPE 2013 uses ChickenModel.cpp (hardcoded cube model), not a geo JSON file.
+    // The VoxelCraft RP chicken.geo.json was a modern Bedrock format not in rujukan.
+    // makeVanillaChickenModel now builds the chicken from ChickenModel.cpp coordinates.
+    // Only load the texture from rujukan mob/chicken.png (64x32 atlas).
+    new THREE.TextureLoader().load(CHICKEN_TEXTURE_URL, (texture) => {
       vanillaChickenTexture = texture;
       vanillaChickenTexture.magFilter = THREE.NearestFilter;
       vanillaChickenTexture.minFilter = THREE.NearestFilter;
       if ('colorSpace' in vanillaChickenTexture && THREE.SRGBColorSpace) {
         vanillaChickenTexture.colorSpace = THREE.SRGBColorSpace;
       }
+      vanillaChickenTexture.flipY = false;
       vanillaChickenTexture.needsUpdate = true;
       for (const mob of mobs) replaceWithVanillaModel(mob);
-    }).catch(error => {
-      console.warn('[VoxelCraft] Vanilla chicken assets failed to load; using fallback model.', error);
+    }, undefined, (error) => {
+      console.warn('[VoxelCraft] Chicken texture failed to load; using fallback model.', error);
     });
 
     // ============================================================
