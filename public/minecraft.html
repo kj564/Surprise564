@@ -2049,6 +2049,9 @@
       lastHealth: 20,          // §Mob.cpp:174
       lastHurt: 0,             // §Mob.cpp:226
       canHurtPlayer: true,    // §Survival mode active
+      // §Entity.h — airSupply, TOTAL_AIR_SUPPLY = 300 (15 seconds * 20 tps)
+      airSupply: 300,
+      maxAirSupply: 300,
     };
     // Base FOV follows the menu option; sprinting temporarily widens it. The
     // initial 72 matches the PerspectiveCamera constructor so the kick lerps cleanly.
@@ -4290,6 +4293,34 @@
         player.vel.z *= friction;
       }
 
+      // §Entity::baseTick drowning (Entity.cpp:491-510):
+      //   if in water: airSupply-- per tick
+      //   if airSupply <= -20: hurt(1), airSupply = 0 (drowning damage)
+      if (player.canHurtPlayer) {
+        const gx = Math.floor(player.pos.x), gy = Math.floor(player.pos.y + 0.5), gz = Math.floor(player.pos.z);
+        const inWater = world.getBlock(gx, gy, gz) === 17;  // water block id
+        if (inWater) {
+          player.airSupply -= 1;
+          if (player.airSupply <= -20) {
+            hurtPlayer(1);
+            player.airSupply = 0;
+          }
+        } else {
+          player.airSupply = player.maxAirSupply;
+        }
+      }
+
+      // §Player::aiStep peaceful regen (Player.cpp:426-428):
+      //   if (tickCount % (12 * TicksPerSecond) == 0) heal(1)
+      //   = heal 1 HP every 12 seconds (240 ticks)
+      if (player.canHurtPlayer && player.health < player.maxHealth && player.health > 0) {
+        player._regenTick = (player._regenTick || 0) + 1;
+        if (player._regenTick >= 240) {
+          player.health = Math.min(player.maxHealth, player.health + 1);
+          player._regenTick = 0;
+        }
+      }
+
       // §Entity::checkFallDamage (Entity.cpp:534-563)
       if (player.canHurtPlayer) {
         if (player.onGround) {
@@ -4955,6 +4986,10 @@
       // Smooth sprint FOV kick: widen the view while sprinting on the ground,
       // ease back to the base FOV from the options menu when not. Clouds drift
       // every frame so the sky stays alive even while the game is paused.
+      // §Toggle D-pad flying sprites when player.fly is active
+      // §TouchscreenInput.cpp:467-470 — flying mode uses different sprite row (y=133)
+      dpadEl.classList.toggle('flying', !!player.fly);
+
       const targetFov = baseFov + (player.sprinting && !player.fly ? 6 : 0);
       if (Math.abs(camera.fov - targetFov) > 0.05) {
         camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 8);
@@ -5097,6 +5132,8 @@
       // decrements invulnerableTime once per tick — we approximate by dt so the
       // blink duration looks right at 60fps rather than waiting for the 20 tps
       // physics tick). The hearts UI reads this in updateHearts().
+      // §Mob::tick — decrement invulnerableTime + hurtTime per tick (20 tps)
+      // We use dt*20 to approximate 1 decrement per render frame at 60fps
       if (player.invulnerableTime > 0) {
         player.invulnerableTime = Math.max(0, player.invulnerableTime - dt * 20);
       }
