@@ -3592,6 +3592,187 @@
         }
       }
     }
+
+    // ============================================================
+    // §LiquidTileDynamic — water flow tick system (1:1 with rujukan)
+    // ============================================================
+    // §LiquidTileDynamic.h:18-91 — tick() computes new depth from neighbors,
+    //   spreads down/horizontally, becomes static when stable.
+    // §LiquidTile.h:78-82 — getTickDelay: water=5 ticks, lava=30 ticks.
+    // §LiquidTile.h:150-153 — getDepth: -1 if not same material, else getData.
+    // §LiquidTile.h:16-21 — getHeight: d>=8 is falling (rendered as 0); d=0 is full.
+    //
+    // Simplification: per-block tick scheduling is replaced by scanning all
+    // loaded chunks near the player every 5 ticks for water blocks. Depth
+    // (data 0..15) is stored per-block in a Map (chunks in this port only
+    // carry 1 byte/block of id data, not the 4-bit Tile::data rujukan uses).
+    const waterDepthData = new Map();   // key "x,y,z" (world coords) → depth 0..15
+    const staticWater = new Set();      // "x,y,z" — skip in tick (became static)
+    let waterTickCounter = 0;
+    const WATER_TICK_DELAY = 5;        // §LiquidTile.h:79 — water getTickDelay = 5
+
+    function waterKey(x, y, z) { return x + ',' + y + ',' + z; }
+
+    // §LiquidTile.h:150-153 — getDepth: -1 if not same material, else getData
+    function getWaterDepth(x, y, z) {
+      if (world.getBlockIfLoaded(x, y, z) !== 17) return -1;
+      const k = waterKey(x, y, z);
+      return waterDepthData.has(k) ? waterDepthData.get(k) : 0;
+    }
+    function setWaterDepth(x, y, z, d) {
+      const k = waterKey(x, y, z);
+      if (d === 0) waterDepthData.delete(k);
+      else waterDepthData.set(k, d);
+      staticWater.delete(k);
+    }
+
+    // §LiquidTileDynamic.h:126-136 — isWaterBlocking: blocks that stop water flow.
+    //   rujukan: solid + doors/signs/ladders/reeds. This port has no
+    //   doors/signs/ladders/reeds in BLOCKS, so the check reduces to `solid`.
+    function isWaterBlocking(x, y, z) {
+      const t = world.getBlockIfLoaded(x, y, z);
+      if (t === 0) return false;       // air
+      if (t === 17) return false;      // water is not blocking itself
+      const def = BLOCKS[t];
+      return def ? !!def.solid : true;
+    }
+
+    // §LiquidTileDynamic.h:119-124 — canSpreadTo: false if same material/lava,
+    //   else !isWaterBlocking.
+    function canSpreadTo(x, y, z) {
+      const t = world.getBlockIfLoaded(x, y, z);
+      if (t === 17) return false;       // same material
+      return !isWaterBlocking(x, y, z);
+    }
+
+    // §LiquidTileDynamic.h:173-185 — trySpreadTo: place water at new depth.
+    function trySpreadTo(x, y, z, depth) {
+      if (canSpreadTo(x, y, z)) {
+        if (world.setBlock(x, y, z, 17)) {
+          setWaterDepth(x, y, z, depth);
+        }
+      }
+    }
+
+    // §LiquidTileDynamic.h:18-91 — tick() per-block. Port: 1:1 logic, only the
+    //   spread-direction simplification omits getSpread/getSlopeDistance (we
+    //   spread to all 4 horizontal neighbors equally instead of using slope
+    //   distance to choose the lowest path).
+    function tickWaterBlock(x, y, z) {
+      const k = waterKey(x, y, z);
+      if (staticWater.has(k)) return;
+
+      const dropOff = 1;  // §LiquidTileDynamic.h:22-23 — water dropOff = 1 (lava = 2)
+      const depth = getWaterDepth(x, y, z);
+      if (depth < 0) return;
+
+      const HORIZONTAL_DIRS = [[-1,0,0],[1,0,0],[0,0,-1],[0,0,1]];
+
+      // §LiquidTileDynamic.h:25-72 — flowing water (depth > 0) recomputes depth
+      if (depth > 0) {
+        let highest = -100;
+        let maxCount = 0;
+        // §LiquidTileDynamic.h:29-32 + 94-102 — getHighest over 4 neighbors
+        for (const [dx, dz] of HORIZONTAL_DIRS) {
+          const d = getWaterDepth(x + dx, y, z + dz);
+          if (d < 0) continue;
+          if (d === 0) maxCount++;
+          const adj = d >= 8 ? 0 : d;
+          if (highest < 0 || adj < highest) highest = adj;
+        }
+
+        // §LiquidTileDynamic.h:34 — newDepth = highest + dropOff
+        let newDepth = highest + dropOff;
+        // §LiquidTileDynamic.h:35-37 — dry up if too far from source
+        if (newDepth >= 8 || highest < 0) newDepth = -1;
+
+        // §LiquidTileDynamic.h:38-42 — water above forces falling depth
+        const above = getWaterDepth(x, y + 1, z);
+        if (above >= 0) {
+          if (above >= 8) newDepth = above;
+          else newDepth = above + 8;
+        }
+        // §LiquidTileDynamic.h:43-50 — 2+ source neighbors + solid/water below = spring
+        if (maxCount >= 2) {
+          if (isWaterBlocking(x, y - 1, z)) {
+            newDepth = 0;
+          } else if (world.getBlockIfLoaded(x, y - 1, z) === 17 && getWaterDepth(x, y, z) === 0) {
+            newDepth = 0;
+          }
+        }
+
+        // §LiquidTileDynamic.h:61-72 — apply newDepth
+        if (newDepth !== depth) {
+          if (newDepth < 0) {
+            // dry up — remove water
+            world.setBlock(x, y, z, 0);
+            waterDepthData.delete(k);
+            staticWater.delete(k);
+            return;
+          } else {
+            setWaterDepth(x, y, z, newDepth);
+          }
+        } else {
+          // §LiquidTileDynamic.h:70-72 — stable → become static (skip future ticks)
+          staticWater.add(k);
+          return;
+        }
+      }
+      // §LiquidTileDynamic.h:73-74 — depth 0 (source) is already stable; setStatic.
+      //   Source blocks remain id=17 with no depth entry. They still spread.
+
+      // §LiquidTileDynamic.h:76-90 — spread to neighbors
+      const curDepth = getWaterDepth(x, y, z);
+      if (curDepth < 0) return;
+
+      // §LiquidTileDynamic.h:76-78 — spread DOWN first (falling water)
+      if (canSpreadTo(x, y - 1, z)) {
+        const below = curDepth >= 8 ? curDepth : curDepth + 8;
+        trySpreadTo(x, y - 1, z, below);
+      } else if (curDepth >= 0 && (curDepth === 0 || isWaterBlocking(x, y - 1, z))) {
+        // §LiquidTileDynamic.h:79-90 — spread HORIZONTALLY (only if not falling freely)
+        let neighbor = curDepth + dropOff;
+        if (curDepth >= 8) neighbor = 1;     // falling water spreads at depth 1
+        if (neighbor >= 8) return;
+        for (const [dx, dz] of HORIZONTAL_DIRS) {
+          trySpreadTo(x + dx, y, z + dz, neighbor);
+        }
+      }
+    }
+
+    // §LiquidTileDynamic.h:104-109 — onPlace adds water to tick list. Simplified
+    //   port: scan all loaded chunks near the player every 5 ticks.
+    function tickWaterSystem() {
+      waterTickCounter++;
+      if (waterTickCounter < WATER_TICK_DELAY) return;
+      waterTickCounter = 0;
+
+      // Scan loaded chunks for water blocks (id 17). Limit to chunks near the
+      // player to keep scan cost bounded (≈7×7 chunk radius = 49 chunks max).
+      const pcx = Math.floor(player.pos.x / CHUNK_X);
+      const pcz = Math.floor(player.pos.z / CHUNK_Z);
+      const RADIUS = 3;
+      for (let dcx = -RADIUS; dcx <= RADIUS; dcx++) {
+        for (let dcz = -RADIUS; dcz <= RADIUS; dcz++) {
+          const chunk = world.getChunk(pcx + dcx, pcz + dcz);
+          if (!chunk) continue;
+          const baseX = chunk.cx * CHUNK_X;
+          const baseZ = chunk.cz * CHUNK_Z;
+          for (let y = 0; y < CHUNK_Y; y++) {
+            for (let lz = 0; lz < CHUNK_Z; lz++) {
+              for (let lx = 0; lx < CHUNK_X; lx++) {
+                if (chunk.get(lx, y, lz) === 17) {
+                  tickWaterBlock(baseX + lx, y, baseZ + lz);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    window.__tickWaterSystem = tickWaterSystem;
+    window.__waterDepthData = waterDepthData;
+
     window.__mobs = mobs;
     window.__spawnChicken = spawnChicken;
     window.__Chicken = Chicken;
@@ -4962,6 +5143,10 @@
           // in the 60fps render loop, or it runs 3x too fast.
           tickMiningTick();
           checkTouchDestroy();
+          // §LiquidTileDynamic.h:18 — water flow tick (every 5 game ticks).
+          // Runs inside the 20 tps physics tick loop so it advances exactly
+          // one game tick per iteration, not 60fps frame counts.
+          tickWaterSystem();
         }
       }
 
