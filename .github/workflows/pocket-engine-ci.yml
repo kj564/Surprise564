@@ -8,7 +8,7 @@ name: Kitab Suci integrity check
 # Instead, this workflow verifies that the kitab suci is intact:
 #   1. The C++ source tree is present and has the expected file count
 #   2. The MCPE 2013 asset files used by minecraft.html exist and are non-empty
-#   3. The committed copies in public/VoxelCraft/ match the kitab suci byte-for-byte
+#   3. The committed copies in public/assets/ match the kitab suci byte-for-byte
 # This catches accidental damage to the source of truth before anyone
 # builds features on top of a corrupted reference.
 
@@ -18,13 +18,13 @@ on:
     paths:
       - "rujukan/pocket-edition-2013/mcpe-source/**"
       - ".github/workflows/pocket-engine-ci.yml"
-      - "public/VoxelCraft/**"
+      - "public/assets/**"
       - "public/minecraft.html"
   pull_request:
     paths:
       - "rujukan/pocket-edition-2013/mcpe-source/**"
       - ".github/workflows/pocket-engine-ci.yml"
-      - "public/VoxelCraft/**"
+      - "public/assets/**"
       - "public/minecraft.html"
   workflow_dispatch:
 
@@ -87,19 +87,19 @@ jobs:
             echo "OK  $path ($actual bytes)"
           done
 
-      - name: Verify public/VoxelCraft mirrors kitab suci
+      - name: Verify public/assets mirrors kitab suci
         run: |
           set -euo pipefail
           ASSETS=rujukan/pocket-edition-2013/mcpe-source/handheld/project/android/assets
           # minecraft.html uses exactly these 6 files. They MUST match the
           # kitab suci byte-for-byte so the game is 1:1 with MCPE 2013.
           for spec in \
-            "terrain.png:VoxelCraft/textures/blocks/terrain.png" \
-            "gui/gui.png:VoxelCraft/textures/gui/gui.png" \
-            "gui/icons.png:VoxelCraft/textures/gui/icons.png" \
-            "gui/items.png:VoxelCraft/textures/gui/items.png" \
-            "environment/clouds.png:VoxelCraft/textures/environment/clouds.png" \
-            "mob/chicken.png:VoxelCraft/textures/mob/chicken.png" ; do
+            "terrain.png:terrain.png" \
+            "gui/gui.png:gui/gui.png" \
+            "gui/icons.png:gui/icons.png" \
+            "gui/items.png:gui/items.png" \
+            "environment/clouds.png:environment/clouds.png" \
+            "mob/chicken.png:mob/chicken.png" ; do
             src="$ASSETS/${spec%%:*}"
             dst="public/${spec##*:}"
             test -s "$dst" || { echo "FAIL: missing committed asset $dst"; exit 1; }
@@ -115,9 +115,9 @@ jobs:
       - name: Verify minecraft.html references only kitab-suci assets
         run: |
           set -euo pipefail
-          # Every VoxelCraft/...png reference in minecraft.html must point to
+          # Every assets/...png reference in minecraft.html must point to
           # a file we just verified above. This catches phantom asset refs.
-          refs=$(grep -oE 'VoxelCraft/[A-Za-z0-9_/.-]+\.png' public/minecraft.html | sort -u)
+          refs=$(grep -oE 'assets/[A-Za-z0-9_/.-]+\.png' public/minecraft.html | sort -u)
           echo "Asset references in minecraft.html:"
           echo "$refs"
           for r in $refs; do
@@ -130,5 +130,5 @@ jobs:
           echo "Kitab Suci integrity: OK"
           echo "  - C++ source tree: $(find rujukan/pocket-edition-2013/mcpe-source -type f \( -name '*.cpp' -o -name '*.h' \) | wc -l) files"
           echo "  - MCPE 2013 assets: 11 verified"
-          echo "  - public/VoxelCraft mirrors kitab suci: 6/6 byte-identical"
+          echo "  - public/assets mirrors kitab suci: 6/6 byte-identical"
           echo "Rule Zero respected: source of truth intact."
