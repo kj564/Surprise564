@@ -61,7 +61,7 @@ describe('block mining', () => {
     const result = finishBlockBreak(world, started.session, defaultBlockRegistry, inventory);
     expect(result.status).toBe('broken');
     expect(world.getBlock(target.x, target.y, target.z)).toBe(0);
-    expect(inventory.getSlot(0)).toEqual({ itemKey: 'minecraft:cobblestone', count: 1, maxStackSize: 64 });
+    expect(inventory.getSlot(0)).toEqual({ itemKey: 'minecraft:cobblestone', count: 1, maxStackSize: 64, auxValue: 0 });
   });
 
   test('cancels if the player changes target or the block changes', () => {

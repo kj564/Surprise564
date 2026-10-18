@@ -2,7 +2,8 @@ import { defaultBlockRegistry, type BlockRegistry } from './blocks/registry';
 import { FixedStepClock, type FixedStepResult } from './core/fixed-step';
 import { Inventory } from './inventory/inventory';
 import { beginMining, finishBlockBreak, type GameMode, type MiningProgressResult, type MiningSession, type MiningStartResult } from './interaction/mining';
-import type { Tool } from './items/tools';
+import { applyMineBlockDurability } from './items/item-instance';
+import { getTool, type Tool } from './items/tools';
 import { placeBlockFromInventory } from './interaction/placement';
 import { raycastVoxels, type RayVector, type VoxelRayHit, type VoxelRayResult } from './interaction/raycast';
 import { Aabb } from './physics/aabb';
@@ -142,12 +143,44 @@ export class VoxelCraftEngine {
     const result = finishBlockBreak(this.world, session, this.registry, this.inventory);
     this.miningSession = null;
     if (result.status === 'broken') {
+      // §SurvivalMode::destroyBlock (SurvivalMode.cpp:57-76):
+      //   item->mineBlock(t, x, y, z);  // decrement tool durability
+      //   if (item->count == 0) inventory->clearSlot(selected);
+      // CreativeMode::creativeDestroyBlock (CreativeMode.cpp:31-38) does NOT
+      // call mineBlock, so tools don't lose durability in creative mode.
+      if (this.gameMode === 'survival') {
+        this.applyToolDurability();
+      }
       return Object.freeze({ status: 'broken', dropsRemaining: result.dropsRemaining });
     }
     if (result.status === 'target-changed' || result.status === 'unloaded' || result.status === 'unbreakable') {
       return { status: 'cancelled' };
     }
     return { status: 'no-session' };
+  }
+
+  /** §SurvivalMode.cpp:63-69 — decrement tool durability on the selected
+   *  hotbar slot after a block break. If the tool breaks (count == 0),
+   *  §FillingContainer::clearSlot nulls the slot (SurvivalMode.cpp:68).
+   *  §rujukan uses `inventory->getSelected()` (real-time lookup of the
+   *  currently selected slot) — NOT a cached tool from startMining. This
+   *  matters if the player switches slots mid-mine: the durability is
+   *  applied to whatever tool is in the selected slot AT BREAK TIME. */
+  private applyToolDurability(): void {
+    const slot = this.selectedSlotValue;
+    const stack = this.inventory.getSlot(slot);
+    if (!stack) return;  // empty slot — nothing to damage
+    // §Item::items[id] lookup — resolve tool from selected slot's itemKey.
+    // Returns null for non-tool items (blocks, etc.) — no durability to apply.
+    const tool = getTool(stack.itemKey);
+    if (!tool) return;
+    const newStack = applyMineBlockDurability(stack, tool);
+    if (newStack === null) {
+      // §SurvivalMode.cpp:68 — count==0 → clearSlot
+      this.inventory.setSlot(slot, null);
+    } else if (newStack !== stack) {
+      this.inventory.setSlot(slot, newStack);
+    }
   }
 
   placeSelected(hit: VoxelRayHit) {

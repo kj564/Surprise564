@@ -201,7 +201,7 @@ class Inventory {
   }
   setSlot(index, stack) {
     const slot = this.assertSlot(index);
-    const normalized = stack === null ? null : createStack(stack.itemKey, stack.count, stack.maxStackSize);
+    const normalized = stack === null ? null : createStack(stack.itemKey, stack.count, stack.maxStackSize, stack.auxValue);
     const previous = this.slots[slot];
     if (sameStack(previous, normalized))
       return false;
@@ -273,7 +273,7 @@ class Inventory {
     return index;
   }
 }
-function createStack(itemKey, count, maxStackSize) {
+function createStack(itemKey, count, maxStackSize, auxValue) {
   validateItemKey(itemKey);
   positiveInteger2(count, "count");
   positiveInteger2(maxStackSize, "maxStackSize");
@@ -281,7 +281,10 @@ function createStack(itemKey, count, maxStackSize) {
     throw new RangeError("maxStackSize cannot exceed 999");
   if (count > maxStackSize)
     throw new RangeError("Stack count exceeds maxStackSize");
-  return Object.freeze({ itemKey, count, maxStackSize });
+  if (auxValue !== undefined && (!Number.isInteger(auxValue) || auxValue < 0 || auxValue > 9999)) {
+    throw new RangeError("auxValue must be a non-negative integer up to 9999");
+  }
+  return Object.freeze({ itemKey, count, maxStackSize, auxValue: auxValue ?? 0 });
 }
 function validateItemKey(itemKey) {
   if (typeof itemKey !== "string" || !/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(itemKey)) {
@@ -293,7 +296,7 @@ function positiveInteger2(value, name) {
     throw new RangeError(name + " must be a positive safe integer");
 }
 function sameStack(a, b) {
-  return a === b || a !== null && b !== null && a.itemKey === b.itemKey && a.count === b.count && a.maxStackSize === b.maxStackSize;
+  return a === b || a !== null && b !== null && a.itemKey === b.itemKey && a.count === b.count && a.maxStackSize === b.maxStackSize && (a.auxValue ?? 0) === (b.auxValue ?? 0);
 }
 
 // src/game/items/tools.ts
@@ -638,6 +641,55 @@ function finishBlockBreak(world, session, registry, inventory) {
 }
 function samePosition(a, b) {
   return b !== null && a.x === b.x && a.y === b.y && a.z === b.z;
+}
+
+// src/game/items/item-instance.ts
+function isDamageableItem(tool) {
+  if (!tool)
+    return false;
+  return tool.tierDef.uses > 0;
+}
+function getMaxDamage(tool) {
+  if (!tool)
+    return 0;
+  return tool.tierDef.uses;
+}
+function hurtStack(stack, amount, tool) {
+  if (!isDamageableItem(tool))
+    return stack;
+  if (!Number.isFinite(amount) || amount <= 0)
+    return stack;
+  let auxValue = (stack.auxValue ?? 0) + amount;
+  let count = stack.count;
+  const maxDamage = getMaxDamage(tool);
+  if (auxValue > maxDamage) {
+    count--;
+    if (count < 0)
+      count = 0;
+    auxValue = 0;
+  }
+  if (count === 0)
+    return null;
+  return Object.freeze({ ...stack, count, auxValue });
+}
+function getMineBlockHurtAmount(tool) {
+  if (!tool)
+    return 0;
+  switch (tool.kind) {
+    case "pickaxe":
+    case "axe":
+    case "shovel":
+      return 1;
+    case "sword":
+      return 2;
+    case "none":
+      return 0;
+  }
+  return 0;
+}
+function applyMineBlockDurability(stack, tool) {
+  const hurtAmount = getMineBlockHurtAmount(tool);
+  return hurtStack(stack, hurtAmount, tool);
 }
 
 // src/game/physics/aabb.ts
@@ -1410,7 +1462,8 @@ function validateWorldSave(input) {
           errors.push("player.inventory[" + index + "] is not a valid item stack");
           return;
         }
-        normalizedInventory.push(Object.freeze({ itemKey: stack.itemKey, count: stack.count, maxStackSize: stack.maxStackSize }));
+        const auxValue = typeof stack.auxValue === "number" && Number.isInteger(stack.auxValue) && stack.auxValue >= 0 && stack.auxValue <= 9999 ? stack.auxValue : 0;
+        normalizedInventory.push(Object.freeze({ itemKey: stack.itemKey, count: stack.count, maxStackSize: stack.maxStackSize, auxValue }));
       });
     }
     if (isRecord(position) && [position.x, position.y, position.z].every(Number.isFinite) && Number.isFinite(player.yaw) && Number.isFinite(player.pitch) && Math.abs(player.pitch) <= Math.PI / 2 && Array.isArray(player.inventory) && player.inventory.length <= MAX_INVENTORY_SLOTS && normalizedInventory.length === player.inventory.length && selectedSlotValid) {
@@ -1622,12 +1675,30 @@ class VoxelCraftEngine {
     const result = finishBlockBreak(this.world, session, this.registry, this.inventory);
     this.miningSession = null;
     if (result.status === "broken") {
+      if (this.gameMode === "survival") {
+        this.applyToolDurability();
+      }
       return Object.freeze({ status: "broken", dropsRemaining: result.dropsRemaining });
     }
     if (result.status === "target-changed" || result.status === "unloaded" || result.status === "unbreakable") {
       return { status: "cancelled" };
     }
     return { status: "no-session" };
+  }
+  applyToolDurability() {
+    const slot = this.selectedSlotValue;
+    const stack = this.inventory.getSlot(slot);
+    if (!stack)
+      return;
+    const tool = getTool(stack.itemKey);
+    if (!tool)
+      return;
+    const newStack = applyMineBlockDurability(stack, tool);
+    if (newStack === null) {
+      this.inventory.setSlot(slot, null);
+    } else if (newStack !== stack) {
+      this.inventory.setSlot(slot, newStack);
+    }
   }
   placeSelected(hit) {
     return placeBlockFromInventory(this.world, hit, this.inventory, this.selectedSlotValue, this.registry, this.player.bounds);

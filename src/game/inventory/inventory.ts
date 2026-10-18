@@ -2,6 +2,10 @@ export interface ItemStack {
   readonly itemKey: string;
   readonly count: number;
   readonly maxStackSize: number;
+  /** §ItemInstance::auxValue (ItemInstance.h:97-99) — used as durability
+   *  for damageable items (tools), block data (wool color, etc.) for blocks.
+   *  Optional for backward compat; defaults to 0 (no damage). */
+  readonly auxValue?: number;
 }
 
 export interface InsertResult {
@@ -39,7 +43,8 @@ export class Inventory {
 
   setSlot(index: number, stack: ItemStack | null): boolean {
     const slot = this.assertSlot(index);
-    const normalized = stack === null ? null : createStack(stack.itemKey, stack.count, stack.maxStackSize);
+    // §Preserve auxValue (durability) when normalizing input stack.
+    const normalized = stack === null ? null : createStack(stack.itemKey, stack.count, stack.maxStackSize, stack.auxValue);
     const previous = this.slots[slot];
     if (sameStack(previous, normalized)) return false;
     this.slots[slot] = normalized;
@@ -115,13 +120,18 @@ export class Inventory {
   }
 }
 
-function createStack(itemKey: string, count: number, maxStackSize: number): ItemStack {
+function createStack(itemKey: string, count: number, maxStackSize: number, auxValue?: number): ItemStack {
   validateItemKey(itemKey);
   positiveInteger(count, 'count');
   positiveInteger(maxStackSize, 'maxStackSize');
   if (maxStackSize > 999) throw new RangeError('maxStackSize cannot exceed 999');
   if (count > maxStackSize) throw new RangeError('Stack count exceeds maxStackSize');
-  return Object.freeze({ itemKey, count, maxStackSize });
+  // §ItemInstance::auxValue — preserved for damageable items (tools).
+  // Validate as non-negative integer; default to 0 (fresh tool) if absent.
+  if (auxValue !== undefined && (!Number.isInteger(auxValue) || auxValue < 0 || auxValue > 9999)) {
+    throw new RangeError('auxValue must be a non-negative integer up to 9999');
+  }
+  return Object.freeze({ itemKey, count, maxStackSize, auxValue: auxValue ?? 0 });
 }
 
 function validateItemKey(itemKey: string): void {
@@ -135,6 +145,10 @@ function positiveInteger(value: number, name: string): void {
 }
 
 function sameStack(a: ItemStack | null, b: ItemStack | null): boolean {
+  // §Compare auxValue too — tools with different durability are NOT the same stack.
+  // Without this, setSlot would silently no-op when applyToolDurability updates
+  // auxValue on a tool (same itemKey/count/maxStackSize but different wear).
   return a === b || (a !== null && b !== null &&
-    a.itemKey === b.itemKey && a.count === b.count && a.maxStackSize === b.maxStackSize);
+    a.itemKey === b.itemKey && a.count === b.count && a.maxStackSize === b.maxStackSize &&
+    (a.auxValue ?? 0) === (b.auxValue ?? 0));
 }

@@ -142,7 +142,11 @@ export function validateWorldSave(input: unknown): SaveValidationResult {
           errors.push('player.inventory[' + index + '] is not a valid item stack');
           return;
         }
-        normalizedInventory.push(Object.freeze({ itemKey: stack.itemKey, count: stack.count, maxStackSize: stack.maxStackSize }));
+        // §ItemInstance::auxValue — optional durability field for tools.
+        // Validated as a non-negative integer (cap at 9999 to bound memory).
+        // If absent or invalid, defaults to 0 (fresh tool with no wear).
+        const auxValue = (typeof stack.auxValue === 'number' && Number.isInteger(stack.auxValue) && stack.auxValue >= 0 && stack.auxValue <= 9999) ? stack.auxValue : 0;
+        normalizedInventory.push(Object.freeze({ itemKey: stack.itemKey, count: stack.count, maxStackSize: stack.maxStackSize, auxValue }));
       });
     }
     if (isRecord(position) && [position.x, position.y, position.z].every(Number.isFinite) &&

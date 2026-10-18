@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>VoxelCraft — Minecraft di Browser</title>
 <style>
@@ -83,6 +84,14 @@
   .slot .name { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); font-size: 8px; color: #fff; text-shadow: 1px 1px 0 #000; white-space: nowrap; opacity: 0; transition: opacity .15s; }
   .slot.active .name { opacity: 1; }
   .slot .count { position:absolute; right:1px; bottom:0; color:#fff; font-size:7px; line-height:1; text-shadow:1px 1px #000; pointer-events:none; }
+  /* §Durability bar — visual indicator of ItemInstance::auxValue wear.
+     Shows a thin colored bar under the tool icon, shrinking as auxValue
+     approaches getMaxDamage(). Matches the MCPE 2013 inventory HUD bar. */
+  .slot .dur { position:absolute; left:1px; right:1px; bottom:8px; height:2px;
+               background:rgba(0,0,0,.5); pointer-events:none; }
+  .slot .dur > i { display:block; height:100%; background:#7fdc4b; }
+  .slot .dur.warn > i { background:#f0a020; }
+  .slot .dur.crit > i { background:#e04848; }
 
   /* HUD — plain text, no background panel (MCPE 2013 draws HUD text directly
      onto the framebuffer with the default8.png font, no toast background).
@@ -3675,6 +3684,13 @@
         count.className = 'count';
         count.textContent = String(voxelEngine?.inventory.getSlot(i)?.count ?? 0);
         slot.appendChild(count);
+        // §Durability bar — only rendered for damageable items (tools).
+        // Filled via refreshHotbarCounts using ItemInstance::auxValue / getMaxDamage.
+        const dur = document.createElement('div');
+        dur.className = 'dur';
+        dur.style.display = 'none';  // hidden by default; shown only for tools
+        dur.innerHTML = '<i></i>';
+        slot.appendChild(dur);
         slot.addEventListener('click', () => selectSlot(i));
         hotbarEl.appendChild(slot);
       });
@@ -3699,8 +3715,35 @@
     }
     function refreshHotbarCounts() {
       document.querySelectorAll('#hotbar .slot').forEach((slot, index) => {
+        const stack = voxelEngine.inventory.getSlot(index);
         const count = slot.querySelector('.count');
-        if (count) count.textContent = String(voxelEngine.inventory.getSlot(index)?.count ?? 0);
+        if (count) count.textContent = String(stack?.count ?? 0);
+        // §ItemInstance::auxValue durability bar — only for tools.
+        // Resolve tool via VoxelCraftGetTool; bare hand + blocks have no bar.
+        const dur = slot.querySelector('.dur');
+        if (!dur) return;
+        const tool = stack ? window.VoxelCraftGetTool(stack.itemKey) : null;
+        if (!tool || !stack) {
+          dur.style.display = 'none';
+          return;
+        }
+        // §getMaxDamage = tier.getUses() (DiggerItem.h:71, WeaponItem.h:16)
+        const maxDamage = tool.tierDef.uses;
+        const aux = stack.auxValue ?? 0;
+        if (maxDamage <= 0) {
+          dur.style.display = 'none';
+          return;
+        }
+        dur.style.display = 'block';
+        // Bar width = 1 - (aux / maxDamage), clamped to [0, 1]
+        // (auxValue > maxDamage would already trigger count-- in hurtStack,
+        //  so aux is always <= maxDamage when we reach here)
+        const remaining = Math.max(0, Math.min(1, 1 - (aux / maxDamage)));
+        const bar = dur.querySelector('i');
+        if (bar) bar.style.width = (remaining * 100) + '%';
+        // Color: green > 50%, orange > 20%, red <= 20%
+        dur.classList.toggle('warn', remaining <= 0.5 && remaining > 0.2);
+        dur.classList.toggle('crit', remaining <= 0.2);
       });
     }
 

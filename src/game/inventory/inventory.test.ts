@@ -22,7 +22,7 @@ describe('Inventory', () => {
   test('removes exact quantities and clears empty stacks', () => {
     const inventory = new Inventory(2);
     inventory.insert('minecraft:stone', 10);
-    expect(inventory.remove(0, 4)).toEqual({ itemKey: 'minecraft:stone', count: 4, maxStackSize: 64 });
+    expect(inventory.remove(0, 4)).toEqual({ itemKey: 'minecraft:stone', count: 4, maxStackSize: 64, auxValue: 0 });
     expect(inventory.getSlot(0)?.count).toBe(6);
     expect(inventory.remove(0, 99)?.count).toBe(6);
     expect(inventory.getSlot(0)).toBeNull();
