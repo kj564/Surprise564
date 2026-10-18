@@ -1375,13 +1375,16 @@
       // UV insets must be normalized against their own axis. The old V inset
       // divided by the atlas aspect ratio, leaving it far below half a texel
       // and allowing edge samples to pick up pixels from the neighboring row.
+      // With flipY=false, UV maps directly to canvas pixels:
+      // V=0 = canvas top (row*16), V=1 = canvas bottom ((row+1)*16)
+      // This matches rujukan GLES1 convention exactly.
       const insetU = 0.01 / ATLAS_W;
       const insetV = 0.01 / ATLAS_H;
       return {
         u0: col / ATLAS_COLS + insetU,
         u1: (col + 1) / ATLAS_COLS - insetU,
-        v0: 1 - (row + 1) / ATLAS_ROWS + insetV,
-        v1: 1 - row / ATLAS_ROWS - insetV
+        v0: row / ATLAS_ROWS + insetV,
+        v1: (row + 1) / ATLAS_ROWS - insetV
       };
     }
 
@@ -3466,6 +3469,10 @@
       ctx.putImageData(leavesData, lx, ly);
 
       const tex = new THREE.CanvasTexture(canvas2);
+      tex.flipY = false;  // VERIFIED: terrain.png uses GLES1 convention (V=0 at top).
+      // Three.js flipY=true (default) would flip the canvas vertically, causing
+      // our V-flip in tileUV (v0=1-(row+1)/16) to double-flip. Setting flipY=false
+      // means canvas top = V=0, matching rujukan's GLES1 UV convention directly.
       tex.magFilter = THREE.NearestFilter;        // pixelated, original MCPE look
       tex.minFilter = THREE.NearestFilter;
       tex.generateMipmaps = false;                  // CRITICAL: mipmaps would
