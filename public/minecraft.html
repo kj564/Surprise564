@@ -1320,9 +1320,15 @@
     }
 
     function buildChunkGeometry(world, chunk, atlas) {
-      const opaquePos = [], opaqueNorm = [], opaqueUv = [], opaqueIdx = [];
-      const transPos = [], transNorm = [], transUv = [], transIdx = [];
+      const opaquePos = [], opaqueNorm = [], opaqueUv = [], opaqueCol = [], opaqueIdx = [];
+      const transPos = [], transNorm = [], transUv = [], transCol = [], transIdx = [];
       let opaqueVert = 0, transVert = 0;
+
+      // VERIFIED MCPE 2013 per-face brightness (TileRenderer.cpp:54-57):
+      //   c10 = 0.5 (DOWN), c11 = 1.0 (UP), c2 = 0.8 (N/S), c3 = 0.6 (W/E)
+      // FACES order: 0=+X, 1=-X, 2=+Y, 3=-Y, 4=+Z, 5=-Z
+      // +X=EAST=0.6, -X=WEST=0.6, +Y=UP=1.0, -Y=DOWN=0.5, +Z=SOUTH=0.8, -Z=NORTH=0.8
+      const FACE_BRIGHTNESS = [0.6, 0.6, 1.0, 0.5, 0.8, 0.8];
 
       const baseX = chunk.cx * CHUNK_X, baseZ = chunk.cz * CHUNK_Z;
 
@@ -1363,12 +1369,16 @@
               const I = isTrans ? transIdx : opaqueIdx;
               let v = isTrans ? transVert : opaqueVert;
 
+              const fb = FACE_BRIGHTNESS[f];
+              const C = isTrans ? transCol : opaqueCol;
               for (let i = 0; i < 4; i++) {
                 const cx = face.c[i][0], cy = face.c[i][1], cz = face.c[i][2];
                 P.push(x + cx, y + cy, z + cz);
                 N.push(face.dir[0], face.dir[1], face.dir[2]);
                 const uu = face.uv[i][0], vv = face.uv[i][1];
                 U.push(uu ? u1 : u0, vv ? v1 : v0);
+                // VERIFIED MCPE 2013: vertex color = per-face brightness
+                C.push(fb, fb, fb);
               }
               I.push(v, v + 1, v + 2, v, v + 2, v + 3);
               if (isTrans) transVert += 4; else opaqueVert += 4;
@@ -1377,19 +1387,20 @@
         }
       }
 
-      function makeGeom(pos, norm, uv, idx) {
+      function makeGeom(pos, norm, uv, col, idx) {
         if (pos.length === 0) return null;
         const g = new THREE.BufferGeometry();
         g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
         g.setAttribute('normal', new THREE.Float32BufferAttribute(norm, 3));
         g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+        g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
         g.setIndex(idx);
         return g;
       }
 
       return {
-        opaque: makeGeom(opaquePos, opaqueNorm, opaqueUv, opaqueIdx),
-        transparent: makeGeom(transPos, transNorm, transUv, transIdx),
+        opaque: makeGeom(opaquePos, opaqueNorm, opaqueUv, opaqueCol, opaqueIdx),
+        transparent: makeGeom(transPos, transNorm, transUv, transCol, transIdx),
       };
     }
 
@@ -4123,6 +4134,11 @@
       sun.intensity = 0.08 + daylight * 0.95;
       sunMesh.position.copy(sunDir).multiplyScalar(300);
       moonMesh.position.copy(sunDir).multiplyScalar(-300);
+      // VERIFIED MCPE 2013: MeshBasicMaterial uses material.color as global
+      // brightness multiplier. MCPE 2013 applies getSkyDarken() (clamped 0-1)
+      // to all rendered tiles. We replicate by setting material.color to daylight.
+      if (opaqueMat) opaqueMat.color.setRGB(daylight, daylight, daylight);
+      if (transparentMat) transparentMat.color.setRGB(daylight, daylight, daylight);
       // sky color: day (light blue) -> sunset (orange) -> night (dark navy)
       const dayCol = new THREE.Color(0x88c5ff);
       const nightCol = new THREE.Color(0x0a0a28);
@@ -4181,8 +4197,13 @@
     (async function init() {
       loadingDetail.textContent = 'memuat tekstur minecraft asli...';
       atlasTexture = await buildAtlas();
-      opaqueMat = new THREE.MeshLambertMaterial({ map: atlasTexture, side: THREE.DoubleSide });
-      transparentMat = new THREE.MeshLambertMaterial({ map: atlasTexture, transparent: true, opacity: 0.82, depthWrite: false, side: THREE.DoubleSide });
+      // VERIFIED MCPE 2013: TileRenderer.cpp uses fixed per-face brightness
+      // (c10=0.5 DOWN, c11=1.0 UP, c2=0.8 N/S, c3=0.6 W/E) baked into vertex
+      // colors. MeshBasicMaterial + vertexColors matches this exactly — no
+      // dynamic scene lighting (MCPE 2013 doesn't use GLES1 per-pixel lighting).
+      // Day/night brightness is handled by adjusting material.color in animate().
+      opaqueMat = new THREE.MeshBasicMaterial({ map: atlasTexture, vertexColors: true, side: THREE.DoubleSide });
+      transparentMat = new THREE.MeshBasicMaterial({ map: atlasTexture, vertexColors: true, transparent: true, opacity: 0.82, depthWrite: false, side: THREE.DoubleSide });
 
       buildHotbar();
       buildHearts();
