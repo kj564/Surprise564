@@ -891,8 +891,13 @@
            bJoin (Join Game)  160×24 at y=yBase
            bOptions (Options)  78×22 at y=yBase+30 -->
       <div id="mainMenuButtons" class="menu-buttons">
-        <button id="playButton">Play Game</button>
-        <button id="helpOptionsButton">Help &amp; Options</button>
+        <!-- §StartMenuScreen.cpp:27 — bHost = "Start Game" (160×24) -->
+        <button id="playButton">Start Game</button>
+        <!-- §StartMenuScreen.cpp:28 — bJoin = "Join Game" (160×24)
+             Browser: multiplayer not available, button shows info dialog -->
+        <button id="joinButton" disabled>Join Game</button>
+        <!-- §StartMenuScreen.cpp:29 — bOptions = "Options" (78×22) -->
+        <button id="helpOptionsButton">Options</button>
       </div>
       <div id="helpOptionsPanel" class="help-options-panel">
         <h2>Help &amp; Options</h2>
@@ -911,18 +916,25 @@
         </label>
         <button id="saveOptionsButton" class="settings-close">Done</button>
       </div>
-      <div class="menu-foot"><span>VoxelCraft 3D · Browser Edition</span><span>Not an official Minecraft product.</span></div>
+      <!-- §StartMenuScreen.cpp:170-171 — version at y=62 (gray 0xffcccccc),
+           copyright at y=height-10 (white 0xffffff) -->
+      <div class="menu-foot">
+        <span class="menu-version">VoxelCraft v0.1.1 alpha</span>
+        <span class="menu-copyright">Mojang AB</span>
+      </div>
     </div>
   </div>
 
   <div id="pauseOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
     <div class="pause-wrap">
-      <h2 id="pauseTitle">Game Menu</h2>
-      <p class="pause-subtitle">Permainan dijeda</p>
+      <h2 id="pauseTitle">Game menu</h2>
       <div class="pause-buttons">
-        <button id="resumeGameButton" type="button">Resume Game</button>
-        <button id="saveWorldButton" type="button">Save World</button>
-        <button id="returnTitleButton" type="button">Save &amp; Return to Title</button>
+        <!-- §PauseScreen.cpp:53 — bContinue = "Back to game" -->
+        <button id="resumeGameButton" type="button">Back to game</button>
+        <!-- §PauseScreen.cpp:54 — bQuit = "Quit to title" -->
+        <button id="returnTitleButton" type="button">Quit to title</button>
+        <!-- §PauseScreen.cpp:55 — bQuitAndSaveLocally = "Quit and copy map" -->
+        <button id="saveWorldButton" type="button">Quit and copy map</button>
       </div>
     </div>
   </div>
