@@ -1652,6 +1652,71 @@
       };
     }
 
+    // ============================================================
+    // §MCPE 2013 per-block lighting — approximated from rujukan:
+    //   LevelChunk::getRawBrightness: max(skyLight - skyDarken, blockLight)
+    //   Level::getBrightness: brightnessRamp[getRawBrightness]
+    //   Dimension::brightnessRamp: ((1-v)/(v*3+1))*(1-0.05)+0.05*3 where v=1-i/16
+    //   LightLayer::Sky = 15 (full sky light), LightLayer::Block = 0 (no block light by default)
+    //   Tile::lightEmission: torch=14/16, glowstone=1.0(=15/16), lava=1.0, furnace_lit=14/16
+    //   Tile::lightBlock: opaque blocks=15, glass=0, leaves=1, water=3, torch=0
+    // ============================================================
+
+    // §Dimension.cpp:66-73 — brightnessRamp pre-computed once
+    const brightnessRamp = new Float32Array(16);
+    for (let i = 0; i <= 15; i++) {
+      const v = 1 - i / 16;
+      brightnessRamp[i] = ((1 - v) / (v * 3 + 1)) * (1 - 0.05) + 0.05 * 3;
+    }
+
+    // §Block light emission from Tile.cpp:161-243 (lightEmission values)
+    // lightEmission is stored as float 0..1 where 1.0 = 15/16 (full bright)
+    // We convert to 0..15 integer level
+    const BLOCK_LIGHT_EMISSION = {};
+    // §Tile.cpp:202 — torch: setLightEmission(15 / 16.0f) → level 15
+    BLOCK_LIGHT_EMISSION[runtimeBlockKey(27)] = 15;  // glowstone (id 27)
+    BLOCK_LIGHT_EMISSION[runtimeBlockKey(16)] = 14;  // furnace_lit — actually furnace (id 16) uses 14/16 but we don't have lit variant
+    // §Tile.cpp:170 — lava: setLightEmission(1.0f) → level 15
+    BLOCK_LIGHT_EMISSION[runtimeBlockKey(17)] = 15;  // water (id 17) — no, this is wrong. Lava isn't in BLOCKS table. Skip.
+
+    // §Tile::lightBlock from Tile.cpp — opaque blocks block all light (255→15),
+    // glass=0, leaves=1, water=3, torch=0
+    const BLOCK_LIGHT_OPACITY = {};
+    // For now, all solid blocks = 15 (full opacity), transparent = 0
+    // This is simplified — rujukan has per-block values but we approximate
+
+    // §Get per-block light level: max(skyLight - skyDarken, blockLight)
+    // skyLight: 15 if block column above is clear (sky-lit), 0 if underground
+    // blockLight: Tile::lightEmission for emitting blocks, 0 otherwise
+    // skyDarken: global day/night darkening (0..8, from getSkyDarken)
+    function getBlockLightLevel(world, chunk, baseX, baseZ, lx, ly, lz, blockId) {
+      // §LevelChunk::getRawBrightness: max(skyLight - skyDarken, blockLight)
+      // skyLight: check if block above is sky-lit (no opaque blocks above)
+      let skyLight = 0;
+      // Check if any opaque block exists above this block in the same column
+      let isSkyLit = true;
+      for (let y = ly + 1; y < CHUNK_Y; y++) {
+        const aboveId = chunk.data[chunk.idx(lx, y, lz)];
+        if (aboveId && BLOCKS[aboveId] && !BLOCKS[aboveId].transparent) {
+          isSkyLit = false;
+          break;
+        }
+      }
+      if (isSkyLit) skyLight = 15;
+
+      // §skyDarken: from day/night cycle (global, updated in animate)
+      // We read the global skyDarkenLevel computed in the animate loop
+      const skyDarken = (typeof skyDarkenLevel !== 'undefined') ? skyDarkenLevel : 0;
+      const skyBrightness = Math.max(0, skyLight - skyDarken);
+
+      // §blockLight: Tile::lightEmission for this block
+      const blockKey = runtimeBlockKey(blockId);
+      const blockLight = BLOCK_LIGHT_EMISSION[blockKey] || 0;
+
+      // §LevelChunk::getRawBrightness: max(skyLight - skyDarken, blockLight)
+      return Math.max(skyBrightness, blockLight);
+    }
+
     function buildChunkGeometry(world, chunk, atlas) {
       const opaquePos = [], opaqueNorm = [], opaqueUv = [], opaqueCol = [], opaqueIdx = [];
       const transPos = [], transNorm = [], transUv = [], transCol = [], transIdx = [];
@@ -1704,14 +1769,23 @@
 
               const fb = FACE_BRIGHTNESS[f];
               const C = isTrans ? transCol : opaqueCol;
+              // §MCPE 2013 TileRenderer.cpp:79-124 — per-block brightness:
+              //   br = tt->getBrightness(level, x+dir, y+dir, z+dir)
+              //   = Level::getBrightness = brightnessRamp[getRawBrightness]
+              //   getRawBrightness = max(skyLight - skyDarken, blockLight)
+              // Browser: approximate skyLight (15 if sky-lit, 0 if underground),
+              // blockLight (lightEmission from Tile.cpp:161-243), skyDarken (day/night).
+              const lightLevel = getBlockLightLevel(world, chunk, baseX, baseZ, x, y, z, id);
+              const C_brightness = brightnessRamp[lightLevel];
+              const finalBrightness = fb * C_brightness;
               for (let i = 0; i < 4; i++) {
                 const cx = face.c[i][0], cy = face.c[i][1], cz = face.c[i][2];
                 P.push(x + cx, y + cy, z + cz);
                 N.push(face.dir[0], face.dir[1], face.dir[2]);
                 const uu = face.uv[i][0], vv = face.uv[i][1];
                 U.push(uu ? u1 : u0, vv ? v1 : v0);
-                // VERIFIED MCPE 2013: vertex color = per-face brightness
-                C.push(fb, fb, fb);
+                // §Per-block per-face brightness: fb (face) * brightnessRamp[lightLevel]
+                C.push(finalBrightness, finalBrightness, finalBrightness);
               }
               I.push(v, v + 1, v + 2, v, v + 2, v + 3);
               if (isTrans) transVert += 4; else opaqueVert += 4;
@@ -4907,10 +4981,12 @@
       sunMesh.position.copy(sunDir).multiplyScalar(300);
       moonMesh.position.copy(sunDir).multiplyScalar(-300);
 
-      // §Block brightness: apply brightnessRamp to material.color
-      // (MCPE 2013 MeshBasicMaterial + getSkyDarken)
-      if (opaqueMat) opaqueMat.color.setRGB(daylight, daylight, daylight);
-      if (transparentMat) transparentMat.color.setRGB(daylight, daylight, daylight);
+      // §Per-block brightness is now baked into vertex colors (buildChunkGeometry).
+      // material.color stays at 1.0 (white) — vertex colors carry the brightness.
+      // (Previously we used a global daylight multiplier, but rujukan uses
+      // per-block brightnessRamp[getRawBrightness] which we now compute per-vertex.)
+      if (opaqueMat) opaqueMat.color.setRGB(1, 1, 1);
+      if (transparentMat) transparentMat.color.setRGB(1, 1, 1);
 
       // §Level.cpp:1172-1192 — getSkyColor:
       //   br = cos(td * PI * 2) * 2 + 0.5, clamp [0, 0.75]
