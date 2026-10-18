@@ -597,7 +597,9 @@
     align-items: center;
     justify-content: center;
     padding: 18px;
-    background: rgba(0,0,0,.64);
+    /* §Screen.cpp:108-110 — fillGradient(0xc0101010, 0xd0101010) =
+       rgba(16,16,16,0.75) → rgba(16,16,16,0.82) dark gray gradient */
+    background: linear-gradient(rgba(16,16,16,0.75), rgba(16,16,16,0.82));
     color: #fff;
     backdrop-filter: none;
   }
