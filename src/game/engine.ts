@@ -1,17 +1,17 @@
-import { defaultBlockRegistry, type BlockRegistry } from './blocks/registry';
-import { FixedStepClock, type FixedStepResult } from './core/fixed-step';
-import { Inventory } from './inventory/inventory';
-import { beginMining, finishBlockBreak, type GameMode, type MiningProgressResult, type MiningSession, type MiningStartResult } from './interaction/mining';
-import { applyMineBlockDurability } from './items/item-instance';
-import { getTool, type Tool } from './items/tools';
-import { placeBlockFromInventory } from './interaction/placement';
-import { raycastVoxels, type RayVector, type VoxelRayHit, type VoxelRayResult } from './interaction/raycast';
-import { Aabb } from './physics/aabb';
-import { PlayerPhysics, type PlayerInput, type PlayerPhysicsState, type PlayerPosition } from './physics/player-physics';
-import { queryCollisionBoxes } from './physics/world-collision';
-import { createWorldSave, restoreWorldSave, type PlayerSnapshot, type SaveMetadataInput } from './persistence/world-save';
-import { ChunkData } from './world/chunk';
-import { VoxelWorld, type BlockPosition, type WorldDimensions } from './world/world';
+import { defaultBlockRegistry, type BlockRegistry } from './world/level/tile/registry';
+import { FixedStepClock, type FixedStepResult } from './util/fixed-step';
+import { Inventory } from './world/inventory/inventory';
+import { beginMining, finishBlockBreak, type GameMode, type MiningProgressResult, type MiningSession, type MiningStartResult } from './client/interaction/mining';
+import { applyMineBlockDurability } from './world/item/item-instance';
+import { getTool, type Tool } from './world/item/tools';
+import { placeBlockFromInventory } from './client/interaction/placement';
+import { raycastVoxels, type RayVector, type VoxelRayHit, type VoxelRayResult } from './client/interaction/raycast';
+import { Aabb } from './world/physics/aabb';
+import { PlayerPhysics, type PlayerInput, type PlayerPhysicsState, type PlayerPosition } from './world/physics/player-physics';
+import { queryCollisionBoxes } from './world/physics/world-collision';
+import { createWorldSave, restoreWorldSave, type PlayerSnapshot, type SaveMetadataInput } from './nbt/world-save';
+import { ChunkData } from './world/level/chunk/chunk';
+import { VoxelWorld, type BlockPosition, type WorldDimensions } from './world/level/world';
 
 export interface VoxelCraftEngineOptions {
   readonly dimensions?: WorldDimensions;

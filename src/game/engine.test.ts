@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { VoxelCraftEngine } from './engine';
-import { CREATIVE_DESTRUCTION_TICK_DELAY, DESTROY_PROGRESS_DIVISOR } from './interaction/mining';
-import { getTool } from './items/tools';
+import { CREATIVE_DESTRUCTION_TICK_DELAY, DESTROY_PROGRESS_DIVISOR } from './client/interaction/mining';
+import { getTool } from './world/item/tools';
 
 function ticksToBreak(hardness: number, speed = 1): number {
   const perTick = (speed / hardness) / 30;

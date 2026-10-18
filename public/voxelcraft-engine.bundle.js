@@ -1,4 +1,4 @@
-// src/game/blocks/registry.ts
+// src/game/world/level/tile/registry.ts
 function block(definition) {
   return Object.freeze({ ...definition, legacyAliases: definition.legacyAliases ? Object.freeze([...definition.legacyAliases]) : undefined, drops: Object.freeze([...definition.drops]) });
 }
@@ -116,7 +116,7 @@ function validateDefinition(entry) {
 }
 var defaultBlockRegistry = new BlockRegistry;
 
-// src/game/core/fixed-step.ts
+// src/game/util/fixed-step.ts
 class FixedStepClock {
   stepSeconds;
   maxFrameSeconds;
@@ -177,7 +177,7 @@ function positiveInteger(value, name) {
   return value;
 }
 
-// src/game/inventory/inventory.ts
+// src/game/world/inventory/inventory.ts
 class Inventory {
   slots;
   _revision = 0;
@@ -299,7 +299,7 @@ function sameStack(a, b) {
   return a === b || a !== null && b !== null && a.itemKey === b.itemKey && a.count === b.count && a.maxStackSize === b.maxStackSize && (a.auxValue ?? 0) === (b.auxValue ?? 0);
 }
 
-// src/game/items/tools.ts
+// src/game/world/item/tools.ts
 var TIERS = Object.freeze({
   wood: Object.freeze({ level: 0, uses: 59, speed: 2, damage: 0 }),
   stone: Object.freeze({ level: 1, uses: 131, speed: 4, damage: 1 }),
@@ -469,7 +469,7 @@ function getPlayerDestroySpeed(material, blockKey, tool) {
 }
 var TOOL_KEYS = Object.freeze(Object.keys(TOOL_TABLE));
 
-// src/game/interaction/mining.ts
+// src/game/client/interaction/mining.ts
 var SURVIVAL_DESTROY_DELAY = 5;
 var CREATIVE_DESTRUCTION_TICK_DELAY = 10;
 var DESTROY_PROGRESS_DIVISOR = 30;
@@ -645,7 +645,7 @@ function samePosition(a, b) {
   return b !== null && a.x === b.x && a.y === b.y && a.z === b.z;
 }
 
-// src/game/items/item-instance.ts
+// src/game/world/item/item-instance.ts
 function isDamageableItem(tool) {
   if (!tool)
     return false;
@@ -694,7 +694,7 @@ function applyMineBlockDurability(stack, tool) {
   return hurtStack(stack, hurtAmount, tool);
 }
 
-// src/game/physics/aabb.ts
+// src/game/world/physics/aabb.ts
 class Aabb {
   minX;
   minY;
@@ -763,7 +763,7 @@ function finiteDelta(value, name) {
     throw new TypeError(name + " must be finite");
 }
 
-// src/game/interaction/placement.ts
+// src/game/client/interaction/placement.ts
 function validatePlacementTarget(world, hit, placedBlockId, registry) {
   if (placedBlockId === 0)
     return { status: "cannot-place-air" };
@@ -828,7 +828,7 @@ function placeBlockFromInventory(world, hit, inventory, slotIndex, registry, pla
   };
 }
 
-// src/game/interaction/raycast.ts
+// src/game/client/interaction/raycast.ts
 function raycastVoxels(world, origin, direction, maxDistance, isSelectable) {
   assertFiniteVector(origin, "origin");
   assertFiniteVector(direction, "direction");
@@ -896,7 +896,7 @@ function assertFiniteVector(vector, name) {
   }
 }
 
-// src/game/physics/collision.ts
+// src/game/world/physics/collision.ts
 function resolveAabbMovement(box, movement, obstacles) {
   const requested = [movement.dx, movement.dy, movement.dz];
   if (!requested.every(Number.isFinite))
@@ -928,7 +928,7 @@ function resolveAabbMovement(box, movement, obstacles) {
   };
 }
 
-// src/game/physics/player-physics.ts
+// src/game/world/physics/player-physics.ts
 var MAX_STEP_SECONDS = 0.25;
 
 class PlayerPhysics {
@@ -1046,7 +1046,7 @@ function clamp(value, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, value));
 }
 
-// src/game/physics/world-collision.ts
+// src/game/world/physics/world-collision.ts
 function queryCollisionBoxes(world, bounds, registry, maxCells = 8192) {
   if (!Number.isSafeInteger(maxCells) || maxCells <= 0)
     throw new RangeError("maxCells must be a positive safe integer");
@@ -1092,7 +1092,7 @@ function blockCube(x, y, z) {
   return new Aabb(x, y, z, x + 1, y + 1, z + 1);
 }
 
-// src/game/core/coordinates.ts
+// src/game/util/coordinates.ts
 var CHUNK_SIZE_X = 16;
 function worldToChunk(worldCoordinate, chunkSize = CHUNK_SIZE_X) {
   assertInteger(worldCoordinate, "worldCoordinate");
@@ -1125,7 +1125,7 @@ function assertPositiveInteger(value, name) {
     throw new RangeError(name + " must be a positive safe integer");
 }
 
-// src/game/world/chunk.ts
+// src/game/world/level/chunk/chunk.ts
 class ChunkData {
   sizeX;
   height;
@@ -1189,7 +1189,7 @@ function positiveInteger3(value, name) {
   return value;
 }
 
-// src/game/world/world.ts
+// src/game/world/level/world.ts
 class VoxelWorld {
   dimensions;
   chunks = new Map;
@@ -1341,7 +1341,7 @@ function assertWorldCoordinate(value, name) {
     throw new TypeError(name + " must be a safe integer");
 }
 
-// src/game/persistence/save-schema.ts
+// src/game/nbt/save-schema.ts
 var MAX_CHUNKS = 4096;
 var MAX_TOTAL_BLOCKS = 32000000;
 var MAX_INVENTORY_SLOTS = 256;
@@ -1517,7 +1517,7 @@ function isIsoDate(value) {
   return typeof value === "string" && Number.isFinite(Date.parse(value)) && value.includes("T");
 }
 
-// src/game/persistence/world-save.ts
+// src/game/nbt/world-save.ts
 function createWorldSave(world, inventory, metadata, player) {
   const candidate = {
     format: "voxelcraft-world",
@@ -1720,7 +1720,7 @@ class VoxelCraftEngine {
   }
 }
 
-// src/game/rendering/chunk-mesher.ts
+// src/game/client/renderer/chunk-mesher.ts
 var FACES = Object.freeze([
   { face: "west", normal: [-1, 0, 0], dx: -1, dy: 0, dz: 0, vertices: [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 1, 0]] },
   { face: "east", normal: [1, 0, 0], dx: 1, dy: 0, dz: 0, vertices: [[1, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]] },
@@ -1819,7 +1819,7 @@ function appendFace(layer, face, x, y, z, blockId) {
   layer.faceCount += 1;
 }
 
-// src/game/rendering/chunk-mesh-cache.ts
+// src/game/client/renderer/chunk-mesh-cache.ts
 class ChunkMeshCache {
   world;
   registry;
@@ -1874,7 +1874,7 @@ function chunkKey(chunkX, chunkZ) {
   return chunkX + "," + chunkZ;
 }
 
-// src/game/world/terrain-generator.ts
+// src/game/world/level/levelgen/terrain-generator.ts
 function generateTerrainChunk(world, chunkX, chunkZ, options = {}) {
   if (!Number.isSafeInteger(chunkX) || !Number.isSafeInteger(chunkZ))
     throw new TypeError("Chunk coordinates must be safe integers");
@@ -1945,7 +1945,7 @@ function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
-// src/game/world/terrain-streaming.ts
+// src/game/world/level/levelgen/terrain-streaming.ts
 function ensureTerrainNeighborhood(world, worldX, worldZ, options = {}) {
   if (!Number.isFinite(worldX) || !Number.isFinite(worldZ)) {
     throw new TypeError("World position must be finite");

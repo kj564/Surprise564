@@ -1,9 +1,9 @@
 import { VoxelCraftEngine } from './engine';
-import { BlockRegistry } from './blocks/registry';
-import { ChunkMeshCache } from './rendering/chunk-mesh-cache';
-import { generateTerrainChunk } from './world/terrain-generator';
-import { ensureTerrainNeighborhood } from './world/terrain-streaming';
-import { getTool, type Tool } from './items/tools';
+import { BlockRegistry } from './world/level/tile/registry';
+import { ChunkMeshCache } from './client/renderer/chunk-mesh-cache';
+import { generateTerrainChunk } from './world/level/levelgen/terrain-generator';
+import { ensureTerrainNeighborhood } from './world/level/levelgen/terrain-streaming';
+import { getTool, type Tool } from './world/item/tools';
 
 declare global {
   interface Window {

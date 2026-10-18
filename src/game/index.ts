@@ -1,45 +1,45 @@
 /** Stable public surface for the renderer-independent VoxelCraft engine. */
 export { VoxelCraftEngine, type VoxelCraftEngineOptions } from './engine';
 
-export { BlockRegistry, defaultBlockRegistry, type BlockDefinition } from './blocks/registry';
-export { FixedStepClock, type FixedStepOptions, type FixedStepResult } from './core/fixed-step';
+export { BlockRegistry, defaultBlockRegistry, type BlockDefinition } from './world/level/tile/registry';
+export { FixedStepClock, type FixedStepOptions, type FixedStepResult } from './util/fixed-step';
 export {
   chunkToWorld,
   worldToChunk,
   worldToLocal,
   localBlockIndex,
-} from './core/coordinates';
-export { Inventory, type ItemStack, type InsertResult } from './inventory/inventory';
+} from './util/coordinates';
+export { Inventory, type ItemStack, type InsertResult } from './world/inventory/inventory';
 export {
   BlockInteractionController,
   type MiningTickResult,
-} from './interaction/controller';
+} from './client/interaction/controller';
 export {
   raycastVoxels,
   type RayVector,
   type VoxelRayHit,
   type VoxelRayMiss,
   type VoxelRayResult,
-} from './interaction/raycast';
+} from './client/interaction/raycast';
 export {
   Aabb,
   type Axis,
-} from './physics/aabb';
+} from './world/physics/aabb';
 export {
   PlayerPhysics,
   type PlayerInput,
   type PlayerPhysicsConfig,
   type PlayerPhysicsState,
   type PlayerPosition,
-} from './physics/player-physics';
-export { queryCollisionBoxes, type CollisionQueryResult } from './physics/world-collision';
-export { ChunkData, type ChunkDimensions } from './world/chunk';
+} from './world/physics/player-physics';
+export { queryCollisionBoxes, type CollisionQueryResult } from './world/physics/world-collision';
+export { ChunkData, type ChunkDimensions } from './world/level/chunk/chunk';
 export {
   VoxelWorld,
   type BlockMutation,
   type BlockPosition,
   type WorldDimensions,
-} from './world/world';
+} from './world/level/world';
 export {
   createWorldSave,
   restoreWorldSave,
@@ -47,12 +47,12 @@ export {
   type RestoredWorld,
   type SaveMetadataInput,
   type RestoreWorldResult,
-} from './persistence/world-save';
+} from './nbt/world-save';
 export {
   validateWorldSave,
   type WorldSaveV1,
   type SaveValidationResult,
-} from './persistence/save-schema';
+} from './nbt/save-schema';
 
-export { ensureTerrainNeighborhood, type TerrainNeighborhoodResult } from './world/terrain-streaming';
-export { generateTerrainChunk, type TerrainOptions } from './world/terrain-generator';
+export { ensureTerrainNeighborhood, type TerrainNeighborhoodResult } from './world/level/levelgen/terrain-streaming';
+export { generateTerrainChunk, type TerrainOptions } from './world/level/levelgen/terrain-generator';

@@ -33,20 +33,19 @@ jobs:
         run: |
           set -euo pipefail
           RUJUKAN=rujukan/pocket-edition-2013/mcpe-source/handheld/project/android/assets
-          mkdir -p public/VoxelCraft/textures/blocks public/VoxelCraft/textures/gui \
-                   public/VoxelCraft/font public/VoxelCraft/textures/environment \
-                   public/VoxelCraft/textures/mob
-          cp "$RUJUKAN/terrain.png"        public/VoxelCraft/textures/blocks/terrain.png
-          cp "$RUJUKAN/gui/gui.png"         public/VoxelCraft/textures/gui/gui.png
-          cp "$RUJUKAN/gui/icons.png"       public/VoxelCraft/textures/gui/icons.png
-          cp "$RUJUKAN/gui/items.png"       public/VoxelCraft/textures/gui/items.png
-          cp "$RUJUKAN/gui/gui_blocks.png"  public/VoxelCraft/textures/gui/gui_blocks.png
-          cp "$RUJUKAN/gui/title.png"       public/VoxelCraft/textures/gui/title.png
-          cp "$RUJUKAN/gui/background.png"  public/VoxelCraft/textures/gui/background.png
-          cp "$RUJUKAN/font/default8.png"   public/VoxelCraft/font/default8.png
-          cp "$RUJUKAN/environment/clouds.png" public/VoxelCraft/textures/environment/clouds.png
-          cp "$RUJUKAN/mob/chicken.png"     public/VoxelCraft/textures/mob/chicken.png
-          cp "$RUJUKAN/particles.png"       public/VoxelCraft/textures/particles.png
+          mkdir -p public/assets/gui public/assets/environment \
+                   public/assets/mob public/assets/font
+          cp "$RUJUKAN/terrain.png"        public/assets/terrain.png
+          cp "$RUJUKAN/gui/gui.png"         public/assets/gui/gui.png
+          cp "$RUJUKAN/gui/icons.png"       public/assets/gui/icons.png
+          cp "$RUJUKAN/gui/items.png"       public/assets/gui/items.png
+          cp "$RUJUKAN/gui/gui_blocks.png"  public/assets/gui/gui_blocks.png
+          cp "$RUJUKAN/gui/title.png"       public/assets/gui/title.png
+          cp "$RUJUKAN/gui/background.png"  public/assets/gui/background.png
+          cp "$RUJUKAN/font/default8.png"   public/assets/font/default8.png
+          cp "$RUJUKAN/environment/clouds.png" public/assets/environment/clouds.png
+          cp "$RUJUKAN/mob/chicken.png"     public/assets/mob/chicken.png
+          cp "$RUJUKAN/particles.png"       public/assets/particles.png
           echo "Staged 11 kitab-suci assets from rujukan/"
 
       - name: Install locked dependencies
@@ -73,12 +72,12 @@ jobs:
           test -s out/minecraft.html
           # The 6 assets minecraft.html actually references (kitab suci):
           for f in \
-            out/VoxelCraft/textures/blocks/terrain.png \
-            out/VoxelCraft/textures/gui/gui.png \
-            out/VoxelCraft/textures/gui/icons.png \
-            out/VoxelCraft/textures/gui/items.png \
-            out/VoxelCraft/textures/environment/clouds.png \
-            out/VoxelCraft/textures/mob/chicken.png ; do
+            out/assets/terrain.png \
+            out/assets/gui/gui.png \
+            out/assets/gui/icons.png \
+            out/assets/gui/items.png \
+            out/assets/environment/clouds.png \
+            out/assets/mob/chicken.png ; do
             test -s "$f" || { echo "FAIL: missing $f"; exit 1; }
           done
           if [ -f public/voxelcraft-engine.bundle.js ]; then

@@ -25,7 +25,7 @@
   #crosshair {
     position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
     width: 16px; height: 16px; pointer-events: none; z-index: 5;
-    background: url('./VoxelCraft/textures/gui/icons.png') no-repeat;
+    background: url('./assets/gui/icons.png') no-repeat;
     background-position: 0 0;
     background-size: 256px 256px;
     image-rendering: pixelated;
@@ -52,7 +52,7 @@
     transform-origin: center bottom;
     display: flex; gap: 0; padding: 0; margin: 0;
     width: 180px; height: 22px;
-    background: url('./VoxelCraft/textures/gui/gui.png') no-repeat;
+    background: url('./assets/gui/gui.png') no-repeat;
     background-position: 0 0;
     background-size: 256px 256px;
     image-rendering: pixelated;
@@ -72,7 +72,7 @@
        is wider than the 20x22 slot, so we pull it 2px to the left and 2px to
        the right with negative margins to centre the highlight on the slot. */
     width: 24px; height: 22px;
-    background: url('./VoxelCraft/textures/gui/gui.png') no-repeat;
+    background: url('./assets/gui/gui.png') no-repeat;
     background-position: 0 -22px;
     background-size: 256px 256px;
     border: 0; box-shadow: none;
@@ -127,7 +127,7 @@
   /* §ProgressScreen.cpp:24-57 — dirt background (gui/background.png)
      + 100x2px progress bar at center+16. Gray bg (0x808080), green fill (0x80ff80). */
   #loading { position: fixed; inset: 0; z-index: 20; 
-    background: url('./VoxelCraft/textures/gui/background.png') repeat;
+    background: url('./assets/gui/background.png') repeat;
     background-size: 64px 64px; background-color: #404040;
     display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
   #loading.hidden { display: none; }
@@ -149,7 +149,7 @@
   /* §Screen.cpp:130-141 — renderDirtBackground uses gui/background.png
      tiled at 32px scale with color 0x404040 tint. */
   #overlay {
-    background: url('./VoxelCraft/textures/gui/background.png') repeat;
+    background: url('./assets/gui/background.png') repeat;
     background-size: 64px 64px;
     background-color: #404040;
     backdrop-filter: none; cursor: default; padding: 24px; overflow-y: auto;
@@ -244,7 +244,7 @@
     grid-template-columns: repeat(8, 32px);  /* ItemSize = 32 (BlockPixels 24 + 2*BorderPixels 4) */
     gap: 0;
     padding: 6px;  /* §By = 6 — frame border height (itemframe.png provides the border) */
-    background-image: url('./VoxelCraft/textures/gui/itemframe.png');
+    background-image: url('./assets/gui/itemframe.png');
     background-size: 100% 100%;  /* §TouchIngameBlockSelectionScreen.cpp:212 — blit itemframe across grid */
     background-repeat: no-repeat;
     background-color: rgba(20, 20, 20, 0.85);
@@ -347,7 +347,7 @@
     line-height: 20px;
     text-shadow: 1px 1px #222;
     background-color: #2c2c2c;
-    background-image: url('./VoxelCraft/textures/gui/gui.png');
+    background-image: url('./assets/gui/gui.png');
     background-position: 0 -66px;  /* §Button.cpp:83 — normal: y=46+1*20=66 */
     background-size: 200px 256px;  /* full atlas, 200px wide */
     background-repeat: repeat-x;
@@ -422,7 +422,7 @@
     gap: 0;
     width: auto;
     padding: 6px;  /* §By = 6 */
-    background-image: url('./VoxelCraft/textures/gui/itemframe.png');
+    background-image: url('./assets/gui/itemframe.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     background-color: rgba(20, 20, 20, 0.85);
@@ -576,13 +576,13 @@
   }
   /* vcGuide icons from rujukan items.png atlas (256x256, 16x16 grid) */
   /* VERIFIED from Item.cpp setIcon(col, row) coordinates */
-  #vcGuide [data-vc-action="kit"]::before { background: url('./VoxelCraft/textures/gui/items.png') -176px -48px / 256px 256px; }
-  #vcGuide [data-vc-action="heal"]::before { background: url('./VoxelCraft/textures/gui/items.png') -160px 0px / 256px 256px; }
-  #vcGuide [data-vc-action="fly"]::before { background: url('./VoxelCraft/textures/gui/items.png') -128px -16px / 256px 256px; }
-  #vcGuide [data-vc-action="day"]::before { background: url('./VoxelCraft/textures/gui/items.png') -96px -64px / 256px 256px; }
-  #vcGuide [data-vc-action="night"]::before { background: url('./VoxelCraft/textures/gui/items.png') -208px -32px / 256px 256px; }
-  #vcGuide [data-vc-action="weather"]::before { background: url('./VoxelCraft/textures/gui/items.png') -96px -48px / 256px 256px; }
-  #vcGuide [data-vc-action="stats"]::before { background: url('./VoxelCraft/textures/gui/items.png') -176px -48px / 256px 256px; }
+  #vcGuide [data-vc-action="kit"]::before { background: url('./assets/gui/items.png') -176px -48px / 256px 256px; }
+  #vcGuide [data-vc-action="heal"]::before { background: url('./assets/gui/items.png') -160px 0px / 256px 256px; }
+  #vcGuide [data-vc-action="fly"]::before { background: url('./assets/gui/items.png') -128px -16px / 256px 256px; }
+  #vcGuide [data-vc-action="day"]::before { background: url('./assets/gui/items.png') -96px -64px / 256px 256px; }
+  #vcGuide [data-vc-action="night"]::before { background: url('./assets/gui/items.png') -208px -32px / 256px 256px; }
+  #vcGuide [data-vc-action="weather"]::before { background: url('./assets/gui/items.png') -96px -48px / 256px 256px; }
+  #vcGuide [data-vc-action="stats"]::before { background: url('./assets/gui/items.png') -176px -48px / 256px 256px; }
   #vcGuide .vc-close::before {
     content: "\2715";  /* plain Unicode X — no RP cursor/cancel sprite needed */
     display: inline-block;
@@ -793,13 +793,13 @@
     filter: none;
   }
   #inventory .inv-tabs button[data-inv-filter="nature"]::before {
-    background: url('./VoxelCraft/textures/gui/items.png') -160px 0px / 256px 256px;
+    background: url('./assets/gui/items.png') -160px 0px / 256px 256px;
   }
   #inventory .inv-tabs button[data-inv-filter="building"]::before {
-    background: url('./VoxelCraft/textures/gui/items.png') -96px -16px / 256px 256px;
+    background: url('./assets/gui/items.png') -96px -16px / 256px 256px;
   }
   #inventory .inv-tabs button[data-inv-filter="minerals"]::before {
-    background: url('./VoxelCraft/textures/gui/items.png') -112px -48px / 256px 256px;
+    background: url('./assets/gui/items.png') -112px -48px / 256px 256px;
   }
   @media (max-width: 460px) {
     #inventory .inv-tabs button {
@@ -892,7 +892,7 @@
   #hearts .heart::after {
     content: "";
     position: absolute; inset: 0;
-    background: url('./VoxelCraft/textures/gui/icons.png') no-repeat;
+    background: url('./assets/gui/icons.png') no-repeat;
     background-size: 256px 256px;
     image-rendering: pixelated;
   }
@@ -934,7 +934,7 @@
   #dpad.visible { display: block; }
   #dpad .btn {
     position: absolute; width: var(--bw); height: var(--bw);
-    background: url('./VoxelCraft/textures/gui/gui.png') no-repeat;
+    background: url('./assets/gui/gui.png') no-repeat;
     background-size: calc(256px * var(--bw) / 26px);
     image-rendering: pixelated; opacity: 0.5;
     touch-action: none;
@@ -1018,7 +1018,7 @@
            Rujukan loads gui/title.png (256×64) and renders it at center top, y=4.
            The title is scaled to fit width/2, maintaining aspect ratio. -->
       <div class="brand">
-        <img src="./VoxelCraft/textures/gui/title.png" alt="Minecraft" class="title-img" />
+        <img src="./assets/gui/title.png" alt="Minecraft" class="title-img" />
       </div>
       <!-- §StartMenuScreen.cpp:75-89 — rujukan button layout:
            bHost (Start Game) 160×24 at y=yBase-28
@@ -1124,7 +1124,7 @@
     //  Tile::initTiles + subclass getTexture(face). See the table
     //  in BLOCKS below.
     // ============================================================
-    const TERRAIN_ATLAS_URL = './VoxelCraft/textures/blocks/terrain.png';
+    const TERRAIN_ATLAS_URL = './assets/terrain.png';
 
     // Block definitions: id -> {name, top, bottom, side, front, solid, transparent, noCollide}
     // Block IDs 0..35 are kept identical to the previous port (no IDs added/removed).
@@ -1986,7 +1986,7 @@
     //  offset counter-shifts by the same player X/Z — net visual effect:
     //  clouds appear fixed in the sky (parallax preserved), always overhead.
     // ============================================================
-    const cloudTex = new THREE.TextureLoader().load('./VoxelCraft/textures/environment/clouds.png');
+    const cloudTex = new THREE.TextureLoader().load('./assets/environment/clouds.png');
     cloudTex.wrapS = cloudTex.wrapT = THREE.RepeatWrapping;
     cloudTex.magFilter = THREE.NearestFilter;   // pixelated, original MCPE look
     cloudTex.minFilter = THREE.NearestFilter;
@@ -2279,7 +2279,7 @@
     // Rujukan MCPE 2013 uses ChickenModel.cpp (hardcoded cube model), not a geo JSON file.
     // The VoxelCraft RP chicken.geo.json was a modern Bedrock format not in rujukan.
     // makeVanillaChickenModel now builds the chicken from ChickenModel.cpp coordinates.
-    const CHICKEN_TEXTURE_URL = new URL('./VoxelCraft/textures/mob/chicken.png', window.location.href).href;
+    const CHICKEN_TEXTURE_URL = new URL('./assets/mob/chicken.png', window.location.href).href;
     let vanillaChickenGeometry = null;
     let vanillaChickenTexture = null;
 
@@ -4346,7 +4346,7 @@
       // §Rujukan MCPE 2013: items.png is 256x256, 16x16 tiles (same format as terrain.png).
       const itemsImg = new Image();
       itemsImg.onload = () => { itemsAtlasImg = itemsImg; buildHotbar(); selectSlot(selectedSlot); };
-      itemsImg.src = './VoxelCraft/textures/gui/items.png';
+      itemsImg.src = './assets/gui/items.png';
       return tex;
     }
 
