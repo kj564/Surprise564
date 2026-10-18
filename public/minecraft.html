@@ -227,8 +227,11 @@
   }
 
   /* Inventory panel (press E) */
+  /* §Screen.cpp:108-110 — fillGradient(0xc0101010, 0xd0101010)
+     = dark gray gradient matching rujukan in-game pause/inventory background */
   #inventory {
-    position: fixed; inset: 0; z-index: 11; background: rgba(0,0,0,0.65);
+    position: fixed; inset: 0; z-index: 11;
+    background: linear-gradient(rgba(16,16,16,0.75), rgba(16,16,16,0.82));
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     color: #fff; backdrop-filter: blur(3px); padding: 20px;
   }
@@ -348,7 +351,7 @@
 
   /* Inventory — MCPE 2013 style: simple dark stone panel, no RP panel sprite. */
   #inventory {
-    background: rgba(0,0,0,.7);
+    /* §Already set above to match rujukan fillGradient — this block just adjusts padding */
     backdrop-filter: none;
     padding: 18px;
   }
@@ -3829,9 +3832,23 @@
       const hasHalf = (hp % 2) === 1;
       // Blink during invulnerability frames (MCPE flashes the hearts when
       // invulnerableTime > 0 — Gui.cpp renderHearts blink check).
-      heartsEl.classList.toggle('blink', player.invulnerableTime > 0);
+      // §Gui.cpp:568-569 — blink only when invulnerableTime >= 10
+      // AND (invulnerableTime / 3) % 2 == 1 (alternating flash pattern)
+      const blink = player.invulnerableTime >= 10 && (Math.floor(player.invulnerableTime / 3) % 2) === 1;
+      heartsEl.classList.toggle('blink', blink);
+      // §Gui.cpp:570-572 — random.setSeed(tickCount * 312871) for deterministic jitter
+      const seed = Math.floor(performance.now() / 50) * 312871;  // 50ms = 1 tick
+      let rng = seed;
+      const nextInt = (max) => { rng = (rng * 1103515245 + 12345) & 0x7fffffff; return rng % max; };
+      const lowHealth = hp <= 4;  // §Gui.cpp:586: if (h <= 4)
       for (let i = 0; i < heartEls.length; i++) {
         const h = heartEls[i];
+        // §Gui.cpp:586-588 — low-health jitter: yo += random.nextInt(2) - 1
+        if (lowHealth) {
+          h.style.transform = `translateY(${nextInt(2) - 1}px)`;
+        } else {
+          h.style.transform = '';
+        }
         if (i < fullHearts) {
           h.classList.remove('half', 'empty');
         } else if (i === fullHearts && hasHalf) {
