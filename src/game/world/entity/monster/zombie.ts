@@ -19,17 +19,17 @@ export const ZOMBIE_RUN_SPEED = 0.5;
 export const ZOMBIE_ATTACK_DAMAGE = 4;
 
 /** §Zombie.cpp:28-35 — goal-selector entries the browser layer wires up. */
-export const ZOMBIE_GOALS: readonly Readonly<{ readonly priority: number; readonly kind: string }> = Object.freeze([
+export const ZOMBIE_GOALS: readonly { readonly priority: number; readonly kind: string }[] = [
   // §Zombie.cpp:29 — `targetSelector->addGoal(1, new HurtByTargetGoal(this, false));`
-  Object.freeze({ priority: 1, kind: 'HurtByTargetGoal' }),
+  { priority: 1, kind: 'HurtByTargetGoal' },
   // §Zombie.cpp:30 — `targetSelector->addGoal(2, new NearestAttackableTargetGoal(this, 1, 16, 0, true));`
-  Object.freeze({ priority: 2, kind: 'NearestAttackableTargetGoal' }),
+  { priority: 2, kind: 'NearestAttackableTargetGoal' },
   // §Zombie.cpp:33 — `goalSelector->addGoal(1, new BreakDoorGoal(this));` (commented out in rujukan)
   // §Zombie.cpp:34 — `goalSelector->addGoal(2, new MeleeAttackGoal(this, runSpeed, false, 0));`
-  Object.freeze({ priority: 2, kind: 'MeleeAttackGoal' }),
+  { priority: 2, kind: 'MeleeAttackGoal' },
   // §Zombie.cpp:35 — `goalSelector->addGoal(7, new RandomStrollGoal(this, runSpeed));`
-  Object.freeze({ priority: 7, kind: 'RandomStrollGoal' }),
-]);
+  { priority: 7, kind: 'RandomStrollGoal' },
+] as const;
 
 /** §Zombie.h:11-42 — Zombie mob. */
 export class Zombie extends Monster {

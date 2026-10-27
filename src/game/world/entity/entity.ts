@@ -741,6 +741,13 @@ export abstract class Entity {
     const zt = Math.floor(this.z);
     return level.isSolidBlockingTile(xt, yt, zt);
   }
+  /** §Entity.h:41 — 
+   *  §Entity.cpp:93-100 — collision check for a proposed movement.
+   *  Phase 1 stub: returns false (no collision data in headless mode). */
+  isFree(xa: number, ya: number, za: number, grow = 0): boolean {
+    return false;
+  }
+
 
   /** §Entity.cpp:402-412 — `float Entity::getBrightness(float a)` — delegated to level. */
   getBrightness(_a: number): number {

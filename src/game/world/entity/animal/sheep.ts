@@ -21,24 +21,24 @@ export const SHEEP_DATA_WOOL_ID = 16;
  *  `15 - DyePowderItem::<COLOR>` (§Sheep.cpp:152-163), so this table is read
  *  by the dye-powder index.
  */
-export const SHEEP_COLORS: readonly Readonly<readonly [number, number, number]>[] = Object.freeze([
-  Object.freeze([1.0, 1.0, 1.0]),    // white      (§Sheep.cpp:6)
-  Object.freeze([0.95, 0.7, 0.2]),   // orange     (§Sheep.cpp:7)
-  Object.freeze([0.9, 0.5, 0.85]),   // magenta    (§Sheep.cpp:8)
-  Object.freeze([0.6, 0.7, 0.95]),   // light blue (§Sheep.cpp:9)
-  Object.freeze([0.9, 0.9, 0.2]),    // yellow     (§Sheep.cpp:10)
-  Object.freeze([0.5, 0.8, 0.1]),    // light green(§Sheep.cpp:11)
-  Object.freeze([0.95, 0.7, 0.8]),   // pink       (§Sheep.cpp:12)
-  Object.freeze([0.3, 0.3, 0.3]),    // gray       (§Sheep.cpp:13)
-  Object.freeze([0.6, 0.6, 0.6]),    // silver     (§Sheep.cpp:14)
-  Object.freeze([0.3, 0.6, 0.7]),    // cyan       (§Sheep.cpp:15)
-  Object.freeze([0.7, 0.4, 0.9]),    // purple     (§Sheep.cpp:16)
-  Object.freeze([0.2, 0.4, 0.8]),    // blue       (§Sheep.cpp:17)
-  Object.freeze([0.5, 0.4, 0.3]),    // brown      (§Sheep.cpp:18)
-  Object.freeze([0.4, 0.5, 0.2]),    // green      (§Sheep.cpp:19)
-  Object.freeze([0.8, 0.3, 0.3]),    // red        (§Sheep.cpp:20)
-  Object.freeze([0.1, 0.1, 0.1]),    // black      (§Sheep.cpp:21)
-] as const);
+export const SHEEP_COLORS: readonly (readonly [number, number, number])[] = [
+  [1.0, 1.0, 1.0],    // white      (§Sheep.cpp:6)
+  [0.95, 0.7, 0.2],   // orange     (§Sheep.cpp:7)
+  [0.9, 0.5, 0.85],   // magenta    (§Sheep.cpp:8)
+  [0.6, 0.7, 0.95],   // light blue (§Sheep.cpp:9)
+  [0.9, 0.9, 0.2],    // yellow     (§Sheep.cpp:10)
+  [0.5, 0.8, 0.1],    // light green(§Sheep.cpp:11)
+  [0.95, 0.7, 0.8],   // pink       (§Sheep.cpp:12)
+  [0.3, 0.3, 0.3],    // gray       (§Sheep.cpp:13)
+  [0.6, 0.6, 0.6],    // silver     (§Sheep.cpp:14)
+  [0.3, 0.6, 0.7],    // cyan       (§Sheep.cpp:15)
+  [0.7, 0.4, 0.9],    // purple     (§Sheep.cpp:16)
+  [0.2, 0.4, 0.8],    // blue       (§Sheep.cpp:17)
+  [0.5, 0.4, 0.3],    // brown      (§Sheep.cpp:18)
+  [0.4, 0.5, 0.2],    // green      (§Sheep.cpp:19)
+  [0.8, 0.3, 0.3],    // red        (§Sheep.cpp:20)
+  [0.1, 0.1, 0.1],    // black      (§Sheep.cpp:21)
+] as const;
 
 /** §Sheep.h:29 — `static const int NumColors = sizeof(COLOR)/sizeof(Sheep*);` = 16. */
 export const SHEEP_NUM_COLORS = SHEEP_COLORS.length;

@@ -961,7 +961,7 @@ export abstract class Mob extends Entity {
     const level = this.level;
     if (level) {
       const player = level.getNearestPlayer(this, -1);
-      this.checkDespawn(player);
+      this.checkDespawnMob(player as Mob | null);
     }
 
     this.xxa = 0;

@@ -10,7 +10,8 @@ import type { EntityLevel } from '../level';
 import { PathfinderMob } from '../mob-hierarchy';
 import { MobType } from '../types';
 import { EntityRendererId } from '../types';
-import type { Entity, Mob } from '../entity';
+import type { Entity } from '../entity';
+import type { Mob } from '../mob';
 
 /** §Monster.cpp:142-144 — `int Monster::getAttackTime() { return 20; }`. */
 export const MONSTER_DEFAULT_ATTACK_TIME = 20;
