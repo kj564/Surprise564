@@ -2761,6 +2761,8 @@
       return boxes;
     }
 
+    // Entity system wrapped in IIFE to avoid class name conflicts with bundle
+    (function() {
     // ---- Entity (Entity.h:23, 224 lines) — root base ----
     class MobEntity {
       constructor(level) {
@@ -4265,6 +4267,8 @@
       geometryIdentifiers: vanillaChickenGeometry?.['minecraft:geometry']?.map(g => g.description?.identifier) || [],
       textureSize: vanillaChickenTexture ? `${vanillaChickenTexture.image?.width}x${vanillaChickenTexture.image?.height}` : null,
     });
+    window.__updateMobs = updateMobs;
+    })();
 
     // ---- Inventory panel ----
     const inventoryEl = document.getElementById('inventory');
@@ -5625,15 +5629,15 @@
           // §MobSpawner.cpp:28 — mob spawning tick (every 20 game ticks).
           // Both run inside the 20 tps physics tick loop so they advance
           // exactly one game tick per iteration, not 60fps frame counts.
-          tickWaterSystem();
-          tickMobSpawner();
+          (window.__tickWaterSystem || function(){})();
+          (window.__tickMobSpawner || function(){})();
         }
       }
 
       // Visual systems stay at 60fps (dt-based) — particles, mobs, day/night.
       if (gameplayActive) {
         updateParticles(dt);
-        updateMobs(dt);
+        (window.__updateMobs || function(){})(dt);
       }
 
       // camera follow with interpolation between physics ticks.
@@ -5864,7 +5868,7 @@
         const sz = player.pos.z + Math.sin(ang) * 6;
         for (let y = CHUNK_Y - 1; y >= 0; y--) {
           const id = world.getBlock(Math.floor(sx), y, Math.floor(sz));
-          if (id && id !== 8) { spawnChicken(sx, y + 1, sz); break; }
+          if (id && id !== 8) { (window.__spawnChicken || function(){})(sx, y + 1, sz); break; }
         }
       }
       requestAnimationFrame(animate);
