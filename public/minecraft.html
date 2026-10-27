@@ -5649,11 +5649,17 @@
         e.preventDefault();
         toggleInventory();
       }
+      // §Options.cpp:48 — keyCraft = KEY_Q (open crafting)
+      if (e.code === 'KeyQ' && !e.repeat && !wasDown && !inventoryOpen) {
+        e.preventDefault();
+        // Open crafting UI (2x2 inventory crafting or 3x3 if near workbench)
+        document.getElementById('craftingUI')?.classList.remove('hidden');
+        return;
+      }
       if (e.code === 'KeyG' && !e.repeat && !wasDown && !inventoryOpen) { e.preventDefault(); openVcGuide(); return; }
+      // §Options.cpp:50 — keyChat = KEY_T (no chat in single player, but keep for consistency)
       if (e.code === 'KeyT' && !e.repeat && !wasDown) {
-        // advance time of day for quick day/night testing
-        worldTime = (worldTime + 0.15) % 1;
-        toast('Time advanced');
+        // no-op in single player
       }
       // number keys
       if (e.code.startsWith('Digit')) {
