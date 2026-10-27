@@ -1353,20 +1353,29 @@
     const CANONICAL_KEY = {
       // §C++ Tile IDs (§Tile.cpp:161-265)
       1: 'minecraft:stone', 2: 'minecraft:grass_block', 3: 'minecraft:dirt',
-      4: 'minecraft:cobblestone', 5: 'minecraft:oak_planks',
-      7: 'minecraft:bedrock', 8: 'minecraft:water',
+      4: 'minecraft:cobblestone', 5: 'minecraft:oak_planks', 6: 'minecraft:sapling',
+      7: 'minecraft:bedrock', 8: 'minecraft:water', 9: 'minecraft:water',
+      10: 'minecraft:lava', 11: 'minecraft:lava',
       12: 'minecraft:sand', 13: 'minecraft:gravel',
       14: 'minecraft:gold_ore', 15: 'minecraft:iron_ore', 16: 'minecraft:coal_ore',
       17: 'minecraft:oak_log', 18: 'minecraft:oak_leaves',
       20: 'minecraft:glass', 21: 'minecraft:lapis_ore', 22: 'minecraft:lapis_block',
-      35: 'minecraft:wool',
+      24: 'minecraft:sandstone', 30: 'minecraft:web', 31: 'minecraft:tallgrass',
+      35: 'minecraft:wool', 37: 'minecraft:flower', 38: 'minecraft:rose',
+      39: 'minecraft:red_mushroom', 40: 'minecraft:brown_mushroom',
       41: 'minecraft:gold_block', 42: 'minecraft:iron_block',
-      45: 'minecraft:brick', 47: 'minecraft:bookshelf', 49: 'minecraft:obsidian',
+      44: 'minecraft:stone_slab', 45: 'minecraft:brick', 46: 'minecraft:tnt',
+      47: 'minecraft:bookshelf', 48: 'minecraft:mossy_cobblestone', 49: 'minecraft:obsidian',
+      50: 'minecraft:torch', 54: 'minecraft:chest',
       56: 'minecraft:diamond_ore', 57: 'minecraft:diamond_block',
-      58: 'minecraft:crafting_table', 61: 'minecraft:furnace',
-      73: 'minecraft:redstone_ore', 79: 'minecraft:ice', 80: 'minecraft:snow',
-      87: 'minecraft:netherrack', 88: 'minecraft:soul_sand',
-      89: 'minecraft:glowstone', 103: 'minecraft:melon',
+      58: 'minecraft:crafting_table', 59: 'minecraft:wheat', 60: 'minecraft:farmland',
+      61: 'minecraft:furnace', 62: 'minecraft:lit_furnace',
+      63: 'minecraft:sign', 64: 'minecraft:wooden_door', 65: 'minecraft:ladder',
+      78: 'minecraft:snow_layer', 79: 'minecraft:ice', 80: 'minecraft:snow',
+      81: 'minecraft:cactus', 82: 'minecraft:clay', 83: 'minecraft:reeds',
+      85: 'minecraft:fence', 87: 'minecraft:netherrack', 88: 'minecraft:soul_sand',
+      89: 'minecraft:glowstone', 96: 'minecraft:trapdoor', 98: 'minecraft:smooth_stone',
+      103: 'minecraft:melon', 107: 'minecraft:fence_gate',
     };
 
     // §Material map — verified 1:1 with rujukan Tile subclass constructors:
@@ -1392,16 +1401,20 @@
     //   StairTile uses base->material: stairs_wood base=wood (Material::wood)
     //   RedStoneOreTile extends OreTile (Material::stone)
     const MATERIAL_MAP = {
-      // §C++ Tile IDs — material from Tile.cpp setSoundType/setMaterial
-      1: 'stone', 2: 'dirt', 3: 'dirt', 4: 'stone', 5: 'wood',
-      7: 'stone', 8: 'water',
-      12: 'sand', 13: 'sand', 14: 'stone', 15: 'stone', 16: 'stone',
-      17: 'wood', 18: 'leaves', 20: 'glass', 21: 'stone', 22: 'stone',
-      35: 'cloth',
-      41: 'metal', 42: 'metal', 45: 'stone', 47: 'wood', 49: 'stone',
-      56: 'stone', 57: 'metal', 58: 'wood', 61: 'stone',
-      73: 'stone', 79: 'ice', 80: 'snow',
-      87: 'stone', 88: 'sand', 89: 'glass', 103: 'wood',
+      // §C++ Tile IDs — material from §Tile.cpp setSoundType/setMaterial
+      1: 'stone', 2: 'grass', 3: 'gravel', 4: 'stone', 5: 'wood', 6: 'grass',
+      7: 'stone', 8: 'silent', 10: 'silent',
+      12: 'sand', 13: 'gravel', 14: 'stone', 15: 'stone', 16: 'stone',
+      17: 'wood', 18: 'grass', 20: 'glass', 21: 'stone', 22: 'stone',
+      24: 'stone', 30: 'cloth', 31: 'grass',
+      35: 'cloth', 37: 'grass', 38: 'grass', 39: 'grass', 40: 'grass',
+      41: 'metal', 42: 'metal', 44: 'stone', 45: 'stone', 46: 'grass',
+      47: 'wood', 48: 'stone', 49: 'stone', 50: 'wood', 54: 'wood',
+      56: 'stone', 57: 'metal', 58: 'wood', 59: 'grass', 60: 'gravel',
+      61: 'stone', 62: 'stone', 63: 'wood', 64: 'wood', 65: 'wood',
+      78: 'cloth', 79: 'glass', 80: 'cloth', 81: 'cloth', 82: 'gravel', 83: 'grass',
+      85: 'wood', 87: 'stone', 88: 'sand', 89: 'stone', 96: 'wood',
+      98: 'stone', 103: 'wood', 107: 'wood',
     };
 
     // Hotbar block ids (8 slots) — rujukan MCPE 2013 set (no wool/cloth in the default bar)
