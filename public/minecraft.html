@@ -1416,6 +1416,71 @@
       103: 'minecraft:melon', 107: 'minecraft:fence_gate',
     };
 
+    // §Recipe key map — maps C++ Tile IDs to rujukan short item keys.
+    // The Recipes system (from voxelcraft-engine.bundle.js) uses short keys
+    // like "wood", "stick", "treeTrunk" — NOT namespaced minecraft:* keys.
+    // This map bridges the block ID to the recipe short key so crafting works.
+    const BLOCK_RECIPE_KEY = {
+      1: 'stoneBrick',      // stone (cobblestone in recipe system)
+      2: 'dirt',            // grass block → dirt in recipes
+      3: 'dirt',            // dirt
+      4: 'stoneBrick',      // cobblestone → stoneBrick
+      5: 'wood',            // oak planks → wood
+      6: 'sapling',         // sapling
+      12: 'sand',           // sand
+      13: 'gravel',         // gravel (no direct recipe use but maps to flint)
+      14: 'goldOre',        // gold ore
+      15: 'ironOre',        // iron ore
+      16: 'coalOre',        // coal ore
+      17: 'treeTrunk',      // oak log → treeTrunk
+      18: 'leaves',         // oak leaves
+      20: 'glass',          // glass
+      21: 'lapisOre',       // lapis ore
+      22: 'lapisBlock',     // lapis block
+      24: 'sandStone',      // sandstone
+      30: 'web',            // web
+      31: 'tallgrass',      // tall grass
+      35: 'cloth',          // cloth/wool
+      37: 'flower',         // flower
+      38: 'rose',           // rose
+      39: 'mushroom1',      // red mushroom
+      40: 'mushroom2',      // brown mushroom
+      41: 'goldBlock',      // gold block
+      42: 'ironBlock',      // iron block
+      44: 'stoneSlab',      // stone slab
+      45: 'redBrick',       // brick block
+      46: 'tnt',            // TNT
+      47: 'bookshelf',      // bookshelf
+      48: 'mossStone',      // moss stone
+      49: 'obsidian',       // obsidian
+      50: 'torch',          // torch
+      54: 'chest',          // chest
+      56: 'emeraldOre',     // diamond ore (emeraldOre in C++)
+      57: 'emeraldBlock',   // diamond block (emeraldBlock in C++)
+      58: 'workBench',      // crafting table
+      59: 'crops',          // wheat crops
+      60: 'farmland',       // farmland
+      61: 'furnace',        // furnace
+      62: 'furnace_lit',    // lit furnace
+      63: 'sign',           // sign
+      64: 'door_wood',      // wooden door
+      65: 'ladder',         // ladder
+      73: 'redStoneOre',    // redstone ore
+      78: 'topSnow',        // snow layer
+      79: 'ice',            // ice
+      80: 'snow',           // snow block
+      81: 'cactus',         // cactus
+      82: 'clay',           // clay
+      83: 'reeds',          // sugar cane
+      85: 'fence',          // fence
+      87: 'netherrack',     // netherrack
+      89: 'lightGem',       // glowstone
+      96: 'trapdoor',       // trapdoor
+      98: 'stoneBrickSmooth', // smooth stone brick
+      103: 'melon',         // melon
+      107: 'fenceGate',     // fence gate
+    };
+
     // §Material map — verified 1:1 with rujukan Tile subclass constructors:
     //   StoneTile.h:15 (Material::stone), GrassTile.cpp:6 (Material::dirt),
     //   DirtTile.h:15 (Material::dirt), OreTile.h:16 (Material::stone),
@@ -6191,9 +6256,9 @@
       slot.addEventListener('click', () => {
         const selected = HOTBAR[selectedSlot];
         if (selected && selected.type === 'block') {
-          // §CRA-001 — use namespaced key (runtimeBlockKey) so the recipe matcher
-          // (which expects minecraft:* keys) can compare against slot.dataset.itemKey.
-          const key = runtimeBlockKey(selected.id);
+          // §CRA-001 — use rujukan short recipe key so the recipe matcher can compare.
+          // The Recipes system uses short keys like "wood", "stick", "treeTrunk".
+          const key = BLOCK_RECIPE_KEY[selected.id] || runtimeBlockKey(selected.id);
           if (slot.dataset.itemKey === key) {
             delete slot.dataset.itemKey;
             slot.textContent = '';
@@ -6246,7 +6311,7 @@
             const slot = document.getElementById(id);
             // §CRA-001 / CTR-005 — use namespaced key (runtimeBlockKey) so the
             // FurnaceRecipes matcher (which expects minecraft:* keys) can compare.
-            const key = selected.type === 'block' ? runtimeBlockKey(selected.id) : selected.id;
+            const key = selected.type === 'block' ? (BLOCK_RECIPE_KEY[selected.id] || runtimeBlockKey(selected.id)) : selected.id;
             slot.textContent = key.substring(0, 6);
             slot.dataset.itemKey = key;
             if (window.VoxelCraftFurnaceRecipes && id === 'furnaceIngredient') {
