@@ -5843,7 +5843,7 @@
     }
 
     // ---- Init ----
-    (async function init() {
+    console.log("[VoxelCraft] About to call init()..."); (async function init() {
       loadingDetail.textContent = 'memuat tekstur minecraft asli...';
       atlasTexture = await buildAtlas();
       // VERIFIED MCPE 2013: TileRenderer.cpp uses fixed per-face brightness
