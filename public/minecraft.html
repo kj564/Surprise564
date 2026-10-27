@@ -1000,6 +1000,211 @@
 
 </style>
 
+  
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="vignette"></div>
+  <div id="crosshair"></div>
+  <div id="hearts" class="hidden"></div>
+  <div id="hud"></div>
+  <div id="hotbar"></div>
+  <div id="toast"></div>
+
+  <div id="inventory" class="hidden" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
+    <button id="invClose" class="inv-done" title="Done" aria-label="Done">×</button>
+    <h2 id="inventoryTitle">Select blocks</h2>
+    <div class="inv-tabs" role="tablist" aria-label="Kategori inventaris">
+      <button type="button" id="inventoryTabAll" role="tab" aria-selected="true" aria-controls="invGrid" class="active" data-inv-filter="all">Semua</button>
+      <button type="button" id="inventoryTabNature" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="nature">Alam</button>
+      <button type="button" id="inventoryTabBuilding" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="building">Bangunan</button>
+      <button type="button" id="inventoryTabMinerals" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="minerals">Mineral</button>
+    </div>
+    <div class="inv-grid" id="invGrid" role="tabpanel" aria-labelledby="inventoryTabAll" tabindex="0"></div>
+    <p class="inv-hint">Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di pojok kanan atas.</p>
+  </div>
+
+
+  <div id="vcGuide" class="hidden" role="dialog" aria-modal="true" aria-labelledby="vcGuideTitle">
+    <div class="vc-form">
+      <h2 class="vc-title" id="vcGuideTitle">VoxelCraft Menu</h2>
+      <p class="vc-body" id="vcGuideBody">Selamat datang di VoxelCraft.</p>
+      <div class="vc-actions">
+        <button type="button" data-vc-action="kit"><span class="vc-action-label">Kit Starter</span><span class="vc-small">Atur blok awal di hotbar</span></button>
+        <button type="button" data-vc-action="heal" disabled><span class="vc-action-label">Pulihkan HP</span><span class="vc-small">Fitur health belum ada di browser</span></button>
+        <button type="button" data-vc-action="fly"><span class="vc-action-label">Mode Terbang</span><span class="vc-small" id="vcFlyStatus">ON / OFF</span></button>
+        <button type="button" data-vc-action="day"><span class="vc-action-label">Waktu: Siang</span><span class="vc-small">Atur siklus siang</span></button>
+        <button type="button" data-vc-action="night"><span class="vc-action-label">Waktu: Malam</span><span class="vc-small">Atur siklus malam</span></button>
+        <button type="button" data-vc-action="weather" disabled><span class="vc-action-label">Cuaca: Cerah</span><span class="vc-small">Cuaca belum didukung browser</span></button>
+        <button type="button" data-vc-action="stats"><span class="vc-action-label">Lihat Statistik</span><span class="vc-small">Status sesi saat ini</span></button>
+      </div>
+      <div class="vc-footer"><button type="button" class="vc-close" data-vc-action="close">Tutup Menu</button></div>
+    </div>
+  </div>
+
+  <div id="loading">
+    <!-- §ProgressScreen.cpp:24-57 — dirt background + progress bar -->
+    <div class="progress-bar"><i style="width: 0%"></i></div>
+    <div id="loadingDetail" style="margin-top:8px;font-size:12px;opacity:0.7">menyiapkan tekstur</div>
+  </div>
+
+  <div id="overlay" class="hidden">
+    <div class="menu-wrap">
+      <!-- §StartMenuScreen.cpp:155-173 — title.png image, NOT text.
+           Rujukan loads gui/title.png (256×64) and renders it at center top, y=4.
+           The title is scaled to fit width/2, maintaining aspect ratio. -->
+      <div class="brand">
+        <img src="./assets/gui/title.png" alt="Minecraft" class="title-img" />
+      </div>
+      <!-- §StartMenuScreen.cpp:75-89 — rujukan button layout:
+           bHost (Start Game) 160×24 at y=yBase-28
+           bJoin (Join Game)  160×24 at y=yBase
+           bOptions (Options)  78×22 at y=yBase+30 -->
+      <div id="mainMenuButtons" class="menu-buttons">
+        <!-- §StartMenuScreen.cpp:27 — bHost = "Start Game" (160×24) -->
+        <button id="playButton">Start Game</button>
+        <!-- §StartMenuScreen.cpp:28 — bJoin = "Join Game" (160×24)
+             Browser: multiplayer not available, button shows info dialog -->
+        <button id="joinButton" disabled>Join Game</button>
+        <!-- §StartMenuScreen.cpp:29 — bOptions = "Options" (78×22) -->
+        <button id="helpOptionsButton">Options</button>
+      </div>
+      <div id="helpOptionsPanel" class="help-options-panel">
+        <h2>Help &amp; Options</h2>
+        <button id="guideButton">How to Play</button>
+        <button id="optionsButton">Game Options</button>
+        <p class="menu-panel-note">Controls, graphics, and world settings for this browser game.</p>
+        <button id="helpBackButton" class="menu-back">Back</button>
+      </div>
+      <div id="settingsPanel" class="settings-panel">
+        <h2>Game Options</h2>
+        <label for="renderQuality">Render Quality
+          <select id="renderQuality"><option value="high">High</option><option value="balanced" selected>Balanced</option><option value="low">Low</option></select>
+        </label>
+        <label for="menuFov">Field of View
+          <select id="menuFov"><option value="70">70</option><option value="80" selected>80</option><option value="90">90</option><option value="100">100</option></select>
+        </label>
+        <button id="saveOptionsButton" class="settings-close">Done</button>
+      </div>
+      <!-- §StartMenuScreen.cpp:170-171 — version at y=62 (gray 0xffcccccc),
+           copyright at y=height-10 (white 0xffffff) -->
+      <div class="menu-foot">
+        <span class="menu-version">VoxelCraft v0.1.1 alpha</span>
+        <span class="menu-copyright">Mojang AB</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="pauseOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+    <div class="pause-wrap">
+      <h2 id="pauseTitle">Game menu</h2>
+      <div class="pause-buttons">
+        <!-- §PauseScreen.cpp:53 — bContinue = "Back to game" -->
+        <button id="resumeGameButton" type="button">Back to game</button>
+        <!-- §PauseScreen.cpp:54 — bQuit = "Quit to title" -->
+        <button id="returnTitleButton" type="button">Quit to title</button>
+        <!-- §PauseScreen.cpp:55 — bQuitAndSaveLocally = "Quit and copy map" -->
+        <button id="saveWorldButton" type="button">Quit and copy map</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- §TouchscreenInput.cpp — D-pad for mobile controls -->
+    <!-- §DeathScreen.h — Death screen (§DeathScreen.cpp) -->
+  <div id="deathScreen" class="hidden" role="dialog" aria-modal="true" aria-labelledby="deathTitle">
+    <div class="death-bg"></div>
+    <div class="death-panel">
+      <h2 id="deathTitle">You died!</h2>
+      <p class="death-score">Score: <span id="deathScore">0</span></p>
+      <button id="respawnBtn" type="button">Respawn</button>
+      <button id="quitToTitleBtn" type="button">Title screen</button>
+    </div>
+  </div>
+
+  <!-- §FurnaceScreen.h — Furnace UI (§FurnaceScreen.cpp) -->
+  <div id="furnaceUI" class="hidden" role="dialog" aria-modal="true" aria-labelledby="furnaceTitle">
+    <div class="container-panel furnace-panel">
+      <button class="container-close" data-close="furnaceUI" aria-label="Close">×</button>
+      <h2 id="furnaceTitle">Furnace</h2>
+      <div class="furnace-grid">
+        <div class="furnace-slot" id="furnaceIngredient" data-slot="ingredient">
+          <span class="slot-label">Input</span>
+        </div>
+        <div class="furnace-arrow">
+          <div class="furnace-flame" id="furnaceFlame"></div>
+          <span>▶</span>
+        </div>
+        <div class="furnace-slot furnace-result" id="furnaceResult" data-slot="result">
+          <span class="slot-label">Output</span>
+        </div>
+      </div>
+      <div class="furnace-fuel-row">
+        <span>Fuel:</span>
+        <div class="furnace-slot" id="furnaceFuel" data-slot="fuel">
+          <span class="slot-label">Fuel</span>
+        </div>
+        <div class="furnace-burn-bar"><div class="furnace-burn-fill" id="furnaceBurnFill"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- §ChestScreen.h — Chest UI (§ChestScreen.cpp) -->
+  <div id="chestUI" class="hidden" role="dialog" aria-modal="true" aria-labelledby="chestTitle">
+    <div class="container-panel chest-panel">
+      <button class="container-close" data-close="chestUI" aria-label="Close">×</button>
+      <h2 id="chestTitle">Chest</h2>
+      <div class="chest-grid" id="chestGrid"></div>
+      <div class="chest-player-grid" id="chestPlayerGrid"></div>
+    </div>
+  </div>
+
+  <!-- §WorkbenchScreen.h — Crafting table UI (§WorkbenchScreen.cpp) -->
+  <div id="craftingUI" class="hidden" role="dialog" aria-modal="true" aria-labelledby="craftingTitle">
+    <div class="container-panel crafting-panel">
+      <button class="container-close" data-close="craftingUI" aria-label="Close">×</button>
+      <h2 id="craftingTitle">Crafting</h2>
+      <div class="crafting-grid">
+        <div class="crafting-3x3" id="crafting3x3">
+          <div class="crafting-slot" data-craft-x="0" data-craft-y="0"></div>
+          <div class="crafting-slot" data-craft-x="1" data-craft-y="0"></div>
+          <div class="crafting-slot" data-craft-x="2" data-craft-y="0"></div>
+          <div class="crafting-slot" data-craft-x="0" data-craft-y="1"></div>
+          <div class="crafting-slot" data-craft-x="1" data-craft-y="1"></div>
+          <div class="crafting-slot" data-craft-x="2" data-craft-y="1"></div>
+          <div class="crafting-slot" data-craft-x="0" data-craft-y="2"></div>
+          <div class="crafting-slot" data-craft-x="1" data-craft-y="2"></div>
+          <div class="crafting-slot" data-craft-x="2" data-craft-y="2"></div>
+        </div>
+        <div class="crafting-arrow"><span>▶</span></div>
+        <div class="crafting-result" id="craftingResult"></div>
+      </div>
+      <div class="crafting-hint">Place items in the grid to craft. Uses Recipes singleton from voxelcraft-engine.bundle.js.</div>
+    </div>
+  </div>
+
+  <!-- §Gui.cpp:604-624 — Air bubbles (renderBubbles) -->
+  <div id="bubbles" class="hidden"></div>
+
+  <!-- §Gui.cpp:625-639 — Debug info overlay (renderDebugInfo) -->
+  <div id="debugOverlay" class="hidden">
+    <div id="debugCoords">XYZ: 0 / 0 / 0</div>
+    <div id="debugChunk">Chunk: 0, 0</div>
+    <div id="debugFps">FPS: 0</div>
+    <div id="debugBlock">Block: none</div>
+    <div id="debugEntities">Entities: 0</div>
+  </div>
+
+<div id="dpad">
+    <div class="btn n" data-key="n"></div>
+    <div class="btn w" data-key="w"></div>
+    <div class="btn c" data-key="c"></div>
+    <div class="btn e" data-key="e"></div>
+    <div class="btn s" data-key="s"></div>
+  </div>
+  <!-- §TouchInputHolder.h — unified turn/build area (transparent) -->
+  <div id="touchArea"></div>
+  
+
   <script type="importmap">
   {
     "imports": {
@@ -6084,208 +6289,5 @@
       }
     }, 100);
   </script>
-</head>
-<body>
-  <canvas id="game"></canvas>
-  <div id="vignette"></div>
-  <div id="crosshair"></div>
-  <div id="hearts" class="hidden"></div>
-  <div id="hud"></div>
-  <div id="hotbar"></div>
-  <div id="toast"></div>
-
-  <div id="inventory" class="hidden" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
-    <button id="invClose" class="inv-done" title="Done" aria-label="Done">×</button>
-    <h2 id="inventoryTitle">Select blocks</h2>
-    <div class="inv-tabs" role="tablist" aria-label="Kategori inventaris">
-      <button type="button" id="inventoryTabAll" role="tab" aria-selected="true" aria-controls="invGrid" class="active" data-inv-filter="all">Semua</button>
-      <button type="button" id="inventoryTabNature" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="nature">Alam</button>
-      <button type="button" id="inventoryTabBuilding" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="building">Bangunan</button>
-      <button type="button" id="inventoryTabMinerals" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="minerals">Mineral</button>
-    </div>
-    <div class="inv-grid" id="invGrid" role="tabpanel" aria-labelledby="inventoryTabAll" tabindex="0"></div>
-    <p class="inv-hint">Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di pojok kanan atas.</p>
-  </div>
-
-
-  <div id="vcGuide" class="hidden" role="dialog" aria-modal="true" aria-labelledby="vcGuideTitle">
-    <div class="vc-form">
-      <h2 class="vc-title" id="vcGuideTitle">VoxelCraft Menu</h2>
-      <p class="vc-body" id="vcGuideBody">Selamat datang di VoxelCraft.</p>
-      <div class="vc-actions">
-        <button type="button" data-vc-action="kit"><span class="vc-action-label">Kit Starter</span><span class="vc-small">Atur blok awal di hotbar</span></button>
-        <button type="button" data-vc-action="heal" disabled><span class="vc-action-label">Pulihkan HP</span><span class="vc-small">Fitur health belum ada di browser</span></button>
-        <button type="button" data-vc-action="fly"><span class="vc-action-label">Mode Terbang</span><span class="vc-small" id="vcFlyStatus">ON / OFF</span></button>
-        <button type="button" data-vc-action="day"><span class="vc-action-label">Waktu: Siang</span><span class="vc-small">Atur siklus siang</span></button>
-        <button type="button" data-vc-action="night"><span class="vc-action-label">Waktu: Malam</span><span class="vc-small">Atur siklus malam</span></button>
-        <button type="button" data-vc-action="weather" disabled><span class="vc-action-label">Cuaca: Cerah</span><span class="vc-small">Cuaca belum didukung browser</span></button>
-        <button type="button" data-vc-action="stats"><span class="vc-action-label">Lihat Statistik</span><span class="vc-small">Status sesi saat ini</span></button>
-      </div>
-      <div class="vc-footer"><button type="button" class="vc-close" data-vc-action="close">Tutup Menu</button></div>
-    </div>
-  </div>
-
-  <div id="loading">
-    <!-- §ProgressScreen.cpp:24-57 — dirt background + progress bar -->
-    <div class="progress-bar"><i style="width: 0%"></i></div>
-    <div id="loadingDetail" style="margin-top:8px;font-size:12px;opacity:0.7">menyiapkan tekstur</div>
-  </div>
-
-  <div id="overlay" class="hidden">
-    <div class="menu-wrap">
-      <!-- §StartMenuScreen.cpp:155-173 — title.png image, NOT text.
-           Rujukan loads gui/title.png (256×64) and renders it at center top, y=4.
-           The title is scaled to fit width/2, maintaining aspect ratio. -->
-      <div class="brand">
-        <img src="./assets/gui/title.png" alt="Minecraft" class="title-img" />
-      </div>
-      <!-- §StartMenuScreen.cpp:75-89 — rujukan button layout:
-           bHost (Start Game) 160×24 at y=yBase-28
-           bJoin (Join Game)  160×24 at y=yBase
-           bOptions (Options)  78×22 at y=yBase+30 -->
-      <div id="mainMenuButtons" class="menu-buttons">
-        <!-- §StartMenuScreen.cpp:27 — bHost = "Start Game" (160×24) -->
-        <button id="playButton">Start Game</button>
-        <!-- §StartMenuScreen.cpp:28 — bJoin = "Join Game" (160×24)
-             Browser: multiplayer not available, button shows info dialog -->
-        <button id="joinButton" disabled>Join Game</button>
-        <!-- §StartMenuScreen.cpp:29 — bOptions = "Options" (78×22) -->
-        <button id="helpOptionsButton">Options</button>
-      </div>
-      <div id="helpOptionsPanel" class="help-options-panel">
-        <h2>Help &amp; Options</h2>
-        <button id="guideButton">How to Play</button>
-        <button id="optionsButton">Game Options</button>
-        <p class="menu-panel-note">Controls, graphics, and world settings for this browser game.</p>
-        <button id="helpBackButton" class="menu-back">Back</button>
-      </div>
-      <div id="settingsPanel" class="settings-panel">
-        <h2>Game Options</h2>
-        <label for="renderQuality">Render Quality
-          <select id="renderQuality"><option value="high">High</option><option value="balanced" selected>Balanced</option><option value="low">Low</option></select>
-        </label>
-        <label for="menuFov">Field of View
-          <select id="menuFov"><option value="70">70</option><option value="80" selected>80</option><option value="90">90</option><option value="100">100</option></select>
-        </label>
-        <button id="saveOptionsButton" class="settings-close">Done</button>
-      </div>
-      <!-- §StartMenuScreen.cpp:170-171 — version at y=62 (gray 0xffcccccc),
-           copyright at y=height-10 (white 0xffffff) -->
-      <div class="menu-foot">
-        <span class="menu-version">VoxelCraft v0.1.1 alpha</span>
-        <span class="menu-copyright">Mojang AB</span>
-      </div>
-    </div>
-  </div>
-
-  <div id="pauseOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
-    <div class="pause-wrap">
-      <h2 id="pauseTitle">Game menu</h2>
-      <div class="pause-buttons">
-        <!-- §PauseScreen.cpp:53 — bContinue = "Back to game" -->
-        <button id="resumeGameButton" type="button">Back to game</button>
-        <!-- §PauseScreen.cpp:54 — bQuit = "Quit to title" -->
-        <button id="returnTitleButton" type="button">Quit to title</button>
-        <!-- §PauseScreen.cpp:55 — bQuitAndSaveLocally = "Quit and copy map" -->
-        <button id="saveWorldButton" type="button">Quit and copy map</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- §TouchscreenInput.cpp — D-pad for mobile controls -->
-    <!-- §DeathScreen.h — Death screen (§DeathScreen.cpp) -->
-  <div id="deathScreen" class="hidden" role="dialog" aria-modal="true" aria-labelledby="deathTitle">
-    <div class="death-bg"></div>
-    <div class="death-panel">
-      <h2 id="deathTitle">You died!</h2>
-      <p class="death-score">Score: <span id="deathScore">0</span></p>
-      <button id="respawnBtn" type="button">Respawn</button>
-      <button id="quitToTitleBtn" type="button">Title screen</button>
-    </div>
-  </div>
-
-  <!-- §FurnaceScreen.h — Furnace UI (§FurnaceScreen.cpp) -->
-  <div id="furnaceUI" class="hidden" role="dialog" aria-modal="true" aria-labelledby="furnaceTitle">
-    <div class="container-panel furnace-panel">
-      <button class="container-close" data-close="furnaceUI" aria-label="Close">×</button>
-      <h2 id="furnaceTitle">Furnace</h2>
-      <div class="furnace-grid">
-        <div class="furnace-slot" id="furnaceIngredient" data-slot="ingredient">
-          <span class="slot-label">Input</span>
-        </div>
-        <div class="furnace-arrow">
-          <div class="furnace-flame" id="furnaceFlame"></div>
-          <span>▶</span>
-        </div>
-        <div class="furnace-slot furnace-result" id="furnaceResult" data-slot="result">
-          <span class="slot-label">Output</span>
-        </div>
-      </div>
-      <div class="furnace-fuel-row">
-        <span>Fuel:</span>
-        <div class="furnace-slot" id="furnaceFuel" data-slot="fuel">
-          <span class="slot-label">Fuel</span>
-        </div>
-        <div class="furnace-burn-bar"><div class="furnace-burn-fill" id="furnaceBurnFill"></div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- §ChestScreen.h — Chest UI (§ChestScreen.cpp) -->
-  <div id="chestUI" class="hidden" role="dialog" aria-modal="true" aria-labelledby="chestTitle">
-    <div class="container-panel chest-panel">
-      <button class="container-close" data-close="chestUI" aria-label="Close">×</button>
-      <h2 id="chestTitle">Chest</h2>
-      <div class="chest-grid" id="chestGrid"></div>
-      <div class="chest-player-grid" id="chestPlayerGrid"></div>
-    </div>
-  </div>
-
-  <!-- §WorkbenchScreen.h — Crafting table UI (§WorkbenchScreen.cpp) -->
-  <div id="craftingUI" class="hidden" role="dialog" aria-modal="true" aria-labelledby="craftingTitle">
-    <div class="container-panel crafting-panel">
-      <button class="container-close" data-close="craftingUI" aria-label="Close">×</button>
-      <h2 id="craftingTitle">Crafting</h2>
-      <div class="crafting-grid">
-        <div class="crafting-3x3" id="crafting3x3">
-          <div class="crafting-slot" data-craft-x="0" data-craft-y="0"></div>
-          <div class="crafting-slot" data-craft-x="1" data-craft-y="0"></div>
-          <div class="crafting-slot" data-craft-x="2" data-craft-y="0"></div>
-          <div class="crafting-slot" data-craft-x="0" data-craft-y="1"></div>
-          <div class="crafting-slot" data-craft-x="1" data-craft-y="1"></div>
-          <div class="crafting-slot" data-craft-x="2" data-craft-y="1"></div>
-          <div class="crafting-slot" data-craft-x="0" data-craft-y="2"></div>
-          <div class="crafting-slot" data-craft-x="1" data-craft-y="2"></div>
-          <div class="crafting-slot" data-craft-x="2" data-craft-y="2"></div>
-        </div>
-        <div class="crafting-arrow"><span>▶</span></div>
-        <div class="crafting-result" id="craftingResult"></div>
-      </div>
-      <div class="crafting-hint">Place items in the grid to craft. Uses Recipes singleton from voxelcraft-engine.bundle.js.</div>
-    </div>
-  </div>
-
-  <!-- §Gui.cpp:604-624 — Air bubbles (renderBubbles) -->
-  <div id="bubbles" class="hidden"></div>
-
-  <!-- §Gui.cpp:625-639 — Debug info overlay (renderDebugInfo) -->
-  <div id="debugOverlay" class="hidden">
-    <div id="debugCoords">XYZ: 0 / 0 / 0</div>
-    <div id="debugChunk">Chunk: 0, 0</div>
-    <div id="debugFps">FPS: 0</div>
-    <div id="debugBlock">Block: none</div>
-    <div id="debugEntities">Entities: 0</div>
-  </div>
-
-<div id="dpad">
-    <div class="btn n" data-key="n"></div>
-    <div class="btn w" data-key="w"></div>
-    <div class="btn c" data-key="c"></div>
-    <div class="btn e" data-key="e"></div>
-    <div class="btn s" data-key="s"></div>
-  </div>
-  <!-- §TouchInputHolder.h — unified turn/build area (transparent) -->
-  <div id="touchArea"></div>
-  
 </body>
 </html>
