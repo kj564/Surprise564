@@ -3599,7 +3599,7 @@
             this.lookAt(lookingAt, 10, this.getMaxHeadXRot());
             // §27.9 post-decrement: lookTime-- <= 0 uses pre-decrement value
             if (this.lookTime-- <= 0 || lookingAt.removed ||
-                lookingAt.distanceToSqr(this.x, this.y, this.z) > lookDistance * lookDistance) {
+                this.distanceToSqr(lookingAt.pos ? lookingAt.pos.x : lookingAt.x, lookingAt.pos ? lookingAt.pos.y : lookingAt.y, lookingAt.pos ? lookingAt.pos.z : lookingAt.z) > lookDistance * lookDistance) {
               this.lookingAtId = 0;
             } else {
               this.lookingAtId = lookingAt.entityId || 1;
@@ -4645,6 +4645,11 @@
         const slot = document.createElement('div');
         slot.className = 'slot' + (i === 0 ? ' active' : '');
         slot.dataset.index = i;
+        if (!entry) {
+          // Empty slot — just show an empty slot div
+          hotbarEl.appendChild(slot);
+          return;
+        }
         if (entry.type === 'more') {
           // §Gui.cpp:187-189 — last slot opens SCREEN_BLOCKSELECTION (inventory).
           // §Gui.cpp:765 — blits 14x4 indicator from gui.png (242, 252).
