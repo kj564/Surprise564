@@ -108,8 +108,8 @@ function validateDefinition(entry) {
     throw new RangeError("lightEmission must be between 0 and 15");
   if (entry.legacyAliases?.some((id2) => !Number.isInteger(id2) || id2 < 0 || id2 > 255))
     throw new RangeError("Legacy block aliases must be integers from 0 to 255");
-  if (entry.drops.some((drop) => !drop.includes(":")))
-    throw new TypeError("Drop item keys must be namespaced");
+  if (entry.drops.some((drop) => !Number.isInteger(drop) || drop < 0))
+    throw new TypeError("Drop IDs must be non-negative integers");
 }
 var defaultBlockRegistry = new BlockRegistry;
 
