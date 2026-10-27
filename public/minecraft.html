@@ -1870,7 +1870,7 @@
     // VERIFIED 1:1 with rujukan TileRenderer.cpp:1743-2030
     // V-flipped for Three.js (PNG top-to-bottom → Three.js bottom-to-top)
     // face index: 0=+X(EAST) 1=-X(WEST) 2=+Y(UP) 3=-Y(DOWN) 4=+Z(SOUTH) 5=-Z(NORTH)
-    const FACES = [
+    const BLOCK_FACES = [
       { dir:[1,0,0],  c:[[1,0,1],[1,0,0],[1,1,0],[1,1,1]], uv:[[0,1],[1,1],[1,0],[0,0]] }, // +X EAST
       { dir:[-1,0,0], c:[[0,1,1],[0,1,0],[0,0,0],[0,0,1]], uv:[[1,0],[0,0],[0,1],[1,1]] }, // -X WEST
       { dir:[0,1,0],  c:[[1,1,1],[1,1,0],[0,1,0],[0,1,1]], uv:[[1,1],[1,0],[0,0],[0,1]] }, // +Y UP
@@ -1970,7 +1970,7 @@
 
       // VERIFIED MCPE 2013 per-face brightness (TileRenderer.cpp:54-57):
       //   c10 = 0.5 (DOWN), c11 = 1.0 (UP), c2 = 0.8 (N/S), c3 = 0.6 (W/E)
-      // FACES order: 0=+X, 1=-X, 2=+Y, 3=-Y, 4=+Z, 5=-Z
+      // BLOCK_FACES order: 0=+X, 1=-X, 2=+Y, 3=-Y, 4=+Z, 5=-Z
       // +X=EAST=0.6, -X=WEST=0.6, +Y=UP=1.0, -Y=DOWN=0.5, +Z=SOUTH=0.8, -Z=NORTH=0.8
       const FACE_BRIGHTNESS = [0.6, 0.6, 1.0, 0.5, 0.8, 0.8];
 
@@ -1985,7 +1985,7 @@
             const isTrans = !!def.transparent;
 
             for (let f = 0; f < 6; f++) {
-              const face = FACES[f];
+              const face = BLOCK_FACES[f];
               const nx = x + face.dir[0], ny = y + face.dir[1], nz = z + face.dir[2];
               const nId = world.getBlockIfLoaded(baseX + nx, ny, baseZ + nz);
 
@@ -1997,7 +1997,7 @@
               if (id === 8 && nId === 8) draw = false;
               if (!draw) continue;
 
-              // Face order follows FACES: +X, -X, +Y, -Y, +Z, -Z.
+              // Face order follows BLOCK_FACES: +X, -X, +Y, -Y, +Z, -Z.
               // Crafting table (ID 15) has its front on both Z faces (frontBothZ);
               // furnace (ID 16) uses its front on +Z only. MCPE 2013 pumpkin/melon
               // (ID 34) has no front face — side tile is used on all four side faces.
@@ -2259,10 +2259,10 @@
     //  with camera interpolation between ticks for smooth visuals.
     //  MAX_TICKS_PER_UPDATE = 10 (Timer.h) prevents spiral-of-death.
     // ============================================================
-    const TICKS_PER_SECOND = 20;
+    const GAME_TPS = 20;
     const MAX_TICKS_PER_UPDATE = 10;
-    const TICK_DT = 1 / TICKS_PER_SECOND;
-    const TICK_MS = 1000 / TICKS_PER_SECOND;  // 50ms per tick (integer-safe)
+    const TICK_DT = 1 / GAME_TPS;
+    const TICK_MS = 1000 / GAME_TPS;  // 50ms per tick (integer-safe)
     let physicsAccumMs = 0;
     let mobPhysicsAccumMs = 0;  // separate accumulator for mob ticks (same 20 tps)
 
