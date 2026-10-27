@@ -6289,10 +6289,11 @@
       const result = document.getElementById('craftingResult');
       if (!result.textContent) return;
       const craftedKey = result.textContent;
-      // §Find first empty hotbar slot (skip the "more" slot at index 8)
+      // §Find first empty hotbar slot (NEVER replace the "more" slot)
       let placed = false;
       for (let i = 0; i < HOTBAR.length; i++) {
-        if (!HOTBAR[i] || HOTBAR[i].type === 'more') {
+        if (HOTBAR[i] && HOTBAR[i].type === 'more') continue;  // skip "more" slot
+        if (!HOTBAR[i]) {
           HOTBAR[i] = { type: 'item', id: craftedKey, label: craftedKey };
           voxelEngine.inventory.setSlot(i, { itemKey: craftedKey, count: 1, maxStackSize: 64 });
           buildHotbar();
@@ -6329,7 +6330,8 @@
             // Add to hotbar (same logic as crafting result)
             let placed = false;
             for (let i = 0; i < HOTBAR.length; i++) {
-              if (!HOTBAR[i] || HOTBAR[i].type === 'more') {
+              if (HOTBAR[i] && HOTBAR[i].type === 'more') continue;
+              if (!HOTBAR[i]) {
                 HOTBAR[i] = { type: 'item', id: craftedKey, label: craftedKey };
                 voxelEngine.inventory.setSlot(i, { itemKey: craftedKey, count: 1, maxStackSize: 64 });
                 buildHotbar();
