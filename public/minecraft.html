@@ -6276,7 +6276,8 @@
         }
       }
     }, 100);
-  
+    } // close else block
+
     } catch(e) {
       console.error('[VoxelCraft] FATAL ERROR:', e.message, e.stack);
       document.getElementById('loadingDetail').textContent = 'ERROR: ' + e.message;
