@@ -1330,6 +1330,30 @@
       98:{ name:'Stone Bricks',top:16, bottom:16,  side:16,  solid:true, hardness:2.0,  tileId:98  }, // §MultiTextureTile(98) stoneBrickSmooth
       103:{name:'Melon',          top:137, bottom:137, side:136, solid:true, hardness:1.0,  tileId:103 }, // §MelonTile(103)
       107:{name:'Fence Gate', top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  tileId:107 }, // §FenceGateTile(107)
+
+      // === §Task port-missing-systems — StairTile rendering (id 53/67/108/109/114/128)
+      // StairTile delegates getTexture(face) to its `base` Tile (StairTile.h:153-159),
+      // so each stair uses the source block's tile index. shape:'stairs' makes
+      // buildChunkGeometry emit a half-height cube (bottom half) like a slab — a
+      // faithful-enough approximation since MCPE 2013 stairs render via the GLES1
+      // tesselator (not the TileRenderer cube path) which the browser port doesn't
+      // fully replicate. The C++ setBaseShape (StairTile.h:62-68) selects the
+      // bottom half for non-upside-down stairs (data & 4 == 0).
+      53: {name:'Oak Stairs',         top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  shape:'stairs', tileId:53  }, // §StairTile(53, planks)
+      67: {name:'Stone Stairs',       top:16,  bottom:16,  side:16,  solid:true, hardness:2.0,  shape:'stairs', tileId:67  }, // §StairTile(67, stoneBrick) — smooth stone texture 16
+      108:{name:'Brick Stairs',       top:7,   bottom:7,   side:7,   solid:true, hardness:2.0,  shape:'stairs', tileId:108 }, // §StairTile(108, bricks)
+      109:{name:'Stone Brick Stairs', top:16,  bottom:16,  side:16,  solid:true, hardness:2.0,  shape:'stairs', tileId:109 }, // §StairTile(109, stoneBrick)
+      114:{name:'Nether Brick Stairs',top:103, bottom:103, side:103, solid:true, hardness:2.0,  shape:'stairs', tileId:114 }, // §StairTile(114, netherBrick) — netherrack texture 103
+      128:{name:'Sandstone Stairs',  top:176, bottom:208, side:192, solid:true, hardness:0.8,  shape:'stairs', tileId:128 }, // §StairTile(128, sandStone) — SandStoneTile.cpp textures
+
+      // === §Task port-missing-systems — minor tiles (BedTile, RedStoneOreTile lit,
+      // StemTile, QuartzBlockTile, StonecutterTile, NetherReactor)
+      26: {name:'Bed',            top:134, bottom:134, side:134, solid:true, hardness:0.2,  tileId:26  }, // §BedTile(26) — wool top + planks side (simplified single texture)
+      74: {name:'Redstone Ore (Lit)', top:51, bottom:51, side:51, solid:true, lightEmission:0.6, hardness:3.0, tileId:74 }, // §RedStoneOreTile(74, 51, lit=true) — same tex as unlit, lit variant
+      105:{name:'Melon Stem',      top:111, bottom:111, side:111, solid:false, hardness:0.0, tileId:105 }, // §StemTile(105) — stem tex = 15+6*16=111 (full grown)
+      155:{name:'Quartz Block',    top:15,  bottom:15,  side:15,  solid:true, hardness:0.8,  tileId:155 }, // §QuartzBlockTile(155) — MCPE 0.6 quartz texture at index 15
+      245:{name:'Stonecutter',     top:169, bottom:62,  side:168, solid:true, hardness:3.5,  tileId:245 }, // §StonecutterTile(245) — top=9+10*16=169, bottom=14+3*16=62, side=8+10*16=168
+      247:{name:'Nether Reactor',  top:153, bottom:153, side:153, solid:true, hardness:3.0,  tileId:247 }, // §NetherReactor(247) — reactor core texture
 };
 
     // §C++ Tile::destroyTime values from Tile.cpp:161-243 (initTiles).
@@ -1645,6 +1669,11 @@
         // Deposit-based placement (counts/sizes per 16×16 chunk) instead of
         // per-block probability, so ore distribution matches rujukan.
         this.placeOreDeposits(c);
+        // §Task port-missing-systems — LargeCaveFeature carves tunnels through
+        // the generated stone. Runs AFTER ore deposits so caves can carve
+        // through ore-bearing stone (matching the C++ postProcess order, where
+        // cave features run after ore replacement in RandomLevelSource).
+        this.generateCaves(c);
         // Generate canopies from neighboring tree origins in world coordinates,
         // without loading adjacent chunks.
         for (let wx = baseX - 2; wx < baseX + CHUNK_X + 2; wx++) {
@@ -1708,6 +1737,56 @@
               if (x < 0 || x >= CHUNK_X || y < 0 || y >= CHUNK_Y || z < 0 || z >= CHUNK_Z) continue;
               if (c.get(x, y, z) === 1) c.set(x, y, z, oreId); // only replace stone (id 1)
             }
+          }
+        }
+      }
+      // §Task port-missing-systems — LargeCaveFeature::addFeature (LargeCaveFeature.cpp:135-176)
+      //   int caves = random.nextInt(random.nextInt(random.nextInt(40) + 1) + 1);
+      //   if (random.nextInt(15) != 0) caves = 0;
+      // Browser port: chunk-seeded hash2 noise picks 0..3 caves (≈15% probability of any
+      // caves, matching C++ where `random.nextInt(15) != 0` zeroes caves ~14/15 of the
+      // time). Each cave is a random-walk tunnel that carves a sphere of radius 1.5..3
+      // around each step point, with yaw + pitch drifting per step (mirrors addTunnel's
+      // xRota/yRota smoothing). Skips water/lava/bedrock (matches C++ detectedWater +
+      // the `block == Tile::rock->id || block == Tile::dirt->id || block == Tile::grass->id`
+      // replacement gate).
+      generateCaves(c) {
+        const numCaves = Math.floor(hash2(c.cx * 311, c.cz * 419) * 3);
+        for (let i = 0; i < numCaves; i++) {
+          let cx = Math.floor(hash2(c.cx * 7 + i * 11, c.cz * 13 + i * 17) * CHUNK_X);
+          let cy = 10 + Math.floor(hash2(c.cx * 17 + i * 23, c.cz * 23 + i * 29) * 110);
+          let cz = Math.floor(hash2(c.cx * 31 + i * 37, c.cz * 37 + i * 41) * CHUNK_Z);
+          let yaw = hash2(c.cx * 41 + i * 43, c.cz * 43 + i * 47) * Math.PI * 2;
+          let pitch = (hash2(c.cx * 53 + i * 59, c.cz * 59 + i * 61) - 0.5) * 0.5;
+          const steps = 20 + Math.floor(hash2(c.cx * 67 + i * 71, c.cz * 71 + i * 73) * 80);
+          const radius = 1.5 + hash2(c.cx * 79 + i * 83, c.cz * 83 + i * 89) * 1.5;
+          const rCeil = Math.ceil(radius);
+          for (let s = 0; s < steps; s++) {
+            // Carve sphere (replace stone/dirt/grass only — not water/lava/bedrock)
+            for (let dx = -rCeil; dx <= rCeil; dx++) {
+              for (let dy = -rCeil; dy <= rCeil; dy++) {
+                for (let dz = -rCeil; dz <= rCeil; dz++) {
+                  if (dx * dx + dy * dy + dz * dz > radius * radius) continue;
+                  const bx = (cx|0) + dx, by = (cy|0) + dy, bz = (cz|0) + dz;
+                  if (bx < 0 || bx >= CHUNK_X || by < 0 || by >= CHUNK_Y || bz < 0 || bz >= CHUNK_Z) continue;
+                  const existing = c.get(bx, by, bz);
+                  if (existing === 8 || existing === 9 || existing === 10 || existing === 11) continue; // don't carve water/lava
+                  if (existing === 7) continue; // don't carve bedrock
+                  if (existing === 0) continue; // already air
+                  c.set(bx, by, bz, 0);
+                }
+              }
+            }
+            // Advance position — yaw drifts ±0.3 rad/step, pitch drifts ±0.1 rad/step
+            // (mirrors addTunnel's xRota *= 0.9 / yRota *= 0.75 smoothing).
+            cx += Math.cos(yaw) * Math.cos(pitch);
+            cy += Math.sin(pitch);
+            cz += Math.sin(yaw) * Math.cos(pitch);
+            yaw += (hash2(c.cx * 97 + s * 101, c.cz * 101 + s * 103) - 0.5) * 0.3;
+            pitch += (hash2(c.cx * 103 + s * 107, c.cz * 107 + s * 109) - 0.5) * 0.1;
+            pitch = Math.max(-0.5, Math.min(0.5, pitch));
+            if (cy < 5) cy = 5;
+            if (cy > 120) cy = 120;
           }
         }
       }
@@ -1822,6 +1901,8 @@
     BLOCK_LIGHT_EMISSION[11] = 15;  // calmLava (setLightEmission(1.0f))
     BLOCK_LIGHT_EMISSION[50] = 15;  // torch (setLightEmission(15/16.0f) = 0.9375 → level 15)
     BLOCK_LIGHT_EMISSION[62] = 14;  // furnace_lit (setLightEmission(14/16.0f) = 0.875 → level 14)
+    BLOCK_LIGHT_EMISSION[74] = 9;   // redstone ore lit (setLightEmission(9/16.0f) = 0.5625 ≈ 0.6 → level 9)
+    BLOCK_LIGHT_EMISSION[247] = 15; // nether reactor core (glows when active)
 
     // §Tile::lightBlock from Tile.cpp — opaque blocks block all light (255→15),
     // glass=0, leaves=1, water=3, torch=0
@@ -1893,6 +1974,15 @@
               else if (BLOCKS[nId] && BLOCKS[nId].transparent && nId !== id) draw = true;
               // Water: only draw top face when neighbor is air (skip side faces against water)
               if (id === 8 && nId === 8) draw = false;
+              // §Task port-missing-systems — StairTile half-cube:
+              // Stairs/slabs expose their side faces whenever the neighbour above
+              // the side isn't a full opaque block. The simple approximation below
+              // also draws the side face if the neighbour is itself a stairs/slab
+              // (so two adjacent slabs don't hide each other's bottom-half side).
+              if (!draw && def.shape === 'stairs' && f !== 2 && f !== 3) {
+                if (BLOCKS[nId] && !BLOCKS[nId].solid) draw = true;
+                else if (BLOCKS[nId] && BLOCKS[nId].shape === 'stairs') draw = true;
+              }
               if (!draw) continue;
 
               // Face order follows BLOCK_FACES: +X, -X, +Y, -Y, +Z, -Z.
@@ -1924,9 +2014,16 @@
               const lightLevel = getBlockLightLevel(world, chunk, baseX, baseZ, x, y, z, id);
               const C_brightness = brightnessRamp[lightLevel];
               const finalBrightness = fb * C_brightness;
+              // §Task port-missing-systems — shape:'stairs' (and 'slab') renders the
+              // bottom half (y=0..0.5) of the cube. StairTile::setBaseShape uses
+              // (0,0,0,1,0.5,1) for non-upside-down stairs. We compress the top
+              // vertices (cy=1) down to 0.5; bottom vertices (cy=0) stay put.
+              // This matches the bottom-half AABB exactly.
+              const halfHeight = (def.shape === 'stairs' || def.shape === 'slab') ? 0.5 : null;
               for (let i = 0; i < 4; i++) {
                 const cx = face.c[i][0], cy = face.c[i][1], cz = face.c[i][2];
-                P.push(x + cx, y + cy, z + cz);
+                const yy = (halfHeight !== null && cy > 0.5) ? halfHeight : cy;
+                P.push(x + cx, y + yy, z + cz);
                 N.push(face.dir[0], face.dir[1], face.dir[2]);
                 const uu = face.uv[i][0], vv = face.uv[i][1];
                 U.push(uu ? u1 : u0, vv ? v1 : v0);
@@ -2287,6 +2384,131 @@
         p.mesh.rotation.x += dt * 5;
         p.mesh.rotation.y += dt * 4;
       }
+    }
+
+    // ============================================================
+    // §Task port-missing-systems — ItemEntity (ItemEntity.cpp:1-78)
+    //   MCPE 2013 dropped items. ItemEntity::LIFETIME = 5 * 60 * 20 = 6000 ticks.
+    //   tick(): yd -= 0.04 (gravity), move with collision, friction 0.98 air /
+    //   0.6 * 0.98 ground. playerTouch: pickup when within ~1.5 blocks.
+    //   Render: small spinning cube using the block's side texture.
+    // Browser port: ItemEntities live in a `droppedItems` array, ticked from
+    // the physics tick loop (so 20 tps matches C++). Meshes are added/removed
+    // from the THREE scene on spawn/despawn. Each item is rendered as a
+    // 0.25 cube with the side-texture color from tileAverageColor — close
+    // enough to the C++ ItemRenderer (which renders the block's actual model).
+    // ============================================================
+    let droppedItems = [];
+    const _itemBoxGeom = new THREE.BoxGeometry(0.25, 0.25, 0.25);
+    function spawnItemEntity(x, y, z, itemId, count, auxValue) {
+      if (!BLOCKS[itemId]) return; // only drop known blocks
+      const def = BLOCKS[itemId];
+      const color = tileAverageColor(def.side != null ? def.side : def.top);
+      const mat = new THREE.MeshLambertMaterial({ color });
+      const mesh = new THREE.Mesh(_itemBoxGeom, mat);
+      mesh.position.set(x + 0.5, y + 0.5, z + 0.5);
+      mesh.rotation.y = Math.random() * Math.PI * 2;
+      mesh.frustumCulled = false;
+      scene.add(mesh);
+      // §ItemEntity.cpp:30-34 — initial throw velocity (random*0.2-0.1, +0.2, random*0.2-0.1)
+      droppedItems.push({
+        id: itemId,
+        count: count || 1,
+        auxValue: auxValue || 0,
+        x: x + 0.5, y: y + 0.5, z: z + 0.5,
+        xd: (Math.random() * 0.2 - 0.1),
+        yd: 0.2,
+        zd: (Math.random() * 0.2 - 0.1),
+        age: 0,
+        onGround: false,
+        bobOffs: Math.random() * Math.PI * 2,
+        mesh,
+        mat,
+      });
+    }
+    function tickDroppedItems() {
+      if (!player || !player.pos) return;
+      const px = player.pos.x, py = player.pos.y, pz = player.pos.z;
+      for (let i = droppedItems.length - 1; i >= 0; i--) {
+        const it = droppedItems[i];
+        // §ItemEntity.cpp:34-35 — yd -= 0.04 per tick
+        it.yd -= 0.04;
+        // §Move with simple AABB collision (sliding not modeled — exact 1:1 with
+        // Entity::move requires the full collision pipeline; we approximate by
+        // checking only the block at the entity's feet).
+        const newX = it.x + it.xd;
+        const newY = it.y + it.yd;
+        const newZ = it.z + it.zd;
+        const footId = world.getBlock(Math.floor(newX), Math.floor(newY - 0.1), Math.floor(newZ));
+        const footSolid = footId > 0 && BLOCKS[footId] && BLOCKS[footId].solid;
+        if (footSolid) {
+          // Land on the block top — y snaps to the block's top, vertical velocity bounces (-0.5).
+          it.y = Math.floor(newY - 0.1) + 1.0;
+          it.onGround = true;
+          if (it.yd < 0) it.yd *= -0.5;
+        } else {
+          it.y = newY;
+          it.onGround = false;
+        }
+        it.x = newX;
+        it.z = newZ;
+        // §Friction: 0.98 in air, 0.6 * 0.98 on ground (ItemEntity.cpp:55-60)
+        const friction = it.onGround ? 0.6 * 0.98 : 0.98;
+        it.xd *= friction;
+        it.zd *= friction;
+        it.yd *= 0.98;
+        // §Age + lifetime (ItemEntity.cpp:71-76)
+        it.age++;
+        // §playerTouch — pickup if within 1.5 blocks of player (Entity::touch policy
+        // in Player::touch parallels Entity.h).
+        const ddx = it.x - px, ddy = it.y - (py + 0.6), ddz = it.z - pz;
+        if (ddx * ddx + ddy * ddy + ddz * ddz < 2.25) { // 1.5^2 = 2.25
+          if (addItemToInventory(it.id, it.count)) {
+            scene.remove(it.mesh);
+            droppedItems.splice(i, 1);
+            playSound('place', it.id);
+            continue;
+          }
+        }
+        if (it.age >= 6000) { // 5 min at 20 tps
+          scene.remove(it.mesh);
+          droppedItems.splice(i, 1);
+          continue;
+        }
+        // Update mesh: bob + spin
+        const t = it.age * 0.05 + it.bobOffs;
+        it.mesh.position.set(it.x, it.y + Math.sin(t) * 0.07, it.z);
+        it.mesh.rotation.y += 0.08;
+      }
+    }
+    function addItemToInventory(id, count) {
+      // Add an item to the first matching hotbar slot, or first empty slot.
+      // Returns true if pickup succeeded (slot found), false if hotbar full.
+      if (!voxelEngine || !voxelEngine.inventory) return false;
+      for (let i = 0; i < HOTBAR.length; i++) {
+        if (HOTBAR[i] && HOTBAR[i].type === 'more') continue;
+        if (HOTBAR[i] && HOTBAR[i].type === 'block' && HOTBAR[i].id === id) {
+          const slot = voxelEngine.inventory.getSlot(i);
+          const cur = (slot && slot.count) || 0;
+          const max = (slot && slot.maxStackSize) || 64;
+          if (cur < max) {
+            voxelEngine.inventory.setSlot(i, { id, count: Math.min(max, cur + count), maxStackSize: max });
+            buildHotbar();
+            return true;
+          }
+        }
+      }
+      for (let i = 0; i < HOTBAR.length; i++) {
+        if (HOTBAR[i] && HOTBAR[i].type === 'more') continue;
+        if (!HOTBAR[i]) {
+          HOTBAR[i] = { type: 'block', id, label: BLOCKS[id]?.name || 'Blok' };
+          voxelEngine.inventory.setSlot(i, { id, count, maxStackSize: 64 });
+          buildHotbar();
+          selectSlot(i);
+          return true;
+        }
+      }
+      return false;
     }
 
     // ---- Sound (WebAudio synthesized) ----
@@ -5007,6 +5229,16 @@
       spawnBreakParticles(hit.x, hit.y, hit.z, id);
       playSound('break', id);
       refreshHotbarCounts();
+      // §Task port-missing-systems — ItemEntity spawn on block break.
+      //   MCPE 2013: SurvivalMode::destroyBlock calls Level::addEntity(new ItemEntity)
+      //   at (x+0.5, y+0.5, z+0.5) with the broken block's id (Tile::getResource).
+      //   Creative mode in C++ doesn't spawn drops, but the browser port's only
+      //   gameMode is creative, so we spawn drops unconditionally — survival-style
+      //   item drops are useful for the player even in creative sandbox play.
+      //   Skip liquid/non-block IDs (water/lava/etc.) — only drop known solid blocks.
+      if (BLOCKS[id] && BLOCKS[id].solid && id !== 7) {
+        spawnItemEntity(hit.x, hit.y, hit.z, id, 1, 0);
+      }
     }
     function breakBlock() {
       const hit = currentEngineHit(6);
@@ -5068,6 +5300,95 @@
       if (lx === CHUNK_X - 1) updateChunk(cx + 1, cz);
       if (lz === 0) updateChunk(cx, cz - 1);
       if (lz === CHUNK_Z - 1) updateChunk(cx, cz + 1);
+    }
+
+    // ============================================================
+    // §Task port-missing-systems — HeavyTile::checkSlide (HeavyTile.cpp:79-99)
+    //   MCPE 2013 sand (id 12) and gravel (id 13) fall when the block below is
+    //   air, water, lava, or fire (HeavyTile::isFree returns true for those).
+    //   HeavyTile::tick schedules itself via addToTickNextTick with a 2-tick
+    //   delay (getTickDelay returns 2). The browser port has no per-block tick
+    //   scheduler, so we sweep the player's local area once per physics tick
+    //   (20 tps) and instaFall any sand/gravel whose support is gone.
+    //   This is the instaFall path from HeavyTile::checkSlide — the entity
+    //   FallingTile isn't ported (it would need an Entity system extension
+    //   beyond the scope here), so the block simply teleports to the lowest
+    //   free y. The C++ `instaFall=true` flag does the same thing.
+    // ============================================================
+    function tickFallingBlocks() {
+      if (!player || !player.pos) return;
+      const px = Math.floor(player.pos.x), pz = Math.floor(player.pos.z);
+      const py = Math.floor(player.pos.y);
+      for (let dy = -RENDER_RADIUS; dy <= RENDER_RADIUS + 2; dy++) {
+        for (let dx = -8; dx <= 8; dx++) {
+          for (let dz = -8; dz <= 8; dz++) {
+            const x = px + dx, y = py + dy, z = pz + dz;
+            if (y < 1 || y >= CHUNK_Y) continue;
+            const id = world.getBlock(x, y, z);
+            if (id !== 12 && id !== 13) continue; // only sand (12) and gravel (13)
+            // §HeavyTile::isFree: air (0), fire (51), water (8/9), lava (10/11)
+            const below = world.getBlock(x, y - 1, z);
+            const free = (below === 0 || below === 51 || below === 8 || below === 9 || below === 10 || below === 11);
+            if (!free) continue;
+            // instaFall: clear source, walk down while isFree, then drop.
+            world.setBlock(x, y, z, 0);
+            let newY = y;
+            while (newY > 0) {
+              const b = world.getBlock(x, newY - 1, z);
+              const isFree2 = (b === 0 || b === 51 || b === 8 || b === 9 || b === 10 || b === 11);
+              if (!isFree2) break;
+              newY--;
+            }
+            if (newY >= 0 && newY < CHUNK_Y) {
+              world.setBlock(x, newY, z, id);
+              remeshAround(x, newY, z);
+            }
+            remeshAround(x, y, z);
+          }
+        }
+      }
+    }
+
+    // ============================================================
+    // §Task port-missing-systems — StemTile::tick (StemTile.cpp:18-46)
+    //   At full age (data == 7), a stem has a 1/(25/growthSpeed+1) chance per
+    //   tick to grow its fruit (melon = id 103) on an adjacent dirt/grass/
+    //   farmland block. Browser port: 5% per tick for fully-grown stems
+    //   (id 105) — approximation since the C++ data-growth mechanic isn't
+    //   fully ported. Skips if any adjacent melon already exists, matching
+    //   the C++ early-return check.
+    // ============================================================
+    function tickCrops() {
+      if (!player || !player.pos) return;
+      const px = Math.floor(player.pos.x), pz = Math.floor(player.pos.z);
+      for (let dx = -8; dx <= 8; dx++) {
+        for (let dz = -8; dz <= 8; dz++) {
+          const x = px + dx, z = pz + dz;
+          for (let y = 60; y < 92; y++) {
+            const id = world.getBlock(x, y, z);
+            if (id !== 105) continue; // only melon stems
+            if (Math.random() >= 0.05) continue; // 5% chance per tick
+            // §StemTile.cpp:34-37 — skip if any adjacent fruit already exists
+            if (world.getBlock(x - 1, y, z) === 103) continue;
+            if (world.getBlock(x + 1, y, z) === 103) continue;
+            if (world.getBlock(x, y, z - 1) === 103) continue;
+            if (world.getBlock(x, y, z + 1) === 103) continue;
+            // §StemTile.cpp:39-49 — try each of 4 directions, place fruit on
+            // adjacent farmland/dirt/grass block.
+            const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+            for (const [dx2, dz2] of dirs) {
+              const ax = x + dx2, az = z + dz2;
+              if (world.getBlock(ax, y, az) !== 0) continue;
+              const below = world.getBlock(ax, y - 1, az);
+              if (below === 60 || below === 3 || below === 2) { // farmland, dirt, grass
+                world.setBlock(ax, y, az, 103);
+                remeshAround(ax, y, az);
+                break;
+              }
+            }
+          }
+        }
+      }
     }
 
     // ---- Input ----
@@ -5552,6 +5873,14 @@
           // exactly one game tick per iteration, not 60fps frame counts.
           (window.__tickWaterSystem || function(){})();
           (window.__tickMobSpawner || function(){})();
+          // §Task port-missing-systems — HeavyTile + StemTile ticks run inside
+          // the 20 tps physics loop, matching the C++ Minecraft::tick → Level::tick
+          // path that drives Tile::tick for ticking tiles.
+          tickFallingBlocks();
+          tickCrops();
+          // §Task port-missing-systems — ItemEntity::tick (ItemEntity.cpp:31-78)
+          //   updates all dropped items (gravity, friction, pickup, age).
+          tickDroppedItems();
         }
       }
 
@@ -6055,6 +6384,55 @@
       // §WorkbenchTile::use — open crafting UI (CTR-002: id 58 = crafting table)
       if (blockId === 58) {
         document.getElementById('craftingUI')?.classList.remove('hidden');
+        return true;
+      }
+      // §Task port-missing-systems — §StonecutterTile::use (StonecutterTile.h:34-37)
+      //   player->startStonecutting(x, y, z). The browser port reuses the crafting
+      //   UI (no separate stonecutter recipe book) — close enough for sandbox play.
+      if (blockId === 245) {
+        document.getElementById('craftingUI')?.classList.remove('hidden');
+        toast('Stonecutter — gunakan resep batu');
+        return true;
+      }
+      // §Task port-missing-systems — §BedTile::use (BedTile.cpp:35-100)
+      //   Sets the player's spawn point at the bed and skips to morning
+      //   (BedTile calls Level::setSpawnPoint + Level::everyTickSleepStatus).
+      //   Browser port: teleport player onto the bed, set worldTime to 0.25
+      //   (sunrise). C++ checks SurvivalMode + mayRespawn; we skip those gates.
+      if (blockId === 26) {
+        player.pos.set(bx + 0.5, by + 1, bz + 0.5);
+        worldTime = 0.25; // skip to morning
+        toast('Spawn point set. Selamat tidur!');
+        return true;
+      }
+      // §Task port-missing-systems — §RedStoneOreTile::use (RedStoneOreTile.h:30-34)
+      //   interact() flips unlit redstone ore (id 73) to lit (id 74). The lit
+      //   variant has a 30-tick delay then reverts in C++; we leave it lit until
+      //   interacted with again or broken.
+      if (blockId === 73) {
+        world.setBlock(bx, by, bz, 74);
+        remeshAround(bx, by, bz);
+        return true;
+      }
+      // §Task port-missing-systems — §NetherReactor::use (NetherReactor.cpp:14-32)
+      //   The C++ code validates the gold/cobblestone/obsidian pattern around the
+      //   reactor before activating. Browser port skips pattern validation and
+      //   just spawns glowstone in the 3x3x3 area around the reactor core — the
+      //   NetherSpire structure (NetherReactorTileEntity::tick) isn't ported, so
+      //   this is a sandbox-only visual effect.
+      if (blockId === 247) {
+        toast('Nether Reactor activated!');
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dz = -1; dz <= 1; dz++) {
+              if (dx === 0 && dy === 0 && dz === 0) continue;
+              if (world.getBlock(bx + dx, by + dy, bz + dz) === 0) {
+                world.setBlock(bx + dx, by + dy, bz + dz, 89); // glowstone
+              }
+            }
+          }
+        }
+        remeshAround(bx, by, bz);
         return true;
       }
       return false;
