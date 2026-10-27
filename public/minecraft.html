@@ -123,7 +123,8 @@
   #overlay .cta { margin-top: 18px; font-size: 18px; padding: 12px 26px; background: #4a9a3a; border: 2px solid #fff; border-radius: 6px; box-shadow: 0 4px 0 #2c5e22; }
   #overlay .keys { margin-top: 22px; display: grid; grid-template-columns: auto auto; gap: 4px 18px; font-size: 13px; text-align: left; }
   #overlay .keys b { display: inline-block; min-width: 78px; color: #ffe082; }
-  #overlay.hidden { display: none; }
+    .hidden { display: none !important; }
+#overlay.hidden { display: none; }
   /* §ProgressScreen.cpp:24-57 — dirt background (gui/background.png)
      + 100x2px progress bar at center+16. Gray bg (0x808080), green fill (0x80ff80). */
   #loading { position: fixed; inset: 0; z-index: 20; 
