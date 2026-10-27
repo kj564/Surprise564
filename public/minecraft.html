@@ -1227,6 +1227,7 @@
     // ============================================================
     //  CONFIG
     // ============================================================
+    console.log("[VC] CONFIG section");
     const CHUNK_X = 16, CHUNK_Z = 16;
     const CHUNK_Y = 128;            // VERIFIED LevelConstants.h: LEVEL_HEIGHT = 128
     const WATER_LEVEL = 64;         // VERIFIED: waterHeight = DEPTH - 64 = 128 - 64 = 64
@@ -1253,6 +1254,7 @@
     //  Tile::initTiles + subclass getTexture(face). See the table
     //  in BLOCKS below.
     // ============================================================
+    console.log("[VC] TEXTURE section");
     const TERRAIN_ATLAS_URL = './assets/terrain.png';
 
     // Block definitions: id -> {name, top, bottom, side, front, solid, transparent, noCollide}
@@ -1280,6 +1282,7 @@
     //    dynamic water animation column (tiles 205..207 in row 12). Tile 205
     //    has translucent pixels (alpha ~135) so the transparent material
     //    renders it correctly as see-through water.
+    console.log("[VC] BLOCKS section");
     const BLOCKS = {
       0:  null, // air
       1: { name:'Batu',          top:1,   bottom:1,   side:1,   solid:true },  // stone — StoneTile(1)
@@ -1470,6 +1473,7 @@
     // §Gui.cpp:187-189 — last slot (N-1) opens SCREEN_BLOCKSELECTION (inventory).
     // §Gui.cpp:756 — renderToolBar loops N-1 item slots, the Nth is the "..." button.
     // §Inventory.h:20 — MAX_SELECTION_SIZE = 9, so 9 total slots (8 items + 1 "...").
+    console.log("[VC] HOTBAR section");
     const HOTBAR = [
       { type: 'block', id: 1,  label: 'Batu' },           // stone (id 1)
       { type: 'block', id: 3,  label: 'Tanah' },           // dirt (id 3)
@@ -2222,6 +2226,7 @@
       return [r, g, b];
     }
 
+    console.log("[VC] WORLD section");
     const world = new World();
     voxelEngine = new window.VoxelCraftEngine({
       dimensions: { chunkSizeX: CHUNK_X, height: CHUNK_Y, chunkSizeZ: CHUNK_Z },
@@ -2290,6 +2295,7 @@
     //   walkingSpeed = DEFAULT_WALK_SPEED = 0.1 (Player.h)
     //   flyingSpeed  = 0.05 (Player::travel flying override scales 0.02→0.05)
     // prevPos used for camera interpolation between physics ticks.
+    console.log("[VC] PLAYER section");
     const player = {
       pos: new THREE.Vector3(8, WATER_LEVEL + 2, 8),
       prevPos: new THREE.Vector3(8, WATER_LEVEL + 2, 8),  // VERIFIED rujukan: waterHeight + 2 = 66
@@ -3793,6 +3799,7 @@
     }
 
     // ---- Mob spawning + tick driver (uses class hierarchy) ----
+    console.log("[VC] MOB section");
     function spawnChicken(x, y, z) {
       const chicken = MobFactory.createChicken(null);
       chicken.setPos(x, y, z);
@@ -4462,7 +4469,8 @@
     const GRASS_TINT_RGB = [121, 192, 90];
     const LEAVES_FILL_RGB = [86, 158, 48];
 
-    async function buildAtlas() {
+    async console.log("[VC] ATLAS section");
+    function buildAtlas() {
       const img = await new Promise((resolve, reject) => {
         const i = new Image();
         i.onload = () => resolve(i);
@@ -4695,6 +4703,7 @@
     }
 
     // ---- Chunk meshing management ----
+    console.log("[VC] CHUNK section");
     function updateChunk(cx, cz) {
       const chunk = world.getChunk(cx, cz);
       if (!chunk) return;
@@ -5603,6 +5612,7 @@
     let fps = 0, fpsAccum = 0, fpsFrames = 0, hudTimer = 0;
     let initialGenerated = false;
 
+    console.log("[VC] ANIMATE section");
     function animate(now) {
       requestAnimationFrame(animate);
       const dt = Math.min(0.05, (now - lastT) / 1000);
