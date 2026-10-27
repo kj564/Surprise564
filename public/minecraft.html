@@ -1074,7 +1074,91 @@
   </div>
 
   <!-- §TouchscreenInput.cpp — D-pad for mobile controls -->
-  <div id="dpad">
+    <!-- §DeathScreen.h — Death screen (§DeathScreen.cpp) -->
+  <div id="deathScreen" class="hidden" role="dialog" aria-modal="true" aria-labelledby="deathTitle">
+    <div class="death-bg"></div>
+    <div class="death-panel">
+      <h2 id="deathTitle">You died!</h2>
+      <p class="death-score">Score: <span id="deathScore">0</span></p>
+      <button id="respawnBtn" type="button">Respawn</button>
+      <button id="quitToTitleBtn" type="button">Title screen</button>
+    </div>
+  </div>
+
+  <!-- §FurnaceScreen.h — Furnace UI (§FurnaceScreen.cpp) -->
+  <div id="furnaceUI" class="hidden" role="dialog" aria-modal="true" aria-labelledby="furnaceTitle">
+    <div class="container-panel furnace-panel">
+      <button class="container-close" data-close="furnaceUI" aria-label="Close">×</button>
+      <h2 id="furnaceTitle">Furnace</h2>
+      <div class="furnace-grid">
+        <div class="furnace-slot" id="furnaceIngredient" data-slot="ingredient">
+          <span class="slot-label">Input</span>
+        </div>
+        <div class="furnace-arrow">
+          <div class="furnace-flame" id="furnaceFlame"></div>
+          <span>▶</span>
+        </div>
+        <div class="furnace-slot furnace-result" id="furnaceResult" data-slot="result">
+          <span class="slot-label">Output</span>
+        </div>
+      </div>
+      <div class="furnace-fuel-row">
+        <span>Fuel:</span>
+        <div class="furnace-slot" id="furnaceFuel" data-slot="fuel">
+          <span class="slot-label">Fuel</span>
+        </div>
+        <div class="furnace-burn-bar"><div class="furnace-burn-fill" id="furnaceBurnFill"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- §ChestScreen.h — Chest UI (§ChestScreen.cpp) -->
+  <div id="chestUI" class="hidden" role="dialog" aria-modal="true" aria-labelledby="chestTitle">
+    <div class="container-panel chest-panel">
+      <button class="container-close" data-close="chestUI" aria-label="Close">×</button>
+      <h2 id="chestTitle">Chest</h2>
+      <div class="chest-grid" id="chestGrid"></div>
+      <div class="chest-player-grid" id="chestPlayerGrid"></div>
+    </div>
+  </div>
+
+  <!-- §WorkbenchScreen.h — Crafting table UI (§WorkbenchScreen.cpp) -->
+  <div id="craftingUI" class="hidden" role="dialog" aria-modal="true" aria-labelledby="craftingTitle">
+    <div class="container-panel crafting-panel">
+      <button class="container-close" data-close="craftingUI" aria-label="Close">×</button>
+      <h2 id="craftingTitle">Crafting</h2>
+      <div class="crafting-grid">
+        <div class="crafting-3x3" id="crafting3x3">
+          <div class="crafting-slot" data-craft-x="0" data-craft-y="0"></div>
+          <div class="crafting-slot" data-craft-x="1" data-craft-y="0"></div>
+          <div class="crafting-slot" data-craft-x="2" data-craft-y="0"></div>
+          <div class="crafting-slot" data-craft-x="0" data-craft-y="1"></div>
+          <div class="crafting-slot" data-craft-x="1" data-craft-y="1"></div>
+          <div class="crafting-slot" data-craft-x="2" data-craft-y="1"></div>
+          <div class="crafting-slot" data-craft-x="0" data-craft-y="2"></div>
+          <div class="crafting-slot" data-craft-x="1" data-craft-y="2"></div>
+          <div class="crafting-slot" data-craft-x="2" data-craft-y="2"></div>
+        </div>
+        <div class="crafting-arrow"><span>▶</span></div>
+        <div class="crafting-result" id="craftingResult"></div>
+      </div>
+      <div class="crafting-hint">Place items in the grid to craft. Uses Recipes singleton from voxelcraft-engine.bundle.js.</div>
+    </div>
+  </div>
+
+  <!-- §Gui.cpp:604-624 — Air bubbles (renderBubbles) -->
+  <div id="bubbles" class="hidden"></div>
+
+  <!-- §Gui.cpp:625-639 — Debug info overlay (renderDebugInfo) -->
+  <div id="debugOverlay" class="hidden">
+    <div id="debugCoords">XYZ: 0 / 0 / 0</div>
+    <div id="debugChunk">Chunk: 0, 0</div>
+    <div id="debugFps">FPS: 0</div>
+    <div id="debugBlock">Block: none</div>
+    <div id="debugEntities">Entities: 0</div>
+  </div>
+
+<div id="dpad">
     <div class="btn n" data-key="n"></div>
     <div class="btn w" data-key="w"></div>
     <div class="btn c" data-key="c"></div>
@@ -5709,6 +5793,177 @@
       loadingDetail.textContent = 'ERROR: ' + err.message;
       console.error(err);
     });
+    // ============================================================
+    // §GUI SYSTEM — ported from MCPE 2013 C++ (Gui.cpp, Screen.cpp, screens/*.cpp)
+    // ============================================================
+
+    // === §Gui.cpp:604-624 — renderBubbles (air supply) ===
+    const bubblesEl = document.getElementById('bubbles');
+    function updateBubbles() {
+      if (!voxelEngine || !voxelEngine.player) { bubblesEl.classList.add('hidden'); return; }
+      const player = voxelEngine.player;
+      // §Gui.cpp:608 — `if (isUnderLiquid(water))`
+      if (player.isUnderwater) {
+        bubblesEl.classList.remove('hidden');
+        // §Gui.cpp:610 — count = ceil((air - 2) * 10 / TOTAL_AIR_SUPPLY)
+        const totalAir = 300; // §Entity.h:27 — TOTAL_AIR_SUPPLY = 15 * TPS = 300
+        const count = Math.ceil((player.airSupply - 2) * 10 / totalAir);
+        const extra = Math.ceil(player.airSupply * 10 / totalAir) - count;
+        bubblesEl.innerHTML = '';
+        for (let i = 0; i < count + extra; i++) {
+          const b = document.createElement('div');
+          b.className = 'bubble';
+          // §Gui.cpp:614-615 — full vs empty bubble
+          if (i >= count) b.style.opacity = '0.3';
+          bubblesEl.appendChild(b);
+        }
+      } else {
+        bubblesEl.classList.add('hidden');
+      }
+    }
+
+    // === §Gui.cpp:625-639 — renderDebugInfo ===
+    const debugEl = document.getElementById('debugOverlay');
+    let debugVisible = false;
+    function toggleDebug() {
+      debugVisible = !debugVisible;
+      debugEl.classList.toggle('hidden', !debugVisible);
+    }
+    function updateDebug() {
+      if (!debugVisible || !voxelEngine) return;
+      const p = voxelEngine.player;
+      document.getElementById('debugCoords').textContent = `XYZ: ${p.x.toFixed(1)} / ${p.y.toFixed(1)} / ${p.z.toFixed(1)}`;
+      document.getElementById('debugChunk').textContent = `Chunk: ${Math.floor(p.x/16)}, ${Math.floor(p.z/16)}`;
+      document.getElementById('debugFps').textContent = `FPS: ${Math.round(currentFps)}`;
+      document.getElementById('debugBlock').textContent = `Block: ${currentTargetBlock || 'none'}`;
+      document.getElementById('debugEntities').textContent = `Entities: ${mobs.length}`;
+    }
+
+    // === §DeathScreen.cpp — Death screen ===
+    const deathScreen = document.getElementById('deathScreen');
+    function showDeathScreen() {
+      document.getElementById('deathScore').textContent = Math.floor(voxelEngine?.player?.score || 0);
+      deathScreen.classList.remove('hidden');
+    }
+    function hideDeathScreen() { deathScreen.classList.add('hidden'); }
+    document.getElementById('respawnBtn')?.addEventListener('click', () => {
+      hideDeathScreen();
+      if (voxelEngine) {
+        // §DeathScreen.cpp:buttonClicked — respawn at spawn point
+        voxelEngine.player.health = voxelEngine.player.maxHealth || 20;
+        voxelEngine.player.x = 8; voxelEngine.player.y = WATER_LEVEL + 2; voxelEngine.player.z = 8;
+        voxelEngine.player.xd = 0; voxelEngine.player.yd = 0; voxelEngine.player.zd = 0;
+        updateHearts();
+      }
+    });
+    document.getElementById('quitToTitleBtn')?.addEventListener('click', () => {
+      hideDeathScreen();
+      showMainMenu();
+    });
+
+    // === §FurnaceScreen.cpp — Furnace UI ===
+    const furnaceUI = document.getElementById('furnaceUI');
+    function openFurnaceUI(furnaceData) {
+      furnaceUI.classList.remove('hidden');
+      // Check if Recipes singleton is available
+      if (window.VoxelCraftFurnaceRecipes) {
+        const furnaceRecipes = window.VoxelCraftFurnaceRecipes.getInstance();
+        // Update result preview
+        const ingredient = furnaceData?.ingredient;
+        if (ingredient) {
+          const result = furnaceRecipes.getResult(ingredient);
+          document.getElementById('furnaceResult').textContent = result ? result.itemKey : '';
+        }
+      }
+    }
+    function closeFurnaceUI() { furnaceUI.classList.add('hidden'); }
+
+    // === §ChestScreen.cpp — Chest UI ===
+    const chestUI = document.getElementById('chestUI');
+    function openChestUI(chestData) {
+      chestUI.classList.remove('hidden');
+      const grid = document.getElementById('chestGrid');
+      grid.innerHTML = '';
+      // Render chest slots (§ChestScreen.cpp — 27 slots in 3 rows of 9)
+      for (let i = 0; i < 27; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'furnace-slot';
+        slot.style.width = '40px'; slot.style.height = '40px';
+        grid.appendChild(slot);
+      }
+      // Render player inventory (§ChestScreen.cpp — player inv below chest)
+      const playerGrid = document.getElementById('chestPlayerGrid');
+      playerGrid.innerHTML = '';
+      for (let i = 0; i < 27; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'furnace-slot';
+        slot.style.width = '40px'; slot.style.height = '40px';
+        playerGrid.appendChild(slot);
+      }
+    }
+    function closeChestUI() { chestUI.classList.add('hidden'); }
+
+    // === §WorkbenchScreen.cpp — Crafting table UI ===
+    const craftingUI = document.getElementById('craftingUI');
+    const craftingSlots = document.querySelectorAll('.crafting-slot');
+    function openCraftingUI() {
+      craftingUI.classList.remove('hidden');
+      // Clear all crafting slots
+      craftingSlots.forEach(s => s.innerHTML = '');
+      document.getElementById('craftingResult').innerHTML = '';
+    }
+    function closeCraftingUI() { craftingUI.classList.add('hidden'); }
+
+    // Check crafting result when slots change (§WorkbenchScreen.cpp — filterRecipe)
+    function checkCraftingResult() {
+      if (!window.VoxelCraftRecipes) return;
+      const recipes = window.VoxelCraftRecipes.getInstance().getRecipes();
+      // Build a CraftingGrid from the 3×3 slots
+      const grid = {
+        width: 3, height: 3,
+        getItem(x, y) {
+          const slot = document.querySelector(`.crafting-slot[data-craft-x="${x}"][data-craft-y="${y}"]`);
+          if (!slot || !slot.dataset.itemKey) return null;
+          return { itemKey: slot.dataset.itemKey, count: 1, maxStackSize: 64 };
+        }
+      };
+      // §WorkbenchScreen.cpp — find matching recipe
+      for (const recipe of recipes) {
+        if (recipe.matches(grid)) {
+          const result = recipe.getResultItem();
+          const resultEl = document.getElementById('craftingResult');
+          resultEl.textContent = result.itemKey;
+          resultEl.style.background = '#7c7';
+          return;
+        }
+      }
+      document.getElementById('craftingResult').textContent = '';
+      document.getElementById('craftingResult').style.background = '#aaa';
+    }
+
+    // === Container close buttons ===
+    document.querySelectorAll('.container-close').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.close;
+        document.getElementById(target)?.classList.add('hidden');
+      });
+    });
+
+    // === F3 key — toggle debug overlay (§Gui.cpp:625) ===
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'F3') { e.preventDefault(); toggleDebug(); }
+    });
+
+    // === Integrate into main loop ===
+    const origUpdateGame = typeof updateGame === 'function' ? updateGame : null;
+    // Bubbles + debug updates (called from existing game loop)
+    setInterval(() => {
+      if (typeof voxelEngine !== 'undefined' && voxelEngine) {
+        updateBubbles();
+        updateDebug();
+      }
+    }, 100);
+
   </script>
 </body>
 </html>
