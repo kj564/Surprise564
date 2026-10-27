@@ -1272,7 +1272,40 @@
       47: { name:'Rak Buku',      top:4,   bottom:4,   side:35,  solid:true },  // bookshelf — BookshelfTile: top/bottom=planks(4), side=35
       103: { name:'Labu',          top:137, bottom:137, side:136, solid:true },  // pumpkin/melon — MelonTile: top=137, side=136 (no front face in MCPE 2013)
       35: { name:'Kain',          top:64,  bottom:64,  side:64,  solid:true },  // cloth (white wool) — ClothTile(35, 64) = 4*16
-    };
+    
+      // === Missing C++ tiles (§Tile.cpp:161-265) ===
+      6: { name:'Pohon Muda',   top:15,  bottom:15,  side:15,  solid:false, hardness:0.0,  tileId:6   }, // §Sapling(6)
+      9: { name:'Air Tenang',   top:205, bottom:205, side:205, solid:false, transparent:true, noCollide:true, hardness:100, tileId:9   }, // §LiquidTileStatic(9) calmWater
+      10:{ name:'Lava',          top:237, bottom:237, side:237, solid:false, transparent:true, noCollide:true, lightEmission:1.0, hardness:100, tileId:10  }, // §LiquidTileDynamic(10) lava
+      11:{ name:'Lava Tenang',   top:237, bottom:237, side:237, solid:false, transparent:true, noCollide:true, lightEmission:1.0, hardness:100, tileId:11  }, // §LiquidTileStatic(11) calmLava
+      24:{ name:'Batu Pasir',    top:176, bottom:192, side:192, solid:true, hardness:0.8,  tileId:24  }, // §SandStoneTile(24)
+      30:{ name:'Jaring Laba',    top:11,  bottom:11,  side:11,  solid:false, transparent:true, noCollide:true, hardness:4.0,  tileId:30  }, // §WebTile(30,11)
+      31:{ name:'Rumput Tinggi', top:39,  bottom:39,  side:39,  solid:false, hardness:0.0,  tileId:31  }, // §TallGrass(31)
+      37:{ name:'Bunga',         top:13,  bottom:13,  side:13,  solid:false, hardness:0.0,  tileId:37  }, // §Bush(37) flower
+      38:{ name:'Mawar',         top:12,  bottom:12,  side:12,  solid:false, hardness:0.0,  tileId:38  }, // §Bush(38) rose
+      39:{ name:'Jamur Merah',   top:29,  bottom:29,  side:29,  solid:false, hardness:0.0,  tileId:39  }, // §Mushroom(39)
+      40:{ name:'Jamur Coklat',  top:28,  bottom:28,  side:28,  solid:false, hardness:0.0,  tileId:40  }, // §Mushroom(40)
+      44:{ name:'Tangga Batu',  top:6,   bottom:6,   side:6,   solid:true, hardness:2.0,  tileId:44  }, // §StoneSlabTile(44)
+      46:{ name:'TNT',           top:8,   bottom:8,   side:8,   solid:true, hardness:0.0,  tileId:46  }, // §TntTile(46,8)
+      48:{ name:'Batu Lumut',    top:36,  bottom:36,  side:36,  solid:true, hardness:2.0,  tileId:48  }, // §Tile(48,36) mossStone
+      50:{ name:'Obor',          top:80,  bottom:80,  side:80,  solid:false, transparent:true, lightEmission:0.9375, hardness:0.0,  tileId:50  }, // §TorchTile(50,80)
+      54:{ name:'Peti',          top:26,  bottom:26,  side:26,  solid:true, hardness:2.5,  tileId:54  }, // §ChestTile(54)
+      59:{ name:'Tanaman',       top:88,  bottom:88,  side:88,  solid:false, hardness:0.0,  tileId:59  }, // §CropTile(59) crops
+      60:{ name:'Lahan Pertanian',top:87, bottom:87,  side:87,  solid:true, hardness:0.6,  tileId:60  }, // §FarmTile(60) farmland
+      62:{ name:'Tungku Menyala',top:62,  bottom:62,  side:45,  front:62, solid:true, lightEmission:0.875, hardness:3.5, tileId:62  }, // §FurnaceTile(62) furnace_lit
+      63:{ name:'Papan Tanda',   top:4,   bottom:4,   side:4,   solid:false, hardness:1.0,  tileId:63  }, // §SignTile(63) sign
+      64:{ name:'Pintu Kayu',    top:0,   bottom:0,   side:0,   solid:false, hardness:1.0,  tileId:64  }, // §DoorTile(64) door_wood
+      65:{ name:'Tangga',        top:165, bottom:165, side:165, solid:false, transparent:true, hardness:0.4,  tileId:65  }, // §LadderTile(65)
+      78:{ name:'Salju Tipis',   top:66,  bottom:66,  side:66,  solid:true, hardness:0.1,  tileId:78  }, // §TopSnowTile(78) topSnow
+      81:{ name:'Kaktus',        top:70,  bottom:70,  side:70,  solid:true, hardness:0.4,  tileId:81  }, // §CactusTile(81)
+      82:{ name:'Tanah Liat',    top:72,  bottom:72,  side:72,  solid:true, hardness:0.6,  tileId:82  }, // §ClayTile(82)
+      83:{ name:'Tebu',          top:73,  bottom:73,  side:73,  solid:false, hardness:0.0,  tileId:83  }, // §ReedTile(83) reeds
+      85:{ name:'Pagar',         top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  tileId:85  }, // §FenceTile(85)
+      96:{ name:'Pintu Jebakan', top:0,   bottom:0,   side:0,   solid:true, hardness:2.0,  tileId:96  }, // §TrapDoorTile(96)
+      98:{ name:'Batu Bata Licin',top:16, bottom:16,  side:16,  solid:true, hardness:2.0,  tileId:98  }, // §MultiTextureTile(98) stoneBrickSmooth
+      103:{name:'Labu',          top:137, bottom:137, side:136, solid:true, hardness:1.0,  tileId:103 }, // §MelonTile(103)
+      107:{name:'Gerbang Pagar', top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  tileId:107 }, // §FenceGateTile(107)
+};
 
     // §Canonical itemKey map — minecraft.html block id → rujukan namespaced key.
     // Required so tool tile lists (PICKAXE_TILES etc., which use canonical keys like
