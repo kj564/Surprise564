@@ -1720,13 +1720,13 @@
 
             // Stone column with bedrock bottom (val > 0 → stone, id=1).
             for (let y = 0; y <= hf; y++) {
-              c.set(lx, y, lz, y <= bedrockDepth ? 10 : 1); // bedrock / stone
+              c.set(lx, y, lz, y <= bedrockDepth ? 7 : 1); // bedrock / stone
             }
 
             // Surface dressing (buildSurfaces): grass/sand top, dirt/sand below.
             const beachy = hf <= WATER_LEVEL + 1;
-            const topId = beachy ? 7 : 2;   // sand near water, grass above
-            const subId = beachy ? 7 : 3;   // sand or dirt below top
+            const topId = beachy ? 12 : 2;   // sand near water, grass above
+            const subId = beachy ? 12 : 3;   // sand or dirt below top
             c.set(lx, hf, lz, topId);
             // 3..4 blocks of dirt/sand below the top block (rujukan MCPE 2013
             // uses a small per-column noise for the sub-surface depth).
@@ -1739,12 +1739,12 @@
 
             // Water fill from hf+1 to WATER_LEVEL (calmWater, id=17).
             if (hf < WATER_LEVEL) {
-              for (let y = hf + 1; y <= WATER_LEVEL; y++) c.set(lx, y, lz, 17);
+              for (let y = hf + 1; y <= WATER_LEVEL; y++) c.set(lx, y, lz, 8);
             }
 
             // Snow caps on high terrain (simplified: hf >= WATER_LEVEL + 16 = 80).
             // rujukan uses temperature noise; we use a height threshold.
-            if (hf >= WATER_LEVEL + 16) c.set(lx, hf, lz, 29); // snow overrides top
+            if (hf >= WATER_LEVEL + 16) c.set(lx, hf, lz,  80); // snow overrides top
             // Tree placement is deferred until all terrain columns are generated.
           }
         }
@@ -1794,13 +1794,13 @@
         // Clay (10/y=0-128/size=32) is skipped — no clay block in our BLOCKS table.
         const deposits = [
           [3,  20, 128, 32], // dirt (id 3 per BLOCKS)
-          [8,  10, 128, 32], // gravel
-          [18, 20, 128, 16], // coal ore
-          [19, 20,  64,  8], // iron ore
-          [20,  2,  32,  8], // gold ore
-          [24,  8,  16,  7], // redstone ore
-          [21,  1,  16,  7], // diamond ore
-          [22,  1,  32,  6], // lapis ore
+          [13, 10, 128, 32], // gravel
+          [16, 20, 128, 16], // coal ore
+          [15, 20,  64,  8], // iron ore
+          [14,  2,  32,  8], // gold ore
+          [73, 8,  16,  7], // redstone ore
+          [56, 1,  16,  7], // diamond ore
+          [21, 1,  32,  6], // lapis ore
         ];
         for (const [oreId, count, maxY, size] of deposits) {
           for (let i = 0; i < count; i++) {
@@ -1820,8 +1820,8 @@
       }
       plantTree(c, worldX, ly, worldZ, woodType = 0) {
         // rujukan MCPE 2013: only oak trees (woodType ignored — birch/spruce/jungle/acacia/dark oak don't exist).
-        const logId = 4;    // oak log
-        const leavesId = 6; // oak leaves
+        const logId = 17;    // oak log
+        const leavesId = 18; // oak leaves
         const baseX = c.cx * CHUNK_X, baseZ = c.cz * CHUNK_Z;
         const h = 4 + Math.floor(hash2(worldX * 31, worldZ * 17) * 3);
         if (worldX >= baseX && worldX < baseX + CHUNK_X && worldZ >= baseZ && worldZ < baseZ + CHUNK_Z) {
