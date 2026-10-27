@@ -1481,6 +1481,110 @@
       107: 'fenceGate',     // fence gate
     };
 
+    // §Recipe result key → namespaced item key map.
+    // The Recipes system returns short keys (e.g. 'stick', 'pickAxe_wood')
+    // but the Inventory requires namespaced keys (e.g. 'minecraft:stick').
+    const RECIPE_RESULT_TO_NAMESPACED = {
+      // Tools
+      'pickAxe_wood': 'minecraft:wooden_pickaxe',
+      'pickAxe_stone': 'minecraft:stone_pickaxe',
+      'pickAxe_iron': 'minecraft:iron_pickaxe',
+      'pickAxe_emerald': 'minecraft:diamond_pickaxe',
+      'pickAxe_gold': 'minecraft:golden_pickaxe',
+      'shovel_wood': 'minecraft:wooden_shovel',
+      'shovel_stone': 'minecraft:stone_shovel',
+      'shovel_iron': 'minecraft:iron_shovel',
+      'shovel_emerald': 'minecraft:diamond_shovel',
+      'shovel_gold': 'minecraft:golden_shovel',
+      'hatchet_wood': 'minecraft:wooden_axe',
+      'hatchet_stone': 'minecraft:stone_axe',
+      'hatchet_iron': 'minecraft:iron_axe',
+      'hatchet_emerald': 'minecraft:diamond_axe',
+      'hatchet_gold': 'minecraft:golden_axe',
+      'hoe_wood': 'minecraft:wooden_hoe',
+      'hoe_stone': 'minecraft:stone_hoe',
+      'hoe_iron': 'minecraft:iron_hoe',
+      'hoe_emerald': 'minecraft:diamond_hoe',
+      'hoe_gold': 'minecraft:golden_hoe',
+      'sword_wood': 'minecraft:wooden_sword',
+      'sword_stone': 'minecraft:stone_sword',
+      'sword_iron': 'minecraft:iron_sword',
+      'sword_emerald': 'minecraft:diamond_sword',
+      'sword_gold': 'minecraft:golden_sword',
+      'shears': 'minecraft:shears',
+      'bow': 'minecraft:bow',
+      'arrow': 'minecraft:arrow',
+      // Items
+      'stick': 'minecraft:stick',
+      'torch': 'minecraft:torch',
+      'string': 'minecraft:string',
+      'flint': 'minecraft:flint',
+      'feather': 'minecraft:feather',
+      'leather': 'minecraft:leather',
+      'paper': 'minecraft:paper',
+      'book': 'minecraft:book',
+      'sugar': 'minecraft:sugar',
+      'sulphur': 'minecraft:gunpowder',
+      'dye_powder': 'minecraft:dye',
+      'snowBall': 'minecraft:snowball',
+      'clay': 'minecraft:clay_ball',
+      'brick': 'minecraft:brick',
+      'yellowDust': 'minecraft:glowstone_dust',
+      // Blocks (from crafting)
+      'wood': 'minecraft:oak_planks',
+      'goldBlock': 'minecraft:gold_block',
+      'ironBlock': 'minecraft:iron_block',
+      'emeraldBlock': 'minecraft:diamond_block',
+      'lapisBlock': 'minecraft:lapis_block',
+      'lightGem': 'minecraft:glowstone',
+      'cloth': 'minecraft:white_wool',
+      'tnt': 'minecraft:tnt',
+      'redBrick': 'minecraft:bricks',
+      'snow': 'minecraft:snow_block',
+      'sand': 'minecraft:sand',
+      'stoneBrick': 'minecraft:cobblestone',
+      'goldIngot': 'minecraft:gold_ingot',
+      'ironIngot': 'minecraft:iron_ingot',
+      'emerald': 'minecraft:diamond',
+      'goldIngot': 'minecraft:gold_ingot',
+      // Doors / misc blocks
+      'door_wood': 'minecraft:oak_door',
+      'trapdoor': 'minecraft:oak_trapdoor',
+      'sign': 'minecraft:oak_sign',
+      'ladder': 'minecraft:ladder',
+      'fence': 'minecraft:oak_fence',
+      'fenceGate': 'minecraft:oak_fence_gate',
+      'bookshelf': 'minecraft:bookshelf',
+      'mushroomStew': 'minecraft:mushroom_stew',
+      'melon': 'minecraft:melon',
+      'seeds_melon': 'minecraft:melon_seeds',
+      'crops': 'minecraft:wheat_seeds',
+      'treeTrunk': 'minecraft:oak_log',
+      // Armor
+      'helmet_cloth': 'minecraft:leather_helmet',
+      'helmet_iron': 'minecraft:iron_helmet',
+      'helmet_diamond': 'minecraft:diamond_helmet',
+      'helmet_gold': 'minecraft:golden_helmet',
+      'chestplate_cloth': 'minecraft:leather_chestplate',
+      'chestplate_iron': 'minecraft:iron_chestplate',
+      'chestplate_diamond': 'minecraft:diamond_chestplate',
+      'chestplate_gold': 'minecraft:golden_chestplate',
+      'leggings_cloth': 'minecraft:leather_leggings',
+      'leggings_iron': 'minecraft:iron_leggings',
+      'leggings_diamond': 'minecraft:diamond_leggings',
+      'leggings_gold': 'minecraft:golden_leggings',
+      'boots_cloth': 'minecraft:leather_boots',
+      'boots_iron': 'minecraft:iron_boots',
+      'boots_diamond': 'minecraft:diamond_boots',
+      'boots_gold': 'minecraft:golden_boots',
+    };
+    // Helper: convert recipe result key to namespaced key
+    function toNamespacedKey(shortKey) {
+      if (!shortKey) return shortKey;
+      if (shortKey.includes(':')) return shortKey; // already namespaced
+      return RECIPE_RESULT_TO_NAMESPACED[shortKey] || ('minecraft:' + shortKey);
+    }
+
     // §Material map — verified 1:1 with rujukan Tile subclass constructors:
     //   StoneTile.h:15 (Material::stone), GrassTile.cpp:6 (Material::dirt),
     //   DirtTile.h:15 (Material::dirt), OreTile.h:16 (Material::stone),
@@ -6299,8 +6403,9 @@
       for (let i = 0; i < HOTBAR.length; i++) {
         if (HOTBAR[i] && HOTBAR[i].type === 'more') continue;  // skip "more" slot
         if (!HOTBAR[i]) {
-          HOTBAR[i] = { type: 'item', id: craftedKey, label: craftedKey };
-          voxelEngine.inventory.setSlot(i, { itemKey: craftedKey, count: 1, maxStackSize: 64 });
+          const nsKey = toNamespacedKey(craftedKey);
+          HOTBAR[i] = { type: 'item', id: nsKey, label: craftedKey };
+          voxelEngine.inventory.setSlot(i, { itemKey: nsKey, count: 1, maxStackSize: 64 });
           buildHotbar();
           selectSlot(i);
           placed = true;
@@ -6337,8 +6442,9 @@
             for (let i = 0; i < HOTBAR.length; i++) {
               if (HOTBAR[i] && HOTBAR[i].type === 'more') continue;
               if (!HOTBAR[i]) {
-                HOTBAR[i] = { type: 'item', id: craftedKey, label: craftedKey };
-                voxelEngine.inventory.setSlot(i, { itemKey: craftedKey, count: 1, maxStackSize: 64 });
+                const nsKey = toNamespacedKey(craftedKey);
+                HOTBAR[i] = { type: 'item', id: nsKey, label: craftedKey };
+                voxelEngine.inventory.setSlot(i, { itemKey: nsKey, count: 1, maxStackSize: 64 });
                 buildHotbar();
                 selectSlot(i);
                 placed = true;
