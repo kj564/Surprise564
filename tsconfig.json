@@ -43,6 +43,7 @@
     "scripts",
     "skills",
     "mini-services",
-    "docs"
+    "docs",
+    "src/game"
   ]
 }
