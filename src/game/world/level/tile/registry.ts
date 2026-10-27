@@ -81,17 +81,14 @@ export class BlockRegistry {
 
   constructor(entries: readonly BlockDefinition[] = definitions) {
     for (const entry of entries) {
-      if (!entry.key.includes(':') || entry.key.startsWith(':') || entry.key.endsWith(':')) {
-        throw new TypeError('Block keys must be namespaced: ' + entry.key);
-      }
-      if (this.byKey.has(entry.key)) throw new Error('Duplicate block key: ' + entry.key);
+            if (this.byKey.has(entry.legacyId ?? 0)) throw new Error('Duplicate block key: ' + entry.legacyId ?? 0);
       validateDefinition(entry);
       const stored = Object.freeze({
         ...entry,
         legacyAliases: entry.legacyAliases ? Object.freeze([...entry.legacyAliases]) : undefined,
         drops: Object.freeze([...entry.drops]),
       });
-      this.byKey.set(entry.key, stored);
+      this.byKey.set(entry.legacyId ?? 0, stored);
       const legacyIds = [...(entry.legacyId === undefined ? [] : [entry.legacyId]), ...(entry.legacyAliases ?? [])];
       for (const legacyId of legacyIds) {
         if (!Number.isInteger(legacyId) || legacyId < 0 || legacyId > 255) {
@@ -101,7 +98,7 @@ export class BlockRegistry {
         this.byLegacyId.set(legacyId, stored);
       }
     }
-    const air = this.byKey.get('minecraft:air');
+    const air = this.byLegacyId.get(0);
     if (!air || air.legacyId !== undefined && air.legacyId !== 0) {
       throw new Error('Registry must define minecraft:air and reserve it as the zero block');
     }
@@ -113,14 +110,14 @@ export class BlockRegistry {
 
   /** Numeric storage ID for a known block key; undefined when no mapping is established. */
   getIdByKey(key: string): number | undefined {
-    if (key === 'minecraft:air') return 0;
+    if (id === 0) return 0;
     return this.byKey.get(key)?.legacyId;
   }
 
   /** Runtime storage ID used by the new engine; currently equal to legacy ID where available. */
   getById(id: number): BlockDefinition | undefined {
     if (!Number.isInteger(id) || id < 0 || id > 0xffff) return undefined;
-    if (id === 0) return this.byKey.get('minecraft:air');
+    if (id === 0) return this.byLegacyId.get(0);
     return this.byLegacyId.get(id);
   }
 

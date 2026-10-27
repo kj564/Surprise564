@@ -77,7 +77,7 @@ export class ChestTileEntity extends TileEntity {
       const slot = (entry.Slot as number) & 0xff;
       if (slot >= 0 && slot < CHEST_SIZE) {
         this.items[slot] = {
-          itemKey: entry.id as string,
+          id: entry.id as string,
           count: entry.count as number,
           maxStackSize: 64,
           auxValue: entry.auxValue as number | undefined,
@@ -93,7 +93,7 @@ export class ChestTileEntity extends TileEntity {
     for (let i = 0; i < CHEST_SIZE; i++) {
       const item = this.items[i];
       if (item) {
-        items.push({ Slot: i, id: item.itemKey, count: item.count, auxValue: item.auxValue });
+        items.push({ Slot: i, id: item.id, count: item.count, auxValue: item.auxValue });
       }
     }
     tag.Items = items;

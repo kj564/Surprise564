@@ -22,7 +22,7 @@ export interface VoxelCraftEngineOptions {
    *  Creative instantly breaks with a 10-tick cooldown between breaks. */
   readonly gameMode?: GameMode;
   /** §MCPE 2013: tool equipped in the selected hotbar slot. Bare hand = null (default).
-   *  The browser port computes this from the selected slot's itemKey via getTool(). */
+   *  The browser port computes this from the selected slot's id via getTool(). */
   readonly tool?: Tool | null;
 }
 
@@ -129,7 +129,7 @@ export class VoxelCraftEngine {
   tickMining(ticks: number, currentTarget: BlockPosition | null):
     | MiningProgressResult
     | { readonly status: 'no-session' }
-    | { readonly status: 'broken'; readonly dropsRemaining: readonly { readonly itemKey: string; readonly count: number; readonly maxStackSize: number }[] } {
+    | { readonly status: 'broken'; readonly dropsRemaining: readonly { readonly id: string; readonly count: number; readonly maxStackSize: number }[] } {
     const session = this.miningSession;
     if (!session) return { status: 'no-session' };
     const currentBlockId = this.world.getBlock(session.target.x, session.target.y, session.target.z);
@@ -170,9 +170,9 @@ export class VoxelCraftEngine {
     const slot = this.selectedSlotValue;
     const stack = this.inventory.getSlot(slot);
     if (!stack) return;  // empty slot — nothing to damage
-    // §Item::items[id] lookup — resolve tool from selected slot's itemKey.
+    // §Item::items[id] lookup — resolve tool from selected slot's id.
     // Returns null for non-tool items (blocks, etc.) — no durability to apply.
-    const tool = getTool(stack.itemKey);
+    const tool = getTool(stack.id);
     if (!tool) return;
     const newStack = applyMineBlockDurability(stack, tool);
     if (newStack === null) {

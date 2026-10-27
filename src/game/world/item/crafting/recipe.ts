@@ -70,7 +70,7 @@ export class ItemPack {
   getItemInstances(): ItemStack[] {
     const result: ItemStack[] = [];
     for (const [id, count] of this.items) {
-      result.push({ itemKey: id, count, maxStackSize: 64 });
+      result.push({ id: id, count, maxStackSize: 64 });
     }
     return result;
   }

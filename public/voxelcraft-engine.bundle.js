@@ -4,98 +4,97 @@ function block(definition) {
 }
 var definitions = [
   block({ key: "minecraft:air", displayName: "Air", shape: "none", renderLayer: "invisible", solid: false, selectable: false, replaceable: true, material: "air", hardness: 0, sound: "silent", lightOpacity: 0, lightEmission: 0, drops: [] }),
-  block({ key: "minecraft:stone", legacyId: 1, displayName: "Stone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 1.5, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [4] }),
-  block({ key: "minecraft:grass_block", legacyId: 2, displayName: "Grass Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.6, sound: "grass", lightOpacity: 15, lightEmission: 0, drops: [3] }),
-  block({ key: "minecraft:dirt", legacyId: 3, displayName: "Dirt", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.5, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: [3] }),
-  block({ key: "minecraft:cobblestone", legacyId: 4, displayName: "Cobblestone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [4] }),
-  block({ key: "minecraft:oak_planks", legacyId: 5, displayName: "Oak Planks", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: [5] }),
+  block({ key: "minecraft:stone", legacyId: 1, displayName: "Stone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 1.5, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:cobblestone"] }),
+  block({ key: "minecraft:grass_block", legacyId: 2, displayName: "Grass Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.6, sound: "grass", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
+  block({ key: "minecraft:dirt", legacyId: 3, displayName: "Dirt", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.5, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
+  block({ key: "minecraft:cobblestone", legacyId: 4, displayName: "Cobblestone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:cobblestone"] }),
+  block({ key: "minecraft:oak_planks", legacyId: 5, displayName: "Oak Planks", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:oak_planks"] }),
   block({ key: "minecraft:bedrock", legacyId: 7, displayName: "Bedrock", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: -1, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [] }),
-  block({ key: "minecraft:sand", legacyId: 12, displayName: "Sand", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "sand", hardness: 0.5, sound: "sand", lightOpacity: 15, lightEmission: 0, drops: [12] }),
-  block({ key: "minecraft:gravel", legacyId: 13, displayName: "Gravel", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "sand", hardness: 0.6, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: [13] }),
-  block({ key: "minecraft:gold_ore", legacyId: 14, displayName: "Gold Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [14] }),
-  block({ key: "minecraft:iron_ore", legacyId: 15, displayName: "Iron Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [15] }),
-  block({ key: "minecraft:coal_ore", legacyId: 16, displayName: "Coal Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [263] }),
-  block({ key: "minecraft:oak_log", legacyId: 17, displayName: "Oak Log", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: [17] }),
-  block({ key: "minecraft:oak_leaves", legacyId: 18, displayName: "Oak Leaves", shape: "cube", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, material: "leaves", hardness: 0.2, sound: "grass", lightOpacity: 1, lightEmission: 0, drops: [18] }),
+  block({ key: "minecraft:sand", legacyId: 12, displayName: "Sand", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "sand", hardness: 0.5, sound: "sand", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:sand"] }),
+  block({ key: "minecraft:gravel", legacyId: 13, displayName: "Gravel", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "sand", hardness: 0.6, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:gravel"] }),
+  block({ key: "minecraft:gold_ore", legacyId: 14, displayName: "Gold Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:gold_ore"] }),
+  block({ key: "minecraft:iron_ore", legacyId: 15, displayName: "Iron Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:iron_ore"] }),
+  block({ key: "minecraft:coal_ore", legacyId: 16, displayName: "Coal Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:coal"] }),
+  block({ key: "minecraft:oak_log", legacyId: 17, displayName: "Oak Log", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:oak_log"] }),
+  block({ key: "minecraft:oak_leaves", legacyId: 18, displayName: "Oak Leaves", shape: "cube", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, material: "leaves", hardness: 0.2, sound: "grass", lightOpacity: 1, lightEmission: 0, drops: ["minecraft:oak_leaves"] }),
   block({ key: "minecraft:glass", legacyId: 20, displayName: "Glass", shape: "cube", renderLayer: "translucent", solid: true, selectable: true, replaceable: false, material: "glass", hardness: 0.3, sound: "glass", lightOpacity: 0, lightEmission: 0, drops: [] }),
-  block({ key: "minecraft:lapis_ore", legacyId: 21, displayName: "Lapis Lazuli Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [351] }),
-  block({ key: "minecraft:sandstone", legacyId: 24, displayName: "Sandstone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 0.8, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [24] }),
-  block({ key: "minecraft:web", legacyId: 30, displayName: "Cobweb", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: false, material: "web", hardness: 4, sound: "cloth", lightOpacity: 1, lightEmission: 0, drops: [287] }),
-  block({ key: "minecraft:gold_block", legacyId: 41, displayName: "Gold Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 3, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: [41] }),
-  block({ key: "minecraft:iron_block", legacyId: 42, displayName: "Iron Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 5, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: [42] }),
-  block({ key: "minecraft:stone_slab", legacyId: 44, displayName: "Stone Slab", shape: "slab", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [44] }),
-  block({ key: "minecraft:bricks", legacyId: 45, displayName: "Bricks", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [45] }),
-  block({ key: "minecraft:obsidian", legacyId: 49, displayName: "Obsidian", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 10, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [49] }),
-  block({ key: "minecraft:torch", legacyId: 50, displayName: "Torch", shape: "torch", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "decoration", hardness: 0, sound: "wood", lightOpacity: 0, lightEmission: 14, drops: [50] }),
-  block({ key: "minecraft:oak_stairs", legacyId: 53, displayName: "Oak Stairs", shape: "stairs", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: [53] }),
-  block({ key: "minecraft:chest", legacyId: 54, displayName: "Chest", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2.5, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: [54] }),
-  block({ key: "minecraft:diamond_ore", legacyId: 56, displayName: "Diamond Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [264] }),
-  block({ key: "minecraft:diamond_block", legacyId: 57, displayName: "Diamond Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 5, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: [57] }),
-  block({ key: "minecraft:crafting_table", legacyId: 58, displayName: "Crafting Table", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2.5, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: [58] }),
-  block({ key: "minecraft:farmland", legacyId: 60, displayName: "Farmland", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.6, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: [3] }),
-  block({ key: "minecraft:furnace", legacyId: 61, displayName: "Furnace", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3.5, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [61] }),
-  block({ key: "minecraft:ladder", legacyId: 65, displayName: "Ladder", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "decoration", hardness: 0.4, sound: "wood", lightOpacity: 0, lightEmission: 0, drops: [65] }),
-  block({ key: "minecraft:stone_stairs", legacyId: 67, displayName: "Stone Stairs", shape: "stairs", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: [67] }),
-  block({ key: "minecraft:iron_door", legacyId: 71, displayName: "Iron Door", shape: "door", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 5, sound: "metal", lightOpacity: 0, lightEmission: 0, drops: [71] }),
-  block({ key: "minecraft:snow_layer", legacyId: 78, displayName: "Snow Layer", shape: "slab", renderLayer: "opaque", solid: false, selectable: true, replaceable: true, material: "topSnow", hardness: 0.1, sound: "cloth", lightOpacity: 0, lightEmission: 0, drops: [78] }),
-  block({ key: "minecraft:ice", legacyId: 79, displayName: "Ice", shape: "cube", renderLayer: "translucent", solid: true, selectable: true, replaceable: false, material: "ice", hardness: 0.5, sound: "glass", lightOpacity: 3, lightEmission: 0, drops: [79] }),
-  block({ key: "minecraft:cactus", legacyId: 81, displayName: "Cactus", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "cactus", hardness: 0.4, sound: "cloth", lightOpacity: 0, lightEmission: 0, drops: [81] }),
-  block({ key: "minecraft:reeds", legacyId: 83, displayName: "Sugar Cane", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "plant", hardness: 0, sound: "grass", lightOpacity: 0, lightEmission: 0, drops: [83] }),
-  block({ key: "minecraft:oak_fence", legacyId: 85, displayName: "Oak Fence", shape: "cube", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 0, lightEmission: 0, drops: [85] }),
+  block({ key: "minecraft:lapis_ore", legacyId: 21, displayName: "Lapis Lazuli Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:lapis_lazuli"] }),
+  block({ key: "minecraft:sandstone", legacyId: 24, displayName: "Sandstone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 0.8, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:sandstone"] }),
+  block({ key: "minecraft:web", legacyId: 30, displayName: "Cobweb", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: false, material: "web", hardness: 4, sound: "cloth", lightOpacity: 1, lightEmission: 0, drops: ["minecraft:string"] }),
+  block({ key: "minecraft:gold_block", legacyId: 41, displayName: "Gold Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 3, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:gold_block"] }),
+  block({ key: "minecraft:iron_block", legacyId: 42, displayName: "Iron Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 5, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:iron_block"] }),
+  block({ key: "minecraft:stone_slab", legacyId: 44, displayName: "Stone Slab", shape: "slab", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:stone_slab"] }),
+  block({ key: "minecraft:bricks", legacyId: 45, displayName: "Bricks", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:bricks"] }),
+  block({ key: "minecraft:obsidian", legacyId: 49, displayName: "Obsidian", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 10, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:obsidian"] }),
+  block({ key: "minecraft:torch", legacyId: 50, displayName: "Torch", shape: "torch", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "decoration", hardness: 0, sound: "wood", lightOpacity: 0, lightEmission: 14, drops: ["minecraft:torch"] }),
+  block({ key: "minecraft:oak_stairs", legacyId: 53, displayName: "Oak Stairs", shape: "stairs", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:oak_stairs"] }),
+  block({ key: "minecraft:chest", legacyId: 54, displayName: "Chest", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2.5, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:chest"] }),
+  block({ key: "minecraft:diamond_ore", legacyId: 56, displayName: "Diamond Ore", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:diamond"] }),
+  block({ key: "minecraft:diamond_block", legacyId: 57, displayName: "Diamond Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 5, sound: "metal", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:diamond_block"] }),
+  block({ key: "minecraft:crafting_table", legacyId: 58, displayName: "Crafting Table", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2.5, sound: "wood", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:crafting_table"] }),
+  block({ key: "minecraft:farmland", legacyId: 60, displayName: "Farmland", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.6, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
+  block({ key: "minecraft:furnace", legacyId: 61, displayName: "Furnace", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 3.5, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:furnace"] }),
+  block({ key: "minecraft:ladder", legacyId: 65, displayName: "Ladder", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "decoration", hardness: 0.4, sound: "wood", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:ladder"] }),
+  block({ key: "minecraft:stone_stairs", legacyId: 67, displayName: "Stone Stairs", shape: "stairs", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 2, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:stone_stairs"] }),
+  block({ key: "minecraft:iron_door", legacyId: 71, displayName: "Iron Door", shape: "door", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, material: "metal", hardness: 5, sound: "metal", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:iron_door"] }),
+  block({ key: "minecraft:snow_layer", legacyId: 78, displayName: "Snow Layer", shape: "slab", renderLayer: "opaque", solid: false, selectable: true, replaceable: true, material: "topSnow", hardness: 0.1, sound: "cloth", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:snow_layer"] }),
+  block({ key: "minecraft:ice", legacyId: 79, displayName: "Ice", shape: "cube", renderLayer: "translucent", solid: true, selectable: true, replaceable: false, material: "ice", hardness: 0.5, sound: "glass", lightOpacity: 3, lightEmission: 0, drops: ["minecraft:ice"] }),
+  block({ key: "minecraft:cactus", legacyId: 81, displayName: "Cactus", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "cactus", hardness: 0.4, sound: "cloth", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:cactus"] }),
+  block({ key: "minecraft:reeds", legacyId: 83, displayName: "Sugar Cane", shape: "cross", renderLayer: "cutout", solid: false, selectable: true, replaceable: true, material: "plant", hardness: 0, sound: "grass", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:reeds"] }),
+  block({ key: "minecraft:oak_fence", legacyId: 85, displayName: "Oak Fence", shape: "cube", renderLayer: "cutout", solid: true, selectable: true, replaceable: false, material: "wood", hardness: 2, sound: "wood", lightOpacity: 0, lightEmission: 0, drops: ["minecraft:oak_fence"] }),
   block({ key: "minecraft:water", legacyId: 8, legacyAliases: [9], displayName: "Water", shape: "liquid", renderLayer: "translucent", solid: false, selectable: true, replaceable: true, material: "dirt", hardness: 100, sound: "silent", lightOpacity: 3, lightEmission: 0, drops: [] }),
   block({ key: "minecraft:lava", legacyId: 10, legacyAliases: [11], displayName: "Lava", shape: "liquid", renderLayer: "translucent", solid: false, selectable: true, replaceable: true, material: "dirt", hardness: 100, sound: "silent", lightOpacity: 15, lightEmission: 15, drops: [] })
 ];
 
 class BlockRegistry {
-  // §C++ Tile::tiles[256] — int-indexed array, NOT string-keyed Map
-  tiles = new Array(256).fill(null);
+  byKey = new Map;
+  byLegacyId = new Map;
   constructor(entries = definitions) {
     for (const entry of entries) {
+      if (this.byKey.has(entry.legacyId ?? 0))
+        throw new Error("Duplicate block key: " + entry.legacyId);
       validateDefinition(entry);
       const stored = Object.freeze({
         ...entry,
         legacyAliases: entry.legacyAliases ? Object.freeze([...entry.legacyAliases]) : undefined,
         drops: Object.freeze([...entry.drops])
       });
-      const ids = [...entry.legacyId === undefined ? [] : [entry.legacyId], ...entry.legacyAliases ?? []];
-      for (const id of ids) {
-        if (!Number.isInteger(id) || id < 0 || id > 255) {
-          throw new RangeError("Block ID must be an integer from 0 to 255");
+      this.byKey.set(entry.legacyId ?? 0, stored);
+      const legacyIds = [...entry.legacyId === undefined ? [] : [entry.legacyId], ...entry.legacyAliases ?? []];
+      for (const legacyId of legacyIds) {
+        if (!Number.isInteger(legacyId) || legacyId < 0 || legacyId > 255) {
+          throw new RangeError("Legacy block ID must be an integer from 0 to 255");
         }
-        if (this.tiles[id])
-          throw new Error("Duplicate block ID: " + id);
-        this.tiles[id] = stored;
+        if (this.byLegacyId.has(legacyId))
+          throw new Error("Duplicate legacy block ID: " + legacyId);
+        this.byLegacyId.set(legacyId, stored);
       }
     }
-    if (!this.tiles[0]) {
-      throw new Error("Registry must define block ID 0 (air)");
+    const air = this.byLegacyId.get(0);
+    if (!air || air.legacyId !== undefined && air.legacyId !== 0) {
+      throw new Error("Registry must define minecraft:air and reserve it as the zero block");
     }
   }
-  // §C++ Tile::tiles[id] — primary lookup by int ID
-  getById(id) {
-    if (!Number.isInteger(id) || id < 0 || id > 255) return undefined;
-    return this.tiles[id] ?? undefined;
-  }
-  getByLegacyId(id) {
-    return this.getById(id);
-  }
-  // Legacy string-key API (for backward compat — delegates to getById)
   getByKey(key) {
-    // Try to parse as int first
-    const id = parseInt(key, 10);
-    if (!isNaN(id)) return this.getById(id);
-    // Fall back to searching by key field
-    for (const t of this.tiles) {
-      if (t && t.key === key) return t;
-    }
-    return undefined;
+    return this.byKey.get(key);
   }
   getIdByKey(key) {
-    const def = this.getByKey(key);
-    return def?.legacyId;
+    if (id === 0)
+      return 0;
+    return this.byKey.get(key)?.legacyId;
+  }
+  getById(id2) {
+    if (!Number.isInteger(id2) || id2 < 0 || id2 > 65535)
+      return;
+    if (id2 === 0)
+      return this.byLegacyId.get(0);
+    return this.byLegacyId.get(id2);
+  }
+  getByLegacyId(id2) {
+    return Number.isInteger(id2) ? this.byLegacyId.get(id2) : undefined;
   }
   values() {
-    return this.tiles.filter(t => t !== null);
+    return [...this.byKey.values()];
   }
 }
 function validateDefinition(entry) {
@@ -107,8 +106,10 @@ function validateDefinition(entry) {
     throw new RangeError("lightOpacity must be between 0 and 15");
   if (!Number.isInteger(entry.lightEmission) || entry.lightEmission < 0 || entry.lightEmission > 15)
     throw new RangeError("lightEmission must be between 0 and 15");
-  if (entry.legacyAliases?.some((id) => !Number.isInteger(id) || id < 0 || id > 255))
+  if (entry.legacyAliases?.some((id2) => !Number.isInteger(id2) || id2 < 0 || id2 > 255))
     throw new RangeError("Legacy block aliases must be integers from 0 to 255");
+  if (entry.drops.some((drop) => !drop.includes(":")))
+    throw new TypeError("Drop item keys must be namespaced");
 }
 var defaultBlockRegistry = new BlockRegistry;
 
@@ -205,28 +206,38 @@ class Inventory {
     this._revision += 1;
     return true;
   }
-  insert(id, count, maxStackSize = 64) {
-    validateItemKey(id);
-    if (!Number.isSafeInteger(count) || count <= 0)
-      throw new RangeError("count must be a positive safe integer");
+  insert(id2, count, maxStackSize = 64) {
+    validateItemId(id2);
+    positiveInteger2(count, "count");
+    positiveInteger2(maxStackSize, "maxStackSize");
+    if (maxStackSize > 999)
+      throw new RangeError("maxStackSize cannot exceed 999");
+    for (const stack of this.slots) {
+      if (stack?.id === id2 && stack.maxStackSize !== maxStackSize) {
+        throw new Error("maxStackSize does not match existing stack definition for " + id2);
+      }
+    }
     let remaining = count;
     let changed = false;
-    for (let index = 0; index < this.slots.length && remaining > 0; index += 1) {
+    for (let index = 0;index < this.slots.length && remaining > 0; index += 1) {
       const stack = this.slots[index];
-      if (!stack || stack.id !== id || stack.count >= stack.maxStackSize) continue;
+      if (!stack || stack.id !== id2 || stack.count >= stack.maxStackSize)
+        continue;
       const amount = Math.min(remaining, stack.maxStackSize - stack.count);
-      this.slots[index] = createStack(id, stack.count + amount, maxStackSize);
+      this.slots[index] = createStack(id2, stack.count + amount, maxStackSize);
       remaining -= amount;
       changed = true;
     }
-    for (let index = 0; index < this.slots.length && remaining > 0; index += 1) {
-      if (this.slots[index] !== null) continue;
+    for (let index = 0;index < this.slots.length && remaining > 0; index += 1) {
+      if (this.slots[index] !== null)
+        continue;
       const amount = Math.min(remaining, maxStackSize);
-      this.slots[index] = createStack(id, amount, maxStackSize);
+      this.slots[index] = createStack(id2, amount, maxStackSize);
       remaining -= amount;
       changed = true;
     }
-    if (changed) this._revision += 1;
+    if (changed)
+      this._revision += 1;
     return Object.freeze({ inserted: count - remaining, remainder: remaining });
   }
   remove(index, count) {
@@ -259,22 +270,21 @@ class Inventory {
     return index;
   }
 }
-function createStack(id, count, maxStackSize, auxValue) {
-  validateItemKey(id);
-  if (!Number.isSafeInteger(count) || count <= 0)
-    throw new RangeError("count must be a positive safe integer");
-  if (maxStackSize === undefined) maxStackSize = 64;
-  if (!Number.isSafeInteger(maxStackSize) || maxStackSize <= 0)
-    throw new RangeError("maxStackSize must be a positive safe integer");
+function createStack(id2, count, maxStackSize, auxValue) {
+  validateItemId(id2);
+  positiveInteger2(count, "count");
+  positiveInteger2(maxStackSize, "maxStackSize");
+  if (maxStackSize > 999)
+    throw new RangeError("maxStackSize cannot exceed 999");
   if (count > maxStackSize)
     throw new RangeError("Stack count exceeds maxStackSize");
   if (auxValue !== undefined && (!Number.isInteger(auxValue) || auxValue < 0 || auxValue > 9999)) {
     throw new RangeError("auxValue must be a non-negative integer up to 9999");
   }
-  return Object.freeze({ id, count, maxStackSize, auxValue: auxValue ?? 0 });
+  return Object.freeze({ id: id2, count, maxStackSize, auxValue: auxValue ?? 0 });
 }
-function validateItemKey(id) {
-  if (!Number.isInteger(id) || id < 0) {
+function validateItemId(id2) {
+  if (!Number.isInteger(id2) || id2 < 0) {
     throw new TypeError("id must be a non-negative integer (C++ ItemInstance.id)");
   }
 }
@@ -296,35 +306,34 @@ var TIERS = Object.freeze({
   none: Object.freeze({ level: 0, uses: 0, speed: 1, damage: 0 })
 });
 var TOOL_TABLE = Object.freeze({
-  256: makeTool("shovel", "iron", 2, 5),
-  257: makeTool("pickaxe", "iron", 2, 6),
-  258: makeTool("axe", "iron", 2, 7),
-  269: makeTool("shovel", "wood", 0, 5),
-  270: makeTool("pickaxe", "wood", 0, 6),
-  271: makeTool("axe", "wood", 0, 7),
-  273: makeTool("shovel", "stone", 1, 5),
-  274: makeTool("pickaxe", "stone", 1, 6),
-  275: makeTool("axe", "stone", 1, 7),
-  277: makeTool("shovel", "diamond", 3, 5),
-  278: makeTool("pickaxe", "diamond", 3, 6),
-  279: makeTool("axe", "diamond", 3, 7),
-  284: makeTool("shovel", "gold", 4, 5),
-  285: makeTool("pickaxe", "gold", 4, 6),
-  286: makeTool("axe", "gold", 4, 7),
-  268: makeTool("sword", "wood", 0, 4),
-  272: makeTool("sword", "stone", 1, 4),
-  267: makeTool("sword", "iron", 2, 4),
-  276: makeTool("sword", "diamond", 3, 4),
-  283: makeTool("sword", "gold", 4, 4),
-  359: makeTool("shears", "none", 13, 5)
+  "minecraft:iron_shovel": makeTool("shovel", "iron", 2, 5),
+  "minecraft:iron_pickaxe": makeTool("pickaxe", "iron", 2, 6),
+  "minecraft:iron_axe": makeTool("axe", "iron", 2, 7),
+  "minecraft:wood_shovel": makeTool("shovel", "wood", 0, 5),
+  "minecraft:wood_pickaxe": makeTool("pickaxe", "wood", 0, 6),
+  "minecraft:wood_axe": makeTool("axe", "wood", 0, 7),
+  "minecraft:stone_shovel": makeTool("shovel", "stone", 1, 5),
+  "minecraft:stone_pickaxe": makeTool("pickaxe", "stone", 1, 6),
+  "minecraft:stone_axe": makeTool("axe", "stone", 1, 7),
+  "minecraft:diamond_shovel": makeTool("shovel", "diamond", 3, 5),
+  "minecraft:diamond_pickaxe": makeTool("pickaxe", "diamond", 3, 6),
+  "minecraft:diamond_axe": makeTool("axe", "diamond", 3, 7),
+  "minecraft:gold_shovel": makeTool("shovel", "gold", 4, 5),
+  "minecraft:gold_pickaxe": makeTool("pickaxe", "gold", 4, 6),
+  "minecraft:gold_axe": makeTool("axe", "gold", 4, 7),
+  "minecraft:wood_sword": makeTool("sword", "wood", 0, 4),
+  "minecraft:stone_sword": makeTool("sword", "stone", 1, 4),
+  "minecraft:iron_sword": makeTool("sword", "iron", 2, 4),
+  "minecraft:diamond_sword": makeTool("sword", "diamond", 3, 4),
+  "minecraft:gold_sword": makeTool("sword", "gold", 4, 4)
 });
 function makeTool(kind, tier, iconCol, iconRow) {
   return Object.freeze({ kind, tier, tierDef: TIERS[tier], iconCol, iconRow });
 }
-function getTool(id) {
-  if (!Number.isInteger(id) || id <= 0)
+function getTool(id2) {
+  if (!Number.isInteger(id2) || id2 <= 0)
     return null;
-  return TOOL_TABLE[id] ?? null;
+  return TOOL_TABLE[id2] ?? null;
 }
 var NOT_ALWAYS_DESTROYABLE = new Set([
   "stone",
@@ -335,15 +344,21 @@ var NOT_ALWAYS_DESTROYABLE = new Set([
 function isAlwaysDestroyable(material) {
   return !NOT_ALWAYS_DESTROYABLE.has(material);
 }
-function pickaxeCanDestroy(material, blockId, tierLevel) {
-  // §C++ Tile IDs — int comparisons, NOT string keys
-  if (blockId === 49) return tierLevel === 3;  // obsidian
-  if (blockId === 57 || blockId === 56) return tierLevel >= 2;  // diamond block/ore
-  if (blockId === 41 || blockId === 14) return tierLevel >= 2;  // gold block/ore
-  if (blockId === 42 || blockId === 15) return tierLevel >= 1;  // iron block/ore
-  if (blockId === 22 || blockId === 21) return tierLevel >= 1;  // lapis block/ore
-  if (blockId === 73 || blockId === 74) return tierLevel >= 2;  // redstone ore
-  if (material === "stone" || material === "metal") return true;
+function pickaxeCanDestroy(material, blockKey, tierLevel) {
+  if (blockKey === "minecraft:obsidian")
+    return tierLevel === 3;
+  if (blockKey === "minecraft:diamond_block" || blockKey === "minecraft:diamond_ore")
+    return tierLevel >= 2;
+  if (blockKey === "minecraft:gold_block" || blockKey === "minecraft:gold_ore")
+    return tierLevel >= 2;
+  if (blockKey === "minecraft:iron_block" || blockKey === "minecraft:iron_ore")
+    return tierLevel >= 1;
+  if (blockKey === "minecraft:lapis_block" || blockKey === "minecraft:lapis_ore")
+    return tierLevel >= 1;
+  if (blockKey === "minecraft:redstone_ore" || blockKey === "minecraft:redstone_ore_lit")
+    return tierLevel >= 2;
+  if (material === "stone" || material === "metal")
+    return true;
   return false;
 }
 function shovelCanDestroy(material) {
@@ -363,51 +378,51 @@ function shovelDestroySpeed(hasTile, tierSpeed) {
   return hasTile ? tierSpeed : 1;
 }
 var PICKAXE_TILES = new Set([
-  4,   // cobblestone
-  98,  // stoneBrickSmooth
-  44,  // stone_slab
-  1,   // stone
-  24,  // sandstone
-  48,  // moss_stone
-  15,  // iron_ore
-  42,  // iron_block
-  16,  // coal_ore
-  41,  // gold_block
-  14,  // gold_ore
-  57,  // diamond_block
-  56,  // diamond_ore
-  79,  // ice
-  21,  // lapis_ore
-  22   // lapis_block
+  "minecraft:cobblestone",
+  "minecraft:stone_bricks",
+  "minecraft:stone_slab",
+  "minecraft:stone",
+  "minecraft:sandstone",
+  "minecraft:moss_stone",
+  "minecraft:iron_ore",
+  "minecraft:iron_block",
+  "minecraft:coal_ore",
+  "minecraft:gold_block",
+  "minecraft:gold_ore",
+  "minecraft:diamond_block",
+  "minecraft:diamond_ore",
+  "minecraft:ice",
+  "minecraft:lapis_ore",
+  "minecraft:lapis_block"
 ]);
 var AXE_TILES = new Set([
-  5,   // oak_planks
-  47,  // bookshelf
-  17,  // oak_log
-  54,  // chest
-  44,  // stone_slab
-  53,  // oak_stairs
-  58,  // crafting_table
-  85   // oak_fence
+  "minecraft:oak_planks",
+  "minecraft:bookshelf",
+  "minecraft:oak_log",
+  "minecraft:chest",
+  "minecraft:stone_slab",
+  "minecraft:oak_stairs",
+  "minecraft:crafting_table",
+  "minecraft:oak_fence"
 ]);
 var SHOVEL_TILES = new Set([
-  2,   // grass_block
-  3,   // dirt
-  12,  // sand
-  13,  // gravel
-  78,  // snow_layer
-  80,  // snow
-  82,  // clay
-  60   // farmland
+  "minecraft:grass_block",
+  "minecraft:dirt",
+  "minecraft:sand",
+  "minecraft:gravel",
+  "minecraft:snow_layer",
+  "minecraft:snow",
+  "minecraft:clay",
+  "minecraft:farmland"
 ]);
-function canDestroyBlock(material, blockId, tool) {
+function canDestroyBlock(material, blockKey, tool) {
   if (isAlwaysDestroyable(material))
     return true;
   if (!tool)
     return false;
   switch (tool.kind) {
     case "pickaxe":
-      return pickaxeCanDestroy(material, blockId, tool.tierDef.level);
+      return pickaxeCanDestroy(material, blockKey, tool.tierDef.level);
     case "shovel":
       return shovelCanDestroy(material);
     case "axe":
@@ -417,17 +432,17 @@ function canDestroyBlock(material, blockId, tool) {
   }
   return false;
 }
-function getPlayerDestroySpeed(material, blockId, tool) {
+function getPlayerDestroySpeed(material, blockKey, tool) {
   if (!tool)
     return 1;
   const hasTile = (() => {
     switch (tool.kind) {
       case "pickaxe":
-        return PICKAXE_TILES.has(blockId);
+        return PICKAXE_TILES.has(blockKey);
       case "axe":
-        return AXE_TILES.has(blockId);
+        return AXE_TILES.has(blockKey);
       case "shovel":
-        return SHOVEL_TILES.has(blockId);
+        return SHOVEL_TILES.has(blockKey);
       case "sword":
         return false;
       case "none":
@@ -579,10 +594,10 @@ function beginMining(world, target, registry, options = {}) {
   if (definition.hardness < 0)
     return { status: "unbreakable" };
   const tool = options.tool ?? null;
-  const playerDestroySpeed = options.playerDestroySpeed ?? getPlayerDestroySpeed(definition.material, definition.legacyId, tool);
+  const playerDestroySpeed = options.playerDestroySpeed ?? getPlayerDestroySpeed(definition.material, definition.key, tool);
   if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0)
     throw new RangeError("playerDestroySpeed must be finite and positive");
-  const canDestroy = canDestroyBlock(definition.material, definition.legacyId, tool);
+  const canDestroy = canDestroyBlock(definition.material, definition.key, tool);
   return {
     status: "started",
     session: new MiningSession(target, blockId, definition.hardness, mode, playerDestroySpeed, canDestroy)
@@ -780,7 +795,7 @@ function placeBlockFromInventory(world, hit, inventory, slotIndex, registry, pla
   const stack = inventory.getSlot(slotIndex);
   if (!stack)
     return { status: "inventory-empty" };
-  const blockId = stack.id;
+  const blockId = registry.getIdByKey(stack.id);
   if (blockId === undefined || blockId === 0)
     return { status: "not-a-block-item" };
   const validation = validatePlacementTarget(world, hit, blockId, registry);
@@ -1627,7 +1642,7 @@ class VoxelCraftEngine {
     return Object.freeze({ clock: clockResult, player: playerState });
   }
   target(origin, direction, reach = 6) {
-    return raycastVoxels(this.world, origin, direction, reach, (id) => this.registry.getById(id)?.selectable ?? false);
+    return raycastVoxels(this.world, origin, direction, reach, (id2) => this.registry.getById(id2)?.selectable ?? false);
   }
   startMining(target, tool = this.tool) {
     const result = beginMining(this.world, target, this.registry, {
@@ -1785,7 +1800,7 @@ function isFaceOccluded(current, neighborId, registry) {
     return false;
   if (neighbor.renderLayer === "opaque")
     return true;
-  return current.legacyId === neighbor.legacyId && current.renderLayer === neighbor.renderLayer;
+  return current.key === neighbor.key && current.renderLayer === neighbor.renderLayer;
 }
 function emptyLayer() {
   return { positions: [], normals: [], blockIds: [], indices: [], faceCount: 0 };
@@ -1894,18 +1909,18 @@ function generateTerrainChunk(world, chunkX, chunkZ, options = {}) {
       maxHeight = Math.max(maxHeight, height);
       const surface = height <= seaLevel + 1 ? ids.sand : ids.grass;
       for (let y = 0;y <= height; y += 1) {
-        const id = y === 0 ? ids.bedrock : y === height ? surface : y >= height - 3 ? ids.dirt : ids.stone;
-        chunk.setBlock(localX, y, localZ, id);
+        const id2 = y === 0 ? ids.bedrock : y === height ? surface : y >= height - 3 ? ids.dirt : ids.stone;
+        chunk.setBlock(localX, y, localZ, id2);
       }
     }
   }
   return Object.freeze({ chunkX, chunkZ, minHeight, maxHeight });
 }
 function requireId(registry, key) {
-  const id = typeof key === "number" ? key : registry.getIdByKey(key);
-  if (id === undefined)
+  const id2 = registry.getIdByKey(key);
+  if (id2 === undefined)
     throw new Error("Terrain requires block definition " + key);
-  return id;
+  return id2;
 }
 function valueNoise(x, z, seed) {
   const x0 = Math.floor(x), z0 = Math.floor(z);
@@ -2577,51 +2592,51 @@ function typeOf(value) {
 class SynchedEntityData {
   itemsById = new Map;
   dirty = false;
-  define(id, value) {
-    if (!Number.isSafeInteger(id) || id < 0 || id > MAX_ID_VALUE)
+  define(id2, value) {
+    if (!Number.isSafeInteger(id2) || id2 < 0 || id2 > MAX_ID_VALUE)
       return;
-    if (this.itemsById.has(id))
+    if (this.itemsById.has(id2))
       return;
     const type = typeOf(value);
-    const item = { type, id, dirty: true, data: value };
-    this.itemsById.set(id, item);
+    const item = { type, id: id2, dirty: true, data: value };
+    this.itemsById.set(id2, item);
     this.dirty = true;
   }
-  getByte(id) {
-    return this.getNumber(id);
+  getByte(id2) {
+    return this.getNumber(id2);
   }
-  getShort(id) {
-    return this.getNumber(id);
+  getShort(id2) {
+    return this.getNumber(id2);
   }
-  getInt(id) {
-    return this.getNumber(id);
+  getInt(id2) {
+    return this.getNumber(id2);
   }
-  getFloat(id) {
-    return this.getNumber(id);
+  getFloat(id2) {
+    return this.getNumber(id2);
   }
-  getString(id) {
-    const item = this.require(id);
+  getString(id2) {
+    const item = this.require(id2);
     if (typeof item.data !== "string") {
-      throw new TypeError("DataItem " + id + " is not a string");
+      throw new TypeError("DataItem " + id2 + " is not a string");
     }
     return item.data;
   }
-  getNumber(id) {
-    const item = this.require(id);
+  getNumber(id2) {
+    const item = this.require(id2);
     if (typeof item.data !== "number") {
-      throw new TypeError("DataItem " + id + " is not numeric");
+      throw new TypeError("DataItem " + id2 + " is not numeric");
     }
     return item.data;
   }
-  require(id) {
-    const item = this.itemsById.get(id);
+  require(id2) {
+    const item = this.itemsById.get(id2);
     if (!item) {
-      throw new Error("DataItem not found: " + id);
+      throw new Error("DataItem not found: " + id2);
     }
     return item;
   }
-  set(id, value) {
-    const item = this.itemsById.get(id);
+  set(id2, value) {
+    const item = this.itemsById.get(id2);
     if (!item)
       return;
     if (item.type !== typeOf(value)) {
@@ -2633,34 +2648,34 @@ class SynchedEntityData {
       this.dirty = true;
     }
   }
-  setFlag(id, flag) {
-    const item = this.itemsById.get(id);
+  setFlag(id2, flag) {
+    const item = this.itemsById.get(id2);
     if (!item)
       return;
     const oldFlag = getFlagBit(item, flag);
     setFlagBit(item, flag);
     if (getFlagBit(item, flag) !== oldFlag) {
-      this.markDirty(id);
+      this.markDirty(id2);
     }
   }
-  clearFlag(id, flag) {
-    const item = this.itemsById.get(id);
+  clearFlag(id2, flag) {
+    const item = this.itemsById.get(id2);
     if (!item)
       return;
     const oldFlag = getFlagBit(item, flag);
     clearFlagBit(item, flag);
     if (getFlagBit(item, flag) !== oldFlag) {
-      this.markDirty(id);
+      this.markDirty(id2);
     }
   }
-  getFlag(id, flag) {
-    const item = this.itemsById.get(id);
+  getFlag(id2, flag) {
+    const item = this.itemsById.get(id2);
     if (!item)
       return false;
     return getFlagBit(item, flag);
   }
-  markDirty(id) {
-    const item = this.itemsById.get(id);
+  markDirty(id2) {
+    const item = this.itemsById.get(id2);
     if (!item)
       return;
     item.dirty = true;
@@ -2674,8 +2689,8 @@ class SynchedEntityData {
     for (const item of this.itemsById.values())
       item.dirty = false;
   }
-  getItem(id) {
-    return this.itemsById.get(id);
+  getItem(id2) {
+    return this.itemsById.get(id2);
   }
   items() {
     return [...this.itemsById.values()];
@@ -3273,8 +3288,8 @@ class Mob extends Entity {
       this.noActionTime = 0;
     }
   }
-  handleEntityEvent(id) {
-    if (id === 2 /* Hurt */) {
+  handleEntityEvent(id2) {
+    if (id2 === 2 /* Hurt */) {
       this.walkAnimSpeed = 1.5;
       this.invulnerableTime = this.invulnerableDuration;
       this.hurtTime = 10;
@@ -3285,7 +3300,7 @@ class Mob extends Entity {
         level.playSound(this, this.getHurtSound(), this.getSoundVolume(), this.getVoicePitch());
       }
       this.hurt(null, 0);
-    } else if (id === 3 /* Death */) {
+    } else if (id2 === 3 /* Death */) {
       const level = this.level;
       if (level) {
         level.playSound(this, this.getDeathSound(), this.getSoundVolume(), this.getVoicePitch());
@@ -3293,7 +3308,7 @@ class Mob extends Entity {
       this.health = 0;
       this.die(null);
     } else {
-      super.handleEntityEvent(id);
+      super.handleEntityEvent(id2);
     }
   }
   getEntityData() {
@@ -3865,11 +3880,11 @@ class Sheep extends Animal {
       this.eatAnimationTickValue--;
     }
   }
-  handleEntityEvent(id) {
-    if (id === 18 /* EatGrass */) {
+  handleEntityEvent(id2) {
+    if (id2 === 18 /* EatGrass */) {
       this.eatAnimationTickValue = EAT_ANIMATION_TICKS2;
     } else {
-      super.handleEntityEvent(id);
+      super.handleEntityEvent(id2);
     }
   }
   getHeadEatPositionScale(a) {
@@ -4967,16 +4982,16 @@ var ANY_AUX_VALUE = -1;
 
 class ItemPack {
   items = new Map;
-  add(id, count = 1) {
-    this.items.set(id, (this.items.get(id) ?? 0) + count);
+  add(id2, count = 1) {
+    this.items.set(id2, (this.items.get(id2) ?? 0) + count);
   }
-  getCount(id) {
-    return this.items.get(id) ?? 0;
+  getCount(id2) {
+    return this.items.get(id2) ?? 0;
   }
   getMaxMultipliesOf(other) {
     let max = Infinity;
-    for (const [id, count] of other.items) {
-      const have = this.items.get(id) ?? 0;
+    for (const [id2, count] of other.items) {
+      const have = this.items.get(id2) ?? 0;
       if (count === 0)
         continue;
       max = Math.min(max, Math.floor(have / count));
@@ -4987,8 +5002,8 @@ class ItemPack {
   }
   getItemInstances() {
     const result = [];
-    for (const [id, count] of this.items) {
-      result.push({ id: id, count, maxStackSize: 64 });
+    for (const [id2, count] of this.items) {
+      result.push({ id: id2, count, maxStackSize: 64 });
     }
     return result;
   }
@@ -5134,65 +5149,17 @@ function shape2(r0, r1) {
 function shape3(r0, r1, r2) {
   return [r0, r1, r2];
 }
-
-// §C++ variable name → int ID map (for recipe backward compat)
-// C++ uses Item::stick, Tile::wood etc. — these are the int IDs.
-var SHORT_KEY_TO_ID = {
-  // Tiles (0-255) — from Tile.cpp initTiles()
-  "air": 0, "stone": 1, "grass": 2, "dirt": 3, "stoneBrick": 4, "wood": 5,
-  "sapling": 6, "bedrock": 7, "water": 8, "calmWater": 9, "lava": 10, "calmLava": 11,
-  "sand": 12, "gravel": 13, "goldOre": 14, "ironOre": 15, "coalOre": 16,
-  "treeTrunk": 17, "leaves": 18, "glass": 20, "lapisOre": 21, "lapisBlock": 22,
-  "sandStone": 24, "web": 30, "tallgrass": 31, "cloth": 35,
-  "flower": 37, "rose": 38, "mushroom1": 39, "mushroom2": 40,
-  "goldBlock": 41, "ironBlock": 42, "stoneSlab": 44, "redBrick": 45, "tnt": 46,
-  "bookshelf": 47, "mossStone": 48, "obsidian": 49, "torch": 50,
-  "chest": 54, "emeraldOre": 56, "emeraldBlock": 57, "workBench": 58,
-  "crops": 59, "farmland": 60, "furnace": 62, "sign": 63, "door_wood": 64,
-  "ladder": 65, "redStoneOre": 73, "topSnow": 78, "ice": 79, "snow": 80,
-  "cactus": 81, "clay": 82, "reeds": 83, "fence": 85, "lightGem": 89,
-  "trapdoor": 96, "stoneBrickSmooth": 98, "melon": 103, "fenceGate": 107,
-  // Items (256+) — from Item.cpp initItems(), id = 256 + localId
-  "shovel_iron": 256, "pickAxe_iron": 257, "hatchet_iron": 258,
-  "flintAndSteel": 259, "apple": 260, "bow": 261, "arrow": 262,
-  "coal": 263, "emerald": 264, "ironIngot": 265, "goldIngot": 266,
-  "sword_iron": 267, "sword_wood": 268, "shovel_wood": 269,
-  "pickAxe_wood": 270, "hatchet_wood": 271, "sword_stone": 272,
-  "shovel_stone": 273, "pickAxe_stone": 274, "hatchet_stone": 275,
-  "sword_emerald": 276, "shovel_emerald": 277, "pickAxe_emerald": 278,
-  "hatchet_emerald": 279, "stick": 280, "bowl": 281, "mushroomStew": 282,
-  "sword_gold": 283, "shovel_gold": 284, "pickAxe_gold": 285, "hatchet_gold": 286,
-  "string": 287, "feather": 288, "sulphur": 289,
-  "hoe_wood": 290, "hoe_stone": 291, "hoe_iron": 292, "hoe_emerald": 293, "hoe_gold": 294,
-  "seeds_wheat": 295, "wheat": 296, "bread": 297,
-  "painting": 321, "sign_item": 323, "door_wood_item": 324, "door_iron": 330,
-  "snowBall": 332, "egg": 344, "compass": 345, "clock": 353,
-  "flint": 318, "leather": 334, "brick": 336, "clay_item": 337,
-  "paper": 339, "book": 340, "yellowDust": 348, "dye_powder": 351,
-  "bone": 352, "sugar": 353, "shears": 359, "melon_item": 360,
-  "seeds_melon": 362, "bed": 355
-};
-function resolveItemId(key) {
-  if (typeof key === "number") return key;
-  if (typeof key === "string") {
-    if (SHORT_KEY_TO_ID[key] !== undefined) return SHORT_KEY_TO_ID[key];
-    const parsed = parseInt(key, 10);
-    if (!isNaN(parsed)) return parsed;
-  }
-  return 0;
-}
-function def(c, idOrKey, auxValue) {
-  return [{ c, id: resolveItemId(idOrKey), auxValue }];
+function def(c, id2, auxValue) {
+  return [{ c, id: itemKey, auxValue }];
 }
 function def2(c0, k0, c1, k1) {
-  return [{ c: c0, id: resolveItemId(k0) }, { c: c1, id: resolveItemId(k1) }];
+  return [{ c: c0, id: k0 }, { c: c1, id: k1 }];
 }
 function def3(c0, k0, c1, k1, c2, k2) {
-  return [{ c: c0, id: resolveItemId(k0) }, { c: c1, id: resolveItemId(k1) }, { c: c2, id: resolveItemId(k2) }];
+  return [{ c: c0, id: k0 }, { c: c1, id: k1 }, { c: c2, id: k2 }];
 }
-function itemStack(idOrKey, count = 1, auxValue) {
-  const id = resolveItemId(idOrKey);
-  return { id, count, maxStackSize: 64, auxValue: auxValue ?? 0 };
+function itemStack(id2, count = 1, auxValue) {
+  return { id: itemKey, count, maxStackSize: 64, auxValue };
 }
 
 class Recipes {
@@ -5244,7 +5211,7 @@ class Recipes {
         if (type) {
           recipeItems.push(itemStack(type.id, 1, type.auxValue));
         } else {
-          recipeItems.push({ id: 0, count: 0, maxStackSize: 64, auxValue: 0 });
+          recipeItems.push(itemStack("air", 0));
         }
       }
     }
@@ -5377,7 +5344,7 @@ class FurnaceRecipes {
     return this.recipes;
   }
   addRecipe(itemId, result) {
-    this.recipes.set(resolveItemId(itemId), { ...result, id: resolveItemId(result.id) });
+    this.recipes.set(itemId, result);
   }
   registerRecipes() {
     this.addRecipe("ironOre", { id: "ironIngot", count: 1, maxStackSize: 64 });

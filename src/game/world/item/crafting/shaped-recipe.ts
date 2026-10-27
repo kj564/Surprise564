@@ -31,12 +31,12 @@ export class ShapedRecipe extends Recipe {
     this.height = height;
     this.recipeItems = recipeItems;
     this.result = result;
-    this.resultId = result.itemKey;
+    this.resultId = result.id;
 
     // §ShapedRecipe.h:17-19 — `for (int i = 0; i < width * height; ++i)
     //   if (!recipeItems[i].isNull()) myItems.add(getIdForItemInstance(&recipeItems[i]));`
     for (const item of recipeItems) {
-      this.myItems.add(item.itemKey);
+      this.myItems.add(item.id);
     }
   }
 
@@ -80,7 +80,7 @@ export class ShapedRecipe extends Recipe {
         const item = grid.getItem(x, y);
         if (!item && !expected) continue;
         if ((!item) !== (!expected)) return false;  // XOR
-        if (expected && item && expected.itemKey !== item.itemKey) return false;
+        if (expected && item && expected.id !== item.id) return false;
         // §ShapedRecipe.h:89 — `if (expected.getAuxValue() != ANY_AUX_VALUE && ...)`
         if (expected && item && expected.auxValue !== ANY_AUX_VALUE && expected.auxValue !== undefined) {
           if (expected.auxValue !== item.auxValue) return false;

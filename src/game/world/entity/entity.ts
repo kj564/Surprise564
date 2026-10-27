@@ -702,13 +702,13 @@ export abstract class Entity {
   /** §Entity.cpp:899-918 — `ItemEntity* spawnAtLocation(int resource, int count, float yOffs)`.
    *  VoxelCraft returns the spawned ItemStack description so callers/tests can
    *  assert on loot drops without standing up an ItemEntity sub-tree. */
-  spawnAtLocation(resource: string, count: number, yOffs = 0): { readonly itemKey: string; readonly count: number } | null {
+  spawnAtLocation(resource: string, count: number, yOffs = 0): { readonly id: string; readonly count: number } | null {
     const level = this.level;
     if (!level) return null;
     // §Entity.cpp:908 — `ItemEntity* ie = new ItemEntity(level, x, y + yOffs, z, *itemInstance);`
     // The browser-layer adapter turns this into a real ItemEntity.
-    level.addEntity({ itemKey: resource, count, x: this.x, y: this.y + yOffs, z: this.z });
-    return Object.freeze({ itemKey: resource, count });
+    level.addEntity({ id: resource, count, x: this.x, y: this.y + yOffs, z: this.z });
+    return Object.freeze({ id: resource, count });
   }
 
   // === Liquid checks (§Entity.cpp:105-127) ===

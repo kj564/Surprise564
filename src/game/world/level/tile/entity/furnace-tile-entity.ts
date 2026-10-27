@@ -96,7 +96,7 @@ export class FurnaceTileEntity extends TileEntity {
         const slot = entry.Slot as number;
         if (slot >= 0 && slot < FURNACE_NUM_SLOTS) {
           this.items[slot] = {
-            itemKey: entry.id as string,
+            id: entry.id as string,
             count: entry.count as number,
             maxStackSize: 64,
             auxValue: entry.auxValue as number | undefined,
@@ -122,7 +122,7 @@ export class FurnaceTileEntity extends TileEntity {
     for (let i = 0; i < FURNACE_NUM_SLOTS; i++) {
       const item = this.items[i];
       if (item) {
-        items.push({ Slot: i, id: item.itemKey, count: item.count, auxValue: item.auxValue });
+        items.push({ Slot: i, id: item.id, count: item.count, auxValue: item.auxValue });
       }
     }
     tag.Items = items;
@@ -213,8 +213,8 @@ export class FurnaceTileEntity extends TileEntity {
     // Browser: use window.VoxelCraftFurnaceRecipes if available
     let resultKey: string | null = null;
     if (typeof window !== 'undefined' && window.VoxelCraftFurnaceRecipes) {
-      const result = window.VoxelCraftFurnaceRecipes.getInstance().getResult(ingredient.itemKey);
-      if (result) resultKey = result.itemKey;
+      const result = window.VoxelCraftFurnaceRecipes.getInstance().getResult(ingredient.id);
+      if (result) resultKey = result.id;
     }
 
     if (!resultKey) return;
@@ -222,8 +222,8 @@ export class FurnaceTileEntity extends TileEntity {
     // §FurnaceTileEntity.cpp:182-183 — place result in output slot
     const resultSlot = this.items[SLOT_RESULT];
     if (!resultSlot) {
-      this.items[SLOT_RESULT] = { itemKey: resultKey, count: 1, maxStackSize: 64 };
-    } else if (resultSlot.itemKey === resultKey) {
+      this.items[SLOT_RESULT] = { id: resultKey, count: 1, maxStackSize: 64 };
+    } else if (resultSlot.id === resultKey) {
       this.items[SLOT_RESULT] = { ...resultSlot, count: resultSlot.count + 1 };
     }
 
@@ -243,14 +243,14 @@ export class FurnaceTileEntity extends TileEntity {
     // §FurnaceTileEntity.cpp:190 — get result from FurnaceRecipes
     let resultKey: string | null = null;
     if (typeof window !== 'undefined' && window.VoxelCraftFurnaceRecipes) {
-      const result = window.VoxelCraftFurnaceRecipes.getInstance().getResult(ingredient.itemKey);
-      if (result) resultKey = result.itemKey;
+      const result = window.VoxelCraftFurnaceRecipes.getInstance().getResult(ingredient.id);
+      if (result) resultKey = result.id;
     }
     if (!resultKey) return false; // §FurnaceTileEntity.cpp:191
 
     const resultSlot = this.items[SLOT_RESULT];
     if (!resultSlot) return true; // §FurnaceTileEntity.cpp:192
-    if (resultSlot.itemKey !== resultKey) return false; // §FurnaceTileEntity.cpp:193
+    if (resultSlot.id !== resultKey) return false; // §FurnaceTileEntity.cpp:193
     if (resultSlot.count < this.getMaxStackSize()) return true; // §FurnaceTileEntity.cpp:194
     return false;
   }
@@ -261,7 +261,7 @@ export class FurnaceTileEntity extends TileEntity {
    */
   getBurnDuration(item: ItemStack | null): number {
     if (!item) return 0;
-    const key = item.itemKey;
+    const key = item.id;
     // §FurnaceTileEntity.cpp:209 — wood material: BURN_INTERVAL * 3/2 = 300 ticks
     if (key.includes('planks') || key.includes('log') || key.includes('wood') ||
         key.includes('oak_log') || key.includes('oak_planks')) return FURNACE_BURN_INTERVAL * 3 / 2;

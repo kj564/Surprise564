@@ -80,9 +80,9 @@ function makeTool(kind: ToolKind, tier: ToolTier, iconCol: number, iconRow: numb
 }
 
 /** Lookup tool metadata by item key. Returns null for non-tool items. */
-export function getTool(itemKey: string | null | undefined): Tool | null {
-  if (!itemKey) return null;
-  return TOOL_TABLE[itemKey] ?? null;
+export function getTool(id: number | null | undefined): Tool | null {
+  if (!Number.isInteger(id) || id <= 0) return null;
+  return TOOL_TABLE[id] ?? null;
 }
 
 // §Block material — 1:1 with rujukan Material.cpp:37-66

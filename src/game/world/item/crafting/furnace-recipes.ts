@@ -61,30 +61,30 @@ export class FurnaceRecipes {
    */
   private registerRecipes(): void {
     // §FurnaceRecipes.cpp:53 — `addFurnaceRecipe(Tile::ironOre->id, ItemInstance(Item::ironIngot));`
-    this.addRecipe('ironOre', { itemKey: 'ironIngot', count: 1, maxStackSize: 64 });
+    this.addRecipe('ironOre', { id: 'ironIngot', count: 1, maxStackSize: 64 });
     // §FurnaceRecipes.cpp:54 — `addFurnaceRecipe(Tile::goldOre->id, ItemInstance(Item::goldIngot));`
-    this.addRecipe('goldOre', { itemKey: 'goldIngot', count: 1, maxStackSize: 64 });
+    this.addRecipe('goldOre', { id: 'goldIngot', count: 1, maxStackSize: 64 });
     // §FurnaceRecipes.cpp:55 — `addFurnaceRecipe(Tile::emeraldOre->id, ItemInstance(Item::emerald));`
-    this.addRecipe('emeraldOre', { itemKey: 'emerald', count: 1, maxStackSize: 64 });
+    this.addRecipe('emeraldOre', { id: 'emerald', count: 1, maxStackSize: 64 });
     // §FurnaceRecipes.cpp:56 — `addFurnaceRecipe(Tile::sand->id, ItemInstance(Tile::glass));`
-    this.addRecipe('sand', { itemKey: 'glass', count: 1, maxStackSize: 64 });
+    this.addRecipe('sand', { id: 'glass', count: 1, maxStackSize: 64 });
     // §FurnaceRecipes.cpp:57 — `addFurnaceRecipe(Item::porkChop_raw->id, ItemInstance(Item::porkChop_cooked));`
-    this.addRecipe('porkChop_raw', { itemKey: 'porkChop_cooked', count: 1, maxStackSize: 64 });
+    this.addRecipe('porkChop_raw', { id: 'porkChop_cooked', count: 1, maxStackSize: 64 });
     // §FurnaceRecipes.cpp:58 — `addFurnaceRecipe(Item::beef_raw->id, ItemInstance(Item::beef_cooked));`
-    this.addRecipe('beef_raw', { itemKey: 'beef_cooked', count: 1, maxStackSize: 64 });
+    this.addRecipe('beef_raw', { id: 'beef_cooked', count: 1, maxStackSize: 64 });
     // §FurnaceRecipes.cpp:59 — `addFurnaceRecipe(Item::chicken_raw->id, ItemInstance(Item::chicken_cooked));`
-    this.addRecipe('chicken_raw', { itemKey: 'chicken_cooked', count: 1, maxStackSize: 64 });
+    this.addRecipe('chicken_raw', { id: 'chicken_cooked', count: 1, maxStackSize: 64 });
     // §FurnaceRecipes.cpp:61 — `addFurnaceRecipe(Tile::stoneBrick->id, ItemInstance(Tile::rock));`
-    this.addRecipe('stoneBrick', { itemKey: 'rock', count: 1, maxStackSize: 64 });
+    this.addRecipe('stoneBrick', { id: 'rock', count: 1, maxStackSize: 64 });
     // §FurnaceRecipes.cpp:62 — `addFurnaceRecipe(Item::clay->id, ItemInstance(Item::brick));`
-    this.addRecipe('clay', { itemKey: 'brick', count: 1, maxStackSize: 64 });
+    this.addRecipe('clay', { id: 'brick', count: 1, maxStackSize: 64 });
     // §FurnaceRecipes.cpp:63 — `addFurnaceRecipe(Tile::cactus->id, ItemInstance(Item::dye_powder, 1, DyePowderItem::GREEN));`
-    this.addRecipe('cactus', { itemKey: 'dye_powder', count: 1, maxStackSize: 64, auxValue: 2 }); // GREEN=2
+    this.addRecipe('cactus', { id: 'dye_powder', count: 1, maxStackSize: 64, auxValue: 2 }); // GREEN=2
     // §FurnaceRecipes.cpp:64 — `addFurnaceRecipe(Tile::mushroom2->id, ItemInstance(Item::dye_powder, 1, DyePowderItem::RED));`
-    this.addRecipe('mushroom2', { itemKey: 'dye_powder', count: 1, maxStackSize: 64, auxValue: 1 }); // RED=1
+    this.addRecipe('mushroom2', { id: 'dye_powder', count: 1, maxStackSize: 64, auxValue: 1 }); // RED=1
     // §FurnaceRecipes.cpp:65 — `addFurnaceRecipe(Tile::treeTrunk->id, ItemInstance(Item::coal, 1, CoalItem::CHAR_COAL));`
-    this.addRecipe('treeTrunk', { itemKey: 'coal', count: 1, maxStackSize: 64, auxValue: 1 }); // CHAR_COAL=1
+    this.addRecipe('treeTrunk', { id: 'coal', count: 1, maxStackSize: 64, auxValue: 1 }); // CHAR_COAL=1
     // §FurnaceRecipes.cpp:66 — `addFurnaceRecipe(Tile::netherrack->id, ItemInstance(Item::netherbrick));`
-    this.addRecipe('netherrack', { itemKey: 'netherbrick', count: 1, maxStackSize: 64 });
+    this.addRecipe('netherrack', { id: 'netherbrick', count: 1, maxStackSize: 64 });
   }
 }

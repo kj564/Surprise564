@@ -26,7 +26,7 @@ export class ShapelessRecipe extends Recipe {
     // §ShapelessRecipe.h:16-18 — `for (unsigned int i = 0; i < ingredients.size(); ++i)
     //   if (!ingredients[i].isNull()) myItems.add(getIdForItemInstance(&ingredients[i]));`
     for (const item of ingredients) {
-      this.myItems.add(item.itemKey);
+      this.myItems.add(item.id);
     }
   }
 
@@ -57,7 +57,7 @@ export class ShapelessRecipe extends Recipe {
           const ingredient = tempList[i];
           if (!ingredient) continue;
           // §ShapelessRecipe.h:44 — `if (item->id == ingredient.id && ...)`
-          if (item.itemKey === ingredient.itemKey) {
+          if (item.id === ingredient.id) {
             // §ShapelessRecipe.h:44 — `ingredient.getAuxValue() == Recipe::ANY_AUX_VALUE || ...`
             if (ingredient.auxValue === ANY_AUX_VALUE || ingredient.auxValue === undefined ||
                 ingredient.auxValue === item.auxValue) {

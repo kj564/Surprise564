@@ -73,7 +73,7 @@ export function placeBlockFromInventory(
 ): PlaceBlockResult | PlacementValidation {
   const stack = inventory.getSlot(slotIndex);
   if (!stack) return { status: 'inventory-empty' };
-  const blockId = registry.getIdByKey(stack.itemKey);
+  const blockId = registry.getIdByKey(stack.id);
   if (blockId === undefined || blockId === 0) return { status: 'not-a-block-item' };
 
   const validation = validatePlacementTarget(world, hit, blockId, registry);

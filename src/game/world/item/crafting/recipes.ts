@@ -14,7 +14,7 @@ import { ShapelessRecipe } from './shapeless-recipe';
 /** §Recipes.h:19-27 — `class Type { char c; Item* item; Tile* tile; ItemInstance itemInstance; }` */
 export interface RecipeType {
   readonly c: string;
-  readonly itemKey: string;
+  readonly id: string;
   readonly auxValue?: number;
 }
 
@@ -28,19 +28,19 @@ export function shape3(r0: string, r1: string, r2: string): string[] { return [r
 
 // === §Recipes.h:37-39 — definition() helpers ===
 /** §Recipes.h:48 — `template<class T> TypeList definition(char c0, T t)` */
-export function def(c: string, itemKey: string, auxValue?: number): RecipeType[] {
-  return [{ c, itemKey, auxValue }];
+export function def(c: string, id: string, auxValue?: number): RecipeType[] {
+  return [{ c, id: itemKey, auxValue }];
 }
 export function def2(c0: string, k0: string, c1: string, k1: string): RecipeType[] {
-  return [{ c: c0, itemKey: k0 }, { c: c1, itemKey: k1 }];
+  return [{ c: c0, id: k0 }, { c: c1, id: k1 }];
 }
 export function def3(c0: string, k0: string, c1: string, k1: string, c2: string, k2: string): RecipeType[] {
-  return [{ c: c0, itemKey: k0 }, { c: c1, itemKey: k1 }, { c: c2, itemKey: k2 }];
+  return [{ c: c0, id: k0 }, { c: c1, id: k1 }, { c: c2, id: k2 }];
 }
 
 /** Helper: create an ItemStack */
-export function itemStack(itemKey: string, count = 1, auxValue?: number): ItemStack {
-  return { itemKey, count, maxStackSize: 64, auxValue };
+export function itemStack(id: string, count = 1, auxValue?: number): ItemStack {
+  return { id: itemKey, count, maxStackSize: 64, auxValue };
 }
 
 /** §Recipes.h:8 — `typedef std::vector<Recipe*> RecipeList;` */
@@ -81,7 +81,7 @@ export class Recipes {
   getRecipeFor(result: ItemStack): Recipe | null {
     for (const r of this.recipes) {
       const ri = r.getResultItem();
-      if (ri.itemKey === result.itemKey) return r;
+      if (ri.id === result.id) return r;
     }
     return null;
   }
@@ -116,7 +116,7 @@ export class Recipes {
         const c = rows[y][x];
         const type = typeMap.get(c);
         if (type) {
-          recipeItems.push(itemStack(type.itemKey, 1, type.auxValue));
+          recipeItems.push(itemStack(type.id, 1, type.auxValue));
         } else {
           recipeItems.push(itemStack('air', 0));
         }
@@ -127,7 +127,7 @@ export class Recipes {
 
   /** §Recipes.h:37 — `void addShapelessRecipe(result, types)` */
   addShapelessRecipe(result: ItemStack, types: RecipeType[]): void {
-    const ingredients = types.map((t) => itemStack(t.itemKey, 1, t.auxValue));
+    const ingredients = types.map((t) => itemStack(t.id, 1, t.auxValue));
     this.recipes.push(new ShapelessRecipe(result, ingredients));
   }
 
@@ -271,9 +271,9 @@ export class Recipes {
 
     for (const [block, ingot] of pairs) {
       // §OreRecipes.cpp:24-27 — 9 ingots → 1 block (3×3)
-      this.addShapedRecipe3(itemStack(block, 1), '###', '###', '###', def('#', ingot.itemKey));
+      this.addShapedRecipe3(itemStack(block, 1), '###', '###', '###', def('#', ingot.id));
       // §OreRecipes.cpp:29-31 — 1 block → 9 ingots
-      this.addShapedRecipe(itemStack(ingot.itemKey, ingot.count), '#', def('#', block));
+      this.addShapedRecipe(itemStack(ingot.id, ingot.count), '#', def('#', block));
     }
   }
 

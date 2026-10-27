@@ -251,8 +251,8 @@ export function finishBlockBreak(
   const remaining: ItemStack[] = [];
   for (const dropKey of definition.drops) {
     const result = inventory.insert(dropKey, 1);
-    if (result.inserted > 0) inserted.push(Object.freeze({ itemKey: dropKey, count: result.inserted, maxStackSize: 64 }));
-    if (result.remainder > 0) remaining.push(Object.freeze({ itemKey: dropKey, count: result.remainder, maxStackSize: 64 }));
+    if (result.inserted > 0) inserted.push(Object.freeze({ id: dropKey, count: result.inserted, maxStackSize: 64 }));
+    if (result.remainder > 0) remaining.push(Object.freeze({ id: dropKey, count: result.remainder, maxStackSize: 64 }));
   }
   return {
     status: 'broken',

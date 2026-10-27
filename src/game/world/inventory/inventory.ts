@@ -1,10 +1,10 @@
 export interface ItemStack {
-  readonly itemKey: string;
+  /** §ItemInstance.h:107 — int id (Tile 0-255 or Item 256+). C++ uses int IDs, NOT string keys. */
+  readonly id: number;
+  /** §ItemInstance.h:105 — int count */
   readonly count: number;
   readonly maxStackSize: number;
-  /** §ItemInstance::auxValue (ItemInstance.h:97-99) — used as durability
-   *  for damageable items (tools), block data (wool color, etc.) for blocks.
-   *  Optional for backward compat; defaults to 0 (no damage). */
+  /** §ItemInstance.h:114 — int auxValue (durability for tools, data for blocks) */
   readonly auxValue?: number;
 }
 
@@ -44,7 +44,7 @@ export class Inventory {
   setSlot(index: number, stack: ItemStack | null): boolean {
     const slot = this.assertSlot(index);
     // §Preserve auxValue (durability) when normalizing input stack.
-    const normalized = stack === null ? null : createStack(stack.itemKey, stack.count, stack.maxStackSize, stack.auxValue);
+    const normalized = stack === null ? null : createStack(stack.id, stack.count, stack.maxStackSize, stack.auxValue);
     const previous = this.slots[slot];
     if (sameStack(previous, normalized)) return false;
     this.slots[slot] = normalized;
@@ -53,15 +53,15 @@ export class Inventory {
   }
 
   /** Fills compatible stacks first, then empty slots; returns any items that did not fit. */
-  insert(itemKey: string, count: number, maxStackSize = 64): InsertResult {
-    validateItemKey(itemKey);
+  insert(id: string, count: number, maxStackSize = 64): InsertResult {
+    validateItemId(id);
     positiveInteger(count, 'count');
     positiveInteger(maxStackSize, 'maxStackSize');
     if (maxStackSize > 999) throw new RangeError('maxStackSize cannot exceed 999');
 
     for (const stack of this.slots) {
-      if (stack?.itemKey === itemKey && stack.maxStackSize !== maxStackSize) {
-        throw new Error('maxStackSize does not match existing stack definition for ' + itemKey);
+      if (stack?.id === id && stack.maxStackSize !== maxStackSize) {
+        throw new Error('maxStackSize does not match existing stack definition for ' + id);
       }
     }
 
@@ -69,16 +69,16 @@ export class Inventory {
     let changed = false;
     for (let index = 0; index < this.slots.length && remaining > 0; index += 1) {
       const stack = this.slots[index];
-      if (!stack || stack.itemKey !== itemKey || stack.count >= stack.maxStackSize) continue;
+      if (!stack || stack.id !== id || stack.count >= stack.maxStackSize) continue;
       const amount = Math.min(remaining, stack.maxStackSize - stack.count);
-      this.slots[index] = createStack(itemKey, stack.count + amount, maxStackSize);
+      this.slots[index] = createStack(id, stack.count + amount, maxStackSize);
       remaining -= amount;
       changed = true;
     }
     for (let index = 0; index < this.slots.length && remaining > 0; index += 1) {
       if (this.slots[index] !== null) continue;
       const amount = Math.min(remaining, maxStackSize);
-      this.slots[index] = createStack(itemKey, amount, maxStackSize);
+      this.slots[index] = createStack(id, amount, maxStackSize);
       remaining -= amount;
       changed = true;
     }
@@ -93,10 +93,10 @@ export class Inventory {
     const stack = this.slots[slot];
     if (!stack) return null;
     const removedCount = Math.min(count, stack.count);
-    const removed = createStack(stack.itemKey, removedCount, stack.maxStackSize);
+    const removed = createStack(stack.id, removedCount, stack.maxStackSize);
     this.slots[slot] = removedCount === stack.count
       ? null
-      : createStack(stack.itemKey, stack.count - removedCount, stack.maxStackSize);
+      : createStack(stack.id, stack.count - removedCount, stack.maxStackSize);
     this._revision += 1;
     return removed;
   }
@@ -120,8 +120,8 @@ export class Inventory {
   }
 }
 
-function createStack(itemKey: string, count: number, maxStackSize: number, auxValue?: number): ItemStack {
-  validateItemKey(itemKey);
+function createStack(id: string, count: number, maxStackSize: number, auxValue?: number): ItemStack {
+  validateItemId(id);
   positiveInteger(count, 'count');
   positiveInteger(maxStackSize, 'maxStackSize');
   if (maxStackSize > 999) throw new RangeError('maxStackSize cannot exceed 999');
@@ -131,12 +131,12 @@ function createStack(itemKey: string, count: number, maxStackSize: number, auxVa
   if (auxValue !== undefined && (!Number.isInteger(auxValue) || auxValue < 0 || auxValue > 9999)) {
     throw new RangeError('auxValue must be a non-negative integer up to 9999');
   }
-  return Object.freeze({ itemKey, count, maxStackSize, auxValue: auxValue ?? 0 });
+  return Object.freeze({ id, count, maxStackSize, auxValue: auxValue ?? 0 });
 }
 
-function validateItemKey(itemKey: string): void {
-  if (typeof itemKey !== 'string' || !/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(itemKey)) {
-    throw new TypeError('itemKey must be a lowercase namespaced key');
+function validateItemId(id: number): void {
+  if (!Number.isInteger(id) || id < 0) {
+    throw new TypeError('id must be a non-negative integer (C++ ItemInstance.id)');
   }
 }
 
@@ -147,8 +147,8 @@ function positiveInteger(value: number, name: string): void {
 function sameStack(a: ItemStack | null, b: ItemStack | null): boolean {
   // §Compare auxValue too — tools with different durability are NOT the same stack.
   // Without this, setSlot would silently no-op when applyToolDurability updates
-  // auxValue on a tool (same itemKey/count/maxStackSize but different wear).
+  // auxValue on a tool (same id/count/maxStackSize but different wear).
   return a === b || (a !== null && b !== null &&
-    a.itemKey === b.itemKey && a.count === b.count && a.maxStackSize === b.maxStackSize &&
+    a.id === b.id && a.count === b.count && a.maxStackSize === b.maxStackSize &&
     (a.auxValue ?? 0) === (b.auxValue ?? 0));
 }

@@ -17,8 +17,8 @@ export const SKELETON_RANGED_COOLDOWN_TICKS = TICKS_PER_SECOND * 3;
 /** §Skeleton.h:13-41 — Skeleton mob. */
 export class Skeleton extends Monster {
   /** §Skeleton.h:39 — `ItemInstance bow;` (constructed as `ItemInstance(Item::bow, 1)`). */
-  protected readonly bow: { readonly itemKey: string; readonly count: number } = Object.freeze({
-    itemKey: 'minecraft:bow',
+  protected readonly bow: { readonly id: string; readonly count: number } = Object.freeze({
+    id: 'minecraft:bow',
     count: 1,
   });
   /** §Skeleton.h:40 — `int fireCheckTick;` */
@@ -72,7 +72,7 @@ export class Skeleton extends Monster {
   }
 
   /** §Skeleton.cpp:42-44 — `ItemInstance* Skeleton::getCarriedItem() { return &bow; }`. */
-  override getCarriedItem(): { readonly itemKey: string; readonly count: number } | null {
+  override getCarriedItem(): { readonly id: string; readonly count: number } | null {
     return this.bow;
   }
 

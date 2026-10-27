@@ -137,7 +137,7 @@ export function validateWorldSave(input: unknown): SaveValidationResult {
           normalizedInventory.push(null);
           return;
         }
-        if (!isRecord(stack) || typeof stack.itemKey !== 'string' || !/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(stack.itemKey) ||
+        if (!isRecord(stack) || typeof stack.id !== 'string' || !/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(stack.id) ||
             !isBoundedInteger(stack.count, 1, 999) || !isBoundedInteger(stack.maxStackSize, 1, 999) || stack.count > stack.maxStackSize) {
           errors.push('player.inventory[' + index + '] is not a valid item stack');
           return;
@@ -146,7 +146,7 @@ export function validateWorldSave(input: unknown): SaveValidationResult {
         // Validated as a non-negative integer (cap at 9999 to bound memory).
         // If absent or invalid, defaults to 0 (fresh tool with no wear).
         const auxValue = (typeof stack.auxValue === 'number' && Number.isInteger(stack.auxValue) && stack.auxValue >= 0 && stack.auxValue <= 9999) ? stack.auxValue : 0;
-        normalizedInventory.push(Object.freeze({ itemKey: stack.itemKey, count: stack.count, maxStackSize: stack.maxStackSize, auxValue }));
+        normalizedInventory.push(Object.freeze({ id: stack.id, count: stack.count, maxStackSize: stack.maxStackSize, auxValue }));
       });
     }
     if (isRecord(position) && [position.x, position.y, position.z].every(Number.isFinite) &&

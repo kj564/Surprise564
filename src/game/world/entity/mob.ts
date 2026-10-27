@@ -987,7 +987,7 @@ export abstract class Mob extends Entity {
   }
 
   /** §Mob.h:120 — `virtual ItemInstance* getCarriedItem() { return NULL; }`. */
-  getCarriedItem(): { readonly itemKey: string; readonly count: number } | null {
+  getCarriedItem(): { readonly id: string; readonly count: number } | null {
     return null;
   }
 
