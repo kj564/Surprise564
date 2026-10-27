@@ -4523,6 +4523,461 @@ class MobFactory {
   }
 }
 
+// src/game/world/level/tile/entity/tile-entity.ts
+var TILE_ENTITY_FURNACE = 1;
+var TILE_ENTITY_CHEST = 2;
+var TILE_ENTITY_SIGN = 4;
+
+class TileEntity {
+  level = null;
+  x = 0;
+  y = 0;
+  z = 0;
+  data = 0;
+  type;
+  runningId = 0;
+  clientSideOnly = false;
+  rendererId = 0;
+  tile = 0;
+  removed = false;
+  constructor(type) {
+    this.type = type;
+  }
+  load(tag) {
+    this.x = tag.x ?? this.x;
+    this.y = tag.y ?? this.y;
+    this.z = tag.z ?? this.z;
+  }
+  save(tag) {
+    tag.x = this.x;
+    tag.y = this.y;
+    tag.z = this.z;
+    return true;
+  }
+  tick() {}
+  isFinished() {
+    return this.removed;
+  }
+  setLevelAndPos(level, x, y, z) {
+    this.level = level;
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+  distanceToSqr(x, y, z) {
+    const dx = this.x - x, dy = this.y - y, dz = this.z - z;
+    return dx * dx + dy * dy + dz * dz;
+  }
+  getTile() {
+    return this.tile;
+  }
+  isRemoved() {
+    return this.removed;
+  }
+  setRemoved() {
+    this.removed = true;
+  }
+  clearRemoved() {
+    this.removed = false;
+  }
+  triggerEvent(_b0, _b1) {}
+  clearCache() {}
+  isType(type) {
+    return this.type === type;
+  }
+  setChanged() {}
+}
+
+// src/game/world/level/tile/entity/furnace-tile-entity.ts
+var FURNACE_BURN_INTERVAL = 10 * 20;
+var FURNACE_NUM_SLOTS = 3;
+var SLOT_INGREDIENT = 0;
+var SLOT_FUEL = 1;
+var SLOT_RESULT = 2;
+
+class FurnaceTileEntity extends TileEntity {
+  litTime = 0;
+  litDuration = 0;
+  tickCount = 0;
+  items = [null, null, null];
+  _canBeFinished = false;
+  _finished = false;
+  constructor() {
+    super(TILE_ENTITY_FURNACE);
+  }
+  getItem(slot) {
+    return this.items[slot] ?? null;
+  }
+  setItem(slot, item) {
+    this.items[slot] = item;
+    this.setChanged();
+  }
+  removeItem(slot, count) {
+    const item = this.items[slot];
+    if (!item)
+      return null;
+    if (item.count <= count) {
+      this.items[slot] = null;
+      this.setChanged();
+      return item;
+    }
+    const removed = { ...item, count };
+    this.items[slot] = { ...item, count: item.count - count };
+    this.setChanged();
+    return removed;
+  }
+  getContainerSize() {
+    return FURNACE_NUM_SLOTS;
+  }
+  getMaxStackSize() {
+    return 64;
+  }
+  shouldSave() {
+    if (this.litTime > 0)
+      return true;
+    for (let i = 0;i < FURNACE_NUM_SLOTS; i++) {
+      if (this.items[i])
+        return true;
+    }
+    return false;
+  }
+  load(tag) {
+    super.load(tag);
+    const items = tag.Items;
+    for (let i = 0;i < FURNACE_NUM_SLOTS; i++)
+      this.items[i] = null;
+    if (items) {
+      for (const entry of items) {
+        const slot = entry.Slot;
+        if (slot >= 0 && slot < FURNACE_NUM_SLOTS) {
+          this.items[slot] = {
+            itemKey: entry.id,
+            count: entry.count,
+            maxStackSize: 64,
+            auxValue: entry.auxValue
+          };
+        }
+      }
+    }
+    this.litTime = tag.BurnTime ?? 0;
+    this.tickCount = tag.CookTime ?? 0;
+    this.litDuration = this.getBurnDuration(this.items[SLOT_FUEL]);
+  }
+  save(tag) {
+    if (!super.save(tag))
+      return false;
+    tag.BurnTime = this.litTime;
+    tag.CookTime = this.tickCount;
+    const items = [];
+    for (let i = 0;i < FURNACE_NUM_SLOTS; i++) {
+      const item = this.items[i];
+      if (item) {
+        items.push({ Slot: i, id: item.itemKey, count: item.count, auxValue: item.auxValue });
+      }
+    }
+    tag.Items = items;
+    return true;
+  }
+  getBurnProgress(max) {
+    return this.tickCount * max / FURNACE_BURN_INTERVAL;
+  }
+  getLitProgress(max) {
+    if (this.litDuration === 0)
+      this.litDuration = FURNACE_BURN_INTERVAL;
+    return this.litTime * max / this.litDuration;
+  }
+  isLit() {
+    return this.litTime > 0;
+  }
+  isSlotEmpty(slot) {
+    return this.items[slot] === null;
+  }
+  tick() {
+    const wasLit = this.litTime > 0;
+    let changed = false;
+    if (this.litTime > 0)
+      this.litTime--;
+    if (this.litTime === 0 && this.canBurn()) {
+      this.litDuration = this.litTime = this.getBurnDuration(this.items[SLOT_FUEL]);
+      if (this.litTime > 0) {
+        changed = true;
+        const fuel = this.items[SLOT_FUEL];
+        if (fuel) {
+          const newCount = fuel.count - 1;
+          if (newCount <= 0) {
+            this.items[SLOT_FUEL] = null;
+          } else {
+            this.items[SLOT_FUEL] = { ...fuel, count: newCount };
+          }
+        }
+      }
+    }
+    if (this.isLit() && this.canBurn()) {
+      if (++this.tickCount === FURNACE_BURN_INTERVAL) {
+        this.tickCount = 0;
+        this.burn();
+        changed = true;
+      }
+    } else {
+      this.tickCount = 0;
+    }
+    if (wasLit !== this.litTime > 0) {
+      changed = true;
+    }
+    if (changed)
+      this.setChanged();
+    else if (!wasLit)
+      this._finished = true;
+  }
+  isFinished() {
+    return this._canBeFinished && this._finished;
+  }
+  burn() {
+    if (!this.canBurn())
+      return;
+    const ingredient = this.items[SLOT_INGREDIENT];
+    if (!ingredient)
+      return;
+    let resultKey = null;
+    if (typeof window !== "undefined" && window.VoxelCraftFurnaceRecipes) {
+      const result = window.VoxelCraftFurnaceRecipes.getInstance().getResult(ingredient.itemKey);
+      if (result)
+        resultKey = result.itemKey;
+    }
+    if (!resultKey)
+      return;
+    const resultSlot = this.items[SLOT_RESULT];
+    if (!resultSlot) {
+      this.items[SLOT_RESULT] = { itemKey: resultKey, count: 1, maxStackSize: 64 };
+    } else if (resultSlot.itemKey === resultKey) {
+      this.items[SLOT_RESULT] = { ...resultSlot, count: resultSlot.count + 1 };
+    }
+    const newIngCount = ingredient.count - 1;
+    if (newIngCount <= 0) {
+      this.items[SLOT_INGREDIENT] = null;
+    } else {
+      this.items[SLOT_INGREDIENT] = { ...ingredient, count: newIngCount };
+    }
+    this.setChanged();
+  }
+  canBurn() {
+    const ingredient = this.items[SLOT_INGREDIENT];
+    if (!ingredient)
+      return false;
+    let resultKey = null;
+    if (typeof window !== "undefined" && window.VoxelCraftFurnaceRecipes) {
+      const result = window.VoxelCraftFurnaceRecipes.getInstance().getResult(ingredient.itemKey);
+      if (result)
+        resultKey = result.itemKey;
+    }
+    if (!resultKey)
+      return false;
+    const resultSlot = this.items[SLOT_RESULT];
+    if (!resultSlot)
+      return true;
+    if (resultSlot.itemKey !== resultKey)
+      return false;
+    if (resultSlot.count < this.getMaxStackSize())
+      return true;
+    return false;
+  }
+  getBurnDuration(item) {
+    if (!item)
+      return 0;
+    const key = item.itemKey;
+    if (key.includes("planks") || key.includes("log") || key.includes("wood") || key.includes("oak_log") || key.includes("oak_planks"))
+      return FURNACE_BURN_INTERVAL * 3 / 2;
+    if (key === "stick")
+      return FURNACE_BURN_INTERVAL / 2;
+    if (key === "coal")
+      return FURNACE_BURN_INTERVAL * 8;
+    return 0;
+  }
+  static isFuel(item) {
+    const temp = new FurnaceTileEntity;
+    return temp.getBurnDuration(item) > 0;
+  }
+}
+
+// src/game/world/level/tile/entity/chest-tile-entity.ts
+var CHEST_SIZE = 9 * 3;
+
+class ChestTileEntity extends TileEntity {
+  items = new Array(CHEST_SIZE).fill(null);
+  hasCheckedNeighbors = false;
+  n = null;
+  e = null;
+  w = null;
+  s = null;
+  openness = 0;
+  oOpenness = 0;
+  openCount = 0;
+  tickInterval = 0;
+  constructor() {
+    super(TILE_ENTITY_CHEST);
+  }
+  getContainerSize() {
+    return CHEST_SIZE;
+  }
+  getMaxStackSize() {
+    return 64;
+  }
+  getName() {
+    return "container.chest";
+  }
+  getItem(slot) {
+    return this.items[slot] ?? null;
+  }
+  setItem(slot, item) {
+    this.items[slot] = item;
+    this.setChanged();
+  }
+  shouldSave() {
+    for (let i = 0;i < CHEST_SIZE; i++) {
+      if (this.items[i])
+        return true;
+    }
+    return false;
+  }
+  load(tag) {
+    super.load(tag);
+    const items = tag.Items;
+    if (!items)
+      return;
+    for (const entry of items) {
+      const slot = entry.Slot & 255;
+      if (slot >= 0 && slot < CHEST_SIZE) {
+        this.items[slot] = {
+          itemKey: entry.id,
+          count: entry.count,
+          maxStackSize: 64,
+          auxValue: entry.auxValue
+        };
+      }
+    }
+  }
+  save(tag) {
+    if (!super.save(tag))
+      return false;
+    const items = [];
+    for (let i = 0;i < CHEST_SIZE; i++) {
+      const item = this.items[i];
+      if (item) {
+        items.push({ Slot: i, id: item.itemKey, count: item.count, auxValue: item.auxValue });
+      }
+    }
+    tag.Items = items;
+    return true;
+  }
+  tick() {
+    this.oOpenness = this.openness;
+    const target = this.openCount > 0 ? 1 : 0;
+    this.openness += (target - this.openness) * 0.1;
+    if (++this.tickInterval >= 20) {
+      this.tickInterval = 0;
+      this.checkNeighbors();
+    }
+  }
+  checkNeighbors() {
+    if (this.hasCheckedNeighbors)
+      return;
+    this.hasCheckedNeighbors = true;
+  }
+  triggerEvent(b0, _b1) {
+    if (b0 === 1) {
+      this.openCount = _b1;
+    }
+  }
+  startOpen() {
+    ++this.openCount;
+    this.setChanged();
+  }
+  stopOpen() {
+    --this.openCount;
+    this.setChanged();
+  }
+  setRemoved() {
+    super.setRemoved();
+    if (this.n) {
+      this.n.hasCheckedNeighbors = false;
+      this.n.s = null;
+    }
+    if (this.s) {
+      this.s.hasCheckedNeighbors = false;
+      this.s.n = null;
+    }
+    if (this.e) {
+      this.e.hasCheckedNeighbors = false;
+      this.e.w = null;
+    }
+    if (this.w) {
+      this.w.hasCheckedNeighbors = false;
+      this.w.e = null;
+    }
+  }
+}
+
+// src/game/world/level/tile/entity/sign-tile-entity.ts
+var SIGN_MAX_LINE_LENGTH = 15;
+var SIGN_NUM_LINES = 4;
+
+class SignTileEntity extends TileEntity {
+  messages = ["", "", "", ""];
+  selectedLine = -1;
+  editable = true;
+  constructor() {
+    super(TILE_ENTITY_SIGN);
+  }
+  save(tag) {
+    if (!super.save(tag))
+      return false;
+    tag.Text1 = this.messages[0];
+    tag.Text2 = this.messages[1];
+    tag.Text3 = this.messages[2];
+    tag.Text4 = this.messages[3];
+    return true;
+  }
+  load(tag) {
+    this.editable = false;
+    super.load(tag);
+    this.messages[0] = tag.Text1 ?? "";
+    this.messages[1] = tag.Text2 ?? "";
+    this.messages[2] = tag.Text3 ?? "";
+    this.messages[3] = tag.Text4 ?? "";
+    for (let i = 0;i < SIGN_NUM_LINES; i++) {
+      if (this.messages[i].length > SIGN_MAX_LINE_LENGTH) {
+        this.messages[i] = this.messages[i].substring(0, SIGN_MAX_LINE_LENGTH);
+      }
+    }
+  }
+  shouldSave() {
+    return true;
+  }
+  isEditable() {
+    return this.editable;
+  }
+  setEditable(editable) {
+    this.editable = editable;
+  }
+  setLevelAndPos(level, x, y, z) {
+    super.setLevelAndPos(level, x, y, z);
+  }
+}
+
+// src/game/world/level/tile/entity/tile-entity-factory.ts
+function createTileEntity(type) {
+  switch (type) {
+    case TILE_ENTITY_FURNACE:
+      return new FurnaceTileEntity;
+    case TILE_ENTITY_CHEST:
+      return new ChestTileEntity;
+    case TILE_ENTITY_SIGN:
+      return new SignTileEntity;
+    default:
+      return null;
+  }
+}
+
 // src/game/world/item/crafting/recipe.ts
 var SIZE_2X2 = 0;
 var SIZE_3X3 = 1;
@@ -4928,5 +5383,9 @@ window.VoxelCraftZombie = Zombie;
 window.VoxelCraftCreeper = Creeper;
 window.VoxelCraftSkeleton = Skeleton;
 window.VoxelCraftSpider = Spider;
+window.VoxelCraftFurnaceTileEntity = FurnaceTileEntity;
+window.VoxelCraftChestTileEntity = ChestTileEntity;
+window.VoxelCraftSignTileEntity = SignTileEntity;
+window.VoxelCraftCreateTileEntity = createTileEntity;
 window.VoxelCraftRecipes = Recipes;
 window.VoxelCraftFurnaceRecipes = FurnaceRecipes;

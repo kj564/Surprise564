@@ -17,6 +17,13 @@ import { Creeper } from './world/entity/monster/creeper';
 import { Skeleton } from './world/entity/monster/skeleton';
 import { Spider } from './world/entity/monster/spider';
 
+
+// §Tile Entity system — ported from MCPE 2013 C++ (TileEntity.h, FurnaceTileEntity, ChestTileEntity, SignTileEntity)
+import { FurnaceTileEntity } from './world/level/tile/entity/furnace-tile-entity';
+import { ChestTileEntity } from './world/level/tile/entity/chest-tile-entity';
+import { SignTileEntity } from './world/level/tile/entity/sign-tile-entity';
+import { createTileEntity } from './world/level/tile/entity/tile-entity-factory';
+import { TILE_ENTITY_FURNACE, TILE_ENTITY_CHEST, TILE_ENTITY_SIGN } from './world/level/tile/entity/tile-entity';
 // §Crafting system — ported from MCPE 2013 C++ (Recipe.h, Recipes.h, FurnaceRecipes.h)
 import { Recipes } from './world/item/crafting/recipes';
 import { FurnaceRecipes } from './world/item/crafting/furnace-recipes';
@@ -43,6 +50,11 @@ declare global {
     VoxelCraftCreeper: typeof Creeper;
     VoxelCraftSkeleton: typeof Skeleton;
     VoxelCraftSpider: typeof Spider;
+    // §Tile Entity system exports
+    VoxelCraftFurnaceTileEntity: typeof FurnaceTileEntity;
+    VoxelCraftChestTileEntity: typeof ChestTileEntity;
+    VoxelCraftSignTileEntity: typeof SignTileEntity;
+    VoxelCraftCreateTileEntity: typeof createTileEntity;
     // §Crafting system exports
     VoxelCraftRecipes: typeof Recipes;
     VoxelCraftFurnaceRecipes: typeof FurnaceRecipes;
@@ -67,6 +79,12 @@ window.VoxelCraftZombie = Zombie;
 window.VoxelCraftCreeper = Creeper;
 window.VoxelCraftSkeleton = Skeleton;
 window.VoxelCraftSpider = Spider;
+
+// §Expose tile entity system
+window.VoxelCraftFurnaceTileEntity = FurnaceTileEntity;
+window.VoxelCraftChestTileEntity = ChestTileEntity;
+window.VoxelCraftSignTileEntity = SignTileEntity;
+window.VoxelCraftCreateTileEntity = createTileEntity;
 
 // §Expose crafting system so minecraft.html can query recipes
 window.VoxelCraftRecipes = Recipes;
