@@ -2345,6 +2345,9 @@
     // Expose closure state for Agent Browser testing (pointer lock fails in headless)
     window.__setGameState = (l, g) => { locked = l; gameStarted = g; };
         let lastBreak = 0, lastPlace = 0;
+    // §CTR-001 — declared so contextmenu / debug overlay can read the last
+    // raycast hit. Updated each animate() frame from raycastVoxel().
+    let currentTargetBlock = null;
     let worldTime = 0.28;
 
     // debug exports
@@ -4393,7 +4396,12 @@
       invGridEl.innerHTML = '';
       const allowedIds = inventoryFilterSets[filter];
       invGridEl.removeAttribute('aria-label');
-      for (let id = 1; id <= 35; id++) {
+      // §INV-001 — iterate over ALL registered block IDs in BLOCKS (sorted),
+      // not just ids 1..35. This makes torches (50), chest (54), workbench (58),
+      // furnace (61/62), door (64), ladder (65), ice (79), fence (85), netherrack
+      // (87), glowstone (89), trapdoor (96), stone_brick (98), melon (103),
+      // fence_gate (107) etc. all pickable from the inventory.
+      for (const id of Object.keys(BLOCKS).map(Number).filter(id => id > 0).sort((a, b) => a - b)) {
         const def = BLOCKS[id];
         if (!def || (allowedIds && !allowedIds.has(id))) continue;
         const slot = document.createElement('div');
@@ -4991,22 +4999,11 @@
         player.vel.z *= friction;
       }
 
-      // §Entity::baseTick drowning (Entity.cpp:491-510):
-      //   if in water: airSupply-- per tick
-      //   if airSupply <= -20: hurt(1), airSupply = 0 (drowning damage)
-      if (player.canHurtPlayer) {
-        const gx = Math.floor(player.pos.x), gy = Math.floor(player.pos.y + 0.5), gz = Math.floor(player.pos.z);
-        const inWater = world.getBlock(gx, gy, gz) === 8;  // water block id
-        if (inWater) {
-          player.airSupply -= 1;
-          if (player.airSupply <= -20) {
-            hurtPlayer(1);
-            player.airSupply = 0;
-          }
-        } else {
-          player.airSupply = player.maxAirSupply;
-        }
-      }
+      // §UI-007 — air supply (drowning) is now handled solely by
+      // updateAirSupply() (called from the consolidated 100ms setInterval)
+      // which also updates the bubbles UI. The previous inline decrement here
+      // caused a double-decrement (20 tps + 10 fps = ~30/sec) making the
+      // player drown in ~10 s instead of ~15 s.
 
       // §Player::aiStep peaceful regen (Player.cpp:426-428):
       //   if (tickCount % (12 * TicksPerSecond) == 0) heal(1)
@@ -5061,6 +5058,12 @@
           player.vel.set(0, 0, 0);
           player.invulnerableTime = 0;
           player.fallDistance = 0;
+          player.airSupply = player.maxAirSupply;
+          // §UI-008 — hide the death screen so the auto-respawn actually unblocks
+          // the player (the overlay was shown by checkPlayerDeath when health<=0).
+          document.getElementById('deathScreen')?.classList.add('hidden');
+          // §UI-008 — refresh the hearts row so the new full health is visible.
+          if (typeof updateHearts === 'function') updateHearts();
           toast('Respawn!');
         }, 2000);
       }
@@ -5826,6 +5829,9 @@
       } else {
         highlightEdges.visible = false;
       }
+      // §CTR-001 — cache the current raycast hit for the right-click handler
+      // (contextmenu event) and the debug overlay.
+      currentTargetBlock = hit ? { id: hit.blockId, x: hit.x, y: hit.y, z: hit.z } : null;
 
       renderer.render(scene, camera);
 
@@ -5916,29 +5922,13 @@
     // ============================================================
 
     // === §Gui.cpp:604-624 — renderBubbles (air supply) ===
+    // §UI-006/UI-007 — the standalone updateBubbles() that read
+    // voxelEngine.player.isUnderwater / .airSupply (which don't exist on the
+    // bundle's PlayerPhysics) is removed. The bubbles UI is now updated by
+    // updateAirSupply() below, which reads the HTML `player` object directly
+    // AND decrements playerAirSupply once per 100 ms (no double-decrement with
+    // the physics tick).
     const bubblesEl = document.getElementById('bubbles');
-    function updateBubbles() {
-      if (!voxelEngine || !voxelEngine.player) { bubblesEl.classList.add('hidden'); return; }
-      const player = voxelEngine.player;
-      // §Gui.cpp:608 — `if (isUnderLiquid(water))`
-      if (player.isUnderwater) {
-        bubblesEl.classList.remove('hidden');
-        // §Gui.cpp:610 — count = ceil((air - 2) * 10 / TOTAL_AIR_SUPPLY)
-        const totalAir = 300; // §Entity.h:27 — TOTAL_AIR_SUPPLY = 15 * TPS = 300
-        const count = Math.ceil((player.airSupply - 2) * 10 / totalAir);
-        const extra = Math.ceil(player.airSupply * 10 / totalAir) - count;
-        bubblesEl.innerHTML = '';
-        for (let i = 0; i < count + extra; i++) {
-          const b = document.createElement('div');
-          b.className = 'bubble';
-          // §Gui.cpp:614-615 — full vs empty bubble
-          if (i >= count) b.style.opacity = '0.3';
-          bubblesEl.appendChild(b);
-        }
-      } else {
-        bubblesEl.classList.add('hidden');
-      }
-    }
 
     // === §Gui.cpp:625-639 — renderDebugInfo ===
     const debugEl = document.getElementById('debugOverlay');
@@ -5952,8 +5942,11 @@
       const p = voxelEngine.player;
       document.getElementById('debugCoords').textContent = `XYZ: ${p.x.toFixed(1)} / ${p.y.toFixed(1)} / ${p.z.toFixed(1)}`;
       document.getElementById('debugChunk').textContent = `Chunk: ${Math.floor(p.x/16)}, ${Math.floor(p.z/16)}`;
-      document.getElementById('debugFps').textContent = `FPS: ${Math.round(currentFps)}`;
-      document.getElementById('debugBlock').textContent = `Block: ${currentTargetBlock || 'none'}`;
+      // §UI-001 — use the existing `fps` variable (computed in animate()), not the
+      // undefined `currentFps`. Read currentTargetBlock.id safely now that the
+      // variable is declared (CTR-001).
+      document.getElementById('debugFps').textContent = `FPS: ${Math.round(fps)}`;
+      document.getElementById('debugBlock').textContent = `Block: ${currentTargetBlock ? currentTargetBlock.id : 'none'}`;
       document.getElementById('debugEntities').textContent = `Entities: ${mobs.length}`;
     }
 
@@ -6074,10 +6067,19 @@
 
     // === Integrate into main loop ===
     const origUpdateGame = typeof updateGame === 'function' ? updateGame : null;
-    // Bubbles + debug updates (called from existing game loop)
+    // §UI-007 — consolidated 100 ms tick. updateAirSupply() both decrements the
+    // player's air supply AND redraws the bubbles UI (replacing the broken
+    // updateBubbles() that read non-existent voxelEngine.player.isUnderwater).
+    // checkPlayerDeath() shows the death screen when health <= 0. updateDebug()
+    // refreshes the F3 overlay. The previous duplicate setInterval at the bottom
+    // of this <script> block that re-ran updateAirSupply + checkPlayerDeath is
+    // removed (it caused double-decrement — player drowned in ~10 s not ~15 s).
     setInterval(() => {
+      if (typeof gameStarted !== 'undefined' && gameStarted && typeof player !== 'undefined' && player) {
+        updateAirSupply();
+        checkPlayerDeath();
+      }
       if (typeof voxelEngine !== 'undefined' && voxelEngine) {
-        updateBubbles();
         updateDebug();
       }
     }, 100);
@@ -6101,9 +6103,15 @@
     document.getElementById('respawnBtn')?.addEventListener('click', () => {
       document.getElementById('deathScreen')?.classList.add('hidden');
       if (player) {
-        player.health = 20;
+        // §UI-008 — reset health, position, velocity, AND air supply so the
+        // player is fully alive again. updateHearts() refreshes the hearts row.
+        player.health = player.maxHealth || 20;
         player.pos.x = 8; player.pos.y = WATER_LEVEL + 2; player.pos.z = 8;
-        player.vel.y = 0;
+        player.vel.x = 0; player.vel.y = 0; player.vel.z = 0;
+        player.airSupply = player.maxAirSupply || 300;
+        player.fallDistance = 0;
+        player.invulnerableTime = 0;
+        if (typeof updateHearts === 'function') updateHearts();
       }
     });
     document.getElementById('quitToTitleBtn')?.addEventListener('click', () => {
@@ -6151,27 +6159,28 @@
 
     // === §Tile::use — block interaction (right-click) ===
     function onBlockInteract(blockId, bx, by, bz) {
-      // §FurnaceTile::use — open furnace UI
-      if (blockId === 16) { // 16 = furnace in compact ID
+      // §FurnaceTile::use — open furnace UI (CTR-002: id 61 = furnace, 62 = lit furnace)
+      if (blockId === 61 || blockId === 62) {
         document.getElementById('furnaceUI')?.classList.remove('hidden');
         return true;
       }
-      // §ChestTile::use — open chest UI
-      if (blockId === 54 || blockId === 19) { // accept both IDs
+      // §ChestTile::use — open chest UI (CTR-002: id 54 = chest)
+      if (blockId === 54) {
         document.getElementById('chestUI')?.classList.remove('hidden');
         return true;
       }
-      // §WorkbenchTile::use — open crafting UI
-      if (blockId === 15) { // 15 = crafting table in compact ID
+      // §WorkbenchTile::use — open crafting UI (CTR-002: id 58 = crafting table)
+      if (blockId === 58) {
         document.getElementById('craftingUI')?.classList.remove('hidden');
         return true;
       }
       return false;
     }
 
-    // Right-click to interact with blocks
+    // Right-click to interact with blocks (CTR-001: currentTargetBlock is now
+    // declared at the top of the closure so this handler can read it directly.)
     document.addEventListener('contextmenu', (e) => {
-      if (e.target.id === 'game' && typeof currentTargetBlock !== 'undefined' && currentTargetBlock) {
+      if (e.target.id === 'game' && currentTargetBlock) {
         e.preventDefault();
         onBlockInteract(currentTargetBlock.id, currentTargetBlock.x, currentTargetBlock.y, currentTargetBlock.z);
       }
@@ -6182,11 +6191,14 @@
       slot.addEventListener('click', () => {
         const selected = HOTBAR[selectedSlot];
         if (selected && selected.type === 'block') {
-          if (slot.dataset.itemKey === String(selected.id)) {
+          // §CRA-001 — use namespaced key (runtimeBlockKey) so the recipe matcher
+          // (which expects minecraft:* keys) can compare against slot.dataset.itemKey.
+          const key = runtimeBlockKey(selected.id);
+          if (slot.dataset.itemKey === key) {
             delete slot.dataset.itemKey;
             slot.textContent = '';
           } else {
-            slot.dataset.itemKey = String(selected.id);
+            slot.dataset.itemKey = key;
             slot.textContent = BLOCKS[selected.id]?.name?.substring(0, 6) || '?';
           }
           checkCraftingResult();
@@ -6232,7 +6244,9 @@
           const selected = HOTBAR[selectedSlot];
           if (selected) {
             const slot = document.getElementById(id);
-            const key = selected.type === 'block' ? String(selected.id) : selected.id;
+            // §CRA-001 / CTR-005 — use namespaced key (runtimeBlockKey) so the
+            // FurnaceRecipes matcher (which expects minecraft:* keys) can compare.
+            const key = selected.type === 'block' ? runtimeBlockKey(selected.id) : selected.id;
             slot.textContent = key.substring(0, 6);
             slot.dataset.itemKey = key;
             if (window.VoxelCraftFurnaceRecipes && id === 'furnaceIngredient') {
@@ -6258,22 +6272,10 @@
       }
     });
 
-    // Integrate death check + air supply into existing game loop
-    setInterval(() => {
-      if (typeof gameStarted !== 'undefined' && gameStarted && typeof player !== 'undefined' && player) {
-        updateAirSupply();
-        checkPlayerDeath();
-        // Update debug overlay
-        const dbg = document.getElementById('debugOverlay');
-        if (dbg && !dbg.classList.contains('hidden')) {
-          document.getElementById('debugCoords').textContent = 'XYZ: ' + Math.floor(player.pos.x) + ' / ' + Math.floor(player.pos.y) + ' / ' + Math.floor(player.pos.z);
-          document.getElementById('debugChunk').textContent = 'Chunk: ' + Math.floor(player.pos.x/16) + ', ' + Math.floor(player.pos.z/16);
-          document.getElementById('debugFps').textContent = 'FPS: ' + Math.round(fps);
-          document.getElementById('debugBlock').textContent = 'Block: ' + (typeof currentTargetBlock !== 'undefined' && currentTargetBlock ? currentTargetBlock.id : 'none');
-          document.getElementById('debugEntities').textContent = 'Entities: ' + (typeof mobs !== 'undefined' ? mobs.length : 0);
-        }
-      }
-    }, 100);
+    // §UI-007 — the duplicate setInterval that previously called
+    // updateAirSupply() + checkPlayerDeath() + inline debug updates has been
+    // REMOVED. The consolidated setInterval above (in the §Integrate into
+    // main loop section) handles all three concerns once per 100 ms.
   </script>
 </body>
 </html>
