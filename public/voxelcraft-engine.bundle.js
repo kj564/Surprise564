@@ -1972,6 +1972,3007 @@ function ensureTerrainNeighborhood(world, worldX, worldZ, options = {}) {
   });
 }
 
+// src/game/world/entity/types.ts
+var MobType;
+((MobType2) => {
+  MobType2[MobType2["BaseEnemy"] = 1] = "BaseEnemy";
+  MobType2[MobType2["BaseCreature"] = 2] = "BaseCreature";
+  MobType2[MobType2["BaseWaterCreature"] = 3] = "BaseWaterCreature";
+  MobType2[MobType2["Chicken"] = 10] = "Chicken";
+  MobType2[MobType2["Cow"] = 11] = "Cow";
+  MobType2[MobType2["Pig"] = 12] = "Pig";
+  MobType2[MobType2["Sheep"] = 13] = "Sheep";
+  MobType2[MobType2["Zombie"] = 32] = "Zombie";
+  MobType2[MobType2["Creeper"] = 33] = "Creeper";
+  MobType2[MobType2["Skeleton"] = 34] = "Skeleton";
+  MobType2[MobType2["Spider"] = 35] = "Spider";
+  MobType2[MobType2["PigZombie"] = 36] = "PigZombie";
+})(MobType ||= {});
+var DATA_SHARED_FLAGS_ID = 0;
+var DATA_AIR_SUPPLY_ID = 1;
+
+// src/game/constants.ts
+var TICKS_PER_SECOND = 20;
+var TICKS_PER_DAY = 19200;
+var SECONDS_PER_DAY = TICKS_PER_DAY / TICKS_PER_SECOND;
+var GRAVITY_PER_TICK = 0.08;
+var AIR_DRAG_PER_TICK = 0.98;
+var INPUT_DECAY = 0.98;
+var YAW_ROT_DECAY = 0.9;
+var FRICTION2_NUMERATOR = 0.6 * 0.6 * 0.91 * 0.91 * 0.6 * 0.91;
+var TOTAL_AIR_SUPPLY = 15 * TICKS_PER_SECOND;
+var MOB_IDLE_DESPAWN_TICKS = 30 * TICKS_PER_SECOND;
+var EAT_ANIMATION_TICKS = TICKS_PER_SECOND * 2;
+var CHICKEN_EGG_TIME_MIN_TICKS = TICKS_PER_SECOND * 60 * 5;
+var CHICKEN_EGG_TIME_RANGE_TICKS = TICKS_PER_SECOND * 60 * 5;
+var SKELETON_RANGED_COOLDOWN_TICKS = TICKS_PER_SECOND * 3;
+
+// src/game/world/entity/entity.ts
+var TOTAL_AIR_SUPPLY2 = 15 * TICKS_PER_SECOND;
+var RADDEG = 180 / Math.PI;
+var DEGRAD = Math.PI / 180;
+
+class Entity {
+  static entityCounter = 0;
+  static sharedRandom = {
+    nextFloat: () => Math.random(),
+    nextInt: (n) => Math.floor(Math.random() * n)
+  };
+  x = 0;
+  y = 0;
+  z = 0;
+  xChunk = 0;
+  yChunk = 0;
+  zChunk = 0;
+  entityId;
+  viewScale = 1;
+  level;
+  xo = 0;
+  yo = 0;
+  zo = 0;
+  xd = 0;
+  yd = 0;
+  zd = 0;
+  yRot = 0;
+  xRot = 0;
+  yRotO = 0;
+  xRotO = 0;
+  bb = new Aabb(0, 0, 0, 0, 0, 0);
+  heightOffset = 0;
+  bbWidth = 0.6;
+  bbHeight = 1.8;
+  walkDistO = 0;
+  walkDist = 0;
+  xOld = 0;
+  yOld = 0;
+  zOld = 0;
+  ySlideOffset = 0;
+  footSize = 0;
+  pushthrough = 0;
+  tickCount = 0;
+  invulnerableTime = 0;
+  airSupply = TOTAL_AIR_SUPPLY2;
+  onFire = 0;
+  flameTime = 1;
+  entityRendererId = 0 /* Default */;
+  fallDistance = 0;
+  blocksBuilding = false;
+  inChunk = false;
+  onGround = false;
+  horizontalCollision = false;
+  verticalCollision = false;
+  collision = false;
+  hurtMarked = false;
+  slide = true;
+  removed = false;
+  noPhysics = false;
+  canRemove = true;
+  invisible = false;
+  reallyRemoveIfPlayer = false;
+  airCapacity = TOTAL_AIR_SUPPLY2;
+  makeStepSound = true;
+  wasInWater = false;
+  fireImmune = false;
+  firstTick = true;
+  nextStep = 1;
+  isStuckInWeb = false;
+  constructor(level) {
+    this.level = level;
+    this._init();
+    this.entityId = ++Entity.entityCounter;
+    this.setPos(0, 0, 0);
+  }
+  reset() {
+    this._init();
+  }
+  _init() {
+    this.xo = this.xOld = this.x;
+    this.yo = this.yOld = this.y;
+    this.zo = this.zOld = this.z;
+    this.xRotO = this.xRot;
+    this.yRotO = this.yRot;
+    this.onFire = 0;
+    this.removed = false;
+    this.fallDistance = 0;
+  }
+  remove() {
+    this.removed = true;
+  }
+  setSize(w, h) {
+    this.bbWidth = w;
+    this.bbHeight = h;
+  }
+  setRot(yRot, xRot) {
+    this.yRot = yRot;
+    this.yRotO = yRot;
+    this.xRot = xRot;
+    this.xRotO = xRot;
+  }
+  setPos(x, y, z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    const w = this.bbWidth / 2;
+    const h = this.bbHeight;
+    const y0 = y - this.heightOffset + this.ySlideOffset;
+    this.bb = new Aabb(x - w, y0, z - w, x + w, y0 + h, z + w);
+  }
+  setPosFrom(pos) {
+    if (pos.move)
+      this.setPos(pos.x, pos.y, pos.z);
+    else
+      this.setPos(this.x, this.y, this.z);
+    if (pos.rot)
+      this.setRot(pos.yRot, pos.xRot);
+    else
+      this.setRot(this.yRot, this.xRot);
+  }
+  move(xa, ya, za) {
+    const level = this.level;
+    if (this.noPhysics) {
+      this.bb = this.bb.move(xa, ya, za);
+      this.x = (this.bb.minX + this.bb.maxX) / 2;
+      this.y = this.bb.minY + this.heightOffset - this.ySlideOffset;
+      this.z = (this.bb.minZ + this.bb.maxZ) / 2;
+      return;
+    }
+    if (!level) {
+      this.bb = this.bb.move(xa, ya, za);
+      this.x = (this.bb.minX + this.bb.maxX) / 2;
+      this.y = this.bb.minY + this.heightOffset - this.ySlideOffset;
+      this.z = (this.bb.minZ + this.bb.maxZ) / 2;
+      return;
+    }
+    if (this.isStuckInWeb) {
+      this.isStuckInWeb = false;
+      xa *= 0.25;
+      ya *= 0.05;
+      za *= 0.25;
+      this.xd = 0;
+      this.yd = 0;
+      this.zd = 0;
+    }
+    const xo = this.x;
+    const zo = this.z;
+    let xaOrg = xa;
+    let yaOrg = ya;
+    let zaOrg = za;
+    const cubes = level.getCubes(this, this.bbExpanded(xa, ya, za));
+    for (const cube of cubes)
+      ya = this.clipY(cube, ya);
+    this.bb = this.bb.move(0, ya, 0);
+    if (!this.slide && yaOrg !== ya) {
+      xa = ya = za = 0;
+    }
+    const og = this.onGround || yaOrg !== ya && yaOrg < 0;
+    for (const cube of cubes)
+      xa = this.clipX(cube, xa);
+    this.bb = this.bb.move(xa, 0, 0);
+    if (!this.slide && xaOrg !== xa) {
+      xa = ya = za = 0;
+    }
+    for (const cube of cubes)
+      za = this.clipZ(cube, za);
+    this.bb = this.bb.move(0, 0, za);
+    if (!this.slide && zaOrg !== za) {
+      xa = ya = za = 0;
+    }
+    this.x = (this.bb.minX + this.bb.maxX) / 2;
+    this.y = this.bb.minY + this.heightOffset - this.ySlideOffset;
+    this.z = (this.bb.minZ + this.bb.maxZ) / 2;
+    this.horizontalCollision = xaOrg !== xa || zaOrg !== za;
+    this.verticalCollision = yaOrg !== ya;
+    this.onGround = yaOrg !== ya && yaOrg < 0;
+    this.collision = this.horizontalCollision || this.verticalCollision;
+    this.checkFallDamage(ya, this.onGround);
+    if (xaOrg !== xa)
+      this.xd = 0;
+    if (yaOrg !== ya)
+      this.yd = 0;
+    if (zaOrg !== za)
+      this.zd = 0;
+    if (this.makeStepSound) {
+      const xm = this.x - xo;
+      const zm = this.z - zo;
+      this.walkDist += Math.sqrt(xm * xm + zm * zm) * 0.6;
+      if (this.walkDist > this.nextStep) {
+        this.nextStep = Math.floor(this.walkDist) + 1;
+        this.playStepSound(Math.floor(this.x), Math.floor(this.y - 0.2 - this.heightOffset), Math.floor(this.z));
+      }
+    }
+    this.ySlideOffset *= 0.4;
+    const water = this.isInWater();
+    if (level.containsFireTile(this.bb)) {
+      this.burn(1);
+      if (!water) {
+        this.onFire++;
+        if (this.onFire === 0)
+          this.onFire = 20 * 15;
+      }
+    } else if (this.onFire <= 0) {
+      this.onFire = -this.flameTime;
+    }
+    if (water && this.onFire > 0) {
+      this.onFire = -this.flameTime;
+    }
+  }
+  bbExpanded(xa, ya, za) {
+    return new Aabb(Math.min(this.bb.minX, this.bb.minX + xa), Math.min(this.bb.minY, this.bb.minY + ya), Math.min(this.bb.minZ, this.bb.minZ + za), Math.max(this.bb.maxX, this.bb.maxX + xa), Math.max(this.bb.maxY, this.bb.maxY + ya), Math.max(this.bb.maxZ, this.bb.maxZ + za));
+  }
+  clipY(cube, ya) {
+    if (ya === 0)
+      return 0;
+    if (!overlapOnAxes(this.bb, cube, "y"))
+      return ya;
+    if (ya > 0 && this.bb.maxY <= cube.minY)
+      return Math.min(ya, cube.minY - this.bb.maxY);
+    if (ya < 0 && this.bb.minY >= cube.maxY)
+      return Math.max(ya, cube.maxY - this.bb.minY);
+    return ya;
+  }
+  clipX(cube, xa) {
+    if (xa === 0)
+      return 0;
+    if (!overlapOnAxes(this.bb, cube, "x"))
+      return xa;
+    if (xa > 0 && this.bb.maxX <= cube.minX)
+      return Math.min(xa, cube.minX - this.bb.maxX);
+    if (xa < 0 && this.bb.minX >= cube.maxX)
+      return Math.max(xa, cube.maxX - this.bb.minX);
+    return xa;
+  }
+  clipZ(cube, za) {
+    if (za === 0)
+      return 0;
+    if (!overlapOnAxes(this.bb, cube, "z"))
+      return za;
+    if (za > 0 && this.bb.maxZ <= cube.minZ)
+      return Math.min(za, cube.minZ - this.bb.maxZ);
+    if (za < 0 && this.bb.minZ >= cube.maxZ)
+      return Math.max(za, cube.maxZ - this.bb.minZ);
+    return za;
+  }
+  makeStuckInWeb() {
+    this.isStuckInWeb = true;
+    this.fallDistance = 0;
+  }
+  tick() {
+    this.baseTick();
+  }
+  baseTick() {
+    this.tickCount++;
+    this.walkDistO = this.walkDist;
+    this.xo = this.x;
+    this.yo = this.y;
+    this.zo = this.z;
+    this.xRotO = this.xRot;
+    this.yRotO = this.yRot;
+    const level = this.level;
+    if (!level) {
+      this.firstTick = false;
+      return;
+    }
+    if (this.isInWater()) {
+      this.fallDistance = 0;
+      this.wasInWater = true;
+      this.onFire = 0;
+    } else {
+      this.wasInWater = false;
+    }
+    if (!level.isClientSide) {
+      if (this.onFire > 0) {
+        if (this.fireImmune) {
+          this.onFire -= 4;
+          if (this.onFire < 0)
+            this.onFire = 0;
+        } else {
+          if (this.onFire % 20 === 0) {
+            this.hurt(null, 1);
+          }
+          this.onFire--;
+        }
+      }
+    }
+    if (this.isInLava()) {
+      this.lavaHurt();
+    }
+    if (this.y < -64) {
+      this.outOfWorld();
+    }
+    this.firstTick = false;
+  }
+  outOfWorld() {
+    this.remove();
+  }
+  checkFallDamage(ya, onGround) {
+    if (onGround) {
+      if (this.fallDistance > 0) {
+        if (this.isMob()) {}
+        this.causeFallDamage(this.fallDistance);
+        this.fallDistance = 0;
+      }
+    } else {
+      if (ya < 0)
+        this.fallDistance -= ya;
+    }
+  }
+  causeFallDamage(_fallDistance) {}
+  getHeadHeight() {
+    return 0;
+  }
+  moveRelative(xa, za, speed) {
+    let dist = Math.sqrt(xa * xa + za * za);
+    if (dist < 0.01)
+      return;
+    if (dist < 1)
+      dist = 1;
+    dist = speed / dist;
+    const xa2 = xa * dist;
+    const za2 = za * dist;
+    const sin_ = Math.sin(this.yRot * DEGRAD);
+    const cos_ = Math.cos(this.yRot * DEGRAD);
+    this.xd += xa2 * cos_ - za2 * sin_;
+    this.zd += za2 * cos_ + xa2 * sin_;
+  }
+  moveTo(x, y, z, yRot, xRot) {
+    this.xOld = this.xo = this.x = x;
+    this.yOld = this.yo = this.y = y + this.heightOffset;
+    this.zOld = this.zo = this.z = z;
+    this.yRot = this.yRotO = yRot;
+    this.xRot = this.xRotO = xRot;
+    this.setPos(this.x, this.y, this.z);
+  }
+  distanceToEntity(e) {
+    return this.distanceTo(e.x, e.y, e.z);
+  }
+  distanceTo(x2, y2, z2) {
+    const dx = this.x - x2;
+    const dy = this.y - y2;
+    const dz = this.z - z2;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+  distanceToSqr(x2, y2, z2) {
+    const dx = this.x - x2;
+    const dy = this.y - y2;
+    const dz = this.z - z2;
+    return dx * dx + dy * dy + dz * dz;
+  }
+  distanceToSqrEntity(e) {
+    return this.distanceToSqr(e.x, e.y, e.z);
+  }
+  markHurt() {
+    this.hurtMarked = true;
+  }
+  hurt(source, _damage) {
+    this.markHurt();
+    return false;
+  }
+  intersects(x0, y0, z0, x1, y1, z1) {
+    return this.bb.intersects(new Aabb(x0, y0, z0, x1, y1, z1));
+  }
+  isPickable() {
+    return false;
+  }
+  isPushable() {
+    return false;
+  }
+  isShootable() {
+    return false;
+  }
+  isCreativeModeAllowed() {
+    return false;
+  }
+  getShadowHeightOffs() {
+    return this.bbHeight / 2;
+  }
+  isAlive() {
+    return !this.removed;
+  }
+  isSneaking() {
+    return false;
+  }
+  isPlayer() {
+    return false;
+  }
+  isMob() {
+    return false;
+  }
+  isItemEntity() {
+    return false;
+  }
+  isHangingEntity() {
+    return false;
+  }
+  getAuxData() {
+    return 0;
+  }
+  isOnFire() {
+    return this.onFire > 0;
+  }
+  interactPreventDefault() {
+    return false;
+  }
+  interact(_player) {
+    return false;
+  }
+  getPickRadius() {
+    return 0.1;
+  }
+  lavaHurt() {
+    if (this.fireImmune)
+      return;
+    this.hurt(null, 4);
+    this.onFire = 30 * TICKS_PER_SECOND;
+  }
+  burn(dmg) {
+    if (!this.fireImmune) {
+      this.hurt(null, dmg);
+    }
+  }
+  spawnAtLocation(resource, count, yOffs = 0) {
+    const level = this.level;
+    if (!level)
+      return null;
+    level.addEntity({ itemKey: resource, count, x: this.x, y: this.y + yOffs, z: this.z });
+    return Object.freeze({ itemKey: resource, count });
+  }
+  isInWater() {
+    const level = this.level;
+    if (!level)
+      return false;
+    return level.isInWater(this.bb, this);
+  }
+  isInLava() {
+    const level = this.level;
+    if (!level)
+      return false;
+    return level.containsMaterial(this.bb, "lava");
+  }
+  isUnderLiquid(material) {
+    const level = this.level;
+    if (!level)
+      return false;
+    return level.containsMaterial(this.bb, material);
+  }
+  isInWall() {
+    const level = this.level;
+    if (!level)
+      return false;
+    const xt = Math.floor(this.x);
+    const yt = Math.floor(this.y + this.getHeadHeight());
+    const zt = Math.floor(this.z);
+    return level.isSolidBlockingTile(xt, yt, zt);
+  }
+  isFree(xa, ya, za, grow = 0) {
+    return false;
+  }
+  getBrightness(_a) {
+    const level = this.level;
+    if (!level)
+      return 0;
+    const xTile = Math.floor(this.x);
+    const hh = (this.bb.maxY - this.bb.minY) * 0.66;
+    const yTile = Math.floor(this.y - this.heightOffset + hh);
+    const zTile = Math.floor(this.z);
+    return level.getBrightness(xTile, yTile, zTile);
+  }
+  turn(xo, yo) {
+    const xRotOld = this.xRot;
+    const yRotOld = this.yRot;
+    this.yRot += xo * 0.15;
+    this.xRot -= yo * 0.15;
+    if (this.xRot < -90)
+      this.xRot = -90;
+    if (this.xRot > 90)
+      this.xRot = 90;
+    this.xRotO += this.xRot - xRotOld;
+    this.yRotO += this.yRot - yRotOld;
+  }
+  interpolateTurn(xo, yo) {
+    this.yRot += xo * 0.15;
+    this.xRot -= yo * 0.15;
+    if (this.xRot < -90)
+      this.xRot = -90;
+    if (this.xRot > 90)
+      this.xRot = 90;
+  }
+  lerpTo(x, y, z, yRot, xRot, _steps) {
+    this.setPos(x, y, z);
+    this.setRot(yRot, xRot);
+  }
+  lerpMotion(xd, yd, zd) {
+    this.xd = xd;
+    this.yd = yd;
+    this.zd = zd;
+  }
+  push(xa, ya, za) {
+    this.xd += xa;
+    this.yd += ya;
+    this.zd += za;
+  }
+  pushEntity(e) {
+    let xa = e.x - this.x;
+    let za = e.z - this.z;
+    let dd = Math.max(Math.abs(xa), Math.abs(za));
+    if (dd >= 0.01) {
+      dd = Math.sqrt(dd);
+      xa /= dd;
+      za /= dd;
+      let pow = 1 / dd;
+      if (pow > 1)
+        pow = 1;
+      xa *= pow;
+      za *= pow;
+      xa *= 0.05;
+      za *= 0.05;
+      xa *= 1 - this.pushthrough;
+      za *= 1 - this.pushthrough;
+      this.push(-xa, 0, -za);
+      e.push(xa, 0, za);
+    }
+  }
+  animateHurt() {}
+  setEquippedSlot(_slot, _item, _auxValue) {}
+  queryEntityRenderer() {
+    return this.entityRendererId;
+  }
+  getCreatureBaseType() {
+    return 0;
+  }
+  handleEntityEvent(_id) {}
+  playStepSound(xt, yt, zt) {
+    const level = this.level;
+    if (!level)
+      return;
+    level.playSound(this, "step.stone", 0.25, 1);
+  }
+  awardKillScore(_victim, _score) {}
+  shouldRenderAtSqrDistance(distance) {
+    const dx = this.bb.maxX - this.bb.minX;
+    const dy = this.bb.maxY - this.bb.minY;
+    const dz = this.bb.maxZ - this.bb.minZ;
+    let size = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    size *= 64 * this.viewScale;
+    return distance < size * size;
+  }
+}
+function overlapOnAxes(a, b, axis) {
+  if (axis === "x")
+    return a.maxY > b.minY && a.minY < b.maxY && a.maxZ > b.minZ && a.minZ < b.maxZ;
+  if (axis === "y")
+    return a.maxX > b.minX && a.minX < b.maxX && a.maxZ > b.minZ && a.minZ < b.maxZ;
+  return a.maxX > b.minX && a.minX < b.maxX && a.maxY > b.minY && a.minY < b.maxY;
+}
+
+// src/game/world/entity/synched-entity-data.ts
+var TYPE_BYTE = 0;
+var TYPE_STRING = 4;
+var TYPE_MASK = 224;
+var MAX_ID_VALUE = ~TYPE_MASK & 255;
+function setFlagBit(item, flag) {
+  if (typeof item.data !== "number") {
+    throw new TypeError("setFlag only valid on numeric DataItems (byte/short/int)");
+  }
+  item.data = item.data | 1 << flag;
+}
+function clearFlagBit(item, flag) {
+  if (typeof item.data !== "number") {
+    throw new TypeError("clearFlag only valid on numeric DataItems (byte/short/int)");
+  }
+  item.data = item.data & ~(1 << flag);
+}
+function getFlagBit(item, flag) {
+  if (typeof item.data !== "number") {
+    throw new TypeError("getFlag only valid on numeric DataItems (byte/short/int)");
+  }
+  return (item.data & 1 << flag) !== 0;
+}
+function typeOf(value) {
+  if (typeof value === "string")
+    return TYPE_STRING;
+  if (typeof value === "number") {
+    return TYPE_BYTE;
+  }
+  throw new TypeError("Unsupported DataItem payload type");
+}
+
+class SynchedEntityData {
+  itemsById = new Map;
+  dirty = false;
+  define(id, value) {
+    if (!Number.isSafeInteger(id) || id < 0 || id > MAX_ID_VALUE)
+      return;
+    if (this.itemsById.has(id))
+      return;
+    const type = typeOf(value);
+    const item = { type, id, dirty: true, data: value };
+    this.itemsById.set(id, item);
+    this.dirty = true;
+  }
+  getByte(id) {
+    return this.getNumber(id);
+  }
+  getShort(id) {
+    return this.getNumber(id);
+  }
+  getInt(id) {
+    return this.getNumber(id);
+  }
+  getFloat(id) {
+    return this.getNumber(id);
+  }
+  getString(id) {
+    const item = this.require(id);
+    if (typeof item.data !== "string") {
+      throw new TypeError("DataItem " + id + " is not a string");
+    }
+    return item.data;
+  }
+  getNumber(id) {
+    const item = this.require(id);
+    if (typeof item.data !== "number") {
+      throw new TypeError("DataItem " + id + " is not numeric");
+    }
+    return item.data;
+  }
+  require(id) {
+    const item = this.itemsById.get(id);
+    if (!item) {
+      throw new Error("DataItem not found: " + id);
+    }
+    return item;
+  }
+  set(id, value) {
+    const item = this.itemsById.get(id);
+    if (!item)
+      return;
+    if (item.type !== typeOf(value)) {
+      return;
+    }
+    if (item.data !== value) {
+      item.data = value;
+      item.dirty = true;
+      this.dirty = true;
+    }
+  }
+  setFlag(id, flag) {
+    const item = this.itemsById.get(id);
+    if (!item)
+      return;
+    const oldFlag = getFlagBit(item, flag);
+    setFlagBit(item, flag);
+    if (getFlagBit(item, flag) !== oldFlag) {
+      this.markDirty(id);
+    }
+  }
+  clearFlag(id, flag) {
+    const item = this.itemsById.get(id);
+    if (!item)
+      return;
+    const oldFlag = getFlagBit(item, flag);
+    clearFlagBit(item, flag);
+    if (getFlagBit(item, flag) !== oldFlag) {
+      this.markDirty(id);
+    }
+  }
+  getFlag(id, flag) {
+    const item = this.itemsById.get(id);
+    if (!item)
+      return false;
+    return getFlagBit(item, flag);
+  }
+  markDirty(id) {
+    const item = this.itemsById.get(id);
+    if (!item)
+      return;
+    item.dirty = true;
+    this.dirty = true;
+  }
+  isDirty() {
+    return this.dirty;
+  }
+  clearDirty() {
+    this.dirty = false;
+    for (const item of this.itemsById.values())
+      item.dirty = false;
+  }
+  getItem(id) {
+    return this.itemsById.get(id);
+  }
+  items() {
+    return [...this.itemsById.values()];
+  }
+}
+
+// src/game/world/entity/mob.ts
+var SWING_DURATION = 8;
+var DEFAULT_MOB_MAX_HEALTH = 10;
+var DEFAULT_RUN_SPEED = 0.7;
+var DEFAULT_WALKING_SPEED = 0.1;
+var DEFAULT_FLYING_SPEED = 0.02;
+
+class Mob extends Entity {
+  invulnerableDuration = 20;
+  timeOffs = 0;
+  rotA = 0;
+  yBodyRot = 0;
+  yBodyRotO = 0;
+  oAttackAnim = 0;
+  attackAnim = 0;
+  health = DEFAULT_MOB_MAX_HEALTH;
+  lastHealth = 20;
+  hurtTime = 0;
+  hurtDuration = 0;
+  hurtDir = 0;
+  deathTime = 0;
+  attackTime = 0;
+  oTilt = 0;
+  tilt = 0;
+  lookTime = 0;
+  fallTime = 0;
+  walkAnimSpeedO = 0;
+  walkAnimSpeed = 0;
+  walkAnimPos = 0;
+  arrowCount = 0;
+  removeArrowTime = 0;
+  random;
+  bypassArmor = false;
+  entityData = new SynchedEntityData;
+  swinging = false;
+  swingTime = 0;
+  noActionTime = 0;
+  xxa = 0;
+  yya = 0;
+  yRotA = 0;
+  defaultLookAngle = 0;
+  runSpeed = DEFAULT_RUN_SPEED;
+  walkingSpeed = DEFAULT_WALKING_SPEED;
+  flyingSpeed = DEFAULT_FLYING_SPEED;
+  textureName = "mob/char.png";
+  modelName = "";
+  deathScore = 0;
+  oRun = 0;
+  run = 0;
+  animStep = 0;
+  animStepO = 0;
+  rotOffs = 0;
+  bobStrength = 1;
+  renderOffset = 0;
+  lSteps = 0;
+  lx = 0;
+  ly = 0;
+  lz = 0;
+  lyr = 0;
+  lxr = 0;
+  lastHurt = 0;
+  dmgSpill = 0;
+  sentX = 0;
+  sentY = 0;
+  sentZ = 0;
+  sentRotX = 0;
+  sentRotY = 0;
+  sentXd = 0;
+  sentYd = 0;
+  sentZd = 0;
+  jumping = false;
+  autoSendPosRot = true;
+  moveControl = null;
+  jumpControl = null;
+  navigation = null;
+  goalSelector = null;
+  targetSelector = null;
+  sensing = null;
+  lookingAtId = 0;
+  ambientSoundTime = 0;
+  speed = 0;
+  constructor(level) {
+    super(level);
+    this.entityData.define(DATA_SHARED_FLAGS_ID, 0);
+    this.entityData.define(DATA_AIR_SUPPLY_ID, TOTAL_AIR_SUPPLY2);
+    this._init();
+    this.health = this.getMaxHealth();
+    this.blocksBuilding = true;
+    this.ambientSoundTime = level ? -level.random.nextInt(100) : 0;
+    this.rotA = (Math.random() + 1) * 0.01;
+    this.setPos(this.x, this.y, this.z);
+    this.timeOffs = Math.random() * 12398;
+    this.yRot = Math.random() * Math.PI * 2;
+    this.footSize = 0.5;
+    this.random = level?.random ?? Entity.sharedRandom;
+  }
+  _init() {
+    super._init();
+    this.yBodyRot = 0;
+    this.yBodyRotO = 0;
+    this.rotOffs = 0;
+    this.fallTime = 0;
+    this.lastHurt = 0;
+    this.deathTime = 0;
+    this.attackTime = 0;
+    this.tilt = 0;
+    this.oTilt = 0;
+    this.hurtDuration = 0;
+    this.hurtTime = 0;
+    this.hurtDir = 0;
+    this.lookTime = 0;
+    this.noActionTime = 0;
+    this.xxa = 0;
+    this.yya = 0;
+    this.yRotA = 0;
+    this.health = 10;
+    this.lastHealth = 20;
+  }
+  getMaxHealth() {
+    return DEFAULT_MOB_MAX_HEALTH;
+  }
+  isMob() {
+    return true;
+  }
+  isBaby() {
+    return false;
+  }
+  getMaxSpawnClusterSize() {
+    return 4;
+  }
+  getWalkingSpeedModifier() {
+    return 0.7;
+  }
+  getTexture() {
+    return this.textureName;
+  }
+  isPickable() {
+    return !this.removed;
+  }
+  isPushable() {
+    return !this.removed;
+  }
+  isShootable() {
+    return true;
+  }
+  getHeadHeight() {
+    return this.bbHeight * 0.85;
+  }
+  getVoicePitch() {
+    if (this.isBaby()) {
+      return (this.random.nextFloat() - this.random.nextFloat()) * 0.2 + 1.5;
+    }
+    return (this.random.nextFloat() - this.random.nextFloat()) * 0.2 + 1;
+  }
+  getAmbientSoundInterval() {
+    return 8 * TICKS_PER_SECOND;
+  }
+  playAmbientSound() {
+    const ambient = this.getAmbientSound();
+    const level = this.level;
+    if (ambient && level) {
+      level.playSound(this, ambient, this.getSoundVolume(), this.getVoicePitch());
+    }
+  }
+  baseTick() {
+    this.oAttackAnim = this.attackAnim;
+    super.baseTick();
+    if ((this.ambientSoundTime++ & 15) === 0 && this.random.nextInt(2000) < this.ambientSoundTime) {
+      this.ambientSoundTime = -this.getAmbientSoundInterval();
+      this.playAmbientSound();
+    }
+    if (this.isAlive() && this.isInWall()) {
+      this.hurt(null, 1);
+    }
+    if (this.isAlive() && this.isUnderLiquid("water") && !this.isWaterMob()) {
+      this.airSupply--;
+      if (this.airSupply === -20) {
+        this.airSupply = 0;
+        this.hurt(null, 2);
+      }
+    } else {
+      this.airSupply = this.airCapacity;
+    }
+    this.oTilt = this.tilt;
+    if (this.attackTime > 0)
+      this.attackTime--;
+    if (this.hurtTime > 0)
+      this.hurtTime--;
+    if (this.invulnerableTime > 0)
+      this.invulnerableTime--;
+    if (this.health <= 0) {
+      this.deathTime++;
+      if (this.deathTime > TICKS_PER_SECOND) {
+        this.beforeRemove();
+        this.remove();
+      }
+    }
+    this.animStepO = this.animStep;
+    this.yBodyRotO = this.yBodyRot;
+    this.yRotO = this.yRot;
+    this.xRotO = this.xRot;
+  }
+  tick() {
+    super.tick();
+    if (this.arrowCount > 0) {
+      if (this.removeArrowTime <= 0) {
+        this.removeArrowTime = 20 * 3;
+      }
+      this.removeArrowTime--;
+      if (this.removeArrowTime <= 0) {
+        this.arrowCount--;
+      }
+    }
+    if (this.lSteps > 0) {
+      const xt = this.x + (this.lx - this.x) / this.lSteps;
+      const yt = this.y + (this.ly - this.y) / this.lSteps;
+      const zt = this.z + (this.lz - this.z) / this.lSteps;
+      let yrd = this.lyr - this.yRot;
+      while (yrd < -180)
+        yrd += 360;
+      while (yrd >= 180)
+        yrd -= 360;
+      this.yRot += yrd / this.lSteps;
+      this.xRot += (this.lxr - this.xRot) / this.lSteps;
+      this.lSteps--;
+      this.setPos(xt, yt, zt);
+      this.setRot(this.yRot, this.xRot);
+    }
+    this.aiStep();
+    this.updateWalkAnim();
+    const dx = this.x - this.xo;
+    const dz = this.z - this.zo;
+    const sideDist = Math.sqrt(dx * dx + dz * dz);
+    let yBodyRotT = this.yBodyRot;
+    let walkSpeed = 0;
+    this.oRun = this.run;
+    let tRun = 0;
+    if (sideDist <= 0.05) {} else {
+      tRun = 1;
+      walkSpeed = sideDist * 3;
+      yBodyRotT = Math.atan2(dz, dx) * (180 / Math.PI) - 90;
+    }
+    if (this.attackAnim > 0) {
+      yBodyRotT = this.yRot;
+    }
+    if (!this.onGround) {
+      tRun = 0;
+    }
+    this.run += (tRun - this.run) * 0.3;
+    let yBodyRotD = yBodyRotT - this.yBodyRot;
+    while (yBodyRotD < -180)
+      yBodyRotD += 360;
+    while (yBodyRotD >= 180)
+      yBodyRotD -= 360;
+    this.yBodyRot += yBodyRotD * 0.3;
+    let headDiff = this.yRot - this.yBodyRot;
+    while (headDiff < -180)
+      headDiff += 360;
+    while (headDiff >= 180)
+      headDiff -= 360;
+    const behind = headDiff < -90 || headDiff >= 90;
+    if (headDiff < -75)
+      headDiff = -75;
+    if (headDiff >= 75)
+      headDiff = 75;
+    this.yBodyRot = this.yRot - headDiff;
+    if (headDiff * headDiff > 50 * 50) {
+      this.yBodyRot += headDiff * 0.2;
+    }
+    if (behind) {
+      walkSpeed *= -1;
+    }
+    while (this.yRot - this.yRotO < -180)
+      this.yRotO -= 360;
+    while (this.yRot - this.yRotO >= 180)
+      this.yRotO += 360;
+    while (this.yBodyRot - this.yBodyRotO < -180)
+      this.yBodyRotO -= 360;
+    while (this.yBodyRot - this.yBodyRotO >= 180)
+      this.yBodyRotO += 360;
+    while (this.xRot - this.xRotO < -180)
+      this.xRotO -= 360;
+    while (this.xRot - this.xRotO >= 180)
+      this.xRotO += 360;
+    this.animStep += walkSpeed;
+  }
+  heal(heal) {
+    if (this.health <= 0)
+      return;
+    this.health += heal;
+    if (this.health > 20)
+      this.health = 20;
+    this.invulnerableTime = Math.floor(this.invulnerableDuration / 2);
+  }
+  hurt(source, dmg) {
+    const level = this.level;
+    if (level?.isClientSide)
+      return false;
+    this.noActionTime = 0;
+    if (this.health <= 0)
+      return false;
+    this.walkAnimSpeed = 1.5;
+    let sound = true;
+    if (this.invulnerableTime > this.invulnerableDuration / 2) {
+      if (dmg <= this.lastHurt)
+        return false;
+      this.actuallyHurt(dmg - this.lastHurt);
+      this.lastHurt = dmg;
+      sound = false;
+    } else {
+      this.lastHurt = dmg;
+      this.lastHealth = this.health;
+      this.invulnerableTime = this.invulnerableDuration;
+      this.actuallyHurt(dmg);
+      this.hurtTime = 10;
+      this.hurtDuration = 10;
+    }
+    this.hurtDir = 0;
+    if (sound) {
+      if (level) {
+        level.broadcastEntityEvent(this, 2 /* Hurt */);
+      }
+      this.markHurt();
+      if (source) {
+        let xd = source.x - this.x;
+        let zd = source.z - this.z;
+        while (xd * xd + zd * zd < 0.0001) {
+          xd = (Math.random() - Math.random()) * 0.01;
+          zd = (Math.random() - Math.random()) * 0.01;
+        }
+        this.hurtDir = Math.atan2(zd, xd) * (180 / Math.PI) - this.yRot;
+        this.knockback(source, dmg, xd, zd);
+      } else {
+        this.hurtDir = (Math.random() * 2 | 0) * 180;
+      }
+    }
+    if (this.health <= 0) {
+      if (sound && level) {
+        level.playSound(this, this.getDeathSound(), this.getSoundVolume(), this.getVoicePitch());
+      }
+      this.die(source);
+    } else if (sound && level) {
+      level.playSound(this, this.getHurtSound(), this.getSoundVolume(), this.getVoicePitch());
+    }
+    return true;
+  }
+  actuallyHurt(dmg) {
+    if (!this.bypassArmor) {
+      dmg = this.getDamageAfterArmorAbsorb(dmg);
+    }
+    this.health -= dmg;
+  }
+  getSoundVolume() {
+    return 1;
+  }
+  getAmbientSound() {
+    return null;
+  }
+  getHurtSound() {
+    return "random.hurt";
+  }
+  getDeathSound() {
+    return "random.hurt";
+  }
+  knockback(source, _dmg, xd, zd) {
+    const dd = 1 / Math.sqrt(xd * xd + zd * zd);
+    const pow = 0.4;
+    this.xd *= 0.5;
+    this.yd *= 0.5;
+    this.zd *= 0.5;
+    this.xd -= xd * dd * pow;
+    this.yd += 0.4;
+    this.zd -= zd * dd * pow;
+    if (this.yd > 0.4)
+      this.yd = 0.4;
+  }
+  die(source) {
+    if (this.deathScore > 0 && source) {
+      source.awardKillScore(this, this.deathScore);
+    }
+    const level = this.level;
+    if (level && !level.isClientSide) {
+      if (!this.isBaby()) {
+        this.dropDeathLoot();
+      }
+      level.broadcastEntityEvent(this, 3 /* Death */);
+    }
+  }
+  dropDeathLoot() {
+    const loot = this.getDeathLoot();
+    if (loot) {
+      const count = this.random.nextInt(3);
+      for (let i = 0;i < count; i++) {
+        this.spawnAtLocation(loot, 1);
+      }
+    }
+  }
+  getDeathLoot() {
+    return null;
+  }
+  causeFallDamage(distance) {
+    const dmg = Math.ceil(distance - 3);
+    if (dmg > 0) {
+      const level = this.level;
+      if (level) {
+        level.playSound(this, dmg > 4 ? "damage.fallbig" : "damage.fallsmall", 0.75, 1);
+      }
+      this.hurt(null, dmg);
+    }
+  }
+  travel(xa, ya) {
+    if (this.isInWater()) {
+      const yo = this.y;
+      this.moveRelative(xa, ya, 0.02);
+      this.move(this.xd, this.yd, this.zd);
+      this.xd *= 0.8;
+      this.yd *= 0.8;
+      this.zd *= 0.8;
+      this.yd -= 0.02;
+      if (this.horizontalCollision && this.isFree(this.xd, this.yd + 0.6 - this.y + yo, this.zd)) {
+        this.yd = 0.3;
+      }
+    } else if (this.isInLava()) {
+      const yo = this.y;
+      this.moveRelative(xa, ya, 0.02);
+      this.move(this.xd, this.yd, this.zd);
+      this.xd *= 0.5;
+      this.yd *= 0.5;
+      this.zd *= 0.5;
+      this.yd -= 0.02;
+      if (this.horizontalCollision && this.isFree(this.xd, this.yd + 0.6 - this.y + yo, this.zd)) {
+        this.yd = 0.3;
+      }
+    } else {
+      let friction = 0.91;
+      if (this.onGround) {
+        friction = 0.6 * 0.91;
+      }
+      const friction2 = FRICTION2_NUMERATOR / (friction * friction * friction);
+      this.moveRelative(xa, ya, this.onGround ? this.walkingSpeed * friction2 : this.flyingSpeed);
+      friction = 0.91;
+      if (this.onGround) {
+        friction = 0.6 * 0.91;
+      }
+      if (this.onLadder()) {
+        this.fallDistance = 0;
+        if (this.yd < -0.15)
+          this.yd = -0.15;
+        if (this.isSneaking() && this.yd < 0)
+          this.yd = 0;
+      }
+      this.move(this.xd, this.yd, this.zd);
+      if (this.horizontalCollision && this.onLadder()) {
+        this.yd = 0.2;
+      }
+      this.yd -= GRAVITY_PER_TICK;
+      this.yd *= AIR_DRAG_PER_TICK;
+      this.xd *= friction;
+      this.zd *= friction;
+    }
+  }
+  updateWalkAnim() {
+    this.walkAnimSpeedO = this.walkAnimSpeed;
+    const xxd = this.x - this.xo;
+    const zzd = this.z - this.zo;
+    let wst = Math.sqrt(xxd * xxd + zzd * zzd) * 4;
+    if (wst > 1)
+      wst = 1;
+    this.walkAnimSpeed += (wst - this.walkAnimSpeed) * 0.4;
+    this.walkAnimPos += this.walkAnimSpeed;
+  }
+  onLadder() {
+    const level = this.level;
+    if (!level)
+      return false;
+    const xt = Math.floor(this.x);
+    const yt = Math.floor(this.bb.minY);
+    const zt = Math.floor(this.z);
+    return isLadderTile(level.getTile(xt, yt, zt)) || isLadderTile(level.getTile(xt, yt + 1, zt));
+  }
+  isAlive() {
+    return !this.removed && this.health > 0;
+  }
+  isWaterMob() {
+    return false;
+  }
+  isSleeping() {
+    return false;
+  }
+  isSneaking() {
+    return this.getSharedFlag(1 /* Sneaking */);
+  }
+  setSneaking(value) {
+    this.setSharedFlag(1 /* Sneaking */, value);
+  }
+  swing() {
+    if (!this.swinging || this.swingTime >= 3 || this.swingTime < 0) {
+      this.swingTime = -1;
+      this.swinging = true;
+    }
+  }
+  updateAttackAnim() {
+    if (this.swinging) {
+      if (++this.swingTime >= SWING_DURATION) {
+        this.swingTime = 0;
+        this.swinging = false;
+      }
+    } else {
+      this.swingTime = 0;
+    }
+    this.attackAnim = this.swingTime / SWING_DURATION;
+  }
+  getAttackAnim(a) {
+    let diff = this.attackAnim - this.oAttackAnim;
+    if (diff < 0)
+      diff += 1;
+    return this.oAttackAnim + diff * a;
+  }
+  jumpFromGround() {
+    this.yd = 0.42;
+  }
+  removeWhenFarAway() {
+    return true;
+  }
+  getMaxHeadXRot() {
+    return 10;
+  }
+  rotlerp(a, b, max) {
+    let diff = b - a;
+    while (diff < -180)
+      diff += 360;
+    while (diff >= 180)
+      diff -= 360;
+    if (diff > max)
+      diff = max;
+    if (diff < -max)
+      diff = -max;
+    return a + diff;
+  }
+  lookAt(e, yMax, xMax) {
+    const xd = e.x - this.x;
+    const zd = e.z - this.z;
+    const yd = (e.bb.minY + e.bb.maxY) / 2 - (this.y + this.getHeadHeight());
+    const sd = Math.sqrt(xd * xd + zd * zd);
+    const yRotD = Math.atan2(zd, xd) * (180 / Math.PI) - 90;
+    const xRotD = Math.atan2(yd, sd) * (180 / Math.PI);
+    this.xRot = -this.rotlerp(this.xRot, xRotD, xMax);
+    this.yRot = this.rotlerp(this.yRot, yRotD, yMax);
+  }
+  isLookingAtAnEntity() {
+    return this.lookingAtId !== 0;
+  }
+  beforeRemove() {}
+  canSpawn() {
+    const level = this.level;
+    if (!level)
+      return false;
+    return level.isUnobstructed(this.bb) && level.getCubes(this, this.bb).length === 0 && !level.containsAnyLiquid(this.bb);
+  }
+  outOfWorld() {
+    const oldHealth = this.health;
+    this.hurt(null, 4);
+    if (this.health >= oldHealth) {
+      this.actuallyHurt(4);
+    }
+  }
+  interpolateOnly() {
+    return this.level?.isClientSide ?? false;
+  }
+  useNewAi() {
+    return false;
+  }
+  setYya(yya) {
+    this.yya = yya;
+  }
+  getSpeed() {
+    return this.speed;
+  }
+  setSpeed(speed) {
+    this.speed = speed;
+    this.yya = speed;
+  }
+  setJumping(jump) {
+    this.jumping = jump;
+  }
+  getSharedFlag(flag) {
+    return this.entityData.getFlag(DATA_SHARED_FLAGS_ID, flag);
+  }
+  setSharedFlag(flag, value) {
+    if (value) {
+      this.entityData.setFlag(DATA_SHARED_FLAGS_ID, flag);
+    } else {
+      this.entityData.clearFlag(DATA_SHARED_FLAGS_ID, flag);
+    }
+  }
+  aiStep() {
+    if (this.isImmobile()) {
+      this.jumping = false;
+      this.xxa = 0;
+      this.yya = 0;
+      this.yRotA = 0;
+    } else if (!this.interpolateOnly()) {
+      if (this.useNewAi()) {
+        this.newServerAiStep();
+      } else {
+        this.updateAi();
+      }
+    }
+    const inWater = this.isInWater();
+    const inLava = this.isInLava();
+    if (this.jumping) {
+      if (inWater || inLava) {
+        this.yd += 0.04;
+      } else if (this.onGround) {
+        this.jumpFromGround();
+      }
+    }
+    this.xxa *= INPUT_DECAY;
+    this.yya *= INPUT_DECAY;
+    this.yRotA *= YAW_ROT_DECAY;
+    const normalSpeed = this.walkingSpeed;
+    const normalAirControl = this.flyingSpeed;
+    this.walkingSpeed *= this.getWalkingSpeedModifier();
+    this.flyingSpeed *= this.getWalkingSpeedModifier();
+    this.travel(this.xxa, this.yya);
+    this.walkingSpeed = normalSpeed;
+    this.flyingSpeed = normalAirControl;
+  }
+  updateAi() {
+    this.noActionTime++;
+    const level = this.level;
+    if (level) {
+      const player2 = level.getNearestPlayer(this, -1);
+      this.checkDespawnMob(player2);
+    }
+    this.xxa = 0;
+    this.yya = 0;
+    const lookDistance = 8;
+    let player = level ? level.getNearestPlayer(this, lookDistance) : null;
+    if (player && this.random.nextFloat() < 0.02) {
+      this.lookingAtId = player.entityId;
+      this.lookTime = 10 + this.random.nextInt(20);
+    } else if (!player && this.random.nextFloat() < 0.02) {
+      this.yRotA = (this.random.nextFloat() - 0.5) * 20;
+    }
+    if (this.lookingAtId !== 0) {
+      const lookingAt = level ? level.getEntity(this.lookingAtId) : null;
+      this.lookingAtId = 0;
+      if (lookingAt) {
+        this.lookAt(lookingAt, 10, this.getMaxHeadXRot());
+        if (this.lookTime-- <= 0 || lookingAt.removed || lookingAt.distanceToSqrEntity(this) > lookDistance * lookDistance) {
+          this.lookingAtId = 0;
+        } else {
+          this.lookingAtId = lookingAt.entityId;
+        }
+      }
+    } else {
+      if (this.random.nextFloat() < 0.05) {
+        this.yRotA = (this.random.nextFloat() - 0.5) * 20;
+      }
+      this.yRot += this.yRotA;
+      this.xRot = this.defaultLookAngle;
+    }
+    const inWater = this.isInWater();
+    const inLava = this.isInLava();
+    if (inWater || inLava)
+      this.jumping = this.random.nextFloat() < 0.8;
+  }
+  newServerAiStep() {
+    this.noActionTime++;
+    this.checkDespawn();
+    this.jumping = false;
+    this.sensing?.tick();
+    if (this.random.nextInt(5) === 0) {
+      this.targetSelector?.tick();
+      this.goalSelector?.tick();
+    }
+    this.navigation?.tick();
+    this.moveControl?.tick();
+    this.jumpControl?.tick();
+  }
+  isImmobile() {
+    return this.health <= 0;
+  }
+  checkDespawn() {
+    const level = this.level;
+    if (!level)
+      return;
+    this.checkDespawnMob(level.getNearestPlayer(this, -1));
+  }
+  checkDespawnMob(nearestBlocking) {
+    if (!nearestBlocking)
+      return;
+    const removeIfFar = this.removeWhenFarAway();
+    const xd = nearestBlocking.x - this.x;
+    const yd = nearestBlocking.y - this.y;
+    const zd = nearestBlocking.z - this.z;
+    const sd = xd * xd + yd * yd + zd * zd;
+    if (removeIfFar && sd > 96 * 96)
+      this.remove();
+    if (this.noActionTime > 30 * TICKS_PER_SECOND && this.random.nextInt(800) === 0 && removeIfFar && sd > 32 * 32) {
+      this.remove();
+    } else {
+      this.noActionTime = 0;
+    }
+  }
+  handleEntityEvent(id) {
+    if (id === 2 /* Hurt */) {
+      this.walkAnimSpeed = 1.5;
+      this.invulnerableTime = this.invulnerableDuration;
+      this.hurtTime = 10;
+      this.hurtDuration = 10;
+      this.hurtDir = 0;
+      const level = this.level;
+      if (level) {
+        level.playSound(this, this.getHurtSound(), this.getSoundVolume(), this.getVoicePitch());
+      }
+      this.hurt(null, 0);
+    } else if (id === 3 /* Death */) {
+      const level = this.level;
+      if (level) {
+        level.playSound(this, this.getDeathSound(), this.getSoundVolume(), this.getVoicePitch());
+      }
+      this.health = 0;
+      this.die(null);
+    } else {
+      super.handleEntityEvent(id);
+    }
+  }
+  getEntityData() {
+    return this.entityData;
+  }
+  getDamageAfterArmorAbsorb(damage) {
+    const absorb = 25 - this.getArmorValue();
+    const v = damage * absorb + this.dmgSpill;
+    this.hurtArmor(damage);
+    const finalDamage = Math.trunc(v / 25);
+    this.dmgSpill = v % 25;
+    return finalDamage;
+  }
+  getArmorValue() {
+    return 0;
+  }
+  hurtArmor(_damage) {}
+  canSee(target) {
+    return true;
+  }
+  getCarriedItem() {
+    return null;
+  }
+  getUseItemDuration() {
+    return 0;
+  }
+  addAdditonalSaveData(tag) {
+    tag["Health"] = this.health;
+    tag["HurtTime"] = this.hurtTime;
+    tag["DeathTime"] = this.deathTime;
+    tag["AttackTime"] = this.attackTime;
+  }
+  readAdditionalSaveData(tag) {
+    this.health = Number(tag["Health"] ?? this.health);
+    this.hurtTime = Number(tag["HurtTime"] ?? 0);
+    this.deathTime = Number(tag["DeathTime"] ?? 0);
+    this.attackTime = Number(tag["AttackTime"] ?? 0);
+  }
+}
+var LADDER_LEGACY_ID = 65;
+function isLadderTile(id) {
+  return id === LADDER_LEGACY_ID;
+}
+
+// src/game/world/entity/mob-hierarchy.ts
+var MAX_TURN = 30;
+var DATA_FLAGS_ID_AGEABLE = 14;
+var DATAFLAG_ISBABY = 0;
+
+class PathfinderMob extends Mob {
+  attackTargetId = 0;
+  holdGround = false;
+  fleeTime = 0;
+  path = null;
+  constructor(level) {
+    super(level);
+  }
+  canSpawn() {
+    if (!super.canSpawn())
+      return false;
+    return this.getWalkTargetValue(Math.floor(this.x), Math.floor(this.bb.minY), Math.floor(this.z)) >= 0;
+  }
+  isPathFinding() {
+    return this.path != null;
+  }
+  setPath(path) {
+    this.path = path;
+  }
+  getAttackTarget() {
+    if (this.attackTargetId === 0)
+      return null;
+    const level = this.level;
+    if (!level)
+      return null;
+    return level.getEntity(this.attackTargetId);
+  }
+  setAttackTarget(attacker) {
+    this.attackTargetId = attacker ? attacker.entityId : 0;
+  }
+  shouldHoldGround() {
+    return false;
+  }
+  updateAi() {
+    if (this.fleeTime > 0)
+      this.fleeTime--;
+    this.holdGround = this.shouldHoldGround();
+    const maxDist = 16;
+    let attackTarget = null;
+    if (this.attackTargetId === 0) {
+      attackTarget = this.findAttackTarget();
+      if (attackTarget) {
+        this.path = this.findPathToEntity(attackTarget, maxDist);
+        this.attackTargetId = attackTarget.entityId;
+      }
+    } else {
+      const level = this.level;
+      attackTarget = level ? level.getEntity(this.attackTargetId) : null;
+      if (!attackTarget || !attackTarget.isAlive()) {
+        this.attackTargetId = 0;
+        attackTarget = null;
+      } else {
+        this.attackTargetId = attackTarget.entityId;
+        const d = attackTarget.distanceToEntity(this);
+        if (this.canSee(attackTarget)) {
+          this.checkHurtTarget(attackTarget, d);
+        } else {
+          this.checkCantSeeTarget(attackTarget, d);
+        }
+      }
+    }
+    let doStroll = false;
+    if (!this.holdGround && attackTarget && (!this.path || this.random.nextInt(20) === 0)) {
+      this.path = this.findPathToEntity(attackTarget, maxDist);
+    } else if (!this.holdGround) {
+      if (!this.path && this.random.nextInt(180) === 0) {
+        doStroll = true;
+      } else if (this.random.nextInt(120) === 0) {
+        doStroll = true;
+      } else if (this.fleeTime > 0 && (this.fleeTime & 7) === 1) {
+        doStroll = true;
+      }
+    }
+    if (doStroll && this.noActionTime < TICKS_PER_SECOND * 5) {
+      this.findRandomStrollLocation();
+    }
+    if (!this.path || this.random.nextInt(100) === 0) {
+      super.updateAi();
+      return;
+    }
+    const target = this.path.currentPos(this);
+    if (target) {
+      const r = this.bbWidth * 2;
+      if (this.distanceToSqr(target.x, target.y, target.z) >= r * r) {
+        const xd = target.x - this.x;
+        const zd = target.z - this.z;
+        const yRotD = Math.atan2(zd, xd) * (180 / Math.PI) - 90;
+        let rotDiff = yRotD - this.yRot;
+        while (rotDiff < -180)
+          rotDiff += 360;
+        while (rotDiff >= 180)
+          rotDiff -= 360;
+        if (rotDiff > MAX_TURN)
+          rotDiff = MAX_TURN;
+        if (rotDiff < -MAX_TURN)
+          rotDiff = -MAX_TURN;
+        this.yya = this.runSpeed;
+        this.yRot += rotDiff;
+        const yd = target.y - Math.floor(this.bb.minY + 0.5);
+        if (yd > 0)
+          this.jumping = true;
+      }
+    }
+    if (attackTarget) {
+      this.lookAt(attackTarget, 30, 30);
+    }
+    if (this.horizontalCollision && !this.isPathFinding())
+      this.jumping = true;
+    if (this.random.nextFloat() < 0.8 && (this.isInWater() || this.isInLava()))
+      this.jumping = true;
+  }
+  findRandomStrollLocation() {
+    let hasBest = false;
+    let xBest = 0, yBest = 0, zBest = 0;
+    let best = -99999;
+    for (let i = 0;i < 10; i++) {
+      const xt = Math.floor(this.x + this.random.nextInt(13) - 6);
+      const yt = Math.floor(this.y + this.random.nextInt(7) - 3);
+      const zt = Math.floor(this.z + this.random.nextInt(13) - 6);
+      const value = this.getWalkTargetValue(xt, yt, zt);
+      if (value > best) {
+        best = value;
+        xBest = xt;
+        yBest = yt;
+        zBest = zt;
+        hasBest = true;
+      }
+    }
+    if (hasBest) {
+      this.path = this.findPathToCoords(xBest, yBest, zBest, 10);
+    }
+  }
+  checkHurtTarget(_target, _d) {}
+  checkCantSeeTarget(_target, d) {
+    if (d > 32)
+      this.attackTargetId = 0;
+  }
+  getWalkTargetValue(_x, _y, _z) {
+    return 0;
+  }
+  findAttackTarget() {
+    return null;
+  }
+  getWalkingSpeedModifier() {
+    let speed = super.getWalkingSpeedModifier();
+    if (this.fleeTime > 0)
+      speed *= 2;
+    return speed;
+  }
+  getNoActionTime() {
+    return this.noActionTime;
+  }
+  findPathToEntity(target, maxDist) {
+    const level = this.level;
+    if (!level?.findPath)
+      return null;
+    return level.findPath(this, target, maxDist);
+  }
+  findPathToCoords(x, y, z, dist) {
+    const level = this.level;
+    if (!level?.findPathTo)
+      return null;
+    return level.findPathTo(this, x, y, z, dist);
+  }
+  getNavigation() {
+    return this.navigation;
+  }
+}
+
+class AgableMob extends PathfinderMob {
+  age = -1;
+  constructor(level) {
+    super(level);
+    this.entityData.define(DATA_FLAGS_ID_AGEABLE, 0);
+    this.setAge(0);
+  }
+  getAge() {
+    return this.age;
+  }
+  setAge(age) {
+    if (this.age < 0 && age >= 0) {
+      this.entityData.clearFlag(DATA_FLAGS_ID_AGEABLE, DATAFLAG_ISBABY);
+    } else if (this.age >= 0 && age < 0) {
+      this.entityData.setFlag(DATA_FLAGS_ID_AGEABLE, DATAFLAG_ISBABY);
+    }
+    this.age = age;
+  }
+  aiStep() {
+    super.aiStep();
+    if (this.age < 0)
+      this.setAge(this.age + 1);
+    else if (this.age > 0)
+      this.setAge(this.age - 1);
+  }
+  isBaby() {
+    const level = this.level;
+    if (level && !level.isClientSide) {
+      return this.age < 0;
+    }
+    return this.entityData.getFlag(DATA_FLAGS_ID_AGEABLE, DATAFLAG_ISBABY);
+  }
+  addAdditonalSaveData(tag) {
+    super.addAdditonalSaveData(tag);
+    tag["Age"] = this.getAge();
+  }
+  readAdditionalSaveData(tag) {
+    super.readAdditionalSaveData(tag);
+    this.setAge(Number(tag["Age"] ?? 0));
+  }
+  getBreedOffspring(target) {
+    return null;
+  }
+}
+
+// src/game/world/entity/animal/animal.ts
+class Animal extends AgableMob {
+  inLove = 0;
+  constructor(level) {
+    super(level);
+  }
+  hurt(source, dmg) {
+    this.fleeTime = 3 * TICKS_PER_SECOND;
+    this.attackTargetId = 0;
+    this.inLove = 0;
+    return super.hurt(source, dmg);
+  }
+  canSpawn() {
+    const level = this.level;
+    if (!level)
+      return false;
+    const xt = Math.floor(this.x);
+    const yt = Math.floor(this.bb.minY);
+    const zt = Math.floor(this.z);
+    const grassLegacyId = 2;
+    const onGrass = level.getTile(xt, yt - 1, zt) === grassLegacyId;
+    const brightEnough = level.getRawBrightness(xt, yt, zt) > 8;
+    return onGrass && brightEnough && super.canSpawn();
+  }
+  getAmbientSoundInterval() {
+    return 12 * TICKS_PER_SECOND;
+  }
+  getWalkTargetValue(x, y, z) {
+    const level = this.level;
+    if (!level)
+      return 0;
+    const grassLegacyId = 2;
+    if (level.getTile(x, y - 1, z) === grassLegacyId)
+      return 10;
+    return level.getBrightness(x, y, z) - 0.5;
+  }
+  findAttackTarget() {
+    return null;
+  }
+  removeWhenFarAway() {
+    return false;
+  }
+  getCreatureBaseType() {
+    return 2 /* BaseCreature */;
+  }
+}
+
+// src/game/world/entity/animal/chicken.ts
+var CHICKEN_EGG_TIME_MIN_TICKS2 = TICKS_PER_SECOND * 60 * 5;
+var CHICKEN_EGG_TIME_RANGE_TICKS2 = TICKS_PER_SECOND * 60 * 5;
+
+class Chicken extends Animal {
+  sheared = false;
+  flap = 0;
+  flapSpeed = 0;
+  oFlap = 0;
+  oFlapSpeed = 0;
+  flapping = 1;
+  eggTime = 0;
+  constructor(level) {
+    super(level);
+    this.entityRendererId = 6 /* Chicken */;
+    this.textureName = "mob/chicken.png";
+    this.setSize(0.3, 0.7);
+    this.eggTime = this.random.nextInt(CHICKEN_EGG_TIME_RANGE_TICKS2) + CHICKEN_EGG_TIME_MIN_TICKS2;
+  }
+  getEntityTypeId() {
+    return 10 /* Chicken */;
+  }
+  getMaxHealth() {
+    return 4;
+  }
+  aiStep() {
+    super.aiStep();
+    this.oFlap = this.flap;
+    this.oFlapSpeed = this.flapSpeed;
+    this.flapSpeed += (this.onGround ? -1 : 4) * 0.3;
+    if (this.flapSpeed < 0)
+      this.flapSpeed = 0;
+    if (this.flapSpeed > 1)
+      this.flapSpeed = 1;
+    if (!this.onGround && this.flapping < 1)
+      this.flapping = 1;
+    this.flapping *= 0.9;
+    if (!this.onGround && this.yd < 0) {
+      this.yd *= 0.6;
+    }
+    this.flap += this.flapping * 2;
+  }
+  causeFallDamage(_distance) {}
+  getAmbientSound() {
+    return "mob.chicken";
+  }
+  getHurtSound() {
+    return "mob.chickenhurt";
+  }
+  getDeathSound() {
+    return "mob.chickenhurt";
+  }
+  dropDeathLoot() {
+    const featherCount = this.random.nextInt(3);
+    for (let i = 0;i < featherCount; i++) {
+      this.spawnAtLocation("minecraft:feather", 1);
+    }
+    this.spawnAtLocation("minecraft:chicken_raw", 1);
+  }
+  getBreedOffspring(_target) {
+    return new Chicken(this.level);
+  }
+  addAdditonalSaveData(tag) {
+    super.addAdditonalSaveData(tag);
+  }
+  readAdditionalSaveData(tag) {
+    super.readAdditionalSaveData(tag);
+  }
+}
+
+// src/game/world/entity/animal/cow.ts
+class Cow extends Animal {
+  constructor(level) {
+    super(level);
+    this.entityRendererId = 7 /* Cow */;
+    this.textureName = "mob/cow.png";
+    this.setSize(0.9, 1.3);
+  }
+  getEntityTypeId() {
+    return 11 /* Cow */;
+  }
+  getMaxHealth() {
+    return 10;
+  }
+  interact(player) {
+    return super.interact(player);
+  }
+  getAmbientSound() {
+    return "mob.cow";
+  }
+  getHurtSound() {
+    return "mob.cowhurt";
+  }
+  getDeathSound() {
+    return "mob.cowhurt";
+  }
+  getSoundVolume() {
+    return 0.4;
+  }
+  getDeathLoot() {
+    return "minecraft:leather";
+  }
+  dropDeathLoot() {
+    const leatherCount = this.random.nextInt(3);
+    for (let i = 0;i < leatherCount; i++) {
+      this.spawnAtLocation("minecraft:leather", 1);
+    }
+    const beefCount = this.random.nextInt(3) + 1;
+    for (let i = 0;i < beefCount; i++) {
+      this.spawnAtLocation("minecraft:beef_raw", 1);
+    }
+  }
+  getBreedOffspring(_target) {
+    return new Cow(this.level);
+  }
+  addAdditonalSaveData(tag) {
+    super.addAdditonalSaveData(tag);
+  }
+  readAdditionalSaveData(tag) {
+    super.readAdditionalSaveData(tag);
+  }
+}
+
+// src/game/world/entity/animal/pig.ts
+class Pig extends Animal {
+  constructor(level) {
+    super(level);
+    this.entityRendererId = 8 /* Pig */;
+    this.textureName = "mob/pig.png";
+    this.setSize(0.9, 0.9);
+  }
+  getEntityTypeId() {
+    return 12 /* Pig */;
+  }
+  getMaxHealth() {
+    return 10;
+  }
+  interact(_player) {
+    return false;
+  }
+  hasSaddle() {
+    return false;
+  }
+  setSaddle(_value) {}
+  getAmbientSound() {
+    return "mob.pig";
+  }
+  getHurtSound() {
+    return "mob.pig";
+  }
+  getDeathSound() {
+    return "mob.pigdeath";
+  }
+  getDeathLoot() {
+    return "minecraft:porkchop_raw";
+  }
+  getBreedOffspring(_target) {
+    return new Pig(this.level);
+  }
+}
+
+// src/game/world/entity/animal/sheep.ts
+var EAT_ANIMATION_TICKS2 = TICKS_PER_SECOND * 2;
+var SHEEP_DATA_WOOL_ID = 16;
+var SHEEP_COLORS = [
+  [1, 1, 1],
+  [0.95, 0.7, 0.2],
+  [0.9, 0.5, 0.85],
+  [0.6, 0.7, 0.95],
+  [0.9, 0.9, 0.2],
+  [0.5, 0.8, 0.1],
+  [0.95, 0.7, 0.8],
+  [0.3, 0.3, 0.3],
+  [0.6, 0.6, 0.6],
+  [0.3, 0.6, 0.7],
+  [0.7, 0.4, 0.9],
+  [0.2, 0.4, 0.8],
+  [0.5, 0.4, 0.3],
+  [0.4, 0.5, 0.2],
+  [0.8, 0.3, 0.3],
+  [0.1, 0.1, 0.1]
+];
+var SHEEP_NUM_COLORS = SHEEP_COLORS.length;
+class Sheep extends Animal {
+  eatAnimationTickValue = 0;
+  constructor(level) {
+    super(level);
+    this.entityRendererId = 9 /* Sheep */;
+    this.textureName = "mob/sheep.png";
+    this.setSize(0.9, 1.3);
+    this.entityData.define(SHEEP_DATA_WOOL_ID, 0);
+  }
+  getMaxHealth() {
+    return 8;
+  }
+  getEntityTypeId() {
+    return 13 /* Sheep */;
+  }
+  aiStep() {
+    super.aiStep();
+    if (this.eatAnimationTickValue > 0) {
+      this.eatAnimationTickValue--;
+    }
+  }
+  handleEntityEvent(id) {
+    if (id === 18 /* EatGrass */) {
+      this.eatAnimationTickValue = EAT_ANIMATION_TICKS2;
+    } else {
+      super.handleEntityEvent(id);
+    }
+  }
+  getHeadEatPositionScale(a) {
+    if (this.eatAnimationTickValue <= 0)
+      return 0;
+    if (this.eatAnimationTickValue >= 4 && this.eatAnimationTickValue <= EAT_ANIMATION_TICKS2 - 4) {
+      return 1;
+    }
+    if (this.eatAnimationTickValue < 4) {
+      return (this.eatAnimationTickValue - a) / 4;
+    }
+    return -(this.eatAnimationTickValue - EAT_ANIMATION_TICKS2 - a) / 4;
+  }
+  getHeadEatAngleScale(a) {
+    if (this.eatAnimationTickValue > 4 && this.eatAnimationTickValue <= EAT_ANIMATION_TICKS2 - 4) {
+      const scale = (this.eatAnimationTickValue - 4 - a) / (EAT_ANIMATION_TICKS2 - 8);
+      return Math.PI * 0.2 + Math.PI * 0.07 * Math.sin(scale * 28.7);
+    }
+    if (this.eatAnimationTickValue > 0) {
+      return Math.PI * 0.2;
+    }
+    return this.xRot / (180 / Math.PI);
+  }
+  interact(player) {
+    return super.interact(player);
+  }
+  shear() {
+    if (this.isSheared() || this.isBaby())
+      return 0;
+    const level = this.level;
+    if (!level || level.isClientSide)
+      return 0;
+    this.setSheared(true);
+    const count = 1 + this.random.nextInt(3);
+    for (let i = 0;i < count; i++) {
+      this.spawnAtLocation("minecraft:white_wool", 1, 1);
+    }
+    return count;
+  }
+  addAdditonalSaveData(tag) {
+    super.addAdditonalSaveData(tag);
+    tag["Sheared"] = this.isSheared();
+    tag["Color"] = this.getColor();
+  }
+  readAdditionalSaveData(tag) {
+    super.readAdditionalSaveData(tag);
+    this.setSheared(Boolean(tag["Sheared"]));
+    this.setColor(Number(tag["Color"] ?? 0));
+  }
+  getColor() {
+    return this.entityData.getByte(SHEEP_DATA_WOOL_ID) & 15;
+  }
+  setColor(color) {
+    const current = this.entityData.getByte(SHEEP_DATA_WOOL_ID);
+    this.entityData.set(SHEEP_DATA_WOOL_ID, current & 240 | color & 15);
+  }
+  isSheared() {
+    return (this.entityData.getByte(SHEEP_DATA_WOOL_ID) & 16) !== 0;
+  }
+  setSheared(value) {
+    const current = this.entityData.getByte(SHEEP_DATA_WOOL_ID);
+    if (value) {
+      this.entityData.set(SHEEP_DATA_WOOL_ID, current | 16);
+    } else {
+      this.entityData.set(SHEEP_DATA_WOOL_ID, current & ~16);
+    }
+  }
+  dropDeathLoot() {
+    if (!this.isSheared()) {
+      this.spawnAtLocation("minecraft:white_wool", 1, 0);
+    }
+  }
+  getDeathLoot() {
+    return "minecraft:white_wool";
+  }
+  jumpFromGround() {
+    if (this.eatAnimationTickValue <= 0) {
+      super.jumpFromGround();
+    }
+  }
+  updateAi() {
+    super.updateAi();
+    const level = this.level;
+    if (!level)
+      return;
+    if (!this.isPathFinding() && this.eatAnimationTickValue <= 0 && (this.isBaby() && this.random.nextInt(50) === 0 || this.random.nextInt(1000) === 0)) {
+      const xx = Math.floor(this.x);
+      const yy = Math.floor(this.y);
+      const zz = Math.floor(this.z);
+      const grassLegacyId = 2;
+      if (level.getTile(xx, yy - 1, zz) === grassLegacyId) {
+        this.eatAnimationTickValue = EAT_ANIMATION_TICKS2;
+        level.broadcastEntityEvent(this, 18 /* EatGrass */);
+      }
+    } else if (this.eatAnimationTickValue === 4) {
+      const xx = Math.floor(this.x);
+      const yy = Math.floor(this.y);
+      const zz = Math.floor(this.z);
+      const grassLegacyId = 2;
+      if (level.getTile(xx, yy - 1, zz) === grassLegacyId) {
+        level.levelEvent(this, 2001, xx, yy - 1, zz, grassLegacyId);
+        level.setTile(xx, yy - 1, zz, 3);
+        this.setSheared(false);
+        if (this.isBaby()) {
+          let age = this.getAge() + TICKS_PER_SECOND * 60;
+          if (age > 0)
+            age = 0;
+          this.setAge(age);
+        }
+      }
+    }
+  }
+  shouldHoldGround() {
+    return this.eatAnimationTickValue > 0;
+  }
+  getAmbientSound() {
+    return "mob.sheep";
+  }
+  getHurtSound() {
+    return "mob.sheep";
+  }
+  getDeathSound() {
+    return "mob.sheep";
+  }
+  get eatAnimationTick() {
+    return this.eatAnimationTickValue;
+  }
+}
+
+// src/game/world/entity/monster/monster.ts
+var MONSTER_DEFAULT_ATTACK_TIME = 20;
+
+class Monster extends PathfinderMob {
+  attackDamage = 2;
+  targetId = 0;
+  lastHurtByMobId = 0;
+  constructor(level) {
+    super(level);
+    this.entityRendererId = 3 /* Humanoid */;
+  }
+  aiStep() {
+    this.updateAttackAnim();
+    const br = this.getBrightness(1);
+    if (br > 0.5) {
+      this.noActionTime += 2;
+    }
+    super.aiStep();
+  }
+  tick() {
+    super.tick();
+    const level = this.level;
+    if (level && !level.isClientSide && level.difficulty === 0) {
+      this.remove();
+    }
+  }
+  hurt(sourceEntity, dmg) {
+    if (!super.hurt(sourceEntity, dmg))
+      return false;
+    if (sourceEntity !== this) {
+      this.attackTargetId = 0;
+      if (sourceEntity) {
+        this.attackTargetId = sourceEntity.entityId;
+        if (sourceEntity.isMob()) {
+          this.lastHurtByMobId = sourceEntity.entityId;
+        }
+      }
+    }
+    return true;
+  }
+  canSpawn() {
+    return this.isDarkEnoughToSpawn() && super.canSpawn();
+  }
+  findAttackTarget() {
+    const level = this.level;
+    if (!level)
+      return null;
+    const player = level.getNearestPlayer(this, 16);
+    if (player && this.canSee(player))
+      return player;
+    return null;
+  }
+  isDarkEnoughToSpawn() {
+    const level = this.level;
+    if (!level)
+      return false;
+    const xt = Math.floor(this.x);
+    const yt = Math.floor(this.bb.minY);
+    const zt = Math.floor(this.z);
+    if (level.getLightBrightness(0, xt, yt, zt) > this.random.nextInt(32))
+      return false;
+    const br = level.getRawBrightness(xt, yt, zt);
+    return br <= this.random.nextInt(8);
+  }
+  doHurtTarget(target) {
+    this.swing();
+    const dmg = this.getAttackDamage(target);
+    return target.hurt(this, dmg);
+  }
+  checkHurtTarget(target, distance) {
+    if (this.attackTime <= 0 && distance < 2 && target.bb.maxY > this.bb.minY && target.bb.minY < this.bb.maxY) {
+      this.attackTime = this.getAttackTime();
+      this.doHurtTarget(target);
+    }
+  }
+  getWalkTargetValue(x, y, z) {
+    const level = this.level;
+    if (!level)
+      return 0;
+    return 0.5 - level.getBrightness(x, y, z);
+  }
+  getCreatureBaseType() {
+    return 1 /* BaseEnemy */;
+  }
+  getTarget() {
+    if (this.targetId === 0)
+      return null;
+    const level = this.level;
+    if (!level)
+      return null;
+    return level.getMob(this.targetId);
+  }
+  setTarget(mob) {
+    this.targetId = mob ? mob.entityId : 0;
+  }
+  getLastHurtByMob() {
+    if (this.targetId === 0)
+      return null;
+    const level = this.level;
+    if (!level)
+      return null;
+    return level.getMob(this.lastHurtByMobId);
+  }
+  setLastHurtByMob(mob) {
+    this.lastHurtByMobId = mob ? mob.entityId : 0;
+  }
+  getAttackDamage(_target) {
+    return this.attackDamage;
+  }
+  getAttackTime() {
+    return MONSTER_DEFAULT_ATTACK_TIME;
+  }
+}
+
+// src/game/world/entity/monster/zombie.ts
+var ZOMBIE_RUN_SPEED = 0.5;
+var ZOMBIE_ATTACK_DAMAGE = 4;
+class Zombie extends Monster {
+  fireCheckTick = 0;
+  useNewAiValue = false;
+  constructor(level) {
+    super(level);
+    this.entityRendererId = 11 /* Zombie */;
+    this.textureName = "mob/zombie.png";
+    this.runSpeed = ZOMBIE_RUN_SPEED;
+    this.attackDamage = ZOMBIE_ATTACK_DAMAGE;
+  }
+  getMaxHealth() {
+    return 12;
+  }
+  aiStep() {
+    if (++this.fireCheckTick & 1 && this.level?.isDay() && !this.level.isClientSide) {
+      const br = this.getBrightness(1);
+      if (br > 0.5) {
+        const level = this.level;
+        if (level.canSeeSky(Math.floor(this.x), Math.floor(this.y), Math.floor(this.z)) && this.random.nextFloat() * 3.5 < br - 0.4) {
+          this.hurt(null, 1);
+          for (let i = 0;i < 5; ++i) {
+            const xa = (2 * this.random.nextFloat() - 1) * (2 * this.random.nextFloat() - 1) * 0.02;
+            const ya = (2 * this.random.nextFloat() - 1) * (2 * this.random.nextFloat() - 1) * 0.02;
+            const za = (2 * this.random.nextFloat() - 1) * (2 * this.random.nextFloat() - 1) * 0.02;
+            level.addParticle("explode", this.x + this.random.nextFloat() * this.bbWidth * 2 - this.bbWidth, this.y + this.random.nextFloat() * this.bbHeight, this.z + this.random.nextFloat() * this.bbWidth * 2 - this.bbWidth, xa, ya, za);
+          }
+        }
+      }
+    }
+    super.aiStep();
+  }
+  getEntityTypeId() {
+    return 32 /* Zombie */;
+  }
+  setUseNewAi(use) {
+    this.useNewAiValue = use;
+  }
+  getArmorValue() {
+    const armor = super.getArmorValue() + 2;
+    return Math.min(armor, 20);
+  }
+  getAmbientSound() {
+    return "mob.zombie";
+  }
+  getHurtSound() {
+    return "mob.zombiehurt";
+  }
+  getDeathSound() {
+    return "mob.zombiedeath";
+  }
+  getDeathLoot() {
+    return null;
+  }
+  useNewAi() {
+    return this.useNewAiValue;
+  }
+  die(source) {
+    super.die(source);
+    const level = this.level;
+    if (level && !level.isClientSide) {
+      if (this.random.nextInt(4) === 0) {
+        this.spawnAtLocation("minecraft:feather", this.random.nextInt(1) + 1);
+      }
+    }
+  }
+  getAttackDamage(_target) {
+    const weapon = this.getCarriedItem();
+    let damage = this.attackDamage;
+    if (weapon)
+      damage += 0;
+    return damage;
+  }
+}
+
+// src/game/world/entity/monster/creeper.ts
+var CREEPER_DATA_SWELL_DIR = 16;
+var CREEPER_MAX_SWELL = 30;
+
+class Creeper extends Monster {
+  swell = 0;
+  oldSwell = 0;
+  swellDirValue = -1;
+  constructor(level) {
+    super(level);
+    this.entityRendererId = 14 /* Creeper */;
+    this.textureName = "mob/creeper.png";
+    this.entityData.define(CREEPER_DATA_SWELL_DIR, -1);
+  }
+  getMaxHealth() {
+    return 16;
+  }
+  tick() {
+    this.oldSwell = this.swell;
+    const level = this.level;
+    if (level?.isClientSide) {
+      const swellDir = this.getSwellDir();
+      if (swellDir > 0 && this.swell === 0) {
+        level.playSound(this, "random.fuse", 1, 0.5);
+      }
+      this.swell += swellDir;
+      if (this.swell < 0)
+        this.swell = 0;
+      if (this.swell >= CREEPER_MAX_SWELL)
+        this.swell = CREEPER_MAX_SWELL;
+    }
+    super.tick();
+    if (level && !level.isClientSide && this.attackTargetId === 0) {
+      if (this.swell > 0) {
+        this.setSwellDir(-1);
+        this.swell--;
+        if (this.swell < 0)
+          this.swell = 0;
+      }
+    }
+  }
+  getSwelling(a) {
+    return (this.oldSwell + (this.swell - this.oldSwell) * a) / (CREEPER_MAX_SWELL - 2);
+  }
+  getEntityTypeId() {
+    return 33 /* Creeper */;
+  }
+  getDeathLoot() {
+    return "minecraft:sulphur";
+  }
+  checkCantSeeTarget(_target, _d) {
+    const level = this.level;
+    if (!level || level.isClientSide)
+      return;
+    if (this.swell > 0) {
+      this.setSwellDir(-1);
+      this.swell--;
+      if (this.swell < 0)
+        this.swell = 0;
+    }
+  }
+  getHurtSound() {
+    return "mob.creeper";
+  }
+  getDeathSound() {
+    return "mob.creeperdeath";
+  }
+  checkHurtTarget(target, d) {
+    const level = this.level;
+    if (!level || level.isClientSide)
+      return;
+    const swellDir = this.getSwellDir();
+    if (swellDir <= 0 && d < 3 || swellDir > 0 && d < 7) {
+      if (this.swell === 0) {
+        level.playSound(this, "random.fuse", 1, 0.5);
+      }
+      this.setSwellDir(1);
+      if (++this.swell >= CREEPER_MAX_SWELL) {
+        level.explode(this, this.x, this.y, this.z, 2.4);
+        this.remove();
+      }
+      this.holdGround = true;
+    } else {
+      this.setSwellDir(-1);
+      if (--this.swell < 0)
+        this.swell = 0;
+    }
+  }
+  getSwellDir() {
+    return this.entityData.getByte(CREEPER_DATA_SWELL_DIR);
+  }
+  setSwellDir(dir) {
+    this.entityData.set(CREEPER_DATA_SWELL_DIR, dir);
+    this.swellDirValue = dir;
+  }
+}
+
+// src/game/world/entity/monster/skeleton.ts
+var SKELETON_RANGED_COOLDOWN_TICKS2 = TICKS_PER_SECOND * 3;
+
+class Skeleton extends Monster {
+  bow = Object.freeze({
+    itemKey: "minecraft:bow",
+    count: 1
+  });
+  fireCheckTick = 0;
+  constructor(level) {
+    super(level);
+    this.entityRendererId = 12 /* Skeleton */;
+    this.textureName = "mob/skeleton.png";
+  }
+  getMaxHealth() {
+    return 10;
+  }
+  aiStep() {
+    if (++this.fireCheckTick & 1 && this.level?.isDay() && !this.level.isClientSide) {
+      const br = this.getBrightness(1);
+      if (br > 0.5) {
+        const level = this.level;
+        if (level.canSeeSky(Math.floor(this.x), Math.floor(this.y), Math.floor(this.z)) && this.random.nextFloat() * 3.5 < br - 0.4) {
+          this.hurt(null, 1);
+          for (let i = 0;i < 5; ++i) {
+            const xa = (2 * this.random.nextFloat() - 1) * (2 * this.random.nextFloat() - 1) * 0.02;
+            const ya = (2 * this.random.nextFloat() - 1) * (2 * this.random.nextFloat() - 1) * 0.02;
+            const za = (2 * this.random.nextFloat() - 1) * (2 * this.random.nextFloat() - 1) * 0.02;
+            level.addParticle("explode", this.x + this.random.nextFloat() * this.bbWidth * 2 - this.bbWidth, this.y + this.random.nextFloat() * this.bbHeight, this.z + this.random.nextFloat() * this.bbWidth * 2 - this.bbWidth, xa, ya, za);
+          }
+        }
+      }
+    }
+    super.aiStep();
+  }
+  getDeathLoot() {
+    return "minecraft:arrow";
+  }
+  getCarriedItem() {
+    return this.bow;
+  }
+  getEntityTypeId() {
+    return 34 /* Skeleton */;
+  }
+  getAmbientSound() {
+    return "mob.skeleton";
+  }
+  getHurtSound() {
+    return "mob.skeletonhurt";
+  }
+  getDeathSound() {
+    return "mob.skeletonhurt";
+  }
+  checkHurtTarget(target, d) {
+    if (d >= 10)
+      return;
+    const xd = target.x - this.x;
+    const zd = target.z - this.z;
+    if (this.attackTime === 0) {
+      const level = this.level;
+      if (level) {
+        const yd = target.y + target.getHeadHeight() - 0.7 - this.y;
+        const yo = Math.sqrt(xd * xd + zd * zd) * 0.2;
+        level.playSound(this, "random.bow", 1, 1 / (this.random.nextFloat() * 0.4 + 0.8));
+        level.addEntity({ kind: "arrow", owner: this, x: this.x, y: this.y + 1.4, z: this.z, xd, yd: yd + yo, zd, speed: 1.6, spread: 32 });
+        this.attackTime = SKELETON_RANGED_COOLDOWN_TICKS2;
+      }
+    }
+    this.yRot = Math.atan2(zd, xd) * (180 / Math.PI) - 90;
+    this.holdGround = true;
+  }
+  dropDeathLoot() {
+    const arrowCount = this.random.nextInt(3);
+    for (let i = 0;i < arrowCount; i++) {
+      this.spawnAtLocation("minecraft:arrow", 1);
+    }
+    const boneCount = this.random.nextInt(3);
+    for (let i = 0;i < boneCount; i++) {
+      this.spawnAtLocation("minecraft:bone", 1);
+    }
+  }
+  getUseItemDuration() {
+    return this.attackTime;
+  }
+}
+
+// src/game/world/entity/monster/spider.ts
+var SPIDER_DATA_FLAGS_ID = 16;
+var SPIDER_RUN_SPEED = 0.5;
+
+class Spider extends Monster {
+  fireCheckTick = 0;
+  constructor(level) {
+    super(level ?? null);
+    this.entityRendererId = 13 /* Spider */;
+    this.textureName = "mob/spider.png";
+    this.setSize(1.4, 0.9);
+    this.runSpeed = SPIDER_RUN_SPEED;
+    this.entityData.define(SPIDER_DATA_FLAGS_ID, 0);
+  }
+  aiStep() {
+    super.aiStep();
+  }
+  tick() {
+    super.tick();
+    const level = this.level;
+    if (level && !level.isClientSide) {
+      this.setClimbing(this.horizontalCollision);
+    }
+  }
+  getMaxHealth() {
+    return 8;
+  }
+  onLadder() {
+    return this.isClimbing();
+  }
+  makeStuckInWeb() {}
+  getModelScale() {
+    return 1;
+  }
+  isClimbing() {
+    return this.entityData.getFlag(SPIDER_DATA_FLAGS_ID, 0);
+  }
+  setClimbing(value) {
+    this.entityData.setFlag(SPIDER_DATA_FLAGS_ID, 0);
+  }
+  getEntityTypeId() {
+    return 35 /* Spider */;
+  }
+  makeStepSound = false;
+  findAttackTarget() {
+    const level = this.level;
+    if (!level)
+      return null;
+    const br = this.getBrightness(1);
+    if (br < 0.5) {
+      return level.findNearestPlayer(this, 16);
+    }
+    return null;
+  }
+  getAmbientSound() {
+    return "mob.spider";
+  }
+  getHurtSound() {
+    return "mob.spider";
+  }
+  getDeathSound() {
+    return "mob.spiderdeath";
+  }
+  checkHurtTarget(target, d) {
+    super.checkHurtTarget(target, d);
+  }
+  getDeathLoot() {
+    return "string";
+  }
+}
+
+// src/game/world/entity/mob-factory.ts
+class MobFactory {
+  static testMobs = new Map;
+  static lastLevel = null;
+  static createMob(mobType, level) {
+    let mob = null;
+    switch (mobType) {
+      case 10 /* Chicken */:
+        mob = new Chicken(level);
+        break;
+      case 11 /* Cow */:
+        mob = new Cow(level);
+        break;
+      case 12 /* Pig */:
+        mob = new Pig(level);
+        break;
+      case 13 /* Sheep */:
+        mob = new Sheep(level);
+        break;
+      case 33 /* Creeper */:
+        mob = new Creeper(level);
+        break;
+      case 32 /* Zombie */:
+        mob = new Zombie(level);
+        break;
+      case 34 /* Skeleton */:
+        mob = new Skeleton(level);
+        break;
+      case 35 /* Spider */:
+        mob = new Spider(level);
+        break;
+      default:
+        return null;
+    }
+    if (mob) {
+      mob.health = mob.getMaxHealth();
+    }
+    return mob;
+  }
+  static clearStaticTestMobs() {
+    MobFactory.getStaticTestMob(0, null);
+  }
+  static getStaticTestMob(mobType, level) {
+    const wantClear = mobType === 0 && level === null;
+    const newLevel = level !== MobFactory.lastLevel;
+    MobFactory.lastLevel = level;
+    if (wantClear || newLevel) {
+      MobFactory.testMobs.clear();
+      if (wantClear)
+        return null;
+    }
+    const existing = MobFactory.testMobs.get(mobType);
+    if (existing)
+      return existing;
+    const mob = MobFactory.createMob(mobType, level);
+    if (mob)
+      MobFactory.testMobs.set(mobType, mob);
+    return mob;
+  }
+}
+
+// src/game/world/item/crafting/recipe.ts
+var SIZE_2X2 = 0;
+var SIZE_3X3 = 1;
+var ANY_AUX_VALUE = -1;
+
+class ItemPack {
+  items = new Map;
+  add(id, count = 1) {
+    this.items.set(id, (this.items.get(id) ?? 0) + count);
+  }
+  getCount(id) {
+    return this.items.get(id) ?? 0;
+  }
+  getMaxMultipliesOf(other) {
+    let max = Infinity;
+    for (const [id, count] of other.items) {
+      const have = this.items.get(id) ?? 0;
+      if (count === 0)
+        continue;
+      max = Math.min(max, Math.floor(have / count));
+      if (max === 0)
+        return 0;
+    }
+    return max === Infinity ? 0 : max;
+  }
+  getItemInstances() {
+    const result = [];
+    for (const [id, count] of this.items) {
+      result.push({ itemKey: id, count, maxStackSize: 64 });
+    }
+    return result;
+  }
+}
+
+class Recipe {
+  myItems = new ItemPack;
+  getItemPack() {
+    return this.myItems;
+  }
+}
+
+// src/game/world/item/crafting/shaped-recipe.ts
+class ShapedRecipe extends Recipe {
+  resultId;
+  width;
+  height;
+  recipeItems;
+  result;
+  constructor(width, height, recipeItems, result) {
+    super();
+    this.width = width;
+    this.height = height;
+    this.recipeItems = recipeItems;
+    this.result = result;
+    this.resultId = result.itemKey;
+    for (const item of recipeItems) {
+      this.myItems.add(item.itemKey);
+    }
+  }
+  getMaxCraftCount(fromItems) {
+    return fromItems.getMaxMultipliesOf(this.myItems);
+  }
+  getResultItem() {
+    return this.result;
+  }
+  matches(grid) {
+    for (let xOffs = 0;xOffs <= 3 - this.width; xOffs++) {
+      for (let yOffs = 0;yOffs <= 3 - this.height; yOffs++) {
+        if (this.matchesAt(grid, xOffs, yOffs, true))
+          return true;
+        if (this.matchesAt(grid, xOffs, yOffs, false))
+          return true;
+      }
+    }
+    return false;
+  }
+  matchesAt(grid, xOffs, yOffs, xFlip) {
+    for (let x = 0;x < 3; x++) {
+      for (let y = 0;y < 3; y++) {
+        const xs = x - xOffs;
+        const ys = y - yOffs;
+        let expected = null;
+        if (xs >= 0 && ys >= 0 && xs < this.width && ys < this.height) {
+          const idx = xFlip ? this.width - xs - 1 + ys * this.width : xs + ys * this.width;
+          expected = this.recipeItems[idx] ?? null;
+        }
+        const item = grid.getItem(x, y);
+        if (!item && !expected)
+          continue;
+        if (!item !== !expected)
+          return false;
+        if (expected && item && expected.itemKey !== item.itemKey)
+          return false;
+        if (expected && item && expected.auxValue !== ANY_AUX_VALUE && expected.auxValue !== undefined) {
+          if (expected.auxValue !== item.auxValue)
+            return false;
+        }
+      }
+    }
+    return true;
+  }
+  assemble(_grid) {
+    return this.result;
+  }
+  size() {
+    return this.width * this.height;
+  }
+  getCraftingSize() {
+    return this.width <= 2 && this.height <= 2 ? SIZE_2X2 : SIZE_3X3;
+  }
+}
+
+// src/game/world/item/crafting/shapeless-recipe.ts
+class ShapelessRecipe extends Recipe {
+  result;
+  ingredients;
+  constructor(result, ingredients) {
+    super();
+    this.result = result;
+    this.ingredients = ingredients;
+    for (const item of ingredients) {
+      this.myItems.add(item.itemKey);
+    }
+  }
+  getResultItem() {
+    return this.result;
+  }
+  getMaxCraftCount(fromItems) {
+    return fromItems.getMaxMultipliesOf(this.myItems);
+  }
+  matches(grid) {
+    const tempList = [...this.ingredients];
+    for (let y = 0;y < 3; y++) {
+      for (let x = 0;x < 3; x++) {
+        const item = grid.getItem(x, y);
+        if (!item)
+          continue;
+        let found = false;
+        for (let i = 0;i < tempList.length; i++) {
+          const ingredient = tempList[i];
+          if (!ingredient)
+            continue;
+          if (item.itemKey === ingredient.itemKey) {
+            if (ingredient.auxValue === ANY_AUX_VALUE || ingredient.auxValue === undefined || ingredient.auxValue === item.auxValue) {
+              found = true;
+              tempList.splice(i, 1);
+              break;
+            }
+          }
+        }
+        if (!found)
+          return false;
+      }
+    }
+    return tempList.length === 0;
+  }
+  assemble(_grid) {
+    return this.result;
+  }
+  size() {
+    return this.ingredients.length;
+  }
+  getCraftingSize() {
+    return this.ingredients.length > 4 ? SIZE_3X3 : SIZE_2X2;
+  }
+}
+
+// src/game/world/item/crafting/recipes.ts
+function shape2(r0, r1) {
+  return [r0, r1];
+}
+function shape3(r0, r1, r2) {
+  return [r0, r1, r2];
+}
+function def(c, itemKey, auxValue) {
+  return [{ c, itemKey, auxValue }];
+}
+function def2(c0, k0, c1, k1) {
+  return [{ c: c0, itemKey: k0 }, { c: c1, itemKey: k1 }];
+}
+function def3(c0, k0, c1, k1, c2, k2) {
+  return [{ c: c0, itemKey: k0 }, { c: c1, itemKey: k1 }, { c: c2, itemKey: k2 }];
+}
+function itemStack(itemKey, count = 1, auxValue) {
+  return { itemKey, count, maxStackSize: 64, auxValue };
+}
+
+class Recipes {
+  static instance = null;
+  recipes = [];
+  constructor() {
+    this.registerAll();
+  }
+  static getInstance() {
+    if (!Recipes.instance) {
+      Recipes.instance = new Recipes;
+    }
+    return Recipes.instance;
+  }
+  static teardown() {
+    Recipes.instance = null;
+  }
+  getRecipes() {
+    return this.recipes;
+  }
+  getRecipeFor(result) {
+    for (const r of this.recipes) {
+      const ri = r.getResultItem();
+      if (ri.itemKey === result.itemKey)
+        return r;
+    }
+    return null;
+  }
+  addShapedRecipe(result, row, types) {
+    this.addShapedRecipeRows(result, [row], types);
+  }
+  addShapedRecipe2(result, r0, r1, types) {
+    this.addShapedRecipeRows(result, [r0, r1], types);
+  }
+  addShapedRecipe3(result, r0, r1, r2, types) {
+    this.addShapedRecipeRows(result, [r0, r1, r2], types);
+  }
+  addShapedRecipeRows(result, rows, types) {
+    const height = rows.length;
+    const width = rows[0]?.length ?? 0;
+    const typeMap = new Map;
+    for (const t of types)
+      typeMap.set(t.c, t);
+    const recipeItems = [];
+    for (let y = 0;y < height; y++) {
+      for (let x = 0;x < width; x++) {
+        const c = rows[y][x];
+        const type = typeMap.get(c);
+        if (type) {
+          recipeItems.push(itemStack(type.itemKey, 1, type.auxValue));
+        } else {
+          recipeItems.push(itemStack("air", 0));
+        }
+      }
+    }
+    this.recipes.push(new ShapedRecipe(width, height, recipeItems, result));
+  }
+  addShapelessRecipe(result, types) {
+    const ingredients = types.map((t) => itemStack(t.itemKey, 1, t.auxValue));
+    this.recipes.push(new ShapelessRecipe(result, ingredients));
+  }
+  registerAll() {
+    this.registerToolRecipes();
+    this.registerWeaponRecipes();
+    this.registerOreRecipes();
+    this.registerFoodRecipes();
+    this.registerArmorRecipes();
+    this.registerClothDyeRecipes();
+    this.addShapedRecipe(itemStack("paper", 3), "###", def("#", "reeds"));
+    this.addShapedRecipe3(itemStack("book", 1), "#", "#", "#", def("#", "paper"));
+    this.addShapedRecipe2(itemStack("fence", 2), "###", "###", def("#", "stick"));
+    this.addShapedRecipe2(itemStack("fenceGate", 1), "#W#", "#W#", def2("#", "stick", "W", "wood"));
+    this.addShapedRecipe3(itemStack("bookshelf", 1), "###", "XXX", "###", def2("#", "wood", "X", "book"));
+    this.addShapedRecipe2(itemStack("snow", 1), "##", "##", def("#", "snowBall"));
+    this.addShapedRecipe2(itemStack("clay", 1), "##", "##", def("#", "clay"));
+    this.addShapedRecipe2(itemStack("redBrick", 1), "##", "##", def("#", "brick"));
+    this.addShapedRecipe2(itemStack("lightGem", 1), "##", "##", def("#", "yellowDust"));
+    this.addShapedRecipe2(itemStack("cloth", 1), "##", "##", def("#", "string"));
+    this.addShapedRecipe3(itemStack("tnt", 1), "X#X", "#X#", "X#X", def2("X", "sulphur", "#", "sand"));
+    this.addShapedRecipe3(itemStack("ladder", 2), "# #", "###", "# #", def("#", "stick"));
+    this.addShapedRecipe3(itemStack("door_wood", 1), "##", "##", "##", def("#", "wood"));
+    this.addShapedRecipe2(itemStack("trapdoor", 2), "###", "###", def("#", "wood"));
+    this.addShapedRecipe3(itemStack("sign", 1), "###", "###", " X ", def2("#", "wood", "X", "stick"));
+    this.addShapedRecipe(itemStack("sugar", 1), "#", def("#", "reeds"));
+    this.addShapedRecipe(itemStack("wood", 4), "#", def("#", "treeTrunk"));
+    this.addShapedRecipe2(itemStack("stick", 4), "#", "#", def("#", "wood"));
+  }
+  registerToolRecipes() {
+    const pickShape = shape3("XXX", " # ", " # ");
+    const shovelShape = shape3("X", "#", "#");
+    const hatchetShape = shape3("XX", "X#", " #");
+    const hoeShape = shape3("XX", " #", " #");
+    const shapes = [pickShape, shovelShape, hatchetShape, hoeShape];
+    const materials = ["wood", "stoneBrick", "ironIngot", "emerald", "goldIngot"];
+    const toolNames = ["pickAxe", "shovel", "hatchet", "hoe"];
+    for (let t = 0;t < toolNames.length; t++) {
+      for (let m = 0;m < materials.length; m++) {
+        const result = itemStack(`${toolNames[t]}_${["wood", "stone", "iron", "emerald", "gold"][m]}`);
+        this.addShapedRecipeRows(result, shapes[t], def2("#", "stick", "X", materials[m]));
+      }
+    }
+    this.addShapedRecipe2(itemStack("shears", 1), " #", "# ", def("#", "ironIngot"));
+  }
+  registerWeaponRecipes() {
+    const swordShape = shape3("X", "X", "#");
+    const materials = ["wood", "stoneBrick", "ironIngot", "emerald", "goldIngot"];
+    const prefixes = ["wood", "stone", "iron", "emerald", "gold"];
+    for (let m = 0;m < materials.length; m++) {
+      this.addShapedRecipeRows(itemStack(`sword_${prefixes[m]}`), swordShape, def2("#", "stick", "X", materials[m]));
+    }
+    this.addShapedRecipe3(itemStack("bow", 1), " #X", "# X", " #X", def2("X", "string", "#", "stick"));
+    this.addShapedRecipe3(itemStack("arrow", 4), "X", "#", "Y", def3("Y", "feather", "X", "flint", "#", "stick"));
+  }
+  registerArmorRecipes() {
+    const helmetShape = shape2("XXX", "X X");
+    const chestShape = shape3("X X", "XXX", "XXX");
+    const leggingsShape = shape3("XXX", "X X", "X X");
+    const bootsShape = shape2("X X", "X X");
+    const shapes = [helmetShape, chestShape, leggingsShape, bootsShape];
+    const materials = ["leather", "ironIngot", "emerald", "goldIngot"];
+    const prefixes = ["cloth", "iron", "diamond", "gold"];
+    const armorTypes = ["helmet", "chestplate", "leggings", "boots"];
+    for (let t = 0;t < armorTypes.length; t++) {
+      for (let m = 0;m < materials.length; m++) {
+        this.addShapedRecipeRows(itemStack(`${armorTypes[t]}_${prefixes[m]}`), shapes[t], def("X", materials[m]));
+      }
+    }
+  }
+  registerFoodRecipes() {
+    this.addShapelessRecipe(itemStack("mushroomStew"), def3("0", "mushroom1", "0", "mushroom2", "0", "bowl"));
+    this.addShapedRecipe3(itemStack("melon", 1), "MMM", "MMM", "MMM", def("M", "melon"));
+    this.addShapedRecipe(itemStack("seeds_melon"), "M", def("M", "melon"));
+  }
+  registerOreRecipes() {
+    const pairs = [
+      ["goldBlock", itemStack("goldIngot", 9)],
+      ["ironBlock", itemStack("ironIngot", 9)],
+      ["emeraldBlock", itemStack("emerald", 9)],
+      ["lapisBlock", itemStack("dye_powder", 9, 4)]
+    ];
+    for (const [block2, ingot] of pairs) {
+      this.addShapedRecipe3(itemStack(block2, 1), "###", "###", "###", def("#", ingot.itemKey));
+      this.addShapedRecipe(itemStack(ingot.itemKey, ingot.count), "#", def("#", block2));
+    }
+  }
+  registerClothDyeRecipes() {
+    this.addShapelessRecipe(itemStack("dye_powder", 2, 11), def("0", "flower"));
+    this.addShapelessRecipe(itemStack("dye_powder", 3, 15), def("0", "bone"));
+    this.addShapelessRecipe(itemStack("dye_powder", 2, 9), def2("0", "dye_powder", "0", "dye_powder"));
+    this.addShapelessRecipe(itemStack("dye_powder", 2, 14), def2("0", "dye_powder", "0", "dye_powder"));
+    this.addShapelessRecipe(itemStack("dye_powder", 2, 10), def2("0", "dye_powder", "0", "dye_powder"));
+    this.addShapelessRecipe(itemStack("dye_powder", 2, 12), def2("0", "dye_powder", "0", "dye_powder"));
+    this.addShapelessRecipe(itemStack("dye_powder", 2, 6), def2("0", "dye_powder", "0", "dye_powder"));
+    this.addShapelessRecipe(itemStack("dye_powder", 2, 5), def2("0", "dye_powder", "0", "dye_powder"));
+    this.addShapelessRecipe(itemStack("dye_powder", 4, 13), def2("0", "dye_powder", "0", "dye_powder"));
+  }
+}
+
+// src/game/world/item/crafting/furnace-recipes.ts
+class FurnaceRecipes {
+  static instance = null;
+  recipes = new Map;
+  constructor() {
+    this.registerRecipes();
+  }
+  static getInstance() {
+    if (!FurnaceRecipes.instance) {
+      FurnaceRecipes.instance = new FurnaceRecipes;
+    }
+    return FurnaceRecipes.instance;
+  }
+  static teardown() {
+    FurnaceRecipes.instance = null;
+  }
+  isFurnaceItem(itemId) {
+    return this.recipes.has(itemId);
+  }
+  getResult(itemId) {
+    return this.recipes.get(itemId) ?? null;
+  }
+  getRecipes() {
+    return this.recipes;
+  }
+  addRecipe(itemId, result) {
+    this.recipes.set(itemId, result);
+  }
+  registerRecipes() {
+    this.addRecipe("ironOre", { itemKey: "ironIngot", count: 1, maxStackSize: 64 });
+    this.addRecipe("goldOre", { itemKey: "goldIngot", count: 1, maxStackSize: 64 });
+    this.addRecipe("emeraldOre", { itemKey: "emerald", count: 1, maxStackSize: 64 });
+    this.addRecipe("sand", { itemKey: "glass", count: 1, maxStackSize: 64 });
+    this.addRecipe("porkChop_raw", { itemKey: "porkChop_cooked", count: 1, maxStackSize: 64 });
+    this.addRecipe("beef_raw", { itemKey: "beef_cooked", count: 1, maxStackSize: 64 });
+    this.addRecipe("chicken_raw", { itemKey: "chicken_cooked", count: 1, maxStackSize: 64 });
+    this.addRecipe("stoneBrick", { itemKey: "rock", count: 1, maxStackSize: 64 });
+    this.addRecipe("clay", { itemKey: "brick", count: 1, maxStackSize: 64 });
+    this.addRecipe("cactus", { itemKey: "dye_powder", count: 1, maxStackSize: 64, auxValue: 2 });
+    this.addRecipe("mushroom2", { itemKey: "dye_powder", count: 1, maxStackSize: 64, auxValue: 1 });
+    this.addRecipe("treeTrunk", { itemKey: "coal", count: 1, maxStackSize: 64, auxValue: 1 });
+    this.addRecipe("netherrack", { itemKey: "netherbrick", count: 1, maxStackSize: 64 });
+  }
+}
+
 // src/game/browser-entry.ts
 window.VoxelCraftEngine = VoxelCraftEngine;
 window.VoxelCraftBlockRegistry = BlockRegistry;
@@ -1979,3 +4980,15 @@ window.VoxelCraftCreateMeshCache = (engine) => new ChunkMeshCache(engine.world, 
 window.VoxelCraftGenerateTerrainChunk = generateTerrainChunk;
 window.VoxelCraftEnsureTerrainNeighborhood = ensureTerrainNeighborhood;
 window.VoxelCraftGetTool = getTool;
+window.VoxelCraftMobFactory = MobFactory;
+window.VoxelCraftMobType = MobType;
+window.VoxelCraftChicken = Chicken;
+window.VoxelCraftCow = Cow;
+window.VoxelCraftPig = Pig;
+window.VoxelCraftSheep = Sheep;
+window.VoxelCraftZombie = Zombie;
+window.VoxelCraftCreeper = Creeper;
+window.VoxelCraftSkeleton = Skeleton;
+window.VoxelCraftSpider = Spider;
+window.VoxelCraftRecipes = Recipes;
+window.VoxelCraftFurnaceRecipes = FurnaceRecipes;

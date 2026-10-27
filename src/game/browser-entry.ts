@@ -5,6 +5,25 @@ import { generateTerrainChunk } from './world/level/levelgen/terrain-generator';
 import { ensureTerrainNeighborhood } from './world/level/levelgen/terrain-streaming';
 import { getTool, type Tool } from './world/item/tools';
 
+// §Entity/Mob system — ported from MCPE 2013 C++ (Entity.h, Mob.h, MobFactory.h)
+import { MobFactory } from './world/entity/mob-factory';
+import { MobType, EntityRendererId } from './world/entity/types';
+import { Chicken } from './world/entity/animal/chicken';
+import { Cow } from './world/entity/animal/cow';
+import { Pig } from './world/entity/animal/pig';
+import { Sheep } from './world/entity/animal/sheep';
+import { Zombie } from './world/entity/monster/zombie';
+import { Creeper } from './world/entity/monster/creeper';
+import { Skeleton } from './world/entity/monster/skeleton';
+import { Spider } from './world/entity/monster/spider';
+
+// §Crafting system — ported from MCPE 2013 C++ (Recipe.h, Recipes.h, FurnaceRecipes.h)
+import { Recipes } from './world/item/crafting/recipes';
+import { FurnaceRecipes } from './world/item/crafting/furnace-recipes';
+import { DYE_BLACK, DYE_RED, DYE_GREEN, DYE_BROWN, DYE_BLUE, DYE_PURPLE,
+         DYE_CYAN, DYE_SILVER, DYE_GRAY, DYE_PINK, DYE_LIME, DYE_YELLOW,
+         DYE_LIGHT_BLUE, DYE_MAGENTA, DYE_ORANGE, DYE_WHITE } from './world/item/dye-colors';
+
 declare global {
   interface Window {
     VoxelCraftEngine: typeof VoxelCraftEngine;
@@ -12,20 +31,43 @@ declare global {
     VoxelCraftCreateMeshCache: (engine: VoxelCraftEngine) => ChunkMeshCache;
     VoxelCraftGenerateTerrainChunk: typeof generateTerrainChunk;
     VoxelCraftEnsureTerrainNeighborhood: typeof ensureTerrainNeighborhood;
-    // §MCPE 2013 tool lookup — used by minecraft.html to resolve the equipped
-    // tool from the selected hotbar slot's itemKey and pass it to startMining.
     VoxelCraftGetTool: typeof getTool;
+    // §Entity/Mob system exports
+    VoxelCraftMobFactory: typeof MobFactory;
+    VoxelCraftMobType: typeof MobType;
+    VoxelCraftChicken: typeof Chicken;
+    VoxelCraftCow: typeof Cow;
+    VoxelCraftPig: typeof Pig;
+    VoxelCraftSheep: typeof Sheep;
+    VoxelCraftZombie: typeof Zombie;
+    VoxelCraftCreeper: typeof Creeper;
+    VoxelCraftSkeleton: typeof Skeleton;
+    VoxelCraftSpider: typeof Spider;
+    // §Crafting system exports
+    VoxelCraftRecipes: typeof Recipes;
+    VoxelCraftFurnaceRecipes: typeof FurnaceRecipes;
   }
 }
 
-// Browser UI/input stays outside the simulation. The preview gets a small adapter to the
-// renderer-independent chunk mesher/cache; it never mutates authoritative world data via meshes.
 window.VoxelCraftEngine = VoxelCraftEngine;
 window.VoxelCraftBlockRegistry = BlockRegistry;
 window.VoxelCraftCreateMeshCache = engine => new ChunkMeshCache(engine.world, engine.registry);
 window.VoxelCraftGenerateTerrainChunk = generateTerrainChunk;
 window.VoxelCraftEnsureTerrainNeighborhood = ensureTerrainNeighborhood;
-// §Expose tool lookup so minecraft.html can compute the equipped tool from the
-// selected hotbar slot's itemKey (e.g. 'minecraft:wood_pickaxe') and pass it
-// to voxelEngine.startMining(target, tool).
 window.VoxelCraftGetTool = getTool;
+
+// §Expose entity/mob system so minecraft.html can spawn and tick mobs
+window.VoxelCraftMobFactory = MobFactory;
+window.VoxelCraftMobType = MobType;
+window.VoxelCraftChicken = Chicken;
+window.VoxelCraftCow = Cow;
+window.VoxelCraftPig = Pig;
+window.VoxelCraftSheep = Sheep;
+window.VoxelCraftZombie = Zombie;
+window.VoxelCraftCreeper = Creeper;
+window.VoxelCraftSkeleton = Skeleton;
+window.VoxelCraftSpider = Spider;
+
+// §Expose crafting system so minecraft.html can query recipes
+window.VoxelCraftRecipes = Recipes;
+window.VoxelCraftFurnaceRecipes = FurnaceRecipes;
