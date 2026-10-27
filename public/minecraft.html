@@ -1318,19 +1318,22 @@
     //   id 34 = rujukan Tile::melon (103)     → 'minecraft:melon'
     //   id 35 = rujukan Tile::cloth (35)      → 'minecraft:cloth'
     const CANONICAL_KEY = {
+      // §C++ Tile IDs (§Tile.cpp:161-265)
       1: 'minecraft:stone', 2: 'minecraft:grass_block', 3: 'minecraft:dirt',
-      4: 'minecraft:oak_log', 5: 'minecraft:oak_planks', 6: 'minecraft:oak_leaves',
-      7: 'minecraft:sand', 8: 'minecraft:gravel', 9: 'minecraft:glass',
-      10: 'minecraft:bedrock', 11: 'minecraft:cobblestone', 12: 'minecraft:gold_block',
-      13: 'minecraft:diamond_block', 14: 'minecraft:iron_block',
-      15: 'minecraft:crafting_table', 16: 'minecraft:furnace', 17: 'minecraft:water',
-      18: 'minecraft:coal_ore', 19: 'minecraft:iron_ore', 20: 'minecraft:gold_ore',
-      21: 'minecraft:diamond_ore', 22: 'minecraft:lapis_ore', 23: 'minecraft:lapis_block',
-      24: 'minecraft:redstone_ore', 25: 'minecraft:emerald_block',  // §placeholder — emerald didn't exist in MCPE 2013; unique key to avoid duplicate
-      26: 'minecraft:obsidian', 27: 'minecraft:glowstone', 28: 'minecraft:stone_bricks',
-      29: 'minecraft:snow', 30: 'minecraft:ice', 31: 'minecraft:netherrack',
-      32: 'minecraft:soul_sand', 33: 'minecraft:bookshelf', 34: 'minecraft:melon',
-      35: 'minecraft:cloth',
+      4: 'minecraft:cobblestone', 5: 'minecraft:oak_planks',
+      7: 'minecraft:bedrock', 8: 'minecraft:water',
+      12: 'minecraft:sand', 13: 'minecraft:gravel',
+      14: 'minecraft:gold_ore', 15: 'minecraft:iron_ore', 16: 'minecraft:coal_ore',
+      17: 'minecraft:oak_log', 18: 'minecraft:oak_leaves',
+      20: 'minecraft:glass', 21: 'minecraft:lapis_ore', 22: 'minecraft:lapis_block',
+      35: 'minecraft:wool',
+      41: 'minecraft:gold_block', 42: 'minecraft:iron_block',
+      45: 'minecraft:brick', 47: 'minecraft:bookshelf', 49: 'minecraft:obsidian',
+      56: 'minecraft:diamond_ore', 57: 'minecraft:diamond_block',
+      58: 'minecraft:crafting_table', 61: 'minecraft:furnace',
+      73: 'minecraft:redstone_ore', 79: 'minecraft:ice', 80: 'minecraft:snow',
+      87: 'minecraft:netherrack', 88: 'minecraft:soul_sand',
+      89: 'minecraft:glowstone', 103: 'minecraft:melon',
     };
 
     // §Material map — verified 1:1 with rujukan Tile subclass constructors:
