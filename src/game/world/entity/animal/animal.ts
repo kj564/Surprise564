@@ -73,7 +73,7 @@ export abstract class Animal extends AgableMob {
   }
 
   /** §Animal.cpp:85-88 — `bool Animal::removeWhenFarAway() { return false; }`. */
-  override removeWhenFarAway(): boolean {
+  removeWhenFarAway(): boolean {
     return false;
   }
 

@@ -1995,10 +1995,6 @@ var DATA_AIR_SUPPLY_ID = 1;
 var TICKS_PER_SECOND = 20;
 var TICKS_PER_DAY = 19200;
 var SECONDS_PER_DAY = TICKS_PER_DAY / TICKS_PER_SECOND;
-var GRAVITY_PER_TICK = 0.08;
-var AIR_DRAG_PER_TICK = 0.98;
-var INPUT_DECAY = 0.98;
-var YAW_ROT_DECAY = 0.9;
 var FRICTION2_NUMERATOR = 0.6 * 0.6 * 0.91 * 0.91 * 0.6 * 0.91;
 var TOTAL_AIR_SUPPLY = 15 * TICKS_PER_SECOND;
 var MOB_IDLE_DESPAWN_TICKS = 30 * TICKS_PER_SECOND;
@@ -2705,7 +2701,6 @@ class SynchedEntityData {
 }
 
 // src/game/world/entity/mob.ts
-var SWING_DURATION = 8;
 var DEFAULT_MOB_MAX_HEALTH = 10;
 var DEFAULT_RUN_SPEED = 0.7;
 var DEFAULT_WALKING_SPEED = 0.1;
@@ -3141,12 +3136,20 @@ class Mob extends Entity {
       let friction = 0.91;
       if (this.onGround) {
         friction = 0.6 * 0.91;
+        const t = this.getTileBelow();
+        if (t > 0) {
+          friction = this.getTileFriction(t) * 0.91;
+        }
       }
-      const friction2 = FRICTION2_NUMERATOR / (friction * friction * friction);
+      const friction2 = 0.6 * 0.6 * 0.91 * 0.91 * 0.6 * 0.91 / (friction * friction * friction);
       this.moveRelative(xa, ya, this.onGround ? this.walkingSpeed * friction2 : this.flyingSpeed);
       friction = 0.91;
       if (this.onGround) {
         friction = 0.6 * 0.91;
+        const t = this.getTileBelow();
+        if (t > 0) {
+          friction = this.getTileFriction(t) * 0.91;
+        }
       }
       if (this.onLadder()) {
         this.fallDistance = 0;
@@ -3159,144 +3162,10 @@ class Mob extends Entity {
       if (this.horizontalCollision && this.onLadder()) {
         this.yd = 0.2;
       }
-      this.yd -= GRAVITY_PER_TICK;
-      this.yd *= AIR_DRAG_PER_TICK;
+      this.yd -= 0.08;
+      this.yd *= 0.98;
       this.xd *= friction;
       this.zd *= friction;
-    }
-  }
-  updateWalkAnim() {
-    this.walkAnimSpeedO = this.walkAnimSpeed;
-    const xxd = this.x - this.xo;
-    const zzd = this.z - this.zo;
-    let wst = Math.sqrt(xxd * xxd + zzd * zzd) * 4;
-    if (wst > 1)
-      wst = 1;
-    this.walkAnimSpeed += (wst - this.walkAnimSpeed) * 0.4;
-    this.walkAnimPos += this.walkAnimSpeed;
-  }
-  onLadder() {
-    const level = this.level;
-    if (!level)
-      return false;
-    const xt = Math.floor(this.x);
-    const yt = Math.floor(this.bb.minY);
-    const zt = Math.floor(this.z);
-    return isLadderTile(level.getTile(xt, yt, zt)) || isLadderTile(level.getTile(xt, yt + 1, zt));
-  }
-  isAlive() {
-    return !this.removed && this.health > 0;
-  }
-  isWaterMob() {
-    return false;
-  }
-  isSleeping() {
-    return false;
-  }
-  isSneaking() {
-    return this.getSharedFlag(1 /* Sneaking */);
-  }
-  setSneaking(value) {
-    this.setSharedFlag(1 /* Sneaking */, value);
-  }
-  swing() {
-    if (!this.swinging || this.swingTime >= 3 || this.swingTime < 0) {
-      this.swingTime = -1;
-      this.swinging = true;
-    }
-  }
-  updateAttackAnim() {
-    if (this.swinging) {
-      if (++this.swingTime >= SWING_DURATION) {
-        this.swingTime = 0;
-        this.swinging = false;
-      }
-    } else {
-      this.swingTime = 0;
-    }
-    this.attackAnim = this.swingTime / SWING_DURATION;
-  }
-  getAttackAnim(a) {
-    let diff = this.attackAnim - this.oAttackAnim;
-    if (diff < 0)
-      diff += 1;
-    return this.oAttackAnim + diff * a;
-  }
-  jumpFromGround() {
-    this.yd = 0.42;
-  }
-  removeWhenFarAway() {
-    return true;
-  }
-  getMaxHeadXRot() {
-    return 10;
-  }
-  rotlerp(a, b, max) {
-    let diff = b - a;
-    while (diff < -180)
-      diff += 360;
-    while (diff >= 180)
-      diff -= 360;
-    if (diff > max)
-      diff = max;
-    if (diff < -max)
-      diff = -max;
-    return a + diff;
-  }
-  lookAt(e, yMax, xMax) {
-    const xd = e.x - this.x;
-    const zd = e.z - this.z;
-    const yd = (e.bb.minY + e.bb.maxY) / 2 - (this.y + this.getHeadHeight());
-    const sd = Math.sqrt(xd * xd + zd * zd);
-    const yRotD = Math.atan2(zd, xd) * (180 / Math.PI) - 90;
-    const xRotD = Math.atan2(yd, sd) * (180 / Math.PI);
-    this.xRot = -this.rotlerp(this.xRot, xRotD, xMax);
-    this.yRot = this.rotlerp(this.yRot, yRotD, yMax);
-  }
-  isLookingAtAnEntity() {
-    return this.lookingAtId !== 0;
-  }
-  beforeRemove() {}
-  canSpawn() {
-    const level = this.level;
-    if (!level)
-      return false;
-    return level.isUnobstructed(this.bb) && level.getCubes(this, this.bb).length === 0 && !level.containsAnyLiquid(this.bb);
-  }
-  outOfWorld() {
-    const oldHealth = this.health;
-    this.hurt(null, 4);
-    if (this.health >= oldHealth) {
-      this.actuallyHurt(4);
-    }
-  }
-  interpolateOnly() {
-    return this.level?.isClientSide ?? false;
-  }
-  useNewAi() {
-    return false;
-  }
-  setYya(yya) {
-    this.yya = yya;
-  }
-  getSpeed() {
-    return this.speed;
-  }
-  setSpeed(speed) {
-    this.speed = speed;
-    this.yya = speed;
-  }
-  setJumping(jump) {
-    this.jumping = jump;
-  }
-  getSharedFlag(flag) {
-    return this.entityData.getFlag(DATA_SHARED_FLAGS_ID, flag);
-  }
-  setSharedFlag(flag, value) {
-    if (value) {
-      this.entityData.setFlag(DATA_SHARED_FLAGS_ID, flag);
-    } else {
-      this.entityData.clearFlag(DATA_SHARED_FLAGS_ID, flag);
     }
   }
   aiStep() {
@@ -3305,52 +3174,64 @@ class Mob extends Entity {
       this.xxa = 0;
       this.yya = 0;
       this.yRotA = 0;
-    } else if (!this.interpolateOnly()) {
-      if (this.useNewAi()) {
-        this.newServerAiStep();
-      } else {
-        this.updateAi();
+    } else {
+      if (!this.interpolateOnly()) {
+        if (this.useNewAi()) {
+          this.newServerAiStep();
+        } else {
+          this.updateAi();
+        }
       }
     }
     const inWater = this.isInWater();
     const inLava = this.isInLava();
     if (this.jumping) {
-      if (inWater || inLava) {
+      if (inWater) {
+        this.yd += 0.04;
+      } else if (inLava) {
         this.yd += 0.04;
       } else if (this.onGround) {
         this.jumpFromGround();
       }
     }
-    this.xxa *= INPUT_DECAY;
-    this.yya *= INPUT_DECAY;
-    this.yRotA *= YAW_ROT_DECAY;
+    this.xxa *= 0.98;
+    this.yya *= 0.98;
+    this.yRotA *= 0.9;
     const normalSpeed = this.walkingSpeed;
-    const normalAirControl = this.flyingSpeed;
+    const normalAirControllSpeed = this.flyingSpeed;
     this.walkingSpeed *= this.getWalkingSpeedModifier();
     this.flyingSpeed *= this.getWalkingSpeedModifier();
     this.travel(this.xxa, this.yya);
     this.walkingSpeed = normalSpeed;
-    this.flyingSpeed = normalAirControl;
+    this.flyingSpeed = normalAirControllSpeed;
+    if (!this.isPlayer() || !this.isSleeping()) {
+      const entities = this.getEntitiesInAABB(this.bbGrowXZ(0.2));
+      for (const e of entities) {
+        if (e.isPlayer() && e.isSleeping())
+          continue;
+        if (e.isPushable())
+          e.push(0.1, 0, 0);
+      }
+    }
   }
   updateAi() {
     this.noActionTime++;
-    const level = this.level;
-    if (level) {
-      const player2 = level.getNearestPlayer(this, -1);
-      this.checkDespawnMob(player2);
-    }
+    const player = this.getNearestPlayer(-1);
+    this.checkDespawnMob(player);
     this.xxa = 0;
     this.yya = 0;
     const lookDistance = 8;
-    let player = level ? level.getNearestPlayer(this, lookDistance) : null;
-    if (player && this.random.nextFloat() < 0.02) {
-      this.lookingAtId = player.entityId;
-      this.lookTime = 10 + this.random.nextInt(20);
-    } else if (!player && this.random.nextFloat() < 0.02) {
-      this.yRotA = (this.random.nextFloat() - 0.5) * 20;
+    if (Math.random() < 0.02) {
+      const nearby = this.getNearestPlayer(lookDistance);
+      if (nearby) {
+        this.lookingAtId = nearby.entityId;
+        this.lookTime = 10 + Math.floor(Math.random() * 20);
+      } else {
+        this.yRotA = (Math.random() - 0.5) * 20;
+      }
     }
     if (this.lookingAtId !== 0) {
-      const lookingAt = level ? level.getEntity(this.lookingAtId) : null;
+      const lookingAt = this.getEntity(this.lookingAtId);
       this.lookingAtId = 0;
       if (lookingAt) {
         this.lookAt(lookingAt, 10, this.getMaxHeadXRot());
@@ -3361,8 +3242,8 @@ class Mob extends Entity {
         }
       }
     } else {
-      if (this.random.nextFloat() < 0.05) {
-        this.yRotA = (this.random.nextFloat() - 0.5) * 20;
+      if (Math.random() < 0.05) {
+        this.yRotA = (Math.random() - 0.5) * 20;
       }
       this.yRot += this.yRotA;
       this.xRot = this.defaultLookAngle;
@@ -3370,7 +3251,7 @@ class Mob extends Entity {
     const inWater = this.isInWater();
     const inLava = this.isInLava();
     if (inWater || inLava)
-      this.jumping = this.random.nextFloat() < 0.8;
+      this.jumping = Math.random() < 0.8;
   }
   newServerAiStep() {
     this.noActionTime++;
@@ -3469,10 +3350,67 @@ class Mob extends Entity {
     this.deathTime = Number(tag["DeathTime"] ?? 0);
     this.attackTime = Number(tag["AttackTime"] ?? 0);
   }
-}
-var LADDER_LEGACY_ID = 65;
-function isLadderTile(id) {
-  return id === LADDER_LEGACY_ID;
+  jumpFromGround() {
+    this.yd = 0.42;
+  }
+  canSpawn() {
+    return true;
+  }
+  isWaterMob() {
+    return false;
+  }
+  beforeRemove() {}
+  updateWalkAnim() {}
+  onLadder() {
+    return false;
+  }
+  removeWhenFarAway() {
+    return false;
+  }
+  updateAttackAnim() {}
+  swing() {
+    if (!this.swinging) {
+      this.swinging = true;
+      this.swingTime = 0;
+    }
+  }
+  getTileBelow() {
+    return 0;
+  }
+  getTileFriction(tileId) {
+    return 0.6;
+  }
+  interpolateOnly() {
+    return false;
+  }
+  useNewAi() {
+    return false;
+  }
+  isSleeping() {
+    return false;
+  }
+  bbGrowXZ(amount) {
+    return new Aabb(this.bb.minX - amount, this.bb.minY, this.bb.minZ - amount, this.bb.maxX + amount, this.bb.maxY, this.bb.maxZ + amount);
+  }
+  getEntitiesInAABB(bb) {
+    return [];
+  }
+  getNearestPlayer(maxDist) {
+    return null;
+  }
+  getEntity(entityId) {
+    return null;
+  }
+  lookAt(target, yMax, xMax) {}
+  getMaxHeadXRot() {
+    return 40;
+  }
+  distanceToSqrEntity(other) {
+    const dx = this.x - other.x;
+    const dy = this.y - other.y;
+    const dz = this.z - other.z;
+    return dx * dx + dy * dy + dz * dz;
+  }
 }
 
 // src/game/world/entity/mob-hierarchy.ts

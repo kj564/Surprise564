@@ -86,13 +86,13 @@ export abstract class EntityFactory {
     const id = Number(tag['id']);
     if (!Number.isInteger(id)) return null;
 
-    let e: Entity | null = null;
+    let e: Entity | null = null as Entity | null;
     if (id < 0) {
       // §EntityFactory.cpp:34-35 — `LOGE("Negative ItemId: %d ...");`
       return null;
     } else if (id < 64) {
       // §EntityFactory.cpp:36-37 — `e = MobFactory::CreateMob(id, level);`
-      e = MobFactory.createMob(id, level);
+      e = MobFactory.createMob(id, level) as unknown as Entity | null;
     } else {
       // §EntityFactory.cpp:38-39 — `e = CreateEntity(id, level);`
       e = EntityFactory.createEntity(id, level);

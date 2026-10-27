@@ -228,7 +228,7 @@ export class Sheep extends Animal {
   }
 
   /** §Sheep.cpp:184-189 — `void Sheep::jumpFromGround()` — no jump while eating. */
-  override jumpFromGround(): void {
+  jumpFromGround(): void {
     if (this.eatAnimationTickValue <= 0) {
       super.jumpFromGround();
     }

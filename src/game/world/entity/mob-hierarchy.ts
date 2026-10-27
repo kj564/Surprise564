@@ -66,7 +66,7 @@ export abstract class PathfinderMob extends Mob {
   }
 
   /** §PathfinderMob.cpp:28-31 — `bool PathfinderMob::canSpawn()` — super + walkTargetValue. */
-  override canSpawn(): boolean {
+  canSpawn(): boolean {
     if (!super.canSpawn()) return false;
     // §PathfinderMob.cpp:30 — `getWalkTargetValue(floor(x), floor(bb.y0), floor(z)) >= 0`
     return this.getWalkTargetValue(Math.floor(this.x), Math.floor(this.bb.minY), Math.floor(this.z)) >= 0;
@@ -125,7 +125,7 @@ export abstract class PathfinderMob extends Mob {
         attackTarget = null;
       } else {
         this.attackTargetId = attackTarget.entityId;
-        const d = attackTarget.distanceToEntity(this);
+        const d = attackTarget.distanceToEntity(this as unknown as Entity);
         if (this.canSee(attackTarget)) {
           // §PathfinderMob.cpp:84 — `checkHurtTarget(attackTarget, d);`
           this.checkHurtTarget(attackTarget, d);
@@ -407,7 +407,7 @@ export abstract class FlyingMob extends Mob {
   }
 
   /** §FlyingMob.cpp:64-67 — `bool FlyingMob::onLadder() { return false; }`. */
-  override onLadder(): boolean {
+  onLadder(): boolean {
     return false;
   }
 
