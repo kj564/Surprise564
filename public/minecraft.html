@@ -5966,144 +5966,237 @@
 
 
     // ============================================================
-    // §UI/GAME FLOW — main menu, pause, inventory, settings, loading
-    // §StartMenuScreen.cpp + §PauseScreen.cpp + §Screen.cpp
+    // §GUI GAME LOGIC — connect new UIs to existing game state
+    // (Does NOT touch main menu/pause/inventory — those already work)
     // ============================================================
 
-    const overlayEl = document.getElementById('overlay');
-    const loadingEl = document.getElementById('loading');
-    const loadingDetail = document.getElementById('loadingDetail');
-    const pauseEl = document.getElementById('pauseOverlay');
-    const inventoryEl = document.getElementById('inventory');
-    const helpPanel = document.getElementById('helpOptionsPanel');
-    const settingsPanel = document.getElementById('settingsPanel');
-    const mainMenuButtons = document.getElementById('mainMenuButtons');
-
-    let currentScreen = 'loading';
-    let gameStarted = false;
-    let gamePaused = false;
-
-    function setScreen(screen) {
-      currentScreen = screen;
-      loadingEl.classList.toggle('hidden', screen !== 'loading');
-      overlayEl.classList.toggle('hidden', screen !== 'menu');
-      pauseEl.classList.toggle('hidden', screen !== 'pause');
-      inventoryEl.classList.toggle('hidden', screen !== 'inventory');
-      if (screen !== 'menu') {
-        if (helpPanel) helpPanel.classList.add('hidden');
-        if (settingsPanel) settingsPanel.classList.add('hidden');
-      }
-      gamePaused = (screen === 'menu' || screen === 'loading');
-    }
-
-    function updateLoadingProgress(pct, detail) {
-      const bar = loadingEl.querySelector('.progress-bar i');
-      if (bar) bar.style.width = pct + '%';
-      if (detail && loadingDetail) loadingDetail.textContent = detail;
-    }
-
-    function hideLoading() { loadingEl.classList.add('hidden'); }
-
-    function showMainMenu() {
-      gameStarted = false;
-      setScreen('menu');
-      if (mainMenuButtons) mainMenuButtons.classList.remove('hidden');
-      if (helpPanel) helpPanel.classList.add('hidden');
-      if (settingsPanel) settingsPanel.classList.add('hidden');
-    }
-
-    // §StartMenuScreen.cpp:27 — Start Game button
-    document.getElementById('playButton')?.addEventListener('click', () => {
-      setScreen('loading');
-      updateLoadingProgress(10, 'menyiapkan tekstur');
-      let pct = 10;
-      const loadInterval = setInterval(() => {
-        pct += 15;
-        if (pct < 50) updateLoadingProgress(pct, 'menyiapkan tekstur');
-        else if (pct < 80) updateLoadingProgress(pct, 'memuat dunia');
-        else if (pct < 100) updateLoadingProgress(pct, 'mempersiapkan permainan');
-        else {
-          clearInterval(loadInterval);
-          updateLoadingProgress(100, 'siap!');
-          hideLoading();
-          gameStarted = true;
-          gamePaused = false;
-          setScreen('game');
+    // === §DeathScreen.cpp — wire death trigger ===
+    function checkPlayerDeath() {
+      if (player && player.health !== undefined && player.health <= 0) {
+        const ds = document.getElementById('deathScreen');
+        if (ds && ds.classList.contains('hidden')) {
+          document.getElementById('deathScore').textContent = Math.floor(browserStats.coins || 0);
+          ds.classList.remove('hidden');
         }
-      }, 200);
+      }
+    }
+    document.getElementById('respawnBtn')?.addEventListener('click', () => {
+      document.getElementById('deathScreen')?.classList.add('hidden');
+      if (player) {
+        player.health = 20;
+        player.pos.x = 8; player.pos.y = WATER_LEVEL + 2; player.pos.z = 8;
+        player.vel.y = 0;
+      }
+    });
+    document.getElementById('quitToTitleBtn')?.addEventListener('click', () => {
+      document.getElementById('deathScreen')?.classList.add('hidden');
+      // Use existing game's quit-to-title
+      const rtBtn = document.getElementById('returnTitleButton');
+      if (rtBtn) rtBtn.click(); else gameStarted = false;
     });
 
-    document.getElementById('joinButton')?.addEventListener('click', () => {
-      showToast('Multiplayer not available in browser version');
-    });
-
-    document.getElementById('helpOptionsButton')?.addEventListener('click', () => {
-      if (mainMenuButtons) mainMenuButtons.classList.add('hidden');
-      if (helpPanel) helpPanel.classList.remove('hidden');
-    });
-
-    document.getElementById('guideButton')?.addEventListener('click', () => {
-      const guide = document.getElementById('vcGuide');
-      if (guide) guide.classList.remove('hidden');
-    });
-
-    document.getElementById('optionsButton')?.addEventListener('click', () => {
-      if (helpPanel) helpPanel.classList.add('hidden');
-      if (settingsPanel) settingsPanel.classList.remove('hidden');
-    });
-
-    document.getElementById('helpBackButton')?.addEventListener('click', () => {
-      if (helpPanel) helpPanel.classList.add('hidden');
-      if (mainMenuButtons) mainMenuButtons.classList.remove('hidden');
-    });
-
-    document.getElementById('saveOptionsButton')?.addEventListener('click', () => {
-      if (settingsPanel) settingsPanel.classList.add('hidden');
-      if (helpPanel) helpPanel.classList.remove('hidden');
-    });
-
-    // §PauseScreen.cpp — pause menu
-    function togglePause() {
-      if (!gameStarted) return;
-      if (currentScreen === 'pause') setScreen('game');
-      else if (currentScreen === 'game') setScreen('pause');
+    // === §Gui.cpp:604-624 — air supply (bubbles) ===
+    let playerAirSupply = 300; // §Entity.h:27 — TOTAL_AIR_SUPPLY = 15 * TPS
+    function updateAirSupply() {
+      if (!player) return;
+      // Check if player head is underwater
+      const headY = Math.floor(player.pos.y + 1.62); // eye height
+      const blockAtHead = world.getBlock(Math.floor(player.pos.x), headY, Math.floor(player.pos.z));
+      const isUnderwater = blockAtHead === 17; // 17 = water in compact ID
+      if (isUnderwater) {
+        playerAirSupply--;
+        if (playerAirSupply <= -20) {
+          playerAirSupply = 0;
+          if (player.health !== undefined) player.health -= 2;
+        }
+      } else {
+        playerAirSupply = 300;
+      }
+      player.airSupply = playerAirSupply;
+      // Update bubbles UI
+      const bubblesEl2 = document.getElementById('bubbles');
+      if (bubblesEl2) {
+        if (isUnderwater) {
+          bubblesEl2.classList.remove('hidden');
+          const count = Math.max(0, Math.ceil((playerAirSupply - 2) * 10 / 300));
+          bubblesEl2.innerHTML = '';
+          for (let i = 0; i < count; i++) {
+            const b = document.createElement('div');
+            b.className = 'bubble';
+            bubblesEl2.appendChild(b);
+          }
+        } else {
+          bubblesEl2.classList.add('hidden');
+        }
+      }
     }
 
-    document.getElementById('resumeGameButton')?.addEventListener('click', () => setScreen('game'));
-    document.getElementById('returnTitleButton')?.addEventListener('click', () => showMainMenu());
-    document.getElementById('saveWorldButton')?.addEventListener('click', () => {
-      showToast('World saved!');
-      setTimeout(() => showMainMenu(), 500);
-    });
-
-    // §InventoryPane.cpp — inventory
-    function toggleInventory() {
-      if (!gameStarted) return;
-      if (currentScreen === 'inventory') setScreen('game');
-      else if (currentScreen === 'game') setScreen('inventory');
+    // === §Tile::use — block interaction (right-click) ===
+    function onBlockInteract(blockId, bx, by, bz) {
+      // §FurnaceTile::use — open furnace UI
+      if (blockId === 16) { // 16 = furnace in compact ID
+        document.getElementById('furnaceUI')?.classList.remove('hidden');
+        return true;
+      }
+      // §ChestTile::use — open chest UI
+      if (blockId === 54 || blockId === 19) { // accept both IDs
+        document.getElementById('chestUI')?.classList.remove('hidden');
+        return true;
+      }
+      // §WorkbenchTile::use — open crafting UI
+      if (blockId === 15) { // 15 = crafting table in compact ID
+        document.getElementById('craftingUI')?.classList.remove('hidden');
+        return true;
+      }
+      return false;
     }
 
-    document.getElementById('invClose')?.addEventListener('click', () => setScreen('game'));
+    // Right-click to interact with blocks
+    document.addEventListener('contextmenu', (e) => {
+      if (e.target.id === 'game' && typeof currentTargetBlock !== 'undefined' && currentTargetBlock) {
+        e.preventDefault();
+        onBlockInteract(currentTargetBlock.id, currentTargetBlock.x, currentTargetBlock.y, currentTargetBlock.z);
+      }
+    });
 
-    // §Screen.cpp:keyPressed
+    // === §WorkbenchScreen.cpp — crafting slot handlers ===
+    document.querySelectorAll('.crafting-slot').forEach(slot => {
+      slot.addEventListener('click', () => {
+        const selected = HOTBAR[selectedSlot];
+        if (selected && selected.type === 'block') {
+          if (slot.dataset.itemKey === String(selected.id)) {
+            delete slot.dataset.itemKey;
+            slot.textContent = '';
+          } else {
+            slot.dataset.itemKey = String(selected.id);
+            slot.textContent = BLOCKS[selected.id]?.name?.substring(0, 6) || '?';
+          }
+          checkCraftingResult();
+        }
+      });
+    });
+
+    // Craft result click
+    document.getElementById('craftingResult')?.addEventListener('click', () => {
+      const result = document.getElementById('craftingResult');
+      if (result.textContent) {
+        const craftedKey = result.textContent;
+        // Add to hotbar
+        for (let i = 0; i < HOTBAR.length; i++) {
+          if (!HOTBAR[i] || HOTBAR[i].type === 'block' && HOTBAR[i].id === 0) {
+            HOTBAR[i] = { type: 'item', id: craftedKey, label: craftedKey };
+            buildHotbar();
+            break;
+          }
+        }
+        // Clear grid
+        document.querySelectorAll('.crafting-slot').forEach(s => {
+          delete s.dataset.itemKey;
+          s.textContent = '';
+        });
+        result.textContent = '';
+        result.style.background = '#aaa';
+        toast('Crafted: ' + craftedKey);
+      }
+    });
+
+    // Check crafting result using Recipes singleton if available
+    function checkCraftingResult() {
+      if (!window.VoxelCraftRecipes) return;
+      try {
+        const recipes = window.VoxelCraftRecipes.getInstance().getRecipes();
+        const grid = {
+          width: 3, height: 3,
+          getItem(x, y) {
+            const slot = document.querySelector('.crafting-slot[data-craft-x="' + x + '"][data-craft-y="' + y + '"]');
+            if (!slot || !slot.dataset.itemKey) return null;
+            return { itemKey: slot.dataset.itemKey, count: 1, maxStackSize: 64 };
+          }
+        };
+        for (const recipe of recipes) {
+          if (recipe.matches(grid)) {
+            const result = recipe.getResultItem();
+            const resultEl = document.getElementById('craftingResult');
+            resultEl.textContent = result.itemKey;
+            resultEl.style.background = '#7c7';
+            return;
+          }
+        }
+        const resultEl = document.getElementById('craftingResult');
+        resultEl.textContent = '';
+        resultEl.style.background = '#aaa';
+      } catch(e) { /* Recipes not available yet */ }
+    }
+
+    // === §FurnaceScreen.cpp — furnace slot handlers ===
+    ['furnaceIngredient', 'furnaceFuel', 'furnaceResult'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', () => {
+        if (id === 'furnaceResult') {
+          const result = document.getElementById('furnaceResult');
+          if (result.textContent) {
+            toast('Got: ' + result.textContent);
+            result.textContent = '';
+            result.style.background = '#8b8b8b';
+          }
+        } else {
+          const selected = HOTBAR[selectedSlot];
+          if (selected) {
+            const slot = document.getElementById(id);
+            const key = selected.type === 'block' ? String(selected.id) : selected.id;
+            slot.textContent = key.substring(0, 6);
+            slot.dataset.itemKey = key;
+            if (window.VoxelCraftFurnaceRecipes && id === 'furnaceIngredient') {
+              const fr = window.VoxelCraftFurnaceRecipes.getInstance();
+              const result = fr.getResult(key);
+              if (result) {
+                document.getElementById('furnaceResult').textContent = result.itemKey;
+                document.getElementById('furnaceFlame')?.classList.add('active');
+                document.getElementById('furnaceBurnFill').style.width = '100%';
+              }
+            }
+          }
+        }
+      });
+    });
+
+    // Container close buttons
+    document.querySelectorAll('.container-close').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.close;
+        document.getElementById(target)?.classList.add('hidden');
+      });
+    });
+
+    // Escape closes container UIs
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (currentScreen === 'inventory') setScreen('game');
-        else if (currentScreen === 'game') setScreen('pause');
-        else if (currentScreen === 'pause') setScreen('game');
-        document.querySelectorAll('#furnaceUI, #chestUI, #craftingUI').forEach(el => el.classList.add('hidden'));
+        ['furnaceUI', 'chestUI', 'craftingUI', 'deathScreen'].forEach(id => {
+          document.getElementById(id)?.classList.add('hidden');
+        });
       }
-      if ((e.key === 'e' || e.key === 'E') && !e.repeat) {
-        if (currentScreen === 'game') toggleInventory();
-        else if (currentScreen === 'inventory') setScreen('game');
+      // F3 = debug overlay
+      if (e.key === 'F3') {
+        e.preventDefault();
+        document.getElementById('debugOverlay')?.classList.toggle('hidden');
       }
     });
 
-    // §Minecraft.cpp:init — start at main menu
-    window.addEventListener('load', () => {
-      setTimeout(() => { hideLoading(); showMainMenu(); }, 500);
-    });
-
+    // Integrate death check + air supply into existing game loop
+    setInterval(() => {
+      if (typeof gameStarted !== 'undefined' && gameStarted && typeof player !== 'undefined' && player) {
+        updateAirSupply();
+        checkPlayerDeath();
+        // Update debug overlay
+        const dbg = document.getElementById('debugOverlay');
+        if (dbg && !dbg.classList.contains('hidden')) {
+          document.getElementById('debugCoords').textContent = 'XYZ: ' + Math.floor(player.pos.x) + ' / ' + Math.floor(player.pos.y) + ' / ' + Math.floor(player.pos.z);
+          document.getElementById('debugChunk').textContent = 'Chunk: ' + Math.floor(player.pos.x/16) + ', ' + Math.floor(player.pos.z/16);
+          document.getElementById('debugFps').textContent = 'FPS: ' + Math.round(fps);
+          document.getElementById('debugBlock').textContent = 'Block: ' + (typeof currentTargetBlock !== 'undefined' && currentTargetBlock ? currentTargetBlock.id : 'none');
+          document.getElementById('debugEntities').textContent = 'Entities: ' + (typeof mobs !== 'undefined' ? mobs.length : 0);
+        }
+      }
+    }, 100);
   </script>
 </body>
 </html>
