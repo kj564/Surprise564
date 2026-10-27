@@ -1381,8 +1381,8 @@
       // §C++ Tile IDs (§Tile.cpp:161-265)
       1: 'minecraft:stone', 2: 'minecraft:grass_block', 3: 'minecraft:dirt',
       4: 'minecraft:cobblestone', 5: 'minecraft:oak_planks', 6: 'minecraft:sapling',
-      7: 'minecraft:bedrock', 8: 'minecraft:water', 9: 'minecraft:water',
-      10: 'minecraft:lava', 11: 'minecraft:lava',
+      7: 'minecraft:bedrock', 8: 'minecraft:flowing_water', 9: 'minecraft:water',
+      10: 'minecraft:flowing_lava', 11: 'minecraft:lava',
       12: 'minecraft:sand', 13: 'minecraft:gravel',
       14: 'minecraft:gold_ore', 15: 'minecraft:iron_ore', 16: 'minecraft:coal_ore',
       17: 'minecraft:oak_log', 18: 'minecraft:oak_leaves',
@@ -6179,34 +6179,6 @@
       }
     });
 
-    // Check crafting result using Recipes singleton if available
-    function checkCraftingResult() {
-      if (!window.VoxelCraftRecipes) return;
-      try {
-        const recipes = window.VoxelCraftRecipes.getInstance().getRecipes();
-        const grid = {
-          width: 3, height: 3,
-          getItem(x, y) {
-            const slot = document.querySelector('.crafting-slot[data-craft-x="' + x + '"][data-craft-y="' + y + '"]');
-            if (!slot || !slot.dataset.itemKey) return null;
-            return { itemKey: slot.dataset.itemKey, count: 1, maxStackSize: 64 };
-          }
-        };
-        for (const recipe of recipes) {
-          if (recipe.matches(grid)) {
-            const result = recipe.getResultItem();
-            const resultEl = document.getElementById('craftingResult');
-            resultEl.textContent = result.itemKey;
-            resultEl.style.background = '#7c7';
-            return;
-          }
-        }
-        const resultEl = document.getElementById('craftingResult');
-        resultEl.textContent = '';
-        resultEl.style.background = '#aaa';
-      } catch(e) { /* Recipes not available yet */ }
-    }
-
     // === §FurnaceScreen.cpp — furnace slot handlers ===
     ['furnaceIngredient', 'furnaceFuel', 'furnaceResult'].forEach(id => {
       document.getElementById(id)?.addEventListener('click', () => {
@@ -6238,25 +6210,12 @@
       });
     });
 
-    // Container close buttons
-    document.querySelectorAll('.container-close').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const target = btn.dataset.close;
-        document.getElementById(target)?.classList.add('hidden');
-      });
-    });
-
-    // Escape closes container UIs
+    // Escape closes container UIs (§Gui.cpp:604 — closeContainerOnEscape)
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         ['furnaceUI', 'chestUI', 'craftingUI', 'deathScreen'].forEach(id => {
           document.getElementById(id)?.classList.add('hidden');
         });
-      }
-      // F3 = debug overlay
-      if (e.key === 'F3') {
-        e.preventDefault();
-        document.getElementById('debugOverlay')?.classList.toggle('hidden');
       }
     });
 
