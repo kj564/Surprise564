@@ -28,19 +28,55 @@ export function shape3(r0: string, r1: string, r2: string): string[] { return [r
 
 // === §Recipes.h:37-39 — definition() helpers ===
 /** §Recipes.h:48 — `template<class T> TypeList definition(char c0, T t)` */
-export function def(c: string, id: string, auxValue?: number): RecipeType[] {
-  return [{ c, id, auxValue }];
+// §C++ variable name → int ID map (for recipe backward compat)
+// C++ uses Item::stick, Tile::wood etc. — these are the int IDs.
+const SHORT_KEY_TO_ID: Record<string, number> = {
+  // Tiles (0-255) — from Tile.cpp initTiles()
+  "air": 0, "stone": 1, "grass": 2, "dirt": 3, "stoneBrick": 4, "wood": 5,
+  "sapling": 6, "bedrock": 7, "water": 8, "sand": 12, "gravel": 13,
+  "goldOre": 14, "ironOre": 15, "coalOre": 16, "treeTrunk": 17, "leaves": 18,
+  "glass": 20, "lapisOre": 21, "lapisBlock": 22, "sandStone": 24,
+  "web": 30, "tallgrass": 31, "cloth": 35, "flower": 37, "rose": 38,
+  "mushroom1": 39, "mushroom2": 40, "goldBlock": 41, "ironBlock": 42,
+  "stoneSlab": 44, "redBrick": 45, "tnt": 46, "bookshelf": 47,
+  "mossStone": 48, "obsidian": 49, "torch": 50, "chest": 54,
+  "emeraldOre": 56, "emeraldBlock": 57, "workBench": 58, "crops": 59,
+  "farmland": 60, "furnace": 62, "ladder": 65, "redStoneOre": 73,
+  "topSnow": 78, "ice": 79, "snow": 80, "cactus": 81, "clay": 82,
+  "reeds": 83, "fence": 85, "lightGem": 89, "trapdoor": 96,
+  "stoneBrickSmooth": 98, "melon": 103, "fenceGate": 107,
+  // Items (256+) — from Item.cpp initItems(), id = 256 + localId
+  "stick": 280, "bowl": 281, "mushroomStew": 282, "string": 287,
+  "feather": 288, "sulphur": 289, "flint": 318, "leather": 334,
+  "brick": 336, "clay_item": 337, "paper": 339, "book": 340,
+  "yellowDust": 348, "dye_powder": 351, "bone": 352, "sugar": 353,
+  "shears": 359, "coal": 263, "emerald": 264, "ironIngot": 265,
+  "goldIngot": 266, "apple": 260, "bow": 261, "arrow": 262,
+  "bread": 297, "seeds_wheat": 295, "wheat": 296,
+  "door_wood": 64, "sign": 63, "snowBall": 332, "bed": 355,
+};
+
+function resolveItemId(key: string | number): number {
+  if (typeof key === 'number') return key;
+  if (SHORT_KEY_TO_ID[key] !== undefined) return SHORT_KEY_TO_ID[key];
+  const parsed = parseInt(key, 10);
+  return isNaN(parsed) ? 0 : parsed;
 }
-export function def2(c0: string, k0: string, c1: string, k1: string): RecipeType[] {
-  return [{ c: c0, id: k0 }, { c: c1, id: k1 }];
+
+
+export function def(c: string, id: string | number, auxValue?: number): RecipeType[] {
+  return [{ c, id: resolveItemId(id), auxValue }];
 }
-export function def3(c0: string, k0: string, c1: string, k1: string, c2: string, k2: string): RecipeType[] {
-  return [{ c: c0, id: k0 }, { c: c1, id: k1 }, { c: c2, id: k2 }];
+export function def2(c0: string, k0: string | number, c1: string, k1: string | number): RecipeType[] {
+  return [{ c: c0, id: resolveItemId(k0) }, { c: c1, id: resolveItemId(k1) }];
+}
+export function def3(c0: string, k0: string | number, c1: string, k1: string | number, c2: string, k2: string | number): RecipeType[] {
+  return [{ c: c0, id: resolveItemId(k0) }, { c: c1, id: resolveItemId(k1) }, { c: c2, id: resolveItemId(k2) }];
 }
 
 /** Helper: create an ItemStack */
-export function itemStack(id: string, count = 1, auxValue?: number): ItemStack {
-  return { id, count, maxStackSize: 64, auxValue };
+export function itemStack(id: string | number, count = 1, auxValue?: number): ItemStack {
+  return { id: resolveItemId(id), count, maxStackSize: 64, auxValue };
 }
 
 /** §Recipes.h:8 — `typedef std::vector<Recipe*> RecipeList;` */

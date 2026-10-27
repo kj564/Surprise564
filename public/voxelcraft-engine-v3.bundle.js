@@ -5149,17 +5149,115 @@ function shape2(r0, r1) {
 function shape3(r0, r1, r2) {
   return [r0, r1, r2];
 }
+var SHORT_KEY_TO_ID = {
+  air: 0,
+  stone: 1,
+  grass: 2,
+  dirt: 3,
+  stoneBrick: 4,
+  wood: 5,
+  sapling: 6,
+  bedrock: 7,
+  water: 8,
+  sand: 12,
+  gravel: 13,
+  goldOre: 14,
+  ironOre: 15,
+  coalOre: 16,
+  treeTrunk: 17,
+  leaves: 18,
+  glass: 20,
+  lapisOre: 21,
+  lapisBlock: 22,
+  sandStone: 24,
+  web: 30,
+  tallgrass: 31,
+  cloth: 35,
+  flower: 37,
+  rose: 38,
+  mushroom1: 39,
+  mushroom2: 40,
+  goldBlock: 41,
+  ironBlock: 42,
+  stoneSlab: 44,
+  redBrick: 45,
+  tnt: 46,
+  bookshelf: 47,
+  mossStone: 48,
+  obsidian: 49,
+  torch: 50,
+  chest: 54,
+  emeraldOre: 56,
+  emeraldBlock: 57,
+  workBench: 58,
+  crops: 59,
+  farmland: 60,
+  furnace: 62,
+  ladder: 65,
+  redStoneOre: 73,
+  topSnow: 78,
+  ice: 79,
+  snow: 80,
+  cactus: 81,
+  clay: 82,
+  reeds: 83,
+  fence: 85,
+  lightGem: 89,
+  trapdoor: 96,
+  stoneBrickSmooth: 98,
+  melon: 103,
+  fenceGate: 107,
+  stick: 280,
+  bowl: 281,
+  mushroomStew: 282,
+  string: 287,
+  feather: 288,
+  sulphur: 289,
+  flint: 318,
+  leather: 334,
+  brick: 336,
+  clay_item: 337,
+  paper: 339,
+  book: 340,
+  yellowDust: 348,
+  dye_powder: 351,
+  bone: 352,
+  sugar: 353,
+  shears: 359,
+  coal: 263,
+  emerald: 264,
+  ironIngot: 265,
+  goldIngot: 266,
+  apple: 260,
+  bow: 261,
+  arrow: 262,
+  bread: 297,
+  seeds_wheat: 295,
+  wheat: 296,
+  door_wood: 64,
+  sign: 63,
+  snowBall: 332,
+  bed: 355
+};
+function resolveItemId(key) {
+  if (typeof key === "number")
+    return key;
+  if (SHORT_KEY_TO_ID[key] !== undefined)
+    return SHORT_KEY_TO_ID[key];
+  const parsed = parseInt(key, 10);
+  return isNaN(parsed) ? 0 : parsed;
+}
 function def(c, id2, auxValue) {
-  return [{ c, id: id2, auxValue }];
+  return [{ c, id: resolveItemId(id2), auxValue }];
 }
 function def2(c0, k0, c1, k1) {
-  return [{ c: c0, id: k0 }, { c: c1, id: k1 }];
+  return [{ c: c0, id: resolveItemId(k0) }, { c: c1, id: resolveItemId(k1) }];
 }
 function def3(c0, k0, c1, k1, c2, k2) {
-  return [{ c: c0, id: k0 }, { c: c1, id: k1 }, { c: c2, id: k2 }];
+  return [{ c: c0, id: resolveItemId(k0) }, { c: c1, id: resolveItemId(k1) }, { c: c2, id: resolveItemId(k2) }];
 }
 function itemStack(id2, count = 1, auxValue) {
-  return { id: id2, count, maxStackSize: 64, auxValue };
+  return { id: resolveItemId(id2), count, maxStackSize: 64, auxValue };
 }
 
 class Recipes {
