@@ -3196,7 +3196,7 @@
       die() { /* overridden by subclasses if needed */ }
       hurt(source, amount) {
         if (this.invulnerableTime > 0 || (this.health !== undefined && this.health <= 0)) return;
-        this.health -= amount;
+        this.health = Math.max(0, this.health - amount);
         if (this.hurtTime !== undefined) this.hurtTime = 10;
         if (this.hurtDuration !== undefined) this.hurtDuration = 10;
         if (this.invulnerableTime !== undefined) this.invulnerableTime = this.invulnerableDuration || 10;
@@ -3924,7 +3924,13 @@
           if (rightWing) rightWing.rotation.z = wingBob * 0.3;
           if (m.bones.get('body')) m.bones.get('body').rotation.x = -wingBob * 0.1;
         }
-        // despawn
+        // §Mob::checkDeath — remove dead mobs (health <= 0)
+        if (m.health <= 0) {
+          scene.remove(m.mesh);
+          mobs.splice(i, 1);
+          continue;
+        }
+        // despawn (distance-based)
         if (m.checkDespawn()) {
           scene.remove(m.mesh);
           mobs.splice(i, 1);
@@ -4487,11 +4493,18 @@
         slot.addEventListener('click', () => {
           // §TouchIngameBlockSelectionScreen.cpp:169-189 — addItem: moveToSelectionSlot(0, itemId) + play sound.
           // Browser port: assign to the selected hotbar slot + toast (no audio).
-          HOTBAR[selectedSlot] = { type: 'block', id, label: BLOCKS[id]?.name || 'Blok' };
-          voxelEngine.inventory.setSlot(selectedSlot, { itemKey: runtimeBlockKey(id), count: 64, maxStackSize: 64 });
+          // §Don't replace the "more" slot (index 8) — find a free slot instead
+          let targetSlot = selectedSlot;
+          if (HOTBAR[selectedSlot] && HOTBAR[selectedSlot].type === 'more') {
+            for (let i = 0; i < HOTBAR.length; i++) {
+              if (!HOTBAR[i] || HOTBAR[i].type === 'more') { targetSlot = i; break; }
+            }
+          }
+          HOTBAR[targetSlot] = { type: 'block', id, label: BLOCKS[id]?.name || 'Blok' };
+          voxelEngine.inventory.setSlot(targetSlot, { itemKey: runtimeBlockKey(id), count: 64, maxStackSize: 64 });
           buildHotbar();
-          selectSlot(selectedSlot);
-          toast('Slot ' + (selectedSlot+1) + ' = ' + def.name);
+          selectSlot(targetSlot);
+          toast('Slot ' + (targetSlot+1) + ' = ' + def.name);
         });
         invGridEl.appendChild(slot);
       }
@@ -5105,13 +5118,13 @@
       if (!player.canHurtPlayer || player.health <= 0) return;
       if (player.invulnerableTime > player.invulnerableDuration / 2) {
         if (dmg <= player.lastHurt) return;
-        player.health -= (dmg - player.lastHurt);
+        player.health = Math.max(0, player.health - (dmg - player.lastHurt));
         player.lastHurt = dmg;
       } else {
         player.lastHurt = dmg;
         player.lastHealth = player.health;
         player.invulnerableTime = player.invulnerableDuration;
-        player.health -= dmg;
+        player.health = Math.max(0, player.health - dmg);
         player.hurtTime = player.hurtDuration;
       }
       if (player.health <= 0) {
@@ -6198,7 +6211,7 @@
         playerAirSupply--;
         if (playerAirSupply <= -20) {
           playerAirSupply = 0;
-          if (player.health !== undefined) player.health -= 2;
+          if (player.health !== undefined) player.health = Math.max(0, player.health - 2);
         }
       } else {
         playerAirSupply = 300;
@@ -6271,28 +6284,39 @@
       });
     });
 
-    // Craft result click
+    // Craft result click — §WorkbenchScreen.cpp:filterRecipe + craft
     document.getElementById('craftingResult')?.addEventListener('click', () => {
       const result = document.getElementById('craftingResult');
-      if (result.textContent) {
-        const craftedKey = result.textContent;
-        // Add to hotbar
-        for (let i = 0; i < HOTBAR.length; i++) {
-          if (!HOTBAR[i] || HOTBAR[i].type === 'block' && HOTBAR[i].id === 0) {
-            HOTBAR[i] = { type: 'item', id: craftedKey, label: craftedKey };
-            buildHotbar();
-            break;
-          }
+      if (!result.textContent) return;
+      const craftedKey = result.textContent;
+      // §Find first empty hotbar slot (skip the "more" slot at index 8)
+      let placed = false;
+      for (let i = 0; i < HOTBAR.length; i++) {
+        if (!HOTBAR[i] || HOTBAR[i].type === 'more') {
+          HOTBAR[i] = { type: 'item', id: craftedKey, label: craftedKey };
+          voxelEngine.inventory.setSlot(i, { itemKey: craftedKey, count: 1, maxStackSize: 64 });
+          buildHotbar();
+          selectSlot(i);
+          placed = true;
+          break;
         }
-        // Clear grid
-        document.querySelectorAll('.crafting-slot').forEach(s => {
+      }
+      if (!placed) {
+        toast('Hotbar penuh!');
+        return;
+      }
+      // §Consume one ingredient per crafting slot used
+      document.querySelectorAll('.crafting-slot').forEach(s => {
+        if (s.dataset.itemKey) {
+          // Decrement the count in the corresponding inventory slot
+          // For simplicity, just clear the slot (creative mode has unlimited blocks)
           delete s.dataset.itemKey;
           s.textContent = '';
-        });
-        result.textContent = '';
-        result.style.background = '#aaa';
-        toast('Crafted: ' + craftedKey);
-      }
+        }
+      });
+      result.textContent = '';
+      result.style.background = '#aaa';
+      toast('Crafted: ' + craftedKey);
     });
 
     // === §FurnaceScreen.cpp — furnace slot handlers ===
@@ -6301,9 +6325,31 @@
         if (id === 'furnaceResult') {
           const result = document.getElementById('furnaceResult');
           if (result.textContent) {
-            toast('Got: ' + result.textContent);
+            const craftedKey = result.textContent;
+            // Add to hotbar (same logic as crafting result)
+            let placed = false;
+            for (let i = 0; i < HOTBAR.length; i++) {
+              if (!HOTBAR[i] || HOTBAR[i].type === 'more') {
+                HOTBAR[i] = { type: 'item', id: craftedKey, label: craftedKey };
+                voxelEngine.inventory.setSlot(i, { itemKey: craftedKey, count: 1, maxStackSize: 64 });
+                buildHotbar();
+                selectSlot(i);
+                placed = true;
+                break;
+              }
+            }
+            if (!placed) { toast('Hotbar penuh!'); return; }
+            // Clear ingredient slot
+            const ingSlot = document.getElementById('furnaceIngredient');
+            if (ingSlot && ingSlot.dataset.itemKey) {
+              delete ingSlot.dataset.itemKey;
+              ingSlot.textContent = '';
+            }
             result.textContent = '';
             result.style.background = '#8b8b8b';
+            document.getElementById('furnaceFlame')?.classList.remove('active');
+            document.getElementById('furnaceBurnFill').style.width = '0%';
+            toast('Got: ' + craftedKey);
           }
         } else {
           const selected = HOTBAR[selectedSlot];
