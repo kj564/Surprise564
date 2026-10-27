@@ -3,7 +3,7 @@ function block(definition) {
   return Object.freeze({ ...definition, legacyAliases: definition.legacyAliases ? Object.freeze([...definition.legacyAliases]) : undefined, drops: Object.freeze([...definition.drops]) });
 }
 var definitions = [
-  block({ key: "minecraft:air", displayName: "Air", shape: "none", renderLayer: "invisible", solid: false, selectable: false, replaceable: true, material: "air", hardness: 0, sound: "silent", lightOpacity: 0, lightEmission: 0, drops: [] }),
+  block({ key: "minecraft:air", legacyId: 0, displayName: "Air", shape: "none", renderLayer: "invisible", solid: false, selectable: false, replaceable: true, material: "air", hardness: 0, sound: "silent", lightOpacity: 0, lightEmission: 0, drops: [] }),
   block({ key: "minecraft:stone", legacyId: 1, displayName: "Stone", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "stone", hardness: 1.5, sound: "stone", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:cobblestone"] }),
   block({ key: "minecraft:grass_block", legacyId: 2, displayName: "Grass Block", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.6, sound: "grass", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
   block({ key: "minecraft:dirt", legacyId: 3, displayName: "Dirt", shape: "cube", renderLayer: "opaque", solid: true, selectable: true, replaceable: false, material: "dirt", hardness: 0.5, sound: "gravel", lightOpacity: 15, lightEmission: 0, drops: ["minecraft:dirt"] }),
@@ -71,8 +71,8 @@ class BlockRegistry {
       }
     }
     const air = this.byLegacyId.get(0);
-    if (!air || air.legacyId !== undefined && air.legacyId !== 0) {
-      throw new Error("Registry must define minecraft:air and reserve it as the zero block");
+    if (!air) {
+      throw new Error("Registry must define block ID 0 (air)");
     }
   }
   getByKey(key) {
