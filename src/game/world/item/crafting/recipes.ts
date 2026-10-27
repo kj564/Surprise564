@@ -29,7 +29,7 @@ export function shape3(r0: string, r1: string, r2: string): string[] { return [r
 // === §Recipes.h:37-39 — definition() helpers ===
 /** §Recipes.h:48 — `template<class T> TypeList definition(char c0, T t)` */
 export function def(c: string, id: string, auxValue?: number): RecipeType[] {
-  return [{ c, id: itemKey, auxValue }];
+  return [{ c, id, auxValue }];
 }
 export function def2(c0: string, k0: string, c1: string, k1: string): RecipeType[] {
   return [{ c: c0, id: k0 }, { c: c1, id: k1 }];
@@ -40,7 +40,7 @@ export function def3(c0: string, k0: string, c1: string, k1: string, c2: string,
 
 /** Helper: create an ItemStack */
 export function itemStack(id: string, count = 1, auxValue?: number): ItemStack {
-  return { id: itemKey, count, maxStackSize: 64, auxValue };
+  return { id, count, maxStackSize: 64, auxValue };
 }
 
 /** §Recipes.h:8 — `typedef std::vector<Recipe*> RecipeList;` */

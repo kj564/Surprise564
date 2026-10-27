@@ -5150,7 +5150,7 @@ function shape3(r0, r1, r2) {
   return [r0, r1, r2];
 }
 function def(c, id2, auxValue) {
-  return [{ c, id: itemKey, auxValue }];
+  return [{ c, id: id2, auxValue }];
 }
 function def2(c0, k0, c1, k1) {
   return [{ c: c0, id: k0 }, { c: c1, id: k1 }];
@@ -5159,7 +5159,7 @@ function def3(c0, k0, c1, k1, c2, k2) {
   return [{ c: c0, id: k0 }, { c: c1, id: k1 }, { c: c2, id: k2 }];
 }
 function itemStack(id2, count = 1, auxValue) {
-  return { id: itemKey, count, maxStackSize: 64, auxValue };
+  return { id: id2, count, maxStackSize: 64, auxValue };
 }
 
 class Recipes {
