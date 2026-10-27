@@ -1205,18 +1205,24 @@
   <div id="touchArea"></div>
   
 
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
-    }
-  }
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="./voxelcraft-engine.bundle.js"></script>
+  <script>
+    // THREE is loaded globally via three.min.js (UMD build)
+    // Bundle is loaded globally via regular script tag
+    // Game code below uses window.THREE and window.VoxelCraft* globals
+    console.log("[VoxelCraft] Scripts loading...");
+    if (typeof THREE === 'undefined') {
+      // three.min.js UMD build assigns to window.THREE
+      // If it failed, try the module build
+      console.error("THREE.js not loaded!");
+      document.getElementById('loadingDetail').textContent = 'ERROR: THREE.js gagal dimuat';
+    } else {
+      console.log("[VoxelCraft] THREE.js loaded, starting game...");
 
-  <script type="module">
     console.log("[VoxelCraft] Module script started");
-    import * as THREE from 'three';
-    import './voxelcraft-engine.bundle.js';
+    
+    
 
     // ============================================================
     //  CONFIG
@@ -6288,6 +6294,8 @@
         }
       }
     }, 100);
+  
+    }
   </script>
 </body>
 </html>
