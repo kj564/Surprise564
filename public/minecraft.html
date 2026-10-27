@@ -1011,7 +1011,7 @@
 
   <div id="inventory" class="hidden" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
     <button id="invClose" class="inv-done" title="Done" aria-label="Done">×</button>
-    <h2 id="inventoryTitle">Select blocks</h2>
+    <h2 id="inventoryTitle">Select Block</h2>
     <div class="inv-tabs" role="tablist" aria-label="Kategori inventaris">
       <button type="button" id="inventoryTabAll" role="tab" aria-selected="true" aria-controls="invGrid" class="active" data-inv-filter="all">Semua</button>
       <button type="button" id="inventoryTabNature" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="nature">Alam</button>
@@ -1019,7 +1019,7 @@
       <button type="button" id="inventoryTabMinerals" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="minerals">Mineral</button>
     </div>
     <div class="inv-grid" id="invGrid" role="tabpanel" aria-labelledby="inventoryTabAll" tabindex="0"></div>
-    <p class="inv-hint">Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di pojok kanan atas.</p>
+    <p class="inv-hint">Select a block to assign to the current hotbar slot. Close with E or the button in the top-right corner.</p>
   </div>
 
 
@@ -1076,11 +1076,37 @@
       </div>
       <div id="settingsPanel" class="settings-panel">
         <h2>Game Options</h2>
-        <label for="renderQuality">Render Quality
-          <select id="renderQuality"><option value="high">High</option><option value="balanced" selected>Balanced</option><option value="low">Low</option></select>
-        </label>
+        <!-- §Options.h — all C++ MCPE 2013 options -->
         <label for="menuFov">Field of View
           <select id="menuFov"><option value="70">70</option><option value="80" selected>80</option><option value="90">90</option><option value="100">100</option></select>
+        </label>
+        <label for="renderDistance">Render Distance
+          <!-- §Options.h:43 — viewDistance (0=FAR, 1=NORMAL, 2=SHORT, 3=TINY) -->
+          <select id="renderDistance"><option value="0">Far</option><option value="1">Normal</option><option value="2" selected>Short</option><option value="3">Tiny</option></select>
+        </label>
+        <label for="graphicsMode">Graphics
+          <!-- §Options.h:50 — fancyGraphics (true=Fancy, false=Fast) -->
+          <select id="graphicsMode"><option value="true" selected>Fancy</option><option value="false">Fast</option></select>
+        </label>
+        <label for="sensitivity">Mouse Sensitivity
+          <!-- §Options.h:42 — sensitivity (0.0-1.0, default 0.5) -->
+          <input type="range" id="sensitivity" min="0" max="100" value="50">
+        </label>
+        <label for="invertMouse">Invert Mouse
+          <!-- §Options.h:41 — invertYMouse -->
+          <input type="checkbox" id="invertMouse">
+        </label>
+        <label for="viewBobbing">View Bobbing
+          <!-- §Options.h:44 — bobView -->
+          <input type="checkbox" id="viewBobbing" checked>
+        </label>
+        <label for="difficulty">Difficulty
+          <!-- §Options.h:38 — difficulty (0=Peaceful, 1=Easy, 2=Normal, 3=Hard) -->
+          <select id="difficulty"><option value="0">Peaceful</option><option value="1">Easy</option><option value="2" selected>Normal</option><option value="3">Hard</option></select>
+        </label>
+        <label for="thirdPerson">Third Person View
+          <!-- §Options.h:40 — thirdPersonView -->
+          <input type="checkbox" id="thirdPerson">
         </label>
         <button id="saveOptionsButton" class="settings-close">Done</button>
       </div>
@@ -1176,7 +1202,7 @@
         <div class="crafting-arrow"><span>▶</span></div>
         <div class="crafting-result" id="craftingResult"></div>
       </div>
-      <div class="crafting-hint">Place items in the grid to craft. Uses Recipes singleton from voxelcraft-engine.bundle.js.</div>
+      <div class="crafting-hint">Place items in the grid to craft.</div>
     </div>
   </div>
 
@@ -1267,17 +1293,17 @@
       1: { name:'Stone',          top:1,   bottom:1,   side:1,   solid:true },  // stone — StoneTile(1)
       2: { name:'Grass Block',        top:0,   bottom:2,   side:3,   solid:true },  // grass — GrassTile: top=0(grass_top, tinted in atlas), bottom=2(dirt), side=3(grass_side)
       3: { name:'Dirt',         top:2,   bottom:2,   side:2,   solid:true },  // dirt — DirtTile(3, 2)
-      17: { name:'Oak Log',       top:21,  bottom:21,  side:20,  solid:true },  // oak log — TreeTile: top=21(log_top), bottom=21, side=20(log_side)
+      17: { name:'Wood',       top:21,  bottom:21,  side:20,  solid:true },  // oak log — TreeTile: top=21(log_top), bottom=21, side=20(log_side)
       5: { name:'Oak Planks',      top:4,   bottom:4,   side:4,   solid:true },  // planks — Tile(5, 4)
-      18: { name:'Oak Leaves',       top:52,  bottom:52,  side:52,  solid:true },  // leaves — LeafTile(18, 52); alpha-0 pixels filled in atlas
+      18: { name:'Leaves',       top:52,  bottom:52,  side:52,  solid:true },  // leaves — LeafTile(18, 52); alpha-0 pixels filled in atlas
       12: { name:'Sand',         top:18,  bottom:18,  side:18,  solid:true },  // sand — HeavyTile(12, 18)
       13: { name:'Gravel',       top:19,  bottom:19,  side:19,  solid:true },  // gravel — GravelTile(13, 19)
       20: { name:'Glass',          top:49,  bottom:49,  side:49,  solid:true, transparent:true },  // glass — GlassTile(20, 49); tile is border-only (alpha 0 inside)
       7: { name:'Bedrock',       top:17,  bottom:17,  side:17,  solid:true },  // bedrock — Tile(7, 17)
       45: { name:'Bricks',          top:7,   bottom:7,   side:7,   solid:true },  // brick — Tile(45, 7)
-      41: { name:'Gold Block',          top:23,  bottom:23,  side:23,  solid:true },  // gold block — MetalTile(41, 23) = 39-16
-      57: { name:'Diamond Block',       top:24,  bottom:24,  side:24,  solid:true },  // diamond block — MetalTile(57, 24) = 40-16
-      42: { name:'Iron Block',          top:22,  bottom:22,  side:22,  solid:true },  // iron block — MetalTile(42, 22) = 38-16
+      41: { name:'Block of Gold',          top:23,  bottom:23,  side:23,  solid:true },  // gold block — MetalTile(41, 23) = 39-16
+      57: { name:'Block of Diamond',       top:24,  bottom:24,  side:24,  solid:true },  // diamond block — MetalTile(57, 24) = 40-16
+      42: { name:'Block of Iron',          top:22,  bottom:22,  side:22,  solid:true },  // iron block — MetalTile(42, 22) = 38-16
       58: { name:'Crafting Table',    top:43,  bottom:4,   side:59,  front:60, frontNZ_WX:true, solid:true },  // crafting table — WorkbenchTile: tex=59, top=tex-16=43, bottom=planks(4), front(-Z,-X)=tex+1=60 per WorkbenchTile.h:24 (face==2||face==4)
       61: { name:'Furnace',        top:62,  bottom:62,  side:45,  front:44, solid:true },  // furnace — FurnaceTile: tex=45, top/bottom=tex+17=62, side=tex=45, front(off)=tex-1=44
       8: { name:'Water',           top:205, bottom:205, side:205, solid:false, transparent:true, noCollide:true },  // water — MCPE 2013 dynamic texture frame 0 (tile 205)
@@ -1316,15 +1342,15 @@
       50:{ name:'Torch',          top:80,  bottom:80,  side:80,  solid:false, transparent:true, lightEmission:0.9375, hardness:0.0,  tileId:50  }, // §TorchTile(50,80)
       54:{ name:'Chest',          top:25,  bottom:25,  side:26,  front:27, solid:true, hardness:2.5,  tileId:54  }, // §ChestTile(54) — ChestTile.cpp top/bottom=25, side=26, front=27 (lockDir face)
       59:{ name:'Wheat',       top:88,  bottom:88,  side:88,  solid:false, hardness:0.0,  tileId:59  }, // §CropTile(59) crops
-      60:{ name:'Lahan Pertanian',top:87, bottom:2,   side:2,   solid:true, hardness:0.6,  tileId:60  }, // §FarmTile(60) farmland — FarmTile.cpp bottom/side=dirt(2)
-      62:{ name:'Tungku Menyala',top:62,  bottom:62,  side:45,  front:61, solid:true, lightEmission:0.875, hardness:3.5, tileId:62  }, // §FurnaceTile(62) furnace_lit — FurnaceTile.cpp:41 tex+16=61 when lit
+      60:{ name:'Farmland',top:87, bottom:2,   side:2,   solid:true, hardness:0.6,  tileId:60  }, // §FarmTile(60) farmland — FarmTile.cpp bottom/side=dirt(2)
+      62:{ name:'Lit Furnace',top:62,  bottom:62,  side:45,  front:61, solid:true, lightEmission:0.875, hardness:3.5, tileId:62  }, // §FurnaceTile(62) furnace_lit — FurnaceTile.cpp:41 tex+16=61 when lit
       63:{ name:'Papan Tanda',   top:4,   bottom:4,   side:4,   solid:false, hardness:1.0,  tileId:63  }, // §SignTile(63) sign
-      64:{ name:'Pintu Kayu',    top:97,  bottom:97,  side:97,  solid:false, hardness:3.0,  tileId:64  }, // §DoorTile(64) door_wood — DoorTile.cpp tex=97, hardness=3.0
-      65:{ name:'Tangga',        top:83,  bottom:83,  side:83,  solid:false, transparent:true, hardness:0.4,  tileId:65  }, // §LadderTile(65) — LadderTile.cpp tex=83
-      78:{ name:'Salju Tipis',   top:66,  bottom:66,  side:66,  solid:true, hardness:0.1,  tileId:78  }, // §TopSnowTile(78) topSnow
-      81:{ name:'Kaktus',        top:69,  bottom:71,  side:70,  solid:true, hardness:0.4,  tileId:81  }, // §CactusTile(81) — CactusTile.h top=tex-1=69, bottom=tex+1=71, side=tex=70
-      82:{ name:'Tanah Liat',    top:72,  bottom:72,  side:72,  solid:true, hardness:0.6,  tileId:82  }, // §ClayTile(82)
-      83:{ name:'Tebu',          top:73,  bottom:73,  side:73,  solid:false, hardness:0.0,  tileId:83  }, // §ReedTile(83) reeds
+      64:{ name:'Wooden Door',    top:97,  bottom:97,  side:97,  solid:false, hardness:3.0,  tileId:64  }, // §DoorTile(64) door_wood — DoorTile.cpp tex=97, hardness=3.0
+      65:{ name:'Ladder',        top:83,  bottom:83,  side:83,  solid:false, transparent:true, hardness:0.4,  tileId:65  }, // §LadderTile(65) — LadderTile.cpp tex=83
+      78:{ name:'Snow Layer',   top:66,  bottom:66,  side:66,  solid:true, hardness:0.1,  tileId:78  }, // §TopSnowTile(78) topSnow
+      81:{ name:'Cactus',        top:69,  bottom:71,  side:70,  solid:true, hardness:0.4,  tileId:81  }, // §CactusTile(81) — CactusTile.h top=tex-1=69, bottom=tex+1=71, side=tex=70
+      82:{ name:'Clay',    top:72,  bottom:72,  side:72,  solid:true, hardness:0.6,  tileId:82  }, // §ClayTile(82)
+      83:{ name:'Sugar Cane',          top:73,  bottom:73,  side:73,  solid:false, hardness:0.0,  tileId:83  }, // §ReedTile(83) reeds
       85:{ name:'Fence',         top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  tileId:85  }, // §FenceTile(85)
       96:{ name:'Trapdoor', top:84,  bottom:84,  side:84,  solid:true, hardness:3.0,  tileId:96  }, // §TrapDoorTile(96) — TrapDoorTile.cpp tex=84, hardness=3.0
       98:{ name:'Stone Bricks',top:16, bottom:16,  side:16,  solid:true, hardness:2.0,  tileId:98  }, // §MultiTextureTile(98) stoneBrickSmooth
@@ -1339,7 +1365,7 @@
       // tesselator (not the TileRenderer cube path) which the browser port doesn't
       // fully replicate. The C++ setBaseShape (StairTile.h:62-68) selects the
       // bottom half for non-upside-down stairs (data & 4 == 0).
-      53: {name:'Oak Stairs',         top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  shape:'stairs', tileId:53  }, // §StairTile(53, planks)
+      53: {name:'Wooden Stairs',         top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  shape:'stairs', tileId:53  }, // §StairTile(53, planks)
       67: {name:'Stone Stairs',       top:16,  bottom:16,  side:16,  solid:true, hardness:2.0,  shape:'stairs', tileId:67  }, // §StairTile(67, stoneBrick) — smooth stone texture 16
       108:{name:'Brick Stairs',       top:7,   bottom:7,   side:7,   solid:true, hardness:2.0,  shape:'stairs', tileId:108 }, // §StairTile(108, bricks)
       109:{name:'Stone Brick Stairs', top:16,  bottom:16,  side:16,  solid:true, hardness:2.0,  shape:'stairs', tileId:109 }, // §StairTile(109, stoneBrick)
@@ -1349,11 +1375,22 @@
       // === §Task port-missing-systems — minor tiles (BedTile, RedStoneOreTile lit,
       // StemTile, QuartzBlockTile, StonecutterTile, NetherReactor)
       26: {name:'Bed',            top:134, bottom:134, side:134, solid:true, hardness:0.2,  tileId:26  }, // §BedTile(26) — wool top + planks side (simplified single texture)
-      74: {name:'Redstone Ore (Lit)', top:51, bottom:51, side:51, solid:true, lightEmission:0.6, hardness:3.0, tileId:74 }, // §RedStoneOreTile(74, 51, lit=true) — same tex as unlit, lit variant
+      74: {name:'Redstone Ore', top:51, bottom:51, side:51, solid:true, lightEmission:0.6, hardness:3.0, tileId:74 }, // §RedStoneOreTile(74, 51, lit=true) — same tex as unlit, lit variant
       105:{name:'Melon Stem',      top:111, bottom:111, side:111, solid:false, hardness:0.0, tileId:105 }, // §StemTile(105) — stem tex = 15+6*16=111 (full grown)
       155:{name:'Quartz Block',    top:15,  bottom:15,  side:15,  solid:true, hardness:0.8,  tileId:155 }, // §QuartzBlockTile(155) — MCPE 0.6 quartz texture at index 15
       245:{name:'Stonecutter',     top:169, bottom:62,  side:168, solid:true, hardness:3.5,  tileId:245 }, // §StonecutterTile(245) — top=9+10*16=169, bottom=14+3*16=62, side=8+10*16=168
       247:{name:'Nether Reactor',  top:153, bottom:153, side:153, solid:true, hardness:3.0,  tileId:247 }, // §NetherReactor(247) — reactor core texture
+      // §Missing C++ tiles — added for 1:1 completeness with Tile.cpp initTiles
+      71:{name:'Iron Door',      top:98,  bottom:98,  side:98,  solid:true, hardness:5.0,  tileId:71  }, // §DoorTile(71, Material::metal)
+      95:{name:'Invisible Bedrock',top:0, bottom:0,  side:0,   solid:false, hardness:-1,  tileId:95  }, // §InvisibleTile(95)
+      112:{name:'Nether Bricks', top:0+14*16, bottom:0+14*16, side:0+14*16, solid:true, hardness:2.0, tileId:112 }, // §Tile(112, 0+14*16)
+      156:{name:'Quartz Stairs', top:15,  bottom:15,  side:15,  solid:true, shape:'stairs', hardness:0.8, tileId:156 }, // §StairTile(156, quartzBlock)
+      246:{name:'Glowing Obsidian', top:10+16*13, bottom:10+16*13, side:10+16*13, solid:true, hardness:10.0, tileId:246, lightEmission:0.875 }, // §ObsidianTile(246, 10+16*13, true)
+      248:{name:'Info Update',    top:252, bottom:252, side:252, solid:true, hardness:1.0,  tileId:248 }, // §Tile(248, 252)
+      249:{name:'Info Update 2', top:253, bottom:253, side:253, solid:true, hardness:1.0,  tileId:249 }, // §Tile(249, 253)
+      253:{name:'Grass Carried', top:3,   bottom:12*16+12, side:12*16+12, solid:true, hardness:0.6, tileId:253 }, // §CarriedTile(253, 3, 12*16+12)
+      254:{name:'Leaves Carried',top:11+14*16, bottom:11+14*16, side:11+14*16, solid:true, transparent:true, hardness:0.2, tileId:254 }, // §LeafTile(254, 11+14*16)
+      255:{name:'Info Reserved6',top:0,   bottom:0,   side:0,   solid:false, hardness:1.0,  tileId:255 }, // §Tile(255, Material::dirt) — placeholder
 };
 
     // §C++ Tile::destroyTime values from Tile.cpp:161-243 (initTiles).
@@ -1367,6 +1404,7 @@
       58:2.5, 59:0.0, 60:0.6, 61:3.5, 62:3.5, 63:1.0, 64:3.0, 65:0.4, 73:3.0, 74:3.0,
       78:0.1, 79:0.5, 80:0.2, 81:0.4, 82:0.6, 83:0.0, 85:2.0, 87:0.4, 89:0.3, 96:3.0,
       98:1.5, 103:1.0, 107:2.0,
+      71:5.0, 95:-1, 112:2.0, 156:0.8, 246:10.0, 248:1.0, 249:1.0, 253:0.6, 254:0.2, 255:1.0,
     };
 
     const MATERIAL_MAP = {
@@ -1387,23 +1425,28 @@
     };
 
     // Hotbar block ids (8 slots) — rujukan MCPE 2013 set (no wool/cloth in the default bar)
-    // §MCPE 2013 hotbar — 8 slots, mixing blocks and tools 1:1 with rujukan Item.cpp.
-    // Block IDs reference the BLOCKS table; tool itemKeys reference the items/tools registry.
-    // The first 4 slots are blocks for building; the last 4 are tools for mining 1:1 with
-    // rujukan (wood/iron/diamond pickaxe + wood shovel for dirt/sand/gravel).
+    // §MCPE 2013 hotbar — 9 slots (MAX_SELECTION_SIZE=9) per Inventory.h:20.
+    // §Gui.cpp:153 — _numSlots defaults to 4 but grows with screen width.
+    // Browser at 1280px: use full 9 slots (matching Xperia Play / wide screen path).
     // §Gui.cpp:187-189 — last slot (N-1) opens SCREEN_BLOCKSELECTION (inventory).
-    // §Gui.cpp:756 — renderToolBar loops N-1 item slots, the Nth is the "..." button.
-    // §Inventory.h:20 — MAX_SELECTION_SIZE = 9, so 9 total slots (8 items + 1 "...").
+    // §Inventory::setupDefault — C++ creative default:
+    //   Sel[0]=shovel_stone, Sel[1]=dirt, Sel[2]=redBrick, Sel[3]=torch,
+    //   Sel[4]=stoneBrick(cobblestone), Sel[5]=wood(planks),
+    //   Sel[6]=glass, Sel[7]=cloth(wool,12), Sel[8]=cloth(wool,9)
+    // §en_US.lang — block names from locale file:
+    //   tile.stonebrick.name=Cobblestone, tile.dirt.name=Dirt, tile.brick.name=Bricks
+    //   tile.wood.name=Wooden Planks, tile.torch.name=Torch, tile.glass.name=Glass
+    //   tile.cloth.name=Wool
     const HOTBAR = [
-      { type: 'block', id: 1,  label: 'Batu' },           // stone (id 1)
-      { type: 'block', id: 3,  label: 'Tanah' },           // dirt (id 3)
-      { type: 'block', id: 5,  label: 'Papan Ek' },        // oak planks (id 5)
-      { type: 'block', id: 17, label: 'Kayu Ek' },  // §treeTrunk(17)          // oak log (id 4)
-      { type: 'tool',  id: 270, label: 'Wooden Pickaxe' },
-      { type: 'tool',  id: 257, label: 'Iron Pickaxe' },
-      { type: 'tool',  id: 278, label: 'Diamond Pickaxe' },
-      { type: 'tool',  id: 269, label: 'Wooden Shovel' },
-      { type: 'more',  label: '...' },   // §Gui.cpp:187 — opens block selection (inventory)
+      { type: 'tool',  id: 273, label: 'Stone Shovel' },      // §Item::shovel_stone (256+17=273)
+      { type: 'block', id: 3,  label: 'Dirt' },                // §Tile::dirt(3)
+      { type: 'block', id: 45, label: 'Bricks' },             // §Tile::redBrick(45)
+      { type: 'block', id: 50, label: 'Torch' },              // §Tile::torch(50)
+      { type: 'block', id: 4,  label: 'Cobblestone' },        // §Tile::stoneBrick(4)
+      { type: 'block', id: 5,  label: 'Wooden Planks' },      // §Tile::wood(5)
+      { type: 'block', id: 20, label: 'Glass' },              // §Tile::glass(20)
+      { type: 'block', id: 35, label: 'Wool', auxValue: 12 }, // §Tile::cloth(35) data=12
+      { type: 'more',  label: '...' },   // §Gui.cpp:187 — opens SCREEN_BLOCKSELECTION
     ];
     // §Tool itemKey → icon (col,row) in items.png 256x256 atlas (16x16 tiles).
     // Verified from rujukan Item.cpp:168-198 (setIcon(col,row) calls).
@@ -4485,7 +4528,7 @@
     // renderItemCatalog removed — MCPE 2013 has no item icon catalog, only block inventory.
     function buildInventory(filter = activeInventoryFilter) {
       activeInventoryFilter = filter;
-      inventoryHintEl.textContent = 'Klik salah satu blok untuk memasukkannya ke slot hotbar terpilih. Tutup dengan E atau tombol di pojok kanan atas.';
+      inventoryHintEl.textContent = 'Select a block to assign to the current hotbar slot. Close with E or the button in the top-right corner.';
       invGridEl.innerHTML = '';
       const allowedIds = inventoryFilterSets[filter];
       invGridEl.removeAttribute('aria-label');
@@ -4550,7 +4593,7 @@
           if (result && typeof result.catch === 'function') {
             result.catch((err) => {
               console.warn('Pointer lock gagal saat menutup inventory:', err);
-              toast('Klik layar game untuk melanjutkan');
+              toast('Click the game screen to continue');
             });
           }
         }
@@ -5029,7 +5072,7 @@
             player.fly = !player.fly;
             player.vel.y = 0;
             jumpTriggerTime = 0;
-            toast(player.fly ? 'Mode terbang ON' : 'Mode terbang OFF');
+            toast(player.fly ? 'Fly mode ON' : 'Fly mode OFF');
           }
         }
       }
@@ -5156,7 +5199,7 @@
       }
       if (player.health <= 0) {
         player.health = 0;
-        toast('Anda mati! Respawn...');
+        toast('You died! Respawning...');
         setTimeout(() => {
           player.health = player.maxHealth;
           player.pos.set(8, WATER_LEVEL + 2, 8);
@@ -5209,7 +5252,7 @@
       // to compute playerDestroySpeed + canDestroy per rujukan formulas.
       const result = voxelEngine.startMining(hit.block, getEquippedTool());
       if (result.status === 'started') miningTargetKey = hit.block.x + ',' + hit.block.y + ',' + hit.block.z;
-      else if (result.status === 'unbreakable') { miningTargetKey = null; toast('Bedrock tidak bisa dihancurkan'); }
+      else if (result.status === 'unbreakable') { miningTargetKey = null; toast('Bedrock cannot be destroyed'); }
       else miningTargetKey = null;
     }
     function stopMining() {
@@ -5275,16 +5318,16 @@
       if (!hit || (hit.face.x === 0 && hit.face.y === 0 && hit.face.z === 0)) return;
       // §Tools can't be placed as blocks (rujukan Item::use → no block placement).
       const entry = HOTBAR[selectedSlot];
-      if (entry && entry.type === 'tool') { toast('Slot aktif adalah alat, bukan blok'); return; }
-      if (entry && entry.type === 'more') { toast('Buka inventaris untuk pilih blok'); return; }
+      if (entry && entry.type === 'tool') { toast('Active slot is a tool, not a block'); return; }
+      if (entry && entry.type === 'more') { toast('Open inventory to select a block'); return; }
       voxelEngine.player.teleport({ x: player.pos.x, y: player.pos.y, z: player.pos.z });
       const result = voxelEngine.placeSelected(hit);
       if (result.status !== 'placed') {
-        if (result.status === 'inventory-empty') toast('Slot kosong — pilih blok dari inventaris');
+        if (result.status === 'inventory-empty') toast('Empty slot — select a block from inventory');
         return;
       }
       const px = result.target.x, py = result.target.y, pz = result.target.z, id = result.blockId;
-      if (!world.setBlock(px, py, pz, id)) { toast('Penempatan blok ditolak oleh dunia'); return; }
+      if (!world.setBlock(px, py, pz, id)) { toast('Block placement rejected by world'); return; }
       remeshAround(px, py, pz);
       browserBlocksPlaced++;
       browserStats.blocksPlaced = browserBlocksPlaced;
@@ -5430,7 +5473,7 @@
         if (result && typeof result.catch === 'function') {
           result.catch((err) => {
             console.warn('Pointer lock gagal:', err);
-            toast('Klik layar game untuk mulai bermain');
+            toast('Click the game screen to start playing');
           });
         }
       }
@@ -5483,7 +5526,7 @@
       vcGuideReturnToGame = false;
       if (shouldResume && canvas.requestPointerLock) {
         const result = canvas.requestPointerLock();
-        if (result && typeof result.catch === 'function') result.catch(() => { syncMenuVisibility(); toast('Klik layar game untuk melanjutkan'); });
+        if (result && typeof result.catch === 'function') result.catch(() => { syncMenuVisibility(); toast('Click the game screen to continue'); });
       }
     }
     vcGuide.querySelectorAll('[data-vc-action]').forEach((button) => {
@@ -5496,7 +5539,7 @@
             break;
           case 'fly':
             player.fly = !player.fly; player.vel.y = 0;
-            updateVcGuideBody(false); toast(player.fly ? 'Mode terbang ON' : 'Mode terbang OFF');
+            updateVcGuideBody(false); toast(player.fly ? 'Fly mode ON' : 'Fly mode OFF');
             break;
           case 'day': worldTime = 0.5; toast('Waktu diatur ke siang'); updateVcGuideBody(false); break;
           case 'night': worldTime = 0; toast('Waktu diatur ke malam'); updateVcGuideBody(false); break;
@@ -5521,7 +5564,7 @@
     });
     resumeGameButton.addEventListener('click', resumeGame);
     saveWorldButton.addEventListener('click', () => {
-      if (world.save()) toast('Dunia disimpan di browser ini');
+      if (world.save()) toast('World saved in this browser');
     });
     returnTitleButton.addEventListener('click', () => {
       if (world.save()) toast('Dunia disimpan sebelum kembali ke menu');
@@ -5545,7 +5588,7 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       settingsPanel.classList.remove('open');
       helpOptionsPanel.classList.add('open');
-      toast('Pengaturan diterapkan');
+      toast('Settings applied');
     });
     canvas.addEventListener('click', startGame);
     function clearPressedKeys() {
@@ -5600,7 +5643,7 @@
         showDebugHud = !showDebugHud;
       }
       if (e.code === 'KeyK' && !e.repeat && !wasDown) {
-        if (world.save()) toast('Dunia disimpan di browser ini');
+        if (world.save()) toast('World saved in this browser');
       }
       if (e.code === 'KeyE' && !e.repeat && !wasDown) {
         e.preventDefault();
@@ -5610,7 +5653,7 @@
       if (e.code === 'KeyT' && !e.repeat && !wasDown) {
         // advance time of day for quick day/night testing
         worldTime = (worldTime + 0.15) % 1;
-        toast('Waktu dimajukan');
+        toast('Time advanced');
       }
       // number keys
       if (e.code.startsWith('Digit')) {
@@ -6083,7 +6126,7 @@
 
     // ---- Init ----
     (async function init() {
-      loadingDetail.textContent = 'memuat tekstur minecraft asli...';
+      loadingDetail.textContent = 'loading minecraft textures...';
       atlasTexture = await buildAtlas();
       // VERIFIED MCPE 2013: TileRenderer.cpp uses fixed per-face brightness
       // (c10=0.5 DOWN, c11=1.0 UP, c2=0.8 N/S, c3=0.6 W/E) baked into vertex
@@ -6095,7 +6138,7 @@
 
       buildHotbar();
       buildHearts();
-      loadingDetail.textContent = 'membangun dunia...';
+      loadingDetail.textContent = 'generating terrain...';
       // pre-generate spawn area synchronously so first frame has ground
       const pcx = Math.floor(player.pos.x / CHUNK_X), pcz = Math.floor(player.pos.z / CHUNK_Z);
       for (let dz = -RENDER_RADIUS; dz <= RENDER_RADIUS; dz++) {
@@ -6402,7 +6445,7 @@
       if (blockId === 26) {
         player.pos.set(bx + 0.5, by + 1, bz + 0.5);
         worldTime = 0.25; // skip to morning
-        toast('Spawn point set. Selamat tidur!');
+        toast('Spawn point set. Sweet dreams!');
         return true;
       }
       // §Task port-missing-systems — §RedStoneOreTile::use (RedStoneOreTile.h:30-34)
@@ -6487,7 +6530,7 @@
         }
       }
       if (!placed) {
-        toast('Hotbar penuh!');
+        toast('Hotbar full!');
         return;
       }
       // §Consume one ingredient per crafting slot used
@@ -6525,7 +6568,7 @@
                 break;
               }
             }
-            if (!placed) { toast('Hotbar penuh!'); return; }
+            if (!placed) { toast('Hotbar full!'); return; }
             // Clear ingredient slot
             const ingSlot = document.getElementById('furnaceIngredient');
             if (ingSlot && ingSlot.dataset.id) {
