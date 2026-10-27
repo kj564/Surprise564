@@ -1278,7 +1278,7 @@
       41: { name:'Emas',          top:23,  bottom:23,  side:23,  solid:true },  // gold block — MetalTile(41, 23) = 39-16
       57: { name:'Berlian',       top:24,  bottom:24,  side:24,  solid:true },  // diamond block — MetalTile(57, 24) = 40-16
       42: { name:'Besi',          top:22,  bottom:22,  side:22,  solid:true },  // iron block — MetalTile(42, 22) = 38-16
-      58: { name:'Meja Kerja',    top:43,  bottom:4,   side:59,  front:60, frontBothZ:true, solid:true },  // crafting table — WorkbenchTile: tex=59, top=tex-16=43, bottom=planks(4), front(+/-Z)=tex+1=60, side(+/-X)=tex=59
+      58: { name:'Meja Kerja',    top:43,  bottom:4,   side:59,  front:60, frontNZ_WX:true, solid:true },  // crafting table — WorkbenchTile: tex=59, top=tex-16=43, bottom=planks(4), front(-Z,-X)=tex+1=60 per WorkbenchTile.h:24 (face==2||face==4)
       61: { name:'Tungku',        top:62,  bottom:62,  side:45,  front:44, solid:true },  // furnace — FurnaceTile: tex=45, top/bottom=tex+17=62, side=tex=45, front(off)=tex-1=44
       8: { name:'Air',           top:205, bottom:205, side:205, solid:false, transparent:true, noCollide:true },  // water — MCPE 2013 dynamic texture frame 0 (tile 205)
       16: { name:'Bijih Batubara', top:34,  bottom:34,  side:34,  solid:true },  // coal ore — OreTile(16, 34)
@@ -1288,7 +1288,6 @@
       21: { name:'Bijih Lapis',   top:160, bottom:160, side:160, solid:true },  // lapis ore — OreTile(21, 160) = 10*16
       22: { name:'Blok Lapis',    top:144, bottom:144, side:144, solid:true },  // lapis block — Tile(22, 144) = 9*16
       73: { name:'Bijih Redstone', top:51,  bottom:51,  side:51,  solid:true },  // redstone ore — index 16*3+3 = 51 (spec)
-      57: { name:'Blok Berlian',  top:24,  bottom:24,  side:24,  solid:true },  // placeholder: emerald didn't exist in MCPE 2013; spec assigns diamond tile 24
       49: { name:'Obsidian',      top:37,  bottom:37,  side:37,  solid:true },  // obsidian — ObsidianTile(49, 37)
       89: { name:'Batu Bersinar', top:105, bottom:105, side:105, solid:true },  // glowstone — LightGemTile(89, 105) = 9+16*6
       4: { name:'Batu Bata',     top:16,  bottom:16,  side:16,  solid:true },  // stonebrick — Tile(4, 16)
@@ -1297,7 +1296,6 @@
       87: { name:'Netherrack',    top:103, bottom:103, side:103, solid:true },  // netherrack — Tile(87, 103) = 7+6*16
       88: { name:'Soul Sand',     top:104, bottom:104, side:104, solid:true },  // soul sand — HellSandTile(88, 104) = 8+6*16
       47: { name:'Rak Buku',      top:4,   bottom:4,   side:35,  solid:true },  // bookshelf — BookshelfTile: top/bottom=planks(4), side=35
-      103: { name:'Labu',          top:137, bottom:137, side:136, solid:true },  // pumpkin/melon — MelonTile: top=137, side=136 (no front face in MCPE 2013)
       35: { name:'Kain',          top:64,  bottom:64,  side:64,  solid:true },  // cloth (white wool) — ClothTile(35, 64) = 4*16
     
       // === Missing C++ tiles (§Tile.cpp:161-265) ===
@@ -1305,34 +1303,47 @@
       9: { name:'Air Tenang',   top:205, bottom:205, side:205, solid:false, transparent:true, noCollide:true, hardness:100, tileId:9   }, // §LiquidTileStatic(9) calmWater
       10:{ name:'Lava',          top:237, bottom:237, side:237, solid:false, transparent:true, noCollide:true, lightEmission:1.0, hardness:100, tileId:10  }, // §LiquidTileDynamic(10) lava
       11:{ name:'Lava Tenang',   top:237, bottom:237, side:237, solid:false, transparent:true, noCollide:true, lightEmission:1.0, hardness:100, tileId:11  }, // §LiquidTileStatic(11) calmLava
-      24:{ name:'Batu Pasir',    top:176, bottom:192, side:192, solid:true, hardness:0.8,  tileId:24  }, // §SandStoneTile(24)
+      24:{ name:'Batu Pasir',    top:176, bottom:208, side:192, solid:true, hardness:0.8,  tileId:24  }, // §SandStoneTile(24) — SandStoneTile.cpp bottom tex+32=208
       30:{ name:'Jaring Laba',    top:11,  bottom:11,  side:11,  solid:false, transparent:true, noCollide:true, hardness:4.0,  tileId:30  }, // §WebTile(30,11)
       31:{ name:'Rumput Tinggi', top:39,  bottom:39,  side:39,  solid:false, hardness:0.0,  tileId:31  }, // §TallGrass(31)
       37:{ name:'Bunga',         top:13,  bottom:13,  side:13,  solid:false, hardness:0.0,  tileId:37  }, // §Bush(37) flower
       38:{ name:'Mawar',         top:12,  bottom:12,  side:12,  solid:false, hardness:0.0,  tileId:38  }, // §Bush(38) rose
       39:{ name:'Jamur Merah',   top:29,  bottom:29,  side:29,  solid:false, hardness:0.0,  tileId:39  }, // §Mushroom(39)
       40:{ name:'Jamur Coklat',  top:28,  bottom:28,  side:28,  solid:false, hardness:0.0,  tileId:40  }, // §Mushroom(40)
-      44:{ name:'Tangga Batu',  top:6,   bottom:6,   side:6,   solid:true, hardness:2.0,  tileId:44  }, // §StoneSlabTile(44)
-      46:{ name:'TNT',           top:8,   bottom:8,   side:8,   solid:true, hardness:0.0,  tileId:46  }, // §TntTile(46,8)
+      44:{ name:'Tangga Batu',  top:6,   bottom:6,   side:5,   solid:true, hardness:2.0,  tileId:44  }, // §StoneSlabTile(44) — StoneSlabTile.cpp side=5 (smooth slab side)
+      46:{ name:'TNT',           top:9,   bottom:10,  side:8,   solid:true, hardness:0.0,  tileId:46  }, // §TntTile(46,8) — TntTile.h top=tex+1=9, bottom=tex+2=10, side=tex=8
       48:{ name:'Batu Lumut',    top:36,  bottom:36,  side:36,  solid:true, hardness:2.0,  tileId:48  }, // §Tile(48,36) mossStone
       50:{ name:'Obor',          top:80,  bottom:80,  side:80,  solid:false, transparent:true, lightEmission:0.9375, hardness:0.0,  tileId:50  }, // §TorchTile(50,80)
-      54:{ name:'Peti',          top:26,  bottom:26,  side:26,  solid:true, hardness:2.5,  tileId:54  }, // §ChestTile(54)
+      54:{ name:'Peti',          top:25,  bottom:25,  side:26,  front:27, solid:true, hardness:2.5,  tileId:54  }, // §ChestTile(54) — ChestTile.cpp top/bottom=25, side=26, front=27 (lockDir face)
       59:{ name:'Tanaman',       top:88,  bottom:88,  side:88,  solid:false, hardness:0.0,  tileId:59  }, // §CropTile(59) crops
-      60:{ name:'Lahan Pertanian',top:87, bottom:87,  side:87,  solid:true, hardness:0.6,  tileId:60  }, // §FarmTile(60) farmland
-      62:{ name:'Tungku Menyala',top:62,  bottom:62,  side:45,  front:62, solid:true, lightEmission:0.875, hardness:3.5, tileId:62  }, // §FurnaceTile(62) furnace_lit
+      60:{ name:'Lahan Pertanian',top:87, bottom:2,   side:2,   solid:true, hardness:0.6,  tileId:60  }, // §FarmTile(60) farmland — FarmTile.cpp bottom/side=dirt(2)
+      62:{ name:'Tungku Menyala',top:62,  bottom:62,  side:45,  front:61, solid:true, lightEmission:0.875, hardness:3.5, tileId:62  }, // §FurnaceTile(62) furnace_lit — FurnaceTile.cpp:41 tex+16=61 when lit
       63:{ name:'Papan Tanda',   top:4,   bottom:4,   side:4,   solid:false, hardness:1.0,  tileId:63  }, // §SignTile(63) sign
-      64:{ name:'Pintu Kayu',    top:0,   bottom:0,   side:0,   solid:false, hardness:1.0,  tileId:64  }, // §DoorTile(64) door_wood
-      65:{ name:'Tangga',        top:165, bottom:165, side:165, solid:false, transparent:true, hardness:0.4,  tileId:65  }, // §LadderTile(65)
+      64:{ name:'Pintu Kayu',    top:97,  bottom:97,  side:97,  solid:false, hardness:3.0,  tileId:64  }, // §DoorTile(64) door_wood — DoorTile.cpp tex=97, hardness=3.0
+      65:{ name:'Tangga',        top:83,  bottom:83,  side:83,  solid:false, transparent:true, hardness:0.4,  tileId:65  }, // §LadderTile(65) — LadderTile.cpp tex=83
       78:{ name:'Salju Tipis',   top:66,  bottom:66,  side:66,  solid:true, hardness:0.1,  tileId:78  }, // §TopSnowTile(78) topSnow
-      81:{ name:'Kaktus',        top:70,  bottom:70,  side:70,  solid:true, hardness:0.4,  tileId:81  }, // §CactusTile(81)
+      81:{ name:'Kaktus',        top:69,  bottom:71,  side:70,  solid:true, hardness:0.4,  tileId:81  }, // §CactusTile(81) — CactusTile.h top=tex-1=69, bottom=tex+1=71, side=tex=70
       82:{ name:'Tanah Liat',    top:72,  bottom:72,  side:72,  solid:true, hardness:0.6,  tileId:82  }, // §ClayTile(82)
       83:{ name:'Tebu',          top:73,  bottom:73,  side:73,  solid:false, hardness:0.0,  tileId:83  }, // §ReedTile(83) reeds
       85:{ name:'Pagar',         top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  tileId:85  }, // §FenceTile(85)
-      96:{ name:'Pintu Jebakan', top:0,   bottom:0,   side:0,   solid:true, hardness:2.0,  tileId:96  }, // §TrapDoorTile(96)
+      96:{ name:'Pintu Jebakan', top:84,  bottom:84,  side:84,  solid:true, hardness:3.0,  tileId:96  }, // §TrapDoorTile(96) — TrapDoorTile.cpp tex=84, hardness=3.0
       98:{ name:'Batu Bata Licin',top:16, bottom:16,  side:16,  solid:true, hardness:2.0,  tileId:98  }, // §MultiTextureTile(98) stoneBrickSmooth
       103:{name:'Labu',          top:137, bottom:137, side:136, solid:true, hardness:1.0,  tileId:103 }, // §MelonTile(103)
       107:{name:'Gerbang Pagar', top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  tileId:107 }, // §FenceGateTile(107)
 };
+
+    // §C++ Tile::destroyTime values from Tile.cpp:161-243 (initTiles).
+    // Used as the fallback when BLOCKS[id].hardness is not set explicitly.
+    // -1 = unbreakable (bedrock); 0 = instant break (torch, flowers, etc.).
+    const DESTROY_TIME = {
+      1:1.5, 2:0.6, 3:0.5, 4:2.0, 5:2.0, 6:0.0, 7:-1, 8:100.0, 9:100.0, 10:100.0, 11:100.0,
+      12:0.5, 13:0.6, 14:3.0, 15:3.0, 16:3.0, 17:2.0, 18:0.2, 20:0.3, 21:3.0, 22:3.0,
+      24:0.8, 30:4.0, 31:0.0, 35:0.8, 37:0.0, 38:0.0, 39:0.0, 40:0.0, 41:3.0, 42:5.0,
+      44:2.0, 45:2.0, 46:0.0, 47:1.5, 48:2.0, 49:10.0, 50:0.0, 54:2.5, 56:3.0, 57:5.0,
+      58:2.5, 59:0.0, 60:0.6, 61:3.5, 62:3.5, 63:1.0, 64:3.0, 65:0.4, 73:3.0, 74:3.0,
+      78:0.1, 79:0.5, 80:0.2, 81:0.4, 82:0.6, 83:0.0, 85:2.0, 87:0.4, 89:0.3, 96:3.0,
+      98:1.5, 103:1.0, 107:2.0,
+    };
 
     // §Canonical itemKey map — minecraft.html block id → rujukan namespaced key.
     // Required so tool tile lists (PICKAXE_TILES etc., which use canonical keys like
@@ -1429,18 +1440,18 @@
     //   RedStoneOreTile extends OreTile (Material::stone)
     const MATERIAL_MAP = {
       // §C++ Tile IDs — material from §Tile.cpp setSoundType/setMaterial
-      1: 'stone', 2: 'grass', 3: 'gravel', 4: 'stone', 5: 'wood', 6: 'grass',
+      1: 'stone', 2: 'dirt', 3: 'dirt', 4: 'stone', 5: 'wood', 6: 'plant',
       7: 'stone', 8: 'silent', 10: 'silent',
       12: 'sand', 13: 'gravel', 14: 'stone', 15: 'stone', 16: 'stone',
-      17: 'wood', 18: 'grass', 20: 'glass', 21: 'stone', 22: 'stone',
-      24: 'stone', 30: 'cloth', 31: 'grass',
-      35: 'cloth', 37: 'grass', 38: 'grass', 39: 'grass', 40: 'grass',
-      41: 'metal', 42: 'metal', 44: 'stone', 45: 'stone', 46: 'grass',
+      17: 'wood', 18: 'leaves', 20: 'glass', 21: 'stone', 22: 'stone',
+      24: 'stone', 30: 'cloth', 31: 'replaceable_plant',
+      35: 'cloth', 37: 'plant', 38: 'plant', 39: 'plant', 40: 'plant',
+      41: 'metal', 42: 'metal', 44: 'stone', 45: 'stone', 46: 'explosive',
       47: 'wood', 48: 'stone', 49: 'stone', 50: 'wood', 54: 'wood',
-      56: 'stone', 57: 'metal', 58: 'wood', 59: 'grass', 60: 'gravel',
+      56: 'stone', 57: 'metal', 58: 'wood', 59: 'plant', 60: 'dirt',
       61: 'stone', 62: 'stone', 63: 'wood', 64: 'wood', 65: 'wood',
-      78: 'cloth', 79: 'glass', 80: 'cloth', 81: 'cloth', 82: 'gravel', 83: 'grass',
-      85: 'wood', 87: 'stone', 88: 'sand', 89: 'stone', 96: 'wood',
+      78: 'topSnow', 79: 'glass', 80: 'snow', 81: 'cactus', 82: 'clay', 83: 'plant',
+      85: 'wood', 87: 'stone', 88: 'sand', 89: 'glass', 96: 'wood',
       98: 'stone', 103: 'wood', 107: 'wood',
     };
 
@@ -1501,9 +1512,23 @@
       }];
       for (const id of Object.keys(BLOCKS).map(Number).filter(id => id > 0 && BLOCKS[id]).sort((a,b) => a-b)) {
         const block = BLOCKS[id], dropId = id;
-        const sound = id === 8 ? 'silent' : [17,5,18,58,61,47].includes(id) ? 'wood'
-          : [12,13,88].includes(id) ? 'sand' : id === 20 || id === 79 ? 'glass'
-          : [41,57,42,22,57,89].includes(id) ? 'metal' : 'stone';
+        // §C++ Tile.cpp:161-265 — SoundType per Tile subclass. Verified 1:1 with
+        // the C++ initTiles() SOUND_WOOD / SOUND_GRASS / SOUND_GRAVEL / SOUND_SAND /
+        // SOUND_GLASS / SOUND_METAL / SOUND_STONE assignments.
+        const SOUND_WOOD_TILES  = [5, 17, 47, 50, 54, 58, 63, 64, 65, 85, 96, 103, 107];
+        const SOUND_GRASS_TILES  = [6, 18, 31, 37, 38, 39, 40, 46, 59, 83];
+        const SOUND_GRAVEL_TILES = [3, 60, 82];
+        const SOUND_SAND_TILES   = [12, 88];
+        const SOUND_GLASS_TILES   = [20, 79, 89];
+        const SOUND_METAL_TILES   = [41, 42, 57, 71];
+        const sound = id === 8 || id === 9 || id === 10 || id === 11 ? 'silent'
+          : SOUND_WOOD_TILES.includes(id) ? 'wood'
+          : SOUND_GRASS_TILES.includes(id) ? 'grass'
+          : SOUND_GRAVEL_TILES.includes(id) ? 'gravel'
+          : SOUND_SAND_TILES.includes(id) ? 'sand'
+          : SOUND_GLASS_TILES.includes(id) ? 'glass'
+          : SOUND_METAL_TILES.includes(id) ? 'metal'
+          : 'stone';
         entries.push({
           key: runtimeBlockKey(id), legacyId: id, displayName: block.name,
           shape: id === 8 ? 'liquid' : 'cube',
@@ -1514,8 +1539,11 @@
           // subclass constructor. Stone/metal/snow/topSnow are notAlwaysDestroyable,
           // so they require the correct tool tier to drop resources.
           material: MATERIAL_MAP[id] || 'dirt',
-          hardness: id === 7 ? -1 : id === 1 ? 1.5 : id === 2 ? 0.6 : id === 3 ? 0.5 : 1,
-          sound, lightOpacity: id === 8 ? 1 : 15, lightEmission: id === 89 ? 15 : 0,
+          // §C++ Tile::destroyTime from Tile.cpp:161-243. block.hardness (set in
+          // BLOCKS) takes precedence; otherwise fall back to DESTROY_TIME lookup;
+          // default to 1.0 if neither is present.
+          hardness: block.hardness != null ? block.hardness : (DESTROY_TIME[id] != null ? DESTROY_TIME[id] : 1),
+          sound, lightOpacity: id === 8 ? 1 : 15, lightEmission: BLOCK_LIGHT_EMISSION[runtimeBlockKey(id)] || 0,
           drops: id === 7 ? [] : [runtimeBlockKey(dropId)],
         });
       }
@@ -1853,7 +1881,10 @@
     // terrain.png atlas (0..255). Catches typos in the table above before
     // they silently produce a wrong face on a block.
     (function validateBlockTileIndices() {
-      for (let id = 1; id <= 35; id++) {
+      // Iterate over ALL defined block IDs (not just 1..35) so that every
+      // BLOCKS entry — including the §Tile.cpp:161-265 tiles added later — is
+      // sanity-checked against the 16×16 terrain.png atlas.
+      for (const id of Object.keys(BLOCKS).map(Number).filter(id => id > 0)) {
         const def = BLOCKS[id];
         if (!def) continue;
         const faces = [def.top, def.bottom, def.side, def.front];
@@ -1919,11 +1950,13 @@
     // lightEmission is stored as float 0..1 where 1.0 = 15/16 (full bright)
     // We convert to 0..15 integer level
     const BLOCK_LIGHT_EMISSION = {};
-    // §Tile.cpp:202 — torch: setLightEmission(15 / 16.0f) → level 15
-    BLOCK_LIGHT_EMISSION[runtimeBlockKey(27)] = 15;  // glowstone (id 27)
-    BLOCK_LIGHT_EMISSION[runtimeBlockKey(16)] = 14;  // furnace_lit — actually furnace (id 16) uses 14/16 but we don't have lit variant
-    // §Tile.cpp:170 — lava: setLightEmission(1.0f) → level 15
-    BLOCK_LIGHT_EMISSION[runtimeBlockKey(8)] = 15;  // water (id 17) — no, this is wrong. Lava isn't in BLOCKS table. Skip.
+    // §Tile.cpp:161-243 — setLightEmission() values, converted to 0..15 integer
+    // levels (1.0 = 15/16 = full bright). Verified 1:1 with rujukan initTiles().
+    BLOCK_LIGHT_EMISSION[runtimeBlockKey(89)] = 15;  // glowstone (setLightEmission(1.0f))
+    BLOCK_LIGHT_EMISSION[runtimeBlockKey(10)] = 15;  // lava (setLightEmission(1.0f))
+    BLOCK_LIGHT_EMISSION[runtimeBlockKey(11)] = 15;  // calmLava (setLightEmission(1.0f))
+    BLOCK_LIGHT_EMISSION[runtimeBlockKey(50)] = 15;  // torch (setLightEmission(15/16.0f) = 0.9375 → level 15)
+    BLOCK_LIGHT_EMISSION[runtimeBlockKey(62)] = 14;  // furnace_lit (setLightEmission(14/16.0f) = 0.875 → level 14)
 
     // §Tile::lightBlock from Tile.cpp — opaque blocks block all light (255→15),
     // glass=0, leaves=1, water=3, torch=0
@@ -1998,14 +2031,16 @@
               if (!draw) continue;
 
               // Face order follows BLOCK_FACES: +X, -X, +Y, -Y, +Z, -Z.
-              // Crafting table (ID 15) has its front on both Z faces (frontBothZ);
-              // furnace (ID 16) uses its front on +Z only. MCPE 2013 pumpkin/melon
-              // (ID 34) has no front face — side tile is used on all four side faces.
+              // Crafting table (ID 58) has its front on -Z and -X faces (frontNZ_WX)
+              // per WorkbenchTile.h:24 (C++ face 2=NORTH=-Z AND face 4=WEST=-X).
+              // Furnace (ID 61) uses its front on +Z only (default furnace face).
+              // MCPE 2013 pumpkin/melon (ID 103) has no front face — side tile is
+              // used on all four side faces.
               const tile = (f === 2) ? def.top
                 : (f === 3) ? def.bottom
+                : (def.frontNZ_WX ? ((f === 5 || f === 1) && def.front != null ? def.front : def.side)
                 : (f === 4 && def.front != null) ? def.front
-                : (f === 5 && def.frontBothZ && def.front != null) ? def.front
-                : def.side;
+                : def.side);
               const { u0, u1, v0, v1 } = tileUV(tile);
               const P = isTrans ? transPos : opaquePos;
               const N = isTrans ? transNorm : opaqueNorm;
