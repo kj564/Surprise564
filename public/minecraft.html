@@ -1264,58 +1264,58 @@
     //    renders it correctly as see-through water.
     const BLOCKS = {
       0:  null, // air
-      1: { name:'Batu',          top:1,   bottom:1,   side:1,   solid:true },  // stone — StoneTile(1)
-      2: { name:'Rumput',        top:0,   bottom:2,   side:3,   solid:true },  // grass — GrassTile: top=0(grass_top, tinted in atlas), bottom=2(dirt), side=3(grass_side)
-      3: { name:'Tanah',         top:2,   bottom:2,   side:2,   solid:true },  // dirt — DirtTile(3, 2)
-      17: { name:'Kayu Ek',       top:21,  bottom:21,  side:20,  solid:true },  // oak log — TreeTile: top=21(log_top), bottom=21, side=20(log_side)
-      5: { name:'Papan Ek',      top:4,   bottom:4,   side:4,   solid:true },  // planks — Tile(5, 4)
-      18: { name:'Daun Ek',       top:52,  bottom:52,  side:52,  solid:true },  // leaves — LeafTile(18, 52); alpha-0 pixels filled in atlas
-      12: { name:'Pasir',         top:18,  bottom:18,  side:18,  solid:true },  // sand — HeavyTile(12, 18)
-      13: { name:'Kerakal',       top:19,  bottom:19,  side:19,  solid:true },  // gravel — GravelTile(13, 19)
-      20: { name:'Kaca',          top:49,  bottom:49,  side:49,  solid:true, transparent:true },  // glass — GlassTile(20, 49); tile is border-only (alpha 0 inside)
+      1: { name:'Stone',          top:1,   bottom:1,   side:1,   solid:true },  // stone — StoneTile(1)
+      2: { name:'Grass Block',        top:0,   bottom:2,   side:3,   solid:true },  // grass — GrassTile: top=0(grass_top, tinted in atlas), bottom=2(dirt), side=3(grass_side)
+      3: { name:'Dirt',         top:2,   bottom:2,   side:2,   solid:true },  // dirt — DirtTile(3, 2)
+      17: { name:'Oak Log',       top:21,  bottom:21,  side:20,  solid:true },  // oak log — TreeTile: top=21(log_top), bottom=21, side=20(log_side)
+      5: { name:'Oak Planks',      top:4,   bottom:4,   side:4,   solid:true },  // planks — Tile(5, 4)
+      18: { name:'Oak Leaves',       top:52,  bottom:52,  side:52,  solid:true },  // leaves — LeafTile(18, 52); alpha-0 pixels filled in atlas
+      12: { name:'Sand',         top:18,  bottom:18,  side:18,  solid:true },  // sand — HeavyTile(12, 18)
+      13: { name:'Gravel',       top:19,  bottom:19,  side:19,  solid:true },  // gravel — GravelTile(13, 19)
+      20: { name:'Glass',          top:49,  bottom:49,  side:49,  solid:true, transparent:true },  // glass — GlassTile(20, 49); tile is border-only (alpha 0 inside)
       7: { name:'Bedrock',       top:17,  bottom:17,  side:17,  solid:true },  // bedrock — Tile(7, 17)
-      45: { name:'Bata',          top:7,   bottom:7,   side:7,   solid:true },  // brick — Tile(45, 7)
-      41: { name:'Emas',          top:23,  bottom:23,  side:23,  solid:true },  // gold block — MetalTile(41, 23) = 39-16
-      57: { name:'Berlian',       top:24,  bottom:24,  side:24,  solid:true },  // diamond block — MetalTile(57, 24) = 40-16
-      42: { name:'Besi',          top:22,  bottom:22,  side:22,  solid:true },  // iron block — MetalTile(42, 22) = 38-16
-      58: { name:'Meja Kerja',    top:43,  bottom:4,   side:59,  front:60, frontNZ_WX:true, solid:true },  // crafting table — WorkbenchTile: tex=59, top=tex-16=43, bottom=planks(4), front(-Z,-X)=tex+1=60 per WorkbenchTile.h:24 (face==2||face==4)
-      61: { name:'Tungku',        top:62,  bottom:62,  side:45,  front:44, solid:true },  // furnace — FurnaceTile: tex=45, top/bottom=tex+17=62, side=tex=45, front(off)=tex-1=44
-      8: { name:'Air',           top:205, bottom:205, side:205, solid:false, transparent:true, noCollide:true },  // water — MCPE 2013 dynamic texture frame 0 (tile 205)
-      16: { name:'Bijih Batubara', top:34,  bottom:34,  side:34,  solid:true },  // coal ore — OreTile(16, 34)
-      15: { name:'Bijih Besi',    top:33,  bottom:33,  side:33,  solid:true },  // iron ore — OreTile(15, 33)
-      14: { name:'Bijih Emas',    top:32,  bottom:32,  side:32,  solid:true },  // gold ore — OreTile(14, 32)
-      56: { name:'Bijih Berlian', top:50,  bottom:50,  side:50,  solid:true },  // diamond ore — OreTile(56, 50)
-      21: { name:'Bijih Lapis',   top:160, bottom:160, side:160, solid:true },  // lapis ore — OreTile(21, 160) = 10*16
-      22: { name:'Blok Lapis',    top:144, bottom:144, side:144, solid:true },  // lapis block — Tile(22, 144) = 9*16
-      73: { name:'Bijih Redstone', top:51,  bottom:51,  side:51,  solid:true },  // redstone ore — index 16*3+3 = 51 (spec)
+      45: { name:'Bricks',          top:7,   bottom:7,   side:7,   solid:true },  // brick — Tile(45, 7)
+      41: { name:'Gold Block',          top:23,  bottom:23,  side:23,  solid:true },  // gold block — MetalTile(41, 23) = 39-16
+      57: { name:'Diamond Block',       top:24,  bottom:24,  side:24,  solid:true },  // diamond block — MetalTile(57, 24) = 40-16
+      42: { name:'Iron Block',          top:22,  bottom:22,  side:22,  solid:true },  // iron block — MetalTile(42, 22) = 38-16
+      58: { name:'Crafting Table',    top:43,  bottom:4,   side:59,  front:60, frontNZ_WX:true, solid:true },  // crafting table — WorkbenchTile: tex=59, top=tex-16=43, bottom=planks(4), front(-Z,-X)=tex+1=60 per WorkbenchTile.h:24 (face==2||face==4)
+      61: { name:'Furnace',        top:62,  bottom:62,  side:45,  front:44, solid:true },  // furnace — FurnaceTile: tex=45, top/bottom=tex+17=62, side=tex=45, front(off)=tex-1=44
+      8: { name:'Water',           top:205, bottom:205, side:205, solid:false, transparent:true, noCollide:true },  // water — MCPE 2013 dynamic texture frame 0 (tile 205)
+      16: { name:'Coal Ore', top:34,  bottom:34,  side:34,  solid:true },  // coal ore — OreTile(16, 34)
+      15: { name:'Iron Ore',    top:33,  bottom:33,  side:33,  solid:true },  // iron ore — OreTile(15, 33)
+      14: { name:'Gold Ore',    top:32,  bottom:32,  side:32,  solid:true },  // gold ore — OreTile(14, 32)
+      56: { name:'Diamond Ore', top:50,  bottom:50,  side:50,  solid:true },  // diamond ore — OreTile(56, 50)
+      21: { name:'Lapis Lazuli Ore',   top:160, bottom:160, side:160, solid:true },  // lapis ore — OreTile(21, 160) = 10*16
+      22: { name:'Lapis Lazuli Block',    top:144, bottom:144, side:144, solid:true },  // lapis block — Tile(22, 144) = 9*16
+      73: { name:'Redstone Ore', top:51,  bottom:51,  side:51,  solid:true },  // redstone ore — index 16*3+3 = 51 (spec)
       49: { name:'Obsidian',      top:37,  bottom:37,  side:37,  solid:true },  // obsidian — ObsidianTile(49, 37)
-      89: { name:'Batu Bersinar', top:105, bottom:105, side:105, solid:true },  // glowstone — LightGemTile(89, 105) = 9+16*6
-      4: { name:'Batu Bata',     top:16,  bottom:16,  side:16,  solid:true },  // stonebrick — Tile(4, 16)
-      80: { name:'Salju',         top:66,  bottom:66,  side:66,  solid:true },  // snow — SnowTile(80, 66) = 16*4+2
-      79: { name:'Es',            top:67,  bottom:67,  side:67,  solid:true, transparent:true },  // ice — IceTile(79, 67) = 16*4+3
+      89: { name:'Glowstone', top:105, bottom:105, side:105, solid:true },  // glowstone — LightGemTile(89, 105) = 9+16*6
+      4: { name:'Cobblestone',     top:16,  bottom:16,  side:16,  solid:true },  // stonebrick — Tile(4, 16)
+      80: { name:'Snow Block',         top:66,  bottom:66,  side:66,  solid:true },  // snow — SnowTile(80, 66) = 16*4+2
+      79: { name:'Ice',            top:67,  bottom:67,  side:67,  solid:true, transparent:true },  // ice — IceTile(79, 67) = 16*4+3
       87: { name:'Netherrack',    top:103, bottom:103, side:103, solid:true },  // netherrack — Tile(87, 103) = 7+6*16
       88: { name:'Soul Sand',     top:104, bottom:104, side:104, solid:true },  // soul sand — HellSandTile(88, 104) = 8+6*16
-      47: { name:'Rak Buku',      top:4,   bottom:4,   side:35,  solid:true },  // bookshelf — BookshelfTile: top/bottom=planks(4), side=35
-      35: { name:'Kain',          top:64,  bottom:64,  side:64,  solid:true },  // cloth (white wool) — ClothTile(35, 64) = 4*16
+      47: { name:'Bookshelf',      top:4,   bottom:4,   side:35,  solid:true },  // bookshelf — BookshelfTile: top/bottom=planks(4), side=35
+      35: { name:'Wool',          top:64,  bottom:64,  side:64,  solid:true },  // cloth (white wool) — ClothTile(35, 64) = 4*16
     
       // === Missing C++ tiles (§Tile.cpp:161-265) ===
-      6: { name:'Pohon Muda',   top:15,  bottom:15,  side:15,  solid:false, hardness:0.0,  tileId:6   }, // §Sapling(6)
-      9: { name:'Air Tenang',   top:205, bottom:205, side:205, solid:false, transparent:true, noCollide:true, hardness:100, tileId:9   }, // §LiquidTileStatic(9) calmWater
+      6: { name:'Sapling',   top:15,  bottom:15,  side:15,  solid:false, hardness:0.0,  tileId:6   }, // §Sapling(6)
+      9: { name:'Water',   top:205, bottom:205, side:205, solid:false, transparent:true, noCollide:true, hardness:100, tileId:9   }, // §LiquidTileStatic(9) calmWater
       10:{ name:'Lava',          top:237, bottom:237, side:237, solid:false, transparent:true, noCollide:true, lightEmission:1.0, hardness:100, tileId:10  }, // §LiquidTileDynamic(10) lava
-      11:{ name:'Lava Tenang',   top:237, bottom:237, side:237, solid:false, transparent:true, noCollide:true, lightEmission:1.0, hardness:100, tileId:11  }, // §LiquidTileStatic(11) calmLava
-      24:{ name:'Batu Pasir',    top:176, bottom:208, side:192, solid:true, hardness:0.8,  tileId:24  }, // §SandStoneTile(24) — SandStoneTile.cpp bottom tex+32=208
-      30:{ name:'Jaring Laba',    top:11,  bottom:11,  side:11,  solid:false, transparent:true, noCollide:true, hardness:4.0,  tileId:30  }, // §WebTile(30,11)
-      31:{ name:'Rumput Tinggi', top:39,  bottom:39,  side:39,  solid:false, hardness:0.0,  tileId:31  }, // §TallGrass(31)
-      37:{ name:'Bunga',         top:13,  bottom:13,  side:13,  solid:false, hardness:0.0,  tileId:37  }, // §Bush(37) flower
-      38:{ name:'Mawar',         top:12,  bottom:12,  side:12,  solid:false, hardness:0.0,  tileId:38  }, // §Bush(38) rose
-      39:{ name:'Jamur Merah',   top:29,  bottom:29,  side:29,  solid:false, hardness:0.0,  tileId:39  }, // §Mushroom(39)
-      40:{ name:'Jamur Coklat',  top:28,  bottom:28,  side:28,  solid:false, hardness:0.0,  tileId:40  }, // §Mushroom(40)
-      44:{ name:'Tangga Batu',  top:6,   bottom:6,   side:5,   solid:true, hardness:2.0,  tileId:44  }, // §StoneSlabTile(44) — StoneSlabTile.cpp side=5 (smooth slab side)
+      11:{ name:'Lava',   top:237, bottom:237, side:237, solid:false, transparent:true, noCollide:true, lightEmission:1.0, hardness:100, tileId:11  }, // §LiquidTileStatic(11) calmLava
+      24:{ name:'Sandstone',    top:176, bottom:208, side:192, solid:true, hardness:0.8,  tileId:24  }, // §SandStoneTile(24) — SandStoneTile.cpp bottom tex+32=208
+      30:{ name:'Cobweb',    top:11,  bottom:11,  side:11,  solid:false, transparent:true, noCollide:true, hardness:4.0,  tileId:30  }, // §WebTile(30,11)
+      31:{ name:'Grass', top:39,  bottom:39,  side:39,  solid:false, hardness:0.0,  tileId:31  }, // §TallGrass(31)
+      37:{ name:'Flower',         top:13,  bottom:13,  side:13,  solid:false, hardness:0.0,  tileId:37  }, // §Bush(37) flower
+      38:{ name:'Rose',         top:12,  bottom:12,  side:12,  solid:false, hardness:0.0,  tileId:38  }, // §Bush(38) rose
+      39:{ name:'Mushroom',   top:29,  bottom:29,  side:29,  solid:false, hardness:0.0,  tileId:39  }, // §Mushroom(39)
+      40:{ name:'Mushroom',  top:28,  bottom:28,  side:28,  solid:false, hardness:0.0,  tileId:40  }, // §Mushroom(40)
+      44:{ name:'Stone Slab',  top:6,   bottom:6,   side:5,   solid:true, hardness:2.0,  tileId:44  }, // §StoneSlabTile(44) — StoneSlabTile.cpp side=5 (smooth slab side)
       46:{ name:'TNT',           top:9,   bottom:10,  side:8,   solid:true, hardness:0.0,  tileId:46  }, // §TntTile(46,8) — TntTile.h top=tex+1=9, bottom=tex+2=10, side=tex=8
-      48:{ name:'Batu Lumut',    top:36,  bottom:36,  side:36,  solid:true, hardness:2.0,  tileId:48  }, // §Tile(48,36) mossStone
-      50:{ name:'Obor',          top:80,  bottom:80,  side:80,  solid:false, transparent:true, lightEmission:0.9375, hardness:0.0,  tileId:50  }, // §TorchTile(50,80)
-      54:{ name:'Peti',          top:25,  bottom:25,  side:26,  front:27, solid:true, hardness:2.5,  tileId:54  }, // §ChestTile(54) — ChestTile.cpp top/bottom=25, side=26, front=27 (lockDir face)
-      59:{ name:'Tanaman',       top:88,  bottom:88,  side:88,  solid:false, hardness:0.0,  tileId:59  }, // §CropTile(59) crops
+      48:{ name:'Moss Stone',    top:36,  bottom:36,  side:36,  solid:true, hardness:2.0,  tileId:48  }, // §Tile(48,36) mossStone
+      50:{ name:'Torch',          top:80,  bottom:80,  side:80,  solid:false, transparent:true, lightEmission:0.9375, hardness:0.0,  tileId:50  }, // §TorchTile(50,80)
+      54:{ name:'Chest',          top:25,  bottom:25,  side:26,  front:27, solid:true, hardness:2.5,  tileId:54  }, // §ChestTile(54) — ChestTile.cpp top/bottom=25, side=26, front=27 (lockDir face)
+      59:{ name:'Wheat',       top:88,  bottom:88,  side:88,  solid:false, hardness:0.0,  tileId:59  }, // §CropTile(59) crops
       60:{ name:'Lahan Pertanian',top:87, bottom:2,   side:2,   solid:true, hardness:0.6,  tileId:60  }, // §FarmTile(60) farmland — FarmTile.cpp bottom/side=dirt(2)
       62:{ name:'Tungku Menyala',top:62,  bottom:62,  side:45,  front:61, solid:true, lightEmission:0.875, hardness:3.5, tileId:62  }, // §FurnaceTile(62) furnace_lit — FurnaceTile.cpp:41 tex+16=61 when lit
       63:{ name:'Papan Tanda',   top:4,   bottom:4,   side:4,   solid:false, hardness:1.0,  tileId:63  }, // §SignTile(63) sign
@@ -1325,11 +1325,11 @@
       81:{ name:'Kaktus',        top:69,  bottom:71,  side:70,  solid:true, hardness:0.4,  tileId:81  }, // §CactusTile(81) — CactusTile.h top=tex-1=69, bottom=tex+1=71, side=tex=70
       82:{ name:'Tanah Liat',    top:72,  bottom:72,  side:72,  solid:true, hardness:0.6,  tileId:82  }, // §ClayTile(82)
       83:{ name:'Tebu',          top:73,  bottom:73,  side:73,  solid:false, hardness:0.0,  tileId:83  }, // §ReedTile(83) reeds
-      85:{ name:'Pagar',         top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  tileId:85  }, // §FenceTile(85)
-      96:{ name:'Pintu Jebakan', top:84,  bottom:84,  side:84,  solid:true, hardness:3.0,  tileId:96  }, // §TrapDoorTile(96) — TrapDoorTile.cpp tex=84, hardness=3.0
-      98:{ name:'Batu Bata Licin',top:16, bottom:16,  side:16,  solid:true, hardness:2.0,  tileId:98  }, // §MultiTextureTile(98) stoneBrickSmooth
-      103:{name:'Labu',          top:137, bottom:137, side:136, solid:true, hardness:1.0,  tileId:103 }, // §MelonTile(103)
-      107:{name:'Gerbang Pagar', top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  tileId:107 }, // §FenceGateTile(107)
+      85:{ name:'Fence',         top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  tileId:85  }, // §FenceTile(85)
+      96:{ name:'Trapdoor', top:84,  bottom:84,  side:84,  solid:true, hardness:3.0,  tileId:96  }, // §TrapDoorTile(96) — TrapDoorTile.cpp tex=84, hardness=3.0
+      98:{ name:'Stone Bricks',top:16, bottom:16,  side:16,  solid:true, hardness:2.0,  tileId:98  }, // §MultiTextureTile(98) stoneBrickSmooth
+      103:{name:'Melon',          top:137, bottom:137, side:136, solid:true, hardness:1.0,  tileId:103 }, // §MelonTile(103)
+      107:{name:'Fence Gate', top:4,   bottom:4,   side:4,   solid:true, hardness:2.0,  tileId:107 }, // §FenceGateTile(107)
 };
 
     // §C++ Tile::destroyTime values from Tile.cpp:161-243 (initTiles).
@@ -1345,268 +1345,6 @@
       98:1.5, 103:1.0, 107:2.0,
     };
 
-    // §Canonical itemKey map — minecraft.html block id → rujukan namespaced key.
-    // Required so tool tile lists (PICKAXE_TILES etc., which use canonical keys like
-    // 'minecraft:obsidian') match the runtime registry's itemKey. Without this, the
-    // per-block tier gates (obsidian→diamond pickaxe, iron_ore→stone pickaxe, etc.)
-    // would silently fail to match.
-    //
-    // §Mapping verified 1:1 with rujukan Tile.cpp:161-243 (Tile::initItems), with
-    // minecraft.html's compact ID scheme:
-    //   id 1 = rujukan Tile::rock (1)         → 'minecraft:stone'
-    //   id 2 = rujukan Tile::grass (2)        → 'minecraft:grass_block'
-    //   id 3 = rujukan Tile::dirt (3)         → 'minecraft:dirt'
-    //   id 4 = rujukan Tile::treeTrunk (17)  → 'minecraft:oak_log'
-    //   id 5 = rujukan Tile::wood (5)         → 'minecraft:oak_planks'
-    //   id 6 = rujukan Tile::leaves (18)      → 'minecraft:oak_leaves'
-    //   id 7 = rujukan Tile::sand (12)        → 'minecraft:sand'
-    //   id 8 = rujukan Tile::gravel (13)      → 'minecraft:gravel'
-    //   id 9 = rujukan Tile::glass (20)       → 'minecraft:glass'
-    //   id 10 = rujukan Tile::unbreakable (7) → 'minecraft:bedrock'
-    //   id 11 = rujukan Tile::stoneBrick (4)  → 'minecraft:stone_bricks'  (Tile.cpp:164 actually is cobblestone, but BLOCKS table uses id 11=brick)
-    //   id 12 = rujukan Tile::goldBlock (41)  → 'minecraft:gold_block'
-    //   id 13 = rujukan Tile::emeraldBlock (57) → 'minecraft:diamond_block'
-    //   id 14 = rujukan Tile::ironBlock (42)  → 'minecraft:iron_block'
-    //   id 15 = rujukan Tile::workBench (58)  → 'minecraft:crafting_table'
-    //   id 16 = rujukan Tile::furnace (61)    → 'minecraft:furnace'
-    //   id 17 = rujukan Tile::water (8)       → 'minecraft:water'
-    //   id 18 = rujukan Tile::coalOre (16)    → 'minecraft:coal_ore'
-    //   id 19 = rujukan Tile::ironOre (15)    → 'minecraft:iron_ore'
-    //   id 20 = rujukan Tile::goldOre (14)    → 'minecraft:gold_ore'
-    //   id 21 = rujukan Tile::emeraldOre (56) → 'minecraft:diamond_ore'
-    //   id 22 = rujukan Tile::lapisOre (21)   → 'minecraft:lapis_ore'
-    //   id 23 = rujukan Tile::lapisBlock (22) → 'minecraft:lapis_block'
-    //   id 24 = rujukan Tile::redStoneOre (73) → 'minecraft:redstone_ore'
-    //   id 25 = (placeholder for emerald, not in MCPE 2013) → 'minecraft:diamond_block'
-    //   id 26 = rujukan Tile::obsidian (49)   → 'minecraft:obsidian'
-    //   id 27 = rujukan Tile::lightGem (89)   → 'minecraft:glowstone'
-    //   id 28 = rujukan Tile::stoneBrickSmooth (98) → 'minecraft:stone_bricks'
-    //   id 29 = rujukan Tile::snow (80)       → 'minecraft:snow'
-    //   id 30 = rujukan Tile::ice (79)        → 'minecraft:ice'
-    //   id 31 = rujukan Tile::netherrack (87) → 'minecraft:netherrack'
-    //   id 32 = rujukan Tile::hellSand (88)    → 'minecraft:soul_sand'
-    //   id 33 = rujukan Tile::bookshelf (47)  → 'minecraft:bookshelf'
-    //   id 34 = rujukan Tile::melon (103)     → 'minecraft:melon'
-    //   id 35 = rujukan Tile::cloth (35)      → 'minecraft:cloth'
-    const CANONICAL_KEY = {
-      // §C++ Tile IDs (§Tile.cpp:161-265)
-      1: 'minecraft:stone', 2: 'minecraft:grass_block', 3: 'minecraft:dirt',
-      4: 'minecraft:cobblestone', 5: 'minecraft:oak_planks', 6: 'minecraft:sapling',
-      7: 'minecraft:bedrock', 8: 'minecraft:flowing_water', 9: 'minecraft:water',
-      10: 'minecraft:flowing_lava', 11: 'minecraft:lava',
-      12: 'minecraft:sand', 13: 'minecraft:gravel',
-      14: 'minecraft:gold_ore', 15: 'minecraft:iron_ore', 16: 'minecraft:coal_ore',
-      17: 'minecraft:oak_log', 18: 'minecraft:oak_leaves',
-      20: 'minecraft:glass', 21: 'minecraft:lapis_ore', 22: 'minecraft:lapis_block',
-      24: 'minecraft:sandstone', 30: 'minecraft:web', 31: 'minecraft:tallgrass',
-      35: 'minecraft:wool', 37: 'minecraft:flower', 38: 'minecraft:rose',
-      39: 'minecraft:red_mushroom', 40: 'minecraft:brown_mushroom',
-      41: 'minecraft:gold_block', 42: 'minecraft:iron_block',
-      44: 'minecraft:stone_slab', 45: 'minecraft:brick', 46: 'minecraft:tnt',
-      47: 'minecraft:bookshelf', 48: 'minecraft:mossy_cobblestone', 49: 'minecraft:obsidian',
-      50: 'minecraft:torch', 54: 'minecraft:chest',
-      56: 'minecraft:diamond_ore', 57: 'minecraft:diamond_block',
-      58: 'minecraft:crafting_table', 59: 'minecraft:wheat', 60: 'minecraft:farmland',
-      61: 'minecraft:furnace', 62: 'minecraft:lit_furnace',
-      63: 'minecraft:sign', 64: 'minecraft:wooden_door', 65: 'minecraft:ladder',
-      78: 'minecraft:snow_layer', 79: 'minecraft:ice', 80: 'minecraft:snow',
-      81: 'minecraft:cactus', 82: 'minecraft:clay', 83: 'minecraft:reeds',
-      85: 'minecraft:fence', 87: 'minecraft:netherrack', 88: 'minecraft:soul_sand',
-      89: 'minecraft:glowstone', 96: 'minecraft:trapdoor', 98: 'minecraft:smooth_stone',
-      103: 'minecraft:melon', 107: 'minecraft:fence_gate',
-    };
-
-    // §Recipe key map — maps C++ Tile IDs to rujukan short item keys.
-    // The Recipes system (from voxelcraft-engine.bundle.js) uses short keys
-    // like "wood", "stick", "treeTrunk" — NOT namespaced minecraft:* keys.
-    // This map bridges the block ID to the recipe short key so crafting works.
-    const BLOCK_RECIPE_KEY = {
-      1: 'stoneBrick',      // stone (cobblestone in recipe system)
-      2: 'dirt',            // grass block → dirt in recipes
-      3: 'dirt',            // dirt
-      4: 'stoneBrick',      // cobblestone → stoneBrick
-      5: 'wood',            // oak planks → wood
-      6: 'sapling',         // sapling
-      12: 'sand',           // sand
-      13: 'gravel',         // gravel (no direct recipe use but maps to flint)
-      14: 'goldOre',        // gold ore
-      15: 'ironOre',        // iron ore
-      16: 'coalOre',        // coal ore
-      17: 'treeTrunk',      // oak log → treeTrunk
-      18: 'leaves',         // oak leaves
-      20: 'glass',          // glass
-      21: 'lapisOre',       // lapis ore
-      22: 'lapisBlock',     // lapis block
-      24: 'sandStone',      // sandstone
-      30: 'web',            // web
-      31: 'tallgrass',      // tall grass
-      35: 'cloth',          // cloth/wool
-      37: 'flower',         // flower
-      38: 'rose',           // rose
-      39: 'mushroom1',      // red mushroom
-      40: 'mushroom2',      // brown mushroom
-      41: 'goldBlock',      // gold block
-      42: 'ironBlock',      // iron block
-      44: 'stoneSlab',      // stone slab
-      45: 'redBrick',       // brick block
-      46: 'tnt',            // TNT
-      47: 'bookshelf',      // bookshelf
-      48: 'mossStone',      // moss stone
-      49: 'obsidian',       // obsidian
-      50: 'torch',          // torch
-      54: 'chest',          // chest
-      56: 'emeraldOre',     // diamond ore (emeraldOre in C++)
-      57: 'emeraldBlock',   // diamond block (emeraldBlock in C++)
-      58: 'workBench',      // crafting table
-      59: 'crops',          // wheat crops
-      60: 'farmland',       // farmland
-      61: 'furnace',        // furnace
-      62: 'furnace_lit',    // lit furnace
-      63: 'sign',           // sign
-      64: 'door_wood',      // wooden door
-      65: 'ladder',         // ladder
-      73: 'redStoneOre',    // redstone ore
-      78: 'topSnow',        // snow layer
-      79: 'ice',            // ice
-      80: 'snow',           // snow block
-      81: 'cactus',         // cactus
-      82: 'clay',           // clay
-      83: 'reeds',          // sugar cane
-      85: 'fence',          // fence
-      87: 'netherrack',     // netherrack
-      89: 'lightGem',       // glowstone
-      96: 'trapdoor',       // trapdoor
-      98: 'stoneBrickSmooth', // smooth stone brick
-      103: 'melon',         // melon
-      107: 'fenceGate',     // fence gate
-    };
-
-    // §Recipe result key → namespaced item key map.
-    // The Recipes system returns short keys (e.g. 'stick', 'pickAxe_wood')
-    // but the Inventory requires namespaced keys (e.g. 'minecraft:stick').
-    const RECIPE_RESULT_TO_NAMESPACED = {
-      // Tools
-      'pickAxe_wood': 'minecraft:wooden_pickaxe',
-      'pickAxe_stone': 'minecraft:stone_pickaxe',
-      'pickAxe_iron': 'minecraft:iron_pickaxe',
-      'pickAxe_emerald': 'minecraft:diamond_pickaxe',
-      'pickAxe_gold': 'minecraft:golden_pickaxe',
-      'shovel_wood': 'minecraft:wooden_shovel',
-      'shovel_stone': 'minecraft:stone_shovel',
-      'shovel_iron': 'minecraft:iron_shovel',
-      'shovel_emerald': 'minecraft:diamond_shovel',
-      'shovel_gold': 'minecraft:golden_shovel',
-      'hatchet_wood': 'minecraft:wooden_axe',
-      'hatchet_stone': 'minecraft:stone_axe',
-      'hatchet_iron': 'minecraft:iron_axe',
-      'hatchet_emerald': 'minecraft:diamond_axe',
-      'hatchet_gold': 'minecraft:golden_axe',
-      'hoe_wood': 'minecraft:wooden_hoe',
-      'hoe_stone': 'minecraft:stone_hoe',
-      'hoe_iron': 'minecraft:iron_hoe',
-      'hoe_emerald': 'minecraft:diamond_hoe',
-      'hoe_gold': 'minecraft:golden_hoe',
-      'sword_wood': 'minecraft:wooden_sword',
-      'sword_stone': 'minecraft:stone_sword',
-      'sword_iron': 'minecraft:iron_sword',
-      'sword_emerald': 'minecraft:diamond_sword',
-      'sword_gold': 'minecraft:golden_sword',
-      'shears': 'minecraft:shears',
-      'bow': 'minecraft:bow',
-      'arrow': 'minecraft:arrow',
-      // Items
-      'stick': 'minecraft:stick',
-      'torch': 'minecraft:torch',
-      'string': 'minecraft:string',
-      'flint': 'minecraft:flint',
-      'feather': 'minecraft:feather',
-      'leather': 'minecraft:leather',
-      'paper': 'minecraft:paper',
-      'book': 'minecraft:book',
-      'sugar': 'minecraft:sugar',
-      'sulphur': 'minecraft:gunpowder',
-      'dye_powder': 'minecraft:dye',
-      'snowBall': 'minecraft:snowball',
-      'clay': 'minecraft:clay_ball',
-      'brick': 'minecraft:brick',
-      'yellowDust': 'minecraft:glowstone_dust',
-      // Blocks (from crafting)
-      'wood': 'minecraft:oak_planks',
-      'goldBlock': 'minecraft:gold_block',
-      'ironBlock': 'minecraft:iron_block',
-      'emeraldBlock': 'minecraft:diamond_block',
-      'lapisBlock': 'minecraft:lapis_block',
-      'lightGem': 'minecraft:glowstone',
-      'cloth': 'minecraft:white_wool',
-      'tnt': 'minecraft:tnt',
-      'redBrick': 'minecraft:bricks',
-      'snow': 'minecraft:snow_block',
-      'sand': 'minecraft:sand',
-      'stoneBrick': 'minecraft:cobblestone',
-      'goldIngot': 'minecraft:gold_ingot',
-      'ironIngot': 'minecraft:iron_ingot',
-      'emerald': 'minecraft:diamond',
-      'goldIngot': 'minecraft:gold_ingot',
-      // Doors / misc blocks
-      'door_wood': 'minecraft:oak_door',
-      'trapdoor': 'minecraft:oak_trapdoor',
-      'sign': 'minecraft:oak_sign',
-      'ladder': 'minecraft:ladder',
-      'fence': 'minecraft:oak_fence',
-      'fenceGate': 'minecraft:oak_fence_gate',
-      'bookshelf': 'minecraft:bookshelf',
-      'mushroomStew': 'minecraft:mushroom_stew',
-      'melon': 'minecraft:melon',
-      'seeds_melon': 'minecraft:melon_seeds',
-      'crops': 'minecraft:wheat_seeds',
-      'treeTrunk': 'minecraft:oak_log',
-      // Armor
-      'helmet_cloth': 'minecraft:leather_helmet',
-      'helmet_iron': 'minecraft:iron_helmet',
-      'helmet_diamond': 'minecraft:diamond_helmet',
-      'helmet_gold': 'minecraft:golden_helmet',
-      'chestplate_cloth': 'minecraft:leather_chestplate',
-      'chestplate_iron': 'minecraft:iron_chestplate',
-      'chestplate_diamond': 'minecraft:diamond_chestplate',
-      'chestplate_gold': 'minecraft:golden_chestplate',
-      'leggings_cloth': 'minecraft:leather_leggings',
-      'leggings_iron': 'minecraft:iron_leggings',
-      'leggings_diamond': 'minecraft:diamond_leggings',
-      'leggings_gold': 'minecraft:golden_leggings',
-      'boots_cloth': 'minecraft:leather_boots',
-      'boots_iron': 'minecraft:iron_boots',
-      'boots_diamond': 'minecraft:diamond_boots',
-      'boots_gold': 'minecraft:golden_boots',
-    };
-    // Helper: convert recipe result key to namespaced key
-    function toNamespacedKey(shortKey) {
-      if (!shortKey) return shortKey;
-      if (shortKey.includes(':')) return shortKey; // already namespaced
-      return RECIPE_RESULT_TO_NAMESPACED[shortKey] || ('minecraft:' + shortKey);
-    }
-
-    // §Material map — verified 1:1 with rujukan Tile subclass constructors:
-    //   StoneTile.h:15 (Material::stone), GrassTile.cpp:6 (Material::dirt),
-    //   DirtTile.h:15 (Material::dirt), OreTile.h:16 (Material::stone),
-    //   HeavyTile.cpp:9 (Material::sand, used by sand + gravel via inheritance),
-    //   TreeTile.h:21 (Material::wood), LeafTile.h:32 (Material::leaves),
-    //   MetalTile.h:13 (Material::metal), GlassTile (Material::glass via Tile.cpp:180),
-    //   TorchTile.h:18 (Material::decoration), LadderTile.h:18 (Material::decoration),
-    //   WorkbenchTile.h:16 (Material::wood), FurnaceTile.cpp:16 (Material::stone),
-    //   BookshelfTile.h:14 (Material::wood), ClothTile.h:14 (Material::cloth),
-    //   SnowTile.h:17 (Material::snow), TopSnowTile.h:17 (Material::topSnow),
-    //   IceTile.h:16 (Material::ice), CactusTile.h:21 (Material::cactus),
-    //   ReedTile.h:16 (Material::plant), WebTile.h:17 (Material::web),
-    //   ObsidianTile extends StoneTile (Material::stone), Bush.h:14 (Material::plant)
-    //   LightGemTile uses Material::glass (Tile.cpp:235)
-    //   Tile 87 netherrack: Material::stone (Tile.cpp:234)
-    //   Tile 88 hellSand: Material::sand
-    //   MelonTile: Material::wood (Tile.cpp:243 SOUND_WOOD suggests wood material)
-    //   Tile 7 bedrock: Material::stone (Tile.cpp:167)
-    //   Tile 22 lapis_block: Material::stone (Tile.cpp:182)
-    //   Tile 4 stoneBrick (cobblestone): Material::stone (Tile.cpp:164)
-    //   StairTile uses base->material: stairs_wood base=wood (Material::wood)
-    //   RedStoneOreTile extends OreTile (Material::stone)
     const MATERIAL_MAP = {
       // §C++ Tile IDs — material from §Tile.cpp setSoundType/setMaterial
       1: 'stone', 2: 'dirt', 3: 'dirt', 4: 'stone', 5: 'wood', 6: 'plant',
@@ -1637,86 +1375,44 @@
       { type: 'block', id: 3,  label: 'Tanah' },           // dirt (id 3)
       { type: 'block', id: 5,  label: 'Papan Ek' },        // oak planks (id 5)
       { type: 'block', id: 17, label: 'Kayu Ek' },  // §treeTrunk(17)          // oak log (id 4)
-      { type: 'tool',  itemKey: 'minecraft:wood_pickaxe',    label: 'Pickaxe Kayu' },
-      { type: 'tool',  itemKey: 'minecraft:iron_pickaxe',    label: 'Pickaxe Besi' },
-      { type: 'tool',  itemKey: 'minecraft:diamond_pickaxe', label: 'Pickaxe Berlian' },
-      { type: 'tool',  itemKey: 'minecraft:wood_shovel',     label: 'Sekop Kayu' },
+      { type: 'tool',  id: 270, label: 'Wooden Pickaxe' },
+      { type: 'tool',  id: 257, label: 'Iron Pickaxe' },
+      { type: 'tool',  id: 278, label: 'Diamond Pickaxe' },
+      { type: 'tool',  id: 269, label: 'Wooden Shovel' },
       { type: 'more',  label: '...' },   // §Gui.cpp:187 — opens block selection (inventory)
     ];
     // §Tool itemKey → icon (col,row) in items.png 256x256 atlas (16x16 tiles).
     // Verified from rujukan Item.cpp:168-198 (setIcon(col,row) calls).
     const TOOL_ICONS = {
-      'minecraft:wood_pickaxe':    { col: 0, row: 6 },
-      'minecraft:stone_pickaxe':   { col: 1, row: 6 },
-      'minecraft:iron_pickaxe':    { col: 2, row: 6 },
-      'minecraft:diamond_pickaxe': { col: 3, row: 6 },
-      'minecraft:gold_pickaxe':    { col: 4, row: 6 },
-      'minecraft:wood_axe':        { col: 0, row: 7 },
-      'minecraft:stone_axe':       { col: 1, row: 7 },
-      'minecraft:iron_axe':        { col: 2, row: 7 },
-      'minecraft:diamond_axe':      { col: 3, row: 7 },
-      'minecraft:gold_axe':        { col: 4, row: 7 },
-      'minecraft:wood_shovel':     { col: 0, row: 5 },
-      'minecraft:stone_shovel':    { col: 1, row: 5 },
-      'minecraft:iron_shovel':     { col: 2, row: 5 },
-      'minecraft:diamond_shovel':  { col: 3, row: 5 },
-      'minecraft:gold_shovel':     { col: 4, row: 5 },
-      'minecraft:wood_sword':      { col: 0, row: 4 },
-      'minecraft:stone_sword':     { col: 1, row: 4 },
-      'minecraft:iron_sword':      { col: 2, row: 4 },
-      'minecraft:diamond_sword':   { col: 3, row: 4 },
-      'minecraft:gold_sword':      { col: 4, row: 4 },
+      270:    { col: 0, row: 6 },
+      274:   { col: 1, row: 6 },
+      257:    { col: 2, row: 6 },
+      278: { col: 3, row: 6 },
+      285:    { col: 4, row: 6 },
+      271:        { col: 0, row: 7 },
+      275:       { col: 1, row: 7 },
+      258:        { col: 2, row: 7 },
+      279:      { col: 3, row: 7 },
+      286:        { col: 4, row: 7 },
+      269:     { col: 0, row: 5 },
+      273:    { col: 1, row: 5 },
+      256:     { col: 2, row: 5 },
+      277:  { col: 3, row: 5 },
+      284:     { col: 4, row: 5 },
+      268:      { col: 0, row: 4 },
+      272:     { col: 1, row: 4 },
+      267:      { col: 2, row: 4 },
+      276:   { col: 3, row: 4 },
+      283:      { col: 4, row: 4 },
     };
 
     // The renderer uses custom compact IDs; this registry explicitly preserves that mapping.
     // §Use canonical namespaced keys so tool tile lists (PICKAXE_TILES, etc.)
     // match the runtime registry's itemKey 1:1. This is required for per-block
     // tier gates (obsidian→diamond pickaxe, etc.) to work correctly.
-    function runtimeBlockKey(id) { return id === 0 ? 'minecraft:air' : (CANONICAL_KEY[id] || ('minecraft:voxelcraft_block_' + id)); }
+    // §runtimeBlockKey removed — int IDs are used directly now
     function createRuntimeBlockRegistry() {
-      const entries = [{
-        key: 'minecraft:air', legacyId: 0, displayName: 'Air', shape: 'none',
-        renderLayer: 'invisible', solid: false, selectable: false, replaceable: true,
-        hardness: 0, sound: 'silent', lightOpacity: 0, lightEmission: 0, drops: [],
-      }];
-      for (const id of Object.keys(BLOCKS).map(Number).filter(id => id > 0 && BLOCKS[id]).sort((a,b) => a-b)) {
-        const block = BLOCKS[id], dropId = id;
-        // §C++ Tile.cpp:161-265 — SoundType per Tile subclass. Verified 1:1 with
-        // the C++ initTiles() SOUND_WOOD / SOUND_GRASS / SOUND_GRAVEL / SOUND_SAND /
-        // SOUND_GLASS / SOUND_METAL / SOUND_STONE assignments.
-        const SOUND_WOOD_TILES  = [5, 17, 47, 50, 54, 58, 63, 64, 65, 85, 96, 103, 107];
-        const SOUND_GRASS_TILES  = [6, 18, 31, 37, 38, 39, 40, 46, 59, 83];
-        const SOUND_GRAVEL_TILES = [3, 60, 82];
-        const SOUND_SAND_TILES   = [12, 88];
-        const SOUND_GLASS_TILES   = [20, 79, 89];
-        const SOUND_METAL_TILES   = [41, 42, 57, 71];
-        const sound = id === 8 || id === 9 || id === 10 || id === 11 ? 'silent'
-          : SOUND_WOOD_TILES.includes(id) ? 'wood'
-          : SOUND_GRASS_TILES.includes(id) ? 'grass'
-          : SOUND_GRAVEL_TILES.includes(id) ? 'gravel'
-          : SOUND_SAND_TILES.includes(id) ? 'sand'
-          : SOUND_GLASS_TILES.includes(id) ? 'glass'
-          : SOUND_METAL_TILES.includes(id) ? 'metal'
-          : 'stone';
-        entries.push({
-          key: runtimeBlockKey(id), legacyId: id, displayName: block.name,
-          shape: id === 8 ? 'liquid' : 'cube',
-          renderLayer: id === 8 || block.transparent ? 'translucent' : 'opaque',
-          solid: block.solid === true, selectable: id !== 8 && !block.noCollide,
-          replaceable: id === 8,
-          // §Material field — verified 1:1 with rujukan Material.cpp + each Tile
-          // subclass constructor. Stone/metal/snow/topSnow are notAlwaysDestroyable,
-          // so they require the correct tool tier to drop resources.
-          material: MATERIAL_MAP[id] || 'dirt',
-          // §C++ Tile::destroyTime from Tile.cpp:161-243. block.hardness (set in
-          // BLOCKS) takes precedence; otherwise fall back to DESTROY_TIME lookup;
-          // default to 1.0 if neither is present.
-          hardness: block.hardness != null ? block.hardness : (DESTROY_TIME[id] != null ? DESTROY_TIME[id] : 1),
-          sound, lightOpacity: id === 8 ? 1 : 15, lightEmission: BLOCK_LIGHT_EMISSION[runtimeBlockKey(id)] || 0,
-          drops: id === 7 ? [] : [runtimeBlockKey(dropId)],
-        });
-      }
-      return new window.VoxelCraftBlockRegistry(entries);
+      return window.VoxelCraftBlockRegistry ? new window.VoxelCraftBlockRegistry() : null;
     }
     let voxelEngine = null;
     function syncEngineChunk(chunk) {
@@ -2121,11 +1817,11 @@
     const BLOCK_LIGHT_EMISSION = {};
     // §Tile.cpp:161-243 — setLightEmission() values, converted to 0..15 integer
     // levels (1.0 = 15/16 = full bright). Verified 1:1 with rujukan initTiles().
-    BLOCK_LIGHT_EMISSION[runtimeBlockKey(89)] = 15;  // glowstone (setLightEmission(1.0f))
-    BLOCK_LIGHT_EMISSION[runtimeBlockKey(10)] = 15;  // lava (setLightEmission(1.0f))
-    BLOCK_LIGHT_EMISSION[runtimeBlockKey(11)] = 15;  // calmLava (setLightEmission(1.0f))
-    BLOCK_LIGHT_EMISSION[runtimeBlockKey(50)] = 15;  // torch (setLightEmission(15/16.0f) = 0.9375 → level 15)
-    BLOCK_LIGHT_EMISSION[runtimeBlockKey(62)] = 14;  // furnace_lit (setLightEmission(14/16.0f) = 0.875 → level 14)
+    BLOCK_LIGHT_EMISSION[89] = 15;  // glowstone (setLightEmission(1.0f))
+    BLOCK_LIGHT_EMISSION[10] = 15;  // lava (setLightEmission(1.0f))
+    BLOCK_LIGHT_EMISSION[11] = 15;  // calmLava (setLightEmission(1.0f))
+    BLOCK_LIGHT_EMISSION[50] = 15;  // torch (setLightEmission(15/16.0f) = 0.9375 → level 15)
+    BLOCK_LIGHT_EMISSION[62] = 14;  // furnace_lit (setLightEmission(14/16.0f) = 0.875 → level 14)
 
     // §Tile::lightBlock from Tile.cpp — opaque blocks block all light (255→15),
     // glass=0, leaves=1, water=3, torch=0
@@ -2158,7 +1854,7 @@
       const skyBrightness = Math.max(0, skyLight - skyDarken);
 
       // §blockLight: Tile::lightEmission for this block
-      const blockKey = runtimeBlockKey(blockId);
+      const blockKey = blockId;
       const blockLight = BLOCK_LIGHT_EMISSION[blockKey] || 0;
 
       // §LevelChunk::getRawBrightness: max(skyLight - skyDarken, blockLight)
@@ -2426,10 +2122,10 @@
     HOTBAR.forEach((entry, slot) => {
       if (entry.type === 'more') return;  // "..." slot is not an inventory item
       if (entry.type === 'block') {
-        voxelEngine.inventory.setSlot(slot, { itemKey: runtimeBlockKey(entry.id), count: 64, maxStackSize: 64 });
+        voxelEngine.inventory.setSlot(slot, { id: entry.id, count: 64, maxStackSize: 64 });
       } else {
         // §Tools don't stack in rujukan (Item::getMaxStackSize returns 1 for tools).
-        voxelEngine.inventory.setSlot(slot, { itemKey: entry.itemKey, count: 1, maxStackSize: 1 });
+        voxelEngine.inventory.setSlot(slot, { id: entry.id, count: 1, maxStackSize: 1 });
       }
     });
     let miningHeld = false;
@@ -4605,7 +4301,7 @@
             }
           }
           HOTBAR[targetSlot] = { type: 'block', id, label: BLOCKS[id]?.name || 'Blok' };
-          voxelEngine.inventory.setSlot(targetSlot, { itemKey: runtimeBlockKey(id), count: 64, maxStackSize: 64 });
+          voxelEngine.inventory.setSlot(targetSlot, { id: id, count: 64, maxStackSize: 64 });
           buildHotbar();
           selectSlot(targetSlot);
           toast('Slot ' + (targetSlot+1) + ' = ' + def.name);
@@ -4778,7 +4474,7 @@
           if (def) drawTilePreview(cx, def.side, 16);
         } else {
           // §Tools render from items.png 256x256 atlas (col,row) per rujukan Item.cpp
-          const icon = TOOL_ICONS[entry.itemKey];
+          const icon = TOOL_ICONS[entry.id];
           if (icon) drawItemPreview(cx, icon.col, icon.row, 16);
         }
         slot.appendChild(c);
@@ -4829,7 +4525,7 @@
         // Resolve tool via VoxelCraftGetTool; bare hand + blocks have no bar.
         const dur = slot.querySelector('.dur');
         if (!dur) return;
-        const tool = stack ? window.VoxelCraftGetTool(stack.itemKey) : null;
+        const tool = stack ? window.VoxelCraftGetTool(stack.id) : null;
         if (!tool || !stack) {
           dur.style.display = 'none';
           return;
@@ -5278,7 +4974,7 @@
       const entry = HOTBAR[selectedSlot];
       if (!entry || entry.type !== 'tool') return null;
       // Use the bundled getTool() from voxelcraft-engine.bundle.js (exposed on window)
-      return (window.VoxelCraftGetTool && window.VoxelCraftGetTool(entry.itemKey)) || null;
+      return (window.VoxelCraftGetTool && window.VoxelCraftGetTool(entry.id)) || null;
     }
     // §Check if the selected slot is the "..." block-selection button
     function isMoreSlotSelected() {
@@ -6170,7 +5866,7 @@
         const ingredient = furnaceData?.ingredient;
         if (ingredient) {
           const result = furnaceRecipes.getResult(ingredient);
-          document.getElementById('furnaceResult').textContent = result ? result.itemKey : '';
+          document.getElementById('furnaceResult').textContent = result ? result.id : '';
         }
       }
     }
@@ -6221,8 +5917,8 @@
         width: 3, height: 3,
         getItem(x, y) {
           const slot = document.querySelector(`.crafting-slot[data-craft-x="${x}"][data-craft-y="${y}"]`);
-          if (!slot || !slot.dataset.itemKey) return null;
-          return { itemKey: slot.dataset.itemKey, count: 1, maxStackSize: 64 };
+          if (!slot || !slot.dataset.id) return null;
+          return { id: slot.dataset.id, count: 1, maxStackSize: 64 };
         }
       };
       // §WorkbenchScreen.cpp — find matching recipe
@@ -6230,7 +5926,7 @@
         if (recipe.matches(grid)) {
           const result = recipe.getResultItem();
           const resultEl = document.getElementById('craftingResult');
-          resultEl.textContent = result.itemKey;
+          resultEl.textContent = result.id;
           resultEl.style.background = '#7c7';
           return;
         }
@@ -6380,12 +6076,12 @@
         if (selected && selected.type === 'block') {
           // §CRA-001 — use rujukan short recipe key so the recipe matcher can compare.
           // The Recipes system uses short keys like "wood", "stick", "treeTrunk".
-          const key = BLOCK_RECIPE_KEY[selected.id] || runtimeBlockKey(selected.id);
-          if (slot.dataset.itemKey === key) {
-            delete slot.dataset.itemKey;
+          const key = selected.id;
+          if (slot.dataset.id === key) {
+            delete slot.dataset.id;
             slot.textContent = '';
           } else {
-            slot.dataset.itemKey = key;
+            slot.dataset.id = key;
             slot.textContent = BLOCKS[selected.id]?.name?.substring(0, 6) || '?';
           }
           checkCraftingResult();
@@ -6403,9 +6099,9 @@
       for (let i = 0; i < HOTBAR.length; i++) {
         if (HOTBAR[i] && HOTBAR[i].type === 'more') continue;  // skip "more" slot
         if (!HOTBAR[i]) {
-          const nsKey = toNamespacedKey(craftedKey);
+          const nsKey = craftedKey;
           HOTBAR[i] = { type: 'item', id: nsKey, label: craftedKey };
-          voxelEngine.inventory.setSlot(i, { itemKey: nsKey, count: 1, maxStackSize: 64 });
+          voxelEngine.inventory.setSlot(i, { id: nsKey, count: 1, maxStackSize: 64 });
           buildHotbar();
           selectSlot(i);
           placed = true;
@@ -6418,10 +6114,10 @@
       }
       // §Consume one ingredient per crafting slot used
       document.querySelectorAll('.crafting-slot').forEach(s => {
-        if (s.dataset.itemKey) {
+        if (s.dataset.id) {
           // Decrement the count in the corresponding inventory slot
           // For simplicity, just clear the slot (creative mode has unlimited blocks)
-          delete s.dataset.itemKey;
+          delete s.dataset.id;
           s.textContent = '';
         }
       });
@@ -6442,9 +6138,9 @@
             for (let i = 0; i < HOTBAR.length; i++) {
               if (HOTBAR[i] && HOTBAR[i].type === 'more') continue;
               if (!HOTBAR[i]) {
-                const nsKey = toNamespacedKey(craftedKey);
+                const nsKey = craftedKey;
                 HOTBAR[i] = { type: 'item', id: nsKey, label: craftedKey };
-                voxelEngine.inventory.setSlot(i, { itemKey: nsKey, count: 1, maxStackSize: 64 });
+                voxelEngine.inventory.setSlot(i, { id: nsKey, count: 1, maxStackSize: 64 });
                 buildHotbar();
                 selectSlot(i);
                 placed = true;
@@ -6454,8 +6150,8 @@
             if (!placed) { toast('Hotbar penuh!'); return; }
             // Clear ingredient slot
             const ingSlot = document.getElementById('furnaceIngredient');
-            if (ingSlot && ingSlot.dataset.itemKey) {
-              delete ingSlot.dataset.itemKey;
+            if (ingSlot && ingSlot.dataset.id) {
+              delete ingSlot.dataset.id;
               ingSlot.textContent = '';
             }
             result.textContent = '';
@@ -6470,14 +6166,14 @@
             const slot = document.getElementById(id);
             // §CRA-001 / CTR-005 — use namespaced key (runtimeBlockKey) so the
             // FurnaceRecipes matcher (which expects minecraft:* keys) can compare.
-            const key = selected.type === 'block' ? (BLOCK_RECIPE_KEY[selected.id] || runtimeBlockKey(selected.id)) : selected.id;
+            const key = selected.id;
             slot.textContent = key.substring(0, 6);
-            slot.dataset.itemKey = key;
+            slot.dataset.id = key;
             if (window.VoxelCraftFurnaceRecipes && id === 'furnaceIngredient') {
               const fr = window.VoxelCraftFurnaceRecipes.getInstance();
               const result = fr.getResult(key);
               if (result) {
-                document.getElementById('furnaceResult').textContent = result.itemKey;
+                document.getElementById('furnaceResult').textContent = result.id;
                 document.getElementById('furnaceFlame')?.classList.add('active');
                 document.getElementById('furnaceBurnFill').style.width = '100%';
               }
