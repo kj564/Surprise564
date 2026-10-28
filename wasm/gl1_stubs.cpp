@@ -57,87 +57,37 @@ static int g_defaultVBO = 0;
 static bool g_gl1Init = false;
 
 // §Init default shader + VBO for GL1 emulation
-static void initGL1Emulation() {
-    if (g_gl1Init) return;
-    g_gl1Init = true;
+EM_JS(void, js_initGL1, (void), {
+    if (window.__gl1Init) return;
+    window.__gl1Init = true;
     
-    EM_ASM({
-        // §Create default shader program for GL1 fixed-function emulation
-        var vsSrc = [
-            'attribute vec3 aPos;',
-            'attribute vec4 aColor;',
-            'attribute vec2 aTexCoord;',
-            'uniform mat4 uProjection;',
-            'uniform mat4 uModelView;',
-            'varying vec4 vColor;',
-            'varying vec2 vTexCoord;',
-            'void main() {',
-            '  vColor = aColor;',
-            '  vTexCoord = aTexCoord;',
-            '  gl_Position = uProjection * uModelView * vec4(aPos, 1.0);',
-            '}'
-        ].join('\n');
-        
-        var fsSrc = [
-            'precision mediump float;',
-            'varying vec4 vColor;',
-            'varying vec2 vTexCoord;',
-            'uniform sampler2D uTexture;',
-            'uniform bool uTextured;',
-            'void main() {',
-            '  if (uTextured) {',
-            '    vec4 tex = texture2D(uTexture, vTexCoord);',
-            '    gl_FragColor = vec4(tex.rgb, tex.a * vColor.a);',
-            '  } else {',
-            '    gl_FragColor = vColor;',
-            '  }',
-            '}'
-        ].join('\n');
-        
-        var gl = (GL.currentContext && GL.currentContext.GLctx) || Module.ctx;
-        if (!gl) return;
-        
-        function compileShader(src, type) {
-            var s = gl.createShader(type);
-            gl.shaderSource(s, src);
-            gl.compileShader(s);
-            if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-                console.error('Shader compile error:', gl.getShaderInfoLog(s));
-            }
-            return s;
-        }
-        
-        var vs = compileShader(vsSrc, gl.VERTEX_SHADER);
-        var fs = compileShader(fsSrc, gl.FRAGMENT_SHADER);
-        var prog = gl.createProgram();
-        gl.attachShader(prog, vs);
-        gl.attachShader(prog, fs);
-        gl.linkProgram(prog);
-        
-        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-            console.error('Program link error:', gl.getProgramInfoLog(prog));
-        }
-        
-        // Store in GL.programs map
-        var progId = GL.getNewId(GL.programs);
-        GL.programs[progId] = prog;
-        window.__gl1Program = progId;
-        window.__gl1ProgramObj = prog;  // also store raw obj for direct use
-        
-        // Create temp VBO for client-side vertex data
-        var vbo = gl.createBuffer();
-        var vboId = GL.getNewId(GL.buffers);
-        GL.buffers[vboId] = vbo;
-        window.__gl1TempVBO = vboId;
-        window.__gl1TempVBOObj = vbo;
-        
-        // Identity matrices (4x4 float arrays)
-        window.__gl1Projection = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
-        window.__gl1ModelView = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
-        
-        console.log('[GL1] Default shader + VBO initialized');
-    });
-}
+    var vsSrc = 'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProjection; uniform mat4 uModelView; varying vec4 vColor; varying vec2 vTexCoord; void main() { vColor = aColor; vTexCoord = aTexCoord; gl_Position = uProjection * uModelView * vec4(aPos, 1.0); }';
+    var fsSrc = 'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTexture; uniform bool uTextured; void main() { if (uTextured) { vec4 tex = texture2D(uTexture, vTexCoord); gl_FragColor = vec4(tex.rgb, tex.a * vColor.a); } else { gl_FragColor = vColor; } }';
+    
+    var gl = (GL.currentContext && GL.currentContext.GLctx) || Module.ctx;
+    if (!gl) return;
+    
+    function compileShader(src, type) {
+        var s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        return s;
+    }
+    
+    var vs = compileShader(vsSrc, gl.VERTEX_SHADER);
+    var fs = compileShader(fsSrc, gl.FRAGMENT_SHADER);
+    var prog = gl.createProgram();
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    
+    window.__gl1ProgramObj = prog;
+    window.__gl1Projection = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+    window.__gl1ModelView = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+    console.log('[GL1] Default shader initialized');
+});
+
+static void initGL1Emulation() { js_initGL1(); }
 
 extern "C" {
 
@@ -190,59 +140,43 @@ void glDisableClientState(unsigned int cap) {
 }
 
 // §glDrawArrays — the KEY function: upload client data to VBO, setup attribs, draw
+EM_JS(void, js_drawArrays, (int mode, int first, int count), {
+    var prog = window.__gl1ProgramObj;
+    var gl = (GL.currentContext && GL.currentContext.GLctx) || Module.ctx;
+    if (!gl) return;
+    
+    if (prog) {
+        gl.useProgram(prog);
+        var uProj = gl.getUniformLocation(prog, 'uProjection');
+        var uMV = gl.getUniformLocation(prog, 'uModelView');
+        if (uProj) gl.uniformMatrix4fv(uProj, false, window.__gl1Projection);
+        if (uMV) gl.uniformMatrix4fv(uMV, false, window.__gl1ModelView);
+        
+        var aPos = gl.getAttribLocation(prog, 'aPos');
+        var aColor = gl.getAttribLocation(prog, 'aColor');
+        var aTexCoord = gl.getAttribLocation(prog, 'aTexCoord');
+        
+        var stride = 24;
+        if (aPos >= 0) {
+            gl.enableVertexAttribArray(aPos);
+            gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, stride, 0);
+        }
+        if (aTexCoord >= 0) {
+            gl.enableVertexAttribArray(aTexCoord);
+            gl.vertexAttribPointer(aTexCoord, 2, gl.FLOAT, false, stride, 12);
+        }
+        if (aColor >= 0) {
+            gl.enableVertexAttribArray(aColor);
+            gl.vertexAttribPointer(aColor, 4, gl.UNSIGNED_BYTE, true, stride, 20);
+        }
+    }
+    
+    gl.drawArrays(mode, first, count);
+});
+
 void glDrawArrays(unsigned int mode, int first, int count) {
     initGL1Emulation();
-    
-    // Check if we have client-side vertex array data (no VBO bound or offset > 0)
-    // For now, assume VBO is already bound (Tesselator::draw binds VBO before calling)
-    // and pointer is an offset into that VBO.
-    // In that case, just call real glDrawArrays via WebGL.
-    
-    EM_ASM({
-        var mode = $0;
-        var first = $1;
-        var count = $2;
-        var progId = window.__gl1Program || 0;
-        var prog = window.__gl1ProgramObj;
-        var gl = (GL.currentContext && GL.currentContext.GLctx) || Module.ctx;
-        if (!gl) return;
-        
-        // Use default shader
-        if (prog) {
-            gl.useProgram(prog);
-            
-            // Set uniforms
-            var uProj = gl.getUniformLocation(prog, 'uProjection');
-            var uMV = gl.getUniformLocation(prog, 'uModelView');
-            if (uProj) gl.uniformMatrix4fv(uProj, false, window.__gl1Projection);
-            if (uMV) gl.uniformMatrix4fv(uMV, false, window.__gl1ModelView);
-            
-            // Setup vertex attribs — assume VBO is bound, pointer is offset
-            // pos at offset 0, texcoord at offset 12 (3*4), color at offset 20 (5*4)
-            var aPos = gl.getAttribLocation(prog, 'aPos');
-            var aColor = gl.getAttribLocation(prog, 'aColor');
-            var aTexCoord = gl.getAttribLocation(prog, 'aTexCoord');
-            
-            // Tesselator vertex format: pos(3f) + tex(2f) + color(4ub) = 24 bytes
-            // pos at 0, tex at 12, color at 20
-            var stride = 24;  // sizeof(VERTEX) in MCPE
-            
-            if (aPos >= 0) {
-                gl.enableVertexAttribArray(aPos);
-                gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, stride, 0);
-            }
-            if (aTexCoord >= 0) {
-                gl.enableVertexAttribArray(aTexCoord);
-                gl.vertexAttribPointer(aTexCoord, 2, gl.FLOAT, false, stride, 12);
-            }
-            if (aColor >= 0) {
-                gl.enableVertexAttribArray(aColor);
-                gl.vertexAttribPointer(aColor, 4, gl.UNSIGNED_BYTE, true, stride, 20);
-            }
-        }
-        
-        gl.drawArrays(mode, first, count);
-    }, mode, first, count);
+    js_drawArrays((int)mode, first, count);
 }
 
 // === Immediate mode (glBegin/glEnd) ===
