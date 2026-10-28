@@ -981,12 +981,6 @@
   <div id="inventory" class="hidden" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
     <button id="invClose" class="inv-done" title="Done" aria-label="Done">×</button>
     <h2 id="inventoryTitle">Select Block</h2>
-    <div class="inv-tabs" role="tablist" aria-label="Kategori inventaris">
-      <button type="button" id="inventoryTabAll" role="tab" aria-selected="true" aria-controls="invGrid" class="active" data-inv-filter="all">All</button>
-      <button type="button" id="inventoryTabNature" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="nature">Nature</button>
-      <button type="button" id="inventoryTabBuilding" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="building">Building</button>
-      <button type="button" id="inventoryTabMineralss" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="minerals">Minerals</button>
-    </div>
     <div class="inv-grid" id="invGrid" role="tabpanel" aria-labelledby="inventoryTabAll" tabindex="0"></div>
     <p class="inv-hint">Select a block to assign to the current hotbar slot. Close with E or the button in the top-right corner.</p>
   </div>
@@ -2508,7 +2502,7 @@
       for (let i = 0; i < HOTBAR.length; i++) {
         if (HOTBAR[i] && HOTBAR[i].type === 'more') continue;
         if (!HOTBAR[i]) {
-          HOTBAR[i] = { type: 'block', id, label: BLOCKS[id]?.name || 'Blok' };
+          HOTBAR[i] = { type: 'block', id, label: BLOCKS[id]?.name || 'Block' };
           voxelEngine.inventory.setSlot(i, { id, count, maxStackSize: 64 });
           buildHotbar();
           selectSlot(i);
@@ -4529,7 +4523,7 @@
               if (!HOTBAR[i] || HOTBAR[i].type === 'more') { targetSlot = i; break; }
             }
           }
-          HOTBAR[targetSlot] = { type: 'block', id, label: BLOCKS[id]?.name || 'Blok' };
+          HOTBAR[targetSlot] = { type: 'block', id, label: BLOCKS[id]?.name || 'Block' };
           voxelEngine.inventory.setSlot(targetSlot, { id: id, count: 64, maxStackSize: 64 });
           buildHotbar();
           selectSlot(targetSlot);
@@ -5231,7 +5225,7 @@
       browserStats.blocksBroken = browserBlocksBroken;
       const coinRewards = { 18: 2, 19: 3, 20: 5, 21: 15, 22: 4, 24: 3 };
       const coinsEarned = coinRewards[id] || 0;
-      if (coinsEarned > 0) { browserStats.coins += coinsEarned; toast('+' + coinsEarned + ' koin'); }
+      if (coinsEarned > 0) { browserStats.coins += coinsEarned; toast('+' + coinsEarned + ' coins'); }
       saveBrowserStats();
       spawnBreakParticles(hit.x, hit.y, hit.z, id);
       playSound('break', id);
@@ -5463,7 +5457,7 @@
         const entry = HOTBAR[selectedSlot];
         const selected = entry ? { name: entry.label } : null;
         null.textContent = 'Statistik VoxelCraft\n' +
-          'Koin: ' + browserStats.coins + '\n' +
+          'Coins: ' + browserStats.coins + '\n' +
           'Kunjungan browser: ' + browserStats.joins + '\n' +
           'Block broken: ' + browserBlocksBroken + '\n' +
           'Block placed: ' + browserBlocksPlaced + '\n' +
@@ -6068,7 +6062,7 @@
           const clock = `${String(Math.floor(clockMinutes / 60) % 24).padStart(2, '0')}:${String(clockMinutes % 60).padStart(2, '0')}`;
           const clockIcon = (worldTime > 0.22 && worldTime < 0.78) ? '☀' : '🌙';
           hudEl.innerHTML =
-            `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> ${clockIcon} <b>${clock}</b> <span class="hud-sep">|</span> Koin: <b>${browserStats.coins}</b> <span class="hud-sep">|</span> ${player.fly ? 'Terbang' : (player.sprinting ? 'Lari' : 'Jalan')} <span class="hud-sep">|</span> Blok: <b>${HOTBAR[selectedSlot]?.label || '?'}</b> <span class="hud-sep">|</span> Hancur: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
+            `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> ${clockIcon} <b>${clock}</b> <span class="hud-sep">|</span> Coins: <b>${browserStats.coins}</b> <span class="hud-sep">|</span> ${player.fly ? 'Flying' : (player.sprinting ? 'Sprinting' : 'Walking')} <span class="hud-sep">|</span> Blok: <b>${HOTBAR[selectedSlot]?.label || '?'}</b> <span class="hud-sep">|</span> Broken: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
         } else {
           hudEl.innerHTML = '';
         }
