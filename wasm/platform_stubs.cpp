@@ -56,50 +56,6 @@ namespace Perf {
 #define GL_ARRAY_BUFFER 0x8892
 #define GL_ELEMENT_ARRAY_BUFFER 0x8893
 
-// §Minimal GL function stubs — real ones come from Emscripten WebGL
-extern "C" {
-    void glEnable(int) {}
-    void glDisable(int) {}
-    void glColor4f(float r, float g, float b, float a) {}
-    void glClearColor(float, float, float, float) {}
-    void glClear(int) {}
-    void glViewport(int, int, int, int) {}
-    void glMatrixMode(int) {}
-    void glLoadIdentity() {}
-    void glOrthof(float, float, float, float, float, float) {}
-    void glFrustumf(float, float, float, float, float, float) {}
-    void glTranslatef(float, float, float) {}
-    void glRotatef(float, float, float, float) {}
-    void glScalef(float, float, float) {}
-    void glPushMatrix() {}
-    void glPopMatrix() {}
-    void glBegin(int) {}
-    void glEnd() {}
-    void glVertex3f(float, float, float) {}
-    void glVertex2f(float, float) {}
-    void glTexCoord2f(float, float) {}
-    void glColor4ub(unsigned char, unsigned char, unsigned char, unsigned char) {}
-    void glBindTexture(int, unsigned int) {}
-    void glGenTextures(int, unsigned int*) {}
-    void glTexImage2D(int, int, int, int, int, int, int, int, const void*) {}
-    void glTexSubImage2D(int, int, int, int, int, int, int, int, const void*) {}
-    void glTexParameteri(int, int, int) {}
-    void glDrawElements(int, int, int, const void*) {}
-    void glDrawArrays(int, int, int) {}
-    void glEnableClientState(int) {}
-    void glDisableClientState(int) {}
-    void glVertexPointer(int, int, int, const void*) {}
-    void glTexCoordPointer(int, int, int, const void*) {}
-    void glColorPointer(int, int, int, const void*) {}
-    void glDeleteTextures(int, const unsigned int*) {}
-    unsigned int glGenLists(int) { return 0; }
-    void glCallList(unsigned int) {}
-    void glNewList(unsigned int, int) {}
-    void glEndList() {}
-    void glDeleteLists(unsigned int, int) {}
-    void glFlush() {}
-    void glFinish() {}
-}
 
 
 // §Pos.h stubs
