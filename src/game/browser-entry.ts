@@ -104,7 +104,7 @@ import { Level, DEPTH, SEA_LEVEL, MAX_BRIGHTNESS, TICKS_PER_DAY } from './world/
 import { ChunkPos, LevelChunk, ChunkCache, ChunkSource, LevelSource } from './world/level/translated/chunk-classes';
 import { Dimension, DimensionFactory, TileEntityType, TileEntity, TileEntityFactory, GameMode, CreativeMode, SurvivalMode, Biome, BiomeSource, RandomLevelSource, LevelSettings, GameType, LEVEL_HEIGHT, CHUNK_BLOCK_COUNT } from './world/level/translated/world-systems';
 import { DOWN, UP, NORTH, SOUTH, WEST, EAST, OPPOSITE_FACING, STEP_X, STEP_Y, STEP_Z } from './world/translated/Facing';
-import { AABB } from './world/phys/translated/AABB';
+import { AABB as AABB_Cpp } from './world/phys/translated/AABB';
 import { Vec3 } from './world/phys/translated/Vec3';
 import { HitResult, HitResultType } from './world/phys/translated/HitResult';
 import { sqrt as mthSqrt, floor as mthFloor, sin as mthSin, cos as mthCos, atan as mthAtan, atan2 as mthAtan2, PI, TWO_PI, DEGRAD, RADDEG } from './util/translated/Mth';
@@ -112,10 +112,11 @@ import { Random } from './util/translated/Random';
 import { TicksPerSecond } from './util/translated/SharedConstants';
 import { Structures, Tools, FoodArmor, Decorations, Mechanisms } from './world/item/translated/ItemCategory';
 import { UseAnimation } from './world/item/translated/UseAnim';
-import { StoneTile, DirtTile, OreTile, MetalTile, GlassTile, TreeTile, LeafTile, GravelTile, HalfTransparentTile, TransparentTile } from './world/level/tile/translated/tile-subclasses';
-import { TntTile, TorchTile, LadderTile, FenceTile, FenceGateTile, BookshelfTile, WebTile, IceTile, SnowTile, TopSnowTile, LightGemTile, ObsidianTile, ClayTile, ReedTile, CactusTile, SandTile, Bush, Sapling, Mushroom, TallGrass, CropTile, FarmTile, SandStoneTile, RedStoneOreTile, MultiTextureTile, BedTile, MelonTile, StemTile, InvisibleTile, StonecutterTile, NetherReactor, QuartzBlockTile, CarriedTile, ThinFenceTile, StairTile, FireTile, DoorTile, SignTile, TrapDoorTile, StoneSlabTile, LiquidTile, LiquidTileDynamic, LiquidTileStatic } from './world/level/tile/translated/tile-subclasses-2';
-import { DiggerItem, PickaxeItem, ShovelItem, HatchetItem, WeaponItem, HoeItem, BowItem, FoodItem, FlintAndSteelItem, DoorItem, SignItem, ShearsItem, BowlFoodItem, SeedItem, CoalItem, EggItem, SnowballItem, DyePowderItem, BedItem, HangingEntityItem, CameraItem, TileItem, AuxDataTileItem, ClothTileItem, LeafTileItem, StoneSlabTileItem, SaplingTileItem, TilePlanterItem } from './world/item/translated/item-subclasses';
-import { Creature, PathfinderMob, AgableMob, Animal, WaterAnimal, Monster, Chicken as ChickenEntity, Cow as CowEntity, Pig as PigEntity, Sheep as SheepEntity, Zombie as ZombieEntity, Skeleton as SkeletonEntity, Spider as SpiderEntity, Creeper as CreeperEntity } from './world/entity/translated/entity-subclasses';
+import { StoneTile as StoneTile_Cpp, DirtTile as DirtTile_Cpp, OreTile as OreTile_Cpp, MetalTile as MetalTile_Cpp, GlassTile as GlassTile_Cpp, TreeTile as TreeTile_Cpp, LeafTile as LeafTile_Cpp, GravelTile as GravelTile_Cpp } from './world/level/tile/translated/tile-subclasses';
+import { TntTile as TntTile_Cpp, TorchTile as TorchTile_Cpp, LadderTile as LadderTile_Cpp, FenceTile as FenceTile_Cpp, FenceGateTile as FenceGateTile_Cpp, BookshelfTile as BookshelfTile_Cpp, WebTile as WebTile_Cpp, IceTile as IceTile_Cpp, SnowTile as SnowTile_Cpp, TopSnowTile as TopSnowTile_Cpp, LightGemTile as LightGemTile_Cpp, ObsidianTile as ObsidianTile_Cpp, ClayTile as ClayTile_Cpp, ReedTile as ReedTile_Cpp, CactusTile as CactusTile_Cpp, SandTile as SandTile_Cpp, Bush as Bush_Cpp, Sapling as Sapling_Cpp, Mushroom as Mushroom_Cpp, TallGrass as TallGrass_Cpp, CropTile as CropTile_Cpp, FarmTile as FarmTile_Cpp, SandStoneTile as SandStoneTile_Cpp, RedStoneOreTile as RedStoneOreTile_Cpp, MultiTextureTile as MultiTextureTile_Cpp, BedTile as BedTile_Cpp, MelonTile as MelonTile_Cpp, StemTile as StemTile_Cpp, InvisibleTile as InvisibleTile_Cpp, StonecutterTile as StonecutterTile_Cpp, NetherReactor as NetherReactor_Cpp, QuartzBlockTile as QuartzBlockTile_Cpp, CarriedTile as CarriedTile_Cpp, ThinFenceTile as ThinFenceTile_Cpp, StairTile as StairTile_Cpp, FireTile as FireTile_Cpp, DoorTile as DoorTile_Cpp, SignTile as SignTile_Cpp, TrapDoorTile as TrapDoorTile_Cpp, StoneSlabTile as StoneSlabTile_Cpp, LiquidTile as LiquidTile_Cpp, LiquidTileDynamic as LiquidTileDynamic_Cpp, LiquidTileStatic as LiquidTileStatic_Cpp } from './world/level/tile/translated/tile-subclasses-2';
+import { DiggerItem as DiggerItem_Cpp, PickaxeItem as PickaxeItem_Cpp, ShovelItem as ShovelItem_Cpp, HatchetItem as HatchetItem_Cpp, WeaponItem as WeaponItem_Cpp, HoeItem as HoeItem_Cpp, BowItem as BowItem_Cpp, FoodItem as FoodItem_Cpp, FlintAndSteelItem as FlintAndSteelItem_Cpp, DoorItem as DoorItem_Cpp, SignItem as SignItem_Cpp, ShearsItem as ShearsItem_Cpp, BowlFoodItem as BowlFoodItem_Cpp, SeedItem as SeedItem_Cpp, CoalItem as CoalItem_Cpp, EggItem as EggItem_Cpp, SnowballItem as SnowballItem_Cpp, DyePowderItem as DyePowderItem_Cpp, BedItem as BedItem_Cpp, HangingEntityItem as HangingEntityItem_Cpp, CameraItem as CameraItem_Cpp, TileItem as TileItem_Cpp, AuxDataTileItem as AuxDataTileItem_Cpp, ClothTileItem as ClothTileItem_Cpp, LeafTileItem as LeafTileItem_Cpp, StoneSlabTileItem as StoneSlabTileItem_Cpp, SaplingTileItem as SaplingTileItem_Cpp, TilePlanterItem as TilePlanterItem_Cpp } from './world/item/translated/item-subclasses';
+// §Entity subclasses from translated C++ (renamed to avoid conflicts with existing code)
+import { Creature as Creature_Cpp, PathfinderMob as PathfinderMob_Cpp, AgableMob as AgableMob_Cpp, Animal as Animal_Cpp, WaterAnimal as WaterAnimal_Cpp, Monster as Monster_Cpp, Chicken as ChickenEntity_Cpp, Cow as CowEntity_Cpp, Pig as PigEntity_Cpp, Sheep as SheepEntity_Cpp, Zombie as ZombieEntity_Cpp, Skeleton as SkeletonEntity_Cpp, Spider as SpiderEntity_Cpp, Creeper as CreeperEntity_Cpp } from './world/entity/translated/entity-subclasses';
 
 // §Export translated C++ classes to window for minecraft.html
 window.VoxelCraftTile = Tile;
@@ -133,7 +134,7 @@ window.VoxelCraftPlayer = Player;
 window.VoxelCraftLevel = Level;
 window.VoxelCraftLevelChunk = LevelChunk;
 window.VoxelCraftChunkCache = ChunkCache;
-window.VoxelCraftAABB = AABB;
+window.VoxelCraftAABB_Cpp = AABB_Cpp;
 window.VoxelCraftVec3 = Vec3;
 window.VoxelCraftHitResult = HitResult;
 window.VoxelCraftMth = { sqrt: mthSqrt, floor: mthFloor, sin: mthSin, cos: mthCos, atan: mthAtan, atan2: mthAtan2, PI, TWO_PI, DEGRAD, RADDEG };
