@@ -93,7 +93,7 @@
 
     async function loadTextureAsync(path) {
       try {
-        var response = await fetch('../assets/' + path);
+        var response = await fetch((location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/') + path);
         if (!response.ok) { logMsg('[TEX] skip ' + path + ' (HTTP ' + response.status + ')'); return; }
         var blob = await response.blob();
         var url = URL.createObjectURL(blob);
@@ -126,7 +126,7 @@
 
     async function loadAssetAsync(path) {
       try {
-        var response = await fetch('../assets/' + path);
+        var response = await fetch((location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/') + path);
         if (!response.ok) return;
         var buf = await response.arrayBuffer();
         window.__mcpeAssets[path] = new Uint8Array(buf);
