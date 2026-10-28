@@ -6062,7 +6062,7 @@
           const clock = `${String(Math.floor(clockMinutes / 60) % 24).padStart(2, '0')}:${String(clockMinutes % 60).padStart(2, '0')}`;
           const clockIcon = (worldTime > 0.22 && worldTime < 0.78) ? '☀' : '🌙';
           hudEl.innerHTML =
-            `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> ${clockIcon} <b>${clock}</b> <span class="hud-sep">|</span> Coins: <b>${browserStats.coins}</b> <span class="hud-sep">|</span> ${player.fly ? 'Flying' : (player.sprinting ? 'Sprinting' : 'Walking')} <span class="hud-sep">|</span> Blok: <b>${HOTBAR[selectedSlot]?.label || '?'}</b> <span class="hud-sep">|</span> Broken: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
+            `<span class="hud-brand">VoxelCraft</span> <span class="hud-sep">|</span> Overworld <span class="hud-sep">|</span> XYZ <b>${Math.floor(player.pos.x)}, ${Math.floor(player.pos.y)}, ${Math.floor(player.pos.z)}</b> <span class="hud-sep">|</span> ${clockIcon} <b>${clock}</b> <span class="hud-sep">|</span> Coins: <b>${browserStats.coins}</b> <span class="hud-sep">|</span> ${player.fly ? 'Flying' : (player.sprinting ? 'Sprinting' : 'Walking')} <span class="hud-sep">|</span> Block: <b>${HOTBAR[selectedSlot]?.label || '?'}</b> <span class="hud-sep">|</span> Broken: <b>${browserBlocksBroken}</b> <span class="hud-sep">|</span> FPS: <b>${fps}</b>`;
         } else {
           hudEl.innerHTML = '';
         }
