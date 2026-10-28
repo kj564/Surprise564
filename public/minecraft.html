@@ -340,7 +340,6 @@
   #invClose,
   #pauseOverlay .pause-buttons button,
   #inventory .inv-tabs button,
-  #vcGuide button {
     min-height: 20px;
     padding: 1px 8px;
     color: #e0e0e0;  /* §Button.cpp:80 — normal text color */
@@ -366,8 +365,6 @@
   #pauseOverlay .pause-buttons button:focus-visible,
   #inventory .inv-tabs button:hover,
   #inventory .inv-tabs button:focus-visible,
-  #vcGuide button:hover,
-  #vcGuide button:focus-visible {
     color: #ffffa0;  /* §Button.cpp:78 — hovered text color */
     background-position: 0 -86px;  /* §Button.cpp:83 — hover: y=46+2*20=86 */
   }
@@ -375,7 +372,6 @@
   #overlay button:active,
   #invClose:active,
   #pauseOverlay .pause-buttons button:active,
-  #vcGuide button:active {
     color: #a0a0a0;  /* §Button.cpp:75 — disabled text color */
     background-position: 0 -46px;  /* §Button.cpp:83 — disabled: y=46+0*20=46 */
     transform: translateY(1px);
@@ -509,18 +505,15 @@
   .item-catalog-slot .lbl { max-width: 100%; overflow-wrap: anywhere; }
   body[data-ui-screen="inventory"] #overlay,
   body[data-ui-screen="inventory"] #pauseOverlay,
-  body[data-ui-screen="inventory"] #vcGuide { display: none !important; }
   body[data-ui-screen="inventory"] #inventory { z-index: 1000; }
 
 
   /* Browser adaptation of the Behavior Pack's ActionFormData menu. */
-  #vcGuide {
     position: fixed; inset: 0; z-index: 35;
     display: flex; align-items: center; justify-content: center;
     padding: 18px; background: rgba(0,0,0,.62); backdrop-filter: none;
   }
-  #vcGuide.hidden { display: none; }
-  #vcGuide .vc-form {
+  #null?.hidden { display: none; }
     width: min(100%, 440px); max-height: min(88vh, 650px); overflow-y: auto;
     padding: 14px; color: #fff;
     background-color: #1d1d1d;
@@ -528,20 +521,10 @@
     border-radius: 0;
     box-shadow: 0 6px 0 rgba(0,0,0,.4);
   }
-  #vcGuide .vc-title { margin: 0 0 8px; color: #fff; font-size: 16px; letter-spacing: 0; text-shadow: 2px 2px #000; }
-  #vcGuide .vc-body { margin: 0 0 14px; padding: 8px 10px; color: #ddd; background: #0e0e0e; border: 1px solid #000; font-size: 12px; line-height: 1.5; white-space: pre-line; text-shadow: 1px 1px #000; }
   /* Bedrock ActionFormData stacks its action buttons vertically. */
-  #vcGuide .vc-actions { display: grid; grid-template-columns: 1fr; gap: 6px; }
-  /* #vcGuide button styling is inherited from the shared gui.png button rule above. */
-  #vcGuide button:disabled { opacity: .55; cursor: not-allowed; }
-  #vcGuide button .vc-small { display: block; margin-top: 2px; color: #bcbcbc; font-size: 9px; font-weight: normal; }
-  #vcGuide .vc-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
-  #vcGuide .vc-close { min-width: 116px; text-align: center; }
-  @media (max-width: 460px) { #vcGuide .vc-actions { grid-template-columns: 1fr; } #vcGuide .vc-form { padding: 10px; } }
 
 
   /* ActionForm button icons use the same item sprites referenced by the Bedrock Behavior Pack. */
-  #vcGuide .vc-actions button {
     display: grid;
     grid-template-columns: 30px minmax(0, 1fr);
     grid-template-rows: auto auto;
@@ -551,7 +534,6 @@
     min-height: 58px;
     padding: 8px 10px;
   }
-  #vcGuide .vc-actions button::before {
     content: "";
     grid-column: 1;
     grid-row: 1 / span 2;
@@ -564,27 +546,16 @@
     image-rendering: pixelated;
     filter: drop-shadow(1px 1px 0 rgba(0,0,0,.35));
   }
-  #vcGuide .vc-action-label {
     grid-column: 2;
     grid-row: 1;
     min-width: 0;
     align-self: end;
   }
-  #vcGuide .vc-actions button .vc-small {
     grid-column: 2;
     grid-row: 2;
     align-self: start;
   }
-  /* vcGuide icons from rujukan items.png atlas (256x256, 16x16 grid) */
   /* VERIFIED from Item.cpp setIcon(col, row) coordinates */
-  #vcGuide [data-vc-action="kit"]::before { background: url('./assets/gui/items.png') -176px -48px / 256px 256px; }
-  #vcGuide [data-vc-action="heal"]::before { background: url('./assets/gui/items.png') -160px 0px / 256px 256px; }
-  #vcGuide [data-vc-action="fly"]::before { background: url('./assets/gui/items.png') -128px -16px / 256px 256px; }
-  #vcGuide [data-vc-action="day"]::before { background: url('./assets/gui/items.png') -96px -64px / 256px 256px; }
-  #vcGuide [data-vc-action="night"]::before { background: url('./assets/gui/items.png') -208px -32px / 256px 256px; }
-  #vcGuide [data-vc-action="weather"]::before { background: url('./assets/gui/items.png') -96px -48px / 256px 256px; }
-  #vcGuide [data-vc-action="stats"]::before { background: url('./assets/gui/items.png') -176px -48px / 256px 256px; }
-  #vcGuide .vc-close::before {
     content: "\2715";  /* plain Unicode X — no RP cursor/cancel sprite needed */
     display: inline-block;
     width: 12px;
@@ -598,8 +569,6 @@
     text-shadow: 1px 1px #000;
   }
   @media (max-width: 460px) {
-    #vcGuide .vc-actions button { min-height: 54px; grid-template-columns: 26px minmax(0, 1fr); column-gap: 6px; padding: 7px; }
-    #vcGuide .vc-actions button::before { width: 24px; height: 24px; }
   }
 
 
@@ -1054,7 +1023,6 @@
       </div>
       <div id="helpOptionsPanel" class="help-options-panel">
         <h2>Help &amp; Options</h2>
-        <button id="guideButton">How to Play</button>
         <button id="optionsButton">Game Options</button>
         <p class="menu-panel-note">Controls, graphics, and world settings for this browser game.</p>
         <button id="helpBackButton" class="menu-back">Back</button>
@@ -4449,10 +4417,10 @@
     let inventoryOpen = false;
     let inventoryReturnToGame = false;
     
-    const vcGuideBody = document.getElementById('vcGuideBody');
-    const vcFlyStatus = document.getElementById('vcFlyStatus');
     
-    let vcGuideReturnToGame = false;
+    
+    
+    
     // Mirror the Behavior Pack's persistent player stats in browser storage.
     const BROWSER_STATS_KEY = 'voxelcraft_browser_stats_v1';
     function safeBrowserCount(value) {
@@ -4571,7 +4539,7 @@
       }
     }
     function toggleInventory() {
-      if (!inventoryOpen && vcGuideOpen) return;
+      if (!inventoryOpen && false) return;
       const opening = !inventoryOpen;
       if (opening) inventoryReturnToGame = locked || inventoryReturnToGame;
       inventoryOpen = opening;
@@ -5441,7 +5409,7 @@
     // pattern in rujukan/.../client/gui/Screen.cpp. Presentation never owns game state.
     function getActiveUiScreen() {
       if (inventoryOpen) return 'inventory';
-      if (vcGuideOpen) return 'guide';
+      if (false) return 'guide';
       if (!gameStarted) return 'title';
       if (locked) return 'playing';
       return 'pause';
@@ -5452,7 +5420,7 @@
       overlay.classList.toggle('hidden', activeScreen !== 'title');
       pauseOverlay.classList.toggle('hidden', activeScreen !== 'pause');
       inventoryEl.classList.toggle('hidden', activeScreen !== 'inventory');
-      vcGuide.classList.toggle('hidden', activeScreen !== 'guide');
+      null?.classList.toggle('hidden', activeScreen !== 'guide');
     }
     function resumeGame() {
       if (settingsPanel) settingsPanel.classList.remove('open');
@@ -5494,7 +5462,7 @@
         const pos = player.pos;
         const entry = HOTBAR[selectedSlot];
         const selected = entry ? { name: entry.label } : null;
-        vcGuideBody.textContent = 'Statistik VoxelCraft\n' +
+        null.textContent = 'Statistik VoxelCraft\n' +
           'Koin: ' + browserStats.coins + '\n' +
           'Kunjungan browser: ' + browserStats.joins + '\n' +
           'Block broken: ' + browserBlocksBroken + '\n' +
@@ -5503,58 +5471,26 @@
           'Slot aktif: ' + (selectedSlot + 1) + ' — ' + (selected ? selected.name : 'kosong') + '\n' +
           'Mode terbang: ' + (player.fly ? 'ON' : 'OFF') + ' | Waktu: ' + clock;
       } else {
-        vcGuideBody.textContent = 'Hello, explorer!';
+        null.textContent = 'Hello, explorer!';
       }
-      vcFlyStatus.textContent = player.fly ? 'Fly ON' : 'Fly OFF';
+      null.textContent = player.fly ? 'Fly ON' : 'Fly OFF';
     }
-    function noopVcGuide() {
-      if (vcGuideOpen || inventoryOpen) return;
-      vcGuideReturnToGame = locked;
-      vcGuideOpen = true;
-      syncMenuVisibility();
-      updateVcGuideBody(false);
-      if (locked) document.exitPointerLock();
-    }
-    function closeVcGuide(resume = true) {
+    
       ;
-      const shouldResume = resume && vcGuideReturnToGame;
+      const shouldResume = resume && false;
       syncMenuVisibility();
-      vcGuideReturnToGame = false;
+      
       if (shouldResume && canvas.requestPointerLock) {
         const result = canvas.requestPointerLock();
         if (result && typeof result.catch === 'function') result.catch(() => { syncMenuVisibility(); toast('Click the game screen to continue'); });
       }
-    }
-    vcGuide.querySelectorAll('[data-vc-action]').forEach((button) => {
-      button.addEventListener('click', () => {
-        switch (button.dataset.vcAction) {
-          case 'kit':
-            [1, 3, 17, 5, 45, 49, 57, 89].forEach((id, i) => { if (BLOCKS[id]) HOTBAR[i] = { type: 'block', id, label: BLOCKS[id].name }; });
-            buildHotbar(); selectSlot(selectedSlot);
-            toast('Kit blok starter dipasang ke hotbar');
-            break;
-          case 'fly':
-            player.fly = !player.fly; player.vel.y = 0;
-            updateVcGuideBody(false); toast(player.fly ? 'Fly mode ON' : 'Fly mode OFF');
-            break;
-          case 'day': worldTime = 0.5; toast('Waktu diatur ke siang'); updateVcGuideBody(false); break;
-          case 'night': worldTime = 0; toast('Waktu diatur ke malam'); updateVcGuideBody(false); break;
-          case 'stats': updateVcGuideBody(true); break;
-          case 'close': closeVcGuide(true); break;
-        }
-      });
-    });
-    vcGuide.addEventListener('click', (event) => { if (event.target === vcGuide) closeVcGuide(true); });
-
-    document.getElementById('guideButton').addEventListener('click', openVcGuide);
-    playButton.addEventListener('click', startGame);
+    
+    
     helpOptionsButton.addEventListener('click', () => {
       settingsPanel.classList.add('open');
       mainMenuButtons.classList.add('hidden');
-      settingsPanel.classList.add('open');
     });
     helpBackButton.addEventListener('click', () => {
-      helpOptionsPanel.classList.remove('open');
       settingsPanel.classList.remove('open');
       mainMenuButtons.classList.remove('hidden');
     });
@@ -5627,7 +5563,7 @@
       keys[e.code] = true;
       if (e.code === 'Escape' && !e.repeat && !wasDown) {
         if (inventoryOpen) { e.preventDefault(); toggleInventory(); return; }
-        if (vcGuideOpen) { e.preventDefault(); ; return; }
+        if (false) { e.preventDefault(); ; return; }
         if (gameStarted && !locked) { e.preventDefault(); resumeGame(); return; }
         if (!gameStarted && settingsPanel?.classList.contains('open')) {
           e.preventDefault();
