@@ -17,8 +17,8 @@ public:
     int getScreenWidth() const;
     int getScreenHeight() const;
     
-    TextureData* getTexture(const std::string& name);
-    TextureData* loadTexture(const std::string& name, bool blur = false);
+    TextureData getTexture(const std::string& name);
+    TextureData loadTexture(const std::string& name, bool blur = false);
     void releaseTexture(TextureData* texture);
     
     void* loadAsset(const std::string& name, int* size);

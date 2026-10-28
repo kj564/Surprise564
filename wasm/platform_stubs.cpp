@@ -1,21 +1,27 @@
+// §Platform stubs for Emscripten — provides functions/classes that MCPE 2013 C++
+// expects but that are NOT in the rujukan source tree (or are platform-specific
+// to Android/Win32 that we replace with browser equivalents).
+//
+// What lives here (after deduplication):
+//   - GL constants (for client/renderer files that don't include GLES/gl.h)
+//   - Pos struct (used by some tile .cpp files)
+//   - FallingTile stub (entity not yet linked)
+//   - EntityTypes enum (forward declarations for IDs)
+//   - MobCategory static pointer init (MobCategory.cpp is stub-only in rujukan)
+//     — but MobCategory.cpp from rujukan DOES exist and DOES define these.
+//     So we DON'T re-define here.
+//   - I18n, Difficulty, TileEntityType, SharedFlagsInformation, etc. — these
+//     are enum/namespace stubs for files that don't include the full headers.
+//   - Tag stub (NBT) — full Tag.cpp exists in rujukan, so we DON'T redefine.
+
 #include <string>
-// §Platform stubs for Emscripten — provides functions that MCPE 2013 C++ expects
 #include <ctime>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
 
-// §platform/time.h
-int getTimeMs() { return (int)(clock() * 1000.0 / CLOCKS_PER_SEC); }
-long getEpochTimeS() { return (long)time(nullptr); }
-
-// §platform/log.h
-#define LOGI(...) fprintf(stderr, "[I] " __VA_ARGS__)
-#define LOGW(...) fprintf(stderr, "[W] " __VA_ARGS__)
-#define LOGE(...) fprintf(stderr, "[E] " __VA_ARGS__)
-
-// §Performance.h stubs
+// §Performance.h stubs (only StopwatchHandler init — Performance.cpp has the rest)
 namespace Perf {
     class Stopwatch {
     public:
@@ -27,7 +33,6 @@ namespace Perf {
 }
 
 // §gles.h stubs — Emscripten provides real WebGL via -s USE_WEBGL2=1
-// We define minimal GL constants that MCPE needs
 #define GL_DEPTH_TEST 0x0B71
 #define GL_ALPHA_TEST 0x0BC0
 #define GL_BLEND 0x0BE2
@@ -56,8 +61,6 @@ namespace Perf {
 #define GL_ARRAY_BUFFER 0x8892
 #define GL_ELEMENT_ARRAY_BUFFER 0x8893
 
-
-
 // §Pos.h stubs
 struct Pos {
     int x, y, z;
@@ -65,31 +68,21 @@ struct Pos {
     Pos(int x, int y, int z) : x(x), y(y), z(z) {}
 };
 
-// §FallingTile (entity) stub — SandTile.cpp references it
+// §FallingTile stub — SandTile.cpp references it. Full FallingTile.cpp exists
+// in rujukan but it pulls in Entity.cpp chain. Keep minimal stub for now.
 class FallingTile {
 public:
+    FallingTile(void* level) {}
     FallingTile(void* level, float x, float y, float z, int id, int data) {}
     int throwTime;
 };
 
-// §EntityTypes stubs
+// §EntityTypes stubs — IDs only (for files that need the enum but not the .cpp)
 namespace EntityTypes {
     enum Id { IdZombie = 32, IdSkeleton = 34, IdSpider = 35, IdCreeper = 33,
-              IdArrow = 80, IdPainting = 9, IdChicken = 10, IdCow = 11, IdPig = 12, IdSheep = 13 };
+              IdArrow = 80, IdPainting = 9, IdChicken = 10, IdCow = 11, IdPig = 12, IdSheep = 13,
+              IdFallingTile = 70 };
 }
-
-// §MobCategory stubs
-class MobCategory {
-public:
-    static const MobCategory* monster;
-    static const MobCategory* creature;
-    static const MobCategory* waterCreature;
-    static void initMobCategories() {}
-    int getMaxInstancesPerChunk() const { return 4; }
-};
-const MobCategory* MobCategory::monster = nullptr;
-const MobCategory* MobCategory::creature = nullptr;
-const MobCategory* MobCategory::waterCreature = nullptr;
 
 // §MobTypes stubs
 namespace MobTypes {
@@ -109,7 +102,6 @@ namespace Difficulty {
     static const int HARD = 3;
 }
 
-
 // §TileEntityType stubs
 namespace TileEntityType {
     static const int Undefined = 0;
@@ -118,40 +110,6 @@ namespace TileEntityType {
     static const int NetherReactor = 3;
     static const int Sign = 4;
 }
-
-// §TileEntityFactory stubs
-class TileEntityFactory {
-public:
-    static void* createTileEntity(int type) { return nullptr; }
-};
-
-// §I18n stubs
-#include <string>
-namespace I18n {
-    inline std::string get(const std::string& key) { return key; }
-}
-
-// §LevelData stub
-class LevelData {
-public:
-    int getGameType() const { return 1; }
-    long getTime() const { return 0; }
-    bool getSpawnMobs() const { return true; }
-    void setLevelName(const std::string&) {}
-};
-
-// §Level stub — minimal interface for tile .cpp files
-class Level {
-public:
-    LevelData* getLevelData() { static LevelData d; return &d; }
-    bool isClientSide = false;
-};
-
-// §NetherReactorPattern stub
-class NetherReactorPattern {
-public:
-    NetherReactorPattern() {}
-};
 
 // §SharedFlagsInformation stubs
 namespace SharedFlagsInformation {
@@ -165,48 +123,14 @@ namespace SharedFlagsInformation {
 // §ParticleType stubs
 namespace ParticleType {
     struct Id {};
-    #define PARTICLETYPE(x) ParticleType::Id()
 }
-
-// §LightLayer stubs
-struct LightLayer {
-    static const LightLayer Sky;
-    static const LightLayer Block;
-};
-const LightLayer LightLayer::Sky = {};
-const LightLayer LightLayer::Block = {};
 
 // §EntityRendererId stubs
 namespace EntityRendererId {
     enum { ER_DEFAULT_RENDERER = 0, ER_PLAYER_RENDERER = 1, ER_ITEM_RENDERER = 2 };
 }
 
-
-// §EntityTile stubs
-// EntityTile extends Tile — needs Level, but we can provide minimal impl
-
-
-// §Recipe constants
-class Recipe {
-public:
-    static const int SIZE_2X2 = 0;
-    static const int SIZE_3X3 = 1;
-    static const int ANY_AUX_VALUE = -1;
-    static bool isAnyAuxValue(int) { return false; }
-};
-const int Recipe::SIZE_2X2;
-const int Recipe::SIZE_3X3;
-const int Recipe::ANY_AUX_VALUE;
-
-// §Tag stubs (NBT)
-class Tag {
-public:
-    static const int TAG_Compound = 10;
-    static const int TAG_List = 9;
-    Tag(const std::string& name) : name(name) {}
-    virtual ~Tag() {}
-    std::string name;
-    int getId() const { return 0; }
-};
-
-
+// §I18n stubs — real I18n is in locale/.
+namespace I18n {
+    inline std::string get(const std::string& key) { return key; }
+}

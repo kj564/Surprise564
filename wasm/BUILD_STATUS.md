@@ -70,3 +70,49 @@ Material::initMaterials()      ← 27 materials ✓
 Tile::initTiles()              ← 30+ tiles ✓
 Item::initItems()              ← 80+ items ✓
 ```
+
+---
+
+## Link Status (Update)
+
+**342 file .o + main_emscripten.cpp + AppPlatform_emscripten.cpp + platform_stubs.cpp →
+mcpe_emscripten_full.wasm (7.4 MB)**
+
+Link command:
+```bash
+em++ main_emscripten.cpp mcpe_build/*.o platform_stubs.cpp AppPlatform_emscripten.cpp \
+  -I$SRC -I$WASM -I$WASM/platform -I$WASM/EGL -I$WASM/gl \
+  -std=c++14 -O2 -w \
+  -include /tmp/emsdk/upstream/emscripten/cache/sysroot/include/time.h \
+  -DNO_EGL -DOPENGL_ES \
+  -Wno-narrowing -Wno-reserved-user-defined-literal \
+  -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=128MB \
+  -s LEGACY_GL_EMULATION=1 \
+  -s EXPORTED_FUNCTIONS="['_main','_malloc','_free']" \
+  -s EXPORTED_RUNTIME_METHODS="['ccall','cwrap','HEAPU8','HEAP8','HEAPU32','UTF8ToString']" \
+  -s ENVIRONMENT=web \
+  -o public/mcpe_emscripten_full.js
+```
+
+### Verified running in browser (Agent Browser test):
+- ✅ WASM file loads (HTTP 200, application/wasm, 7.4 MB)
+- ✅ Module._main called by Emscripten
+- ✅ stdout: `Vsize: 24, 24` — Tile system initialized
+- ✅ stdout: `Level Name: level` — Level storage initialized
+- ✅ stdout: 4 warnings about missing tile categories (non-fatal)
+- ✅ Engine main loop runs (`emscripten_set_main_loop` active)
+
+### Files deployed to public/:
+- `public/mcpe_emscripten_full.js` (200 KB) — Emscripten glue
+- `public/mcpe_emscripten_full.wasm` (7.4 MB) — MCPE 2013 engine binary
+- `public/minecraft-wasm.html` — HTML loader (loads WASM instead of TS bundle)
+
+### Live URL (after GitHub Pages deploy):
+- https://kj564.github.io/Surprise564/minecraft-wasm.html
+
+### REA approach used:
+1. Clone rujukan/pocket-edition-2013/mcpe-source/handheld/src/ (350 .cpp files)
+2. Compile each individually with Emscripten → 342 .o files (97.7%)
+3. Link all 342 .o + main_emscripten.cpp + stubs into single WASM binary
+4. Wrap with HTML loader that initializes Emscripten Module
+5. NO REWRITE — actual MCPE 2013 C++ source code runs in browser via WASM

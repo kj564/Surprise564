@@ -4,6 +4,8 @@
 
 #include "NinecraftApp.h"
 #include "AppPlatform_emscripten.h"
+#include "platform/input/Keyboard.h"
+#include "client/MouseHandler.h"
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 
@@ -29,37 +31,17 @@ static void emscripten_main_loop() {
     }
 }
 
-// §Browser input handlers
-static EM_BOOL on_mouse_move(int eventType, const EmscriptenMouseEvent* event, void* userData) {
-    if (g_platform) {
-        // §Update mouse position
-        Mouse::move(event->targetX, event->targetY);
-    }
-    return EM_TRUE;
-}
-
-static EM_BOOL on_mouse_down(int eventType, const EmscriptenMouseEvent* event, void* userData) {
-    if (g_platform) {
-        Mouse::press(event->button);
-    }
-    return EM_TRUE;
-}
-
-static EM_BOOL on_mouse_up(int eventType, const EmscriptenMouseEvent* event, void* userData) {
-    if (g_platform) {
-        Mouse::release(event->button);
-    }
-    return EM_TRUE;
-}
+// §Browser input handlers — feed events into MCPE's static Keyboard/MouseHandler
+static AppPlatform_emscripten* g_input_platform = nullptr;
 
 static EM_BOOL on_key_down(int eventType, const EmscriptenKeyboardEvent* event, void* userData) {
-    // §Translate browser key codes to MCPE key codes
-    Keyboard::press(event->keyCode);
+    // §Translate browser key codes to MCPE key codes (feed into static Keyboard)
+    Keyboard::feed((unsigned char)event->keyCode, KeyboardAction::KEYDOWN);
     return EM_TRUE;
 }
 
 static EM_BOOL on_key_up(int eventType, const EmscriptenKeyboardEvent* event, void* userData) {
-    Keyboard::release(event->keyCode);
+    Keyboard::feed((unsigned char)event->keyCode, KeyboardAction::KEYUP);
     return EM_TRUE;
 }
 
@@ -69,22 +51,15 @@ int main() {
     g_platform = new AppPlatform_emscripten();
     g_platform->setupCanvas(854, 480);
     
-    // §Create app context
+    // §Create app context (NO_EGL is defined — display/context/surface fields removed)
     g_context.platform = g_platform;
     g_context.doRender = true;
-    // §No EGL in browser — use WebGL via Emscripten
-    g_context.display = nullptr;
-    g_context.context = nullptr;
-    g_context.surface = nullptr;
     
     // §Create the game
     g_app = new NinecraftApp();
-    g_app->init(g_context);
+    ((App*)g_app)->init(g_context);
     
     // §Register input handlers
-    emscripten_set_mousemove_callback("#canvas", nullptr, EM_FALSE, on_mouse_move);
-    emscripten_set_mousedown_callback("#canvas", nullptr, EM_FALSE, on_mouse_down);
-    emscripten_set_mouseup_callback("#canvas", nullptr, EM_FALSE, on_mouse_up);
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_FALSE, on_key_down);
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_FALSE, on_key_up);
     

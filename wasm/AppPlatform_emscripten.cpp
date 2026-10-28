@@ -14,8 +14,8 @@ AppPlatform_emscripten::~AppPlatform_emscripten() {
 int AppPlatform_emscripten::getScreenWidth() const { return _width; }
 int AppPlatform_emscripten::getScreenHeight() const { return _height; }
 
-TextureData* AppPlatform_emscripten::getTexture(const std::string& name) { return nullptr; }
-TextureData* AppPlatform_emscripten::loadTexture(const std::string& name, bool blur) { return getTexture(name); }
+TextureData AppPlatform_emscripten::getTexture(const std::string& name) { return TextureData(); }
+TextureData AppPlatform_emscripten::loadTexture(const std::string& name, bool blur) { return TextureData(); }
 void AppPlatform_emscripten::releaseTexture(TextureData* texture) {}
 void* AppPlatform_emscripten::loadAsset(const std::string& name, int* size) { return nullptr; }
 void* AppPlatform_emscripten::loadFile(const std::string& path, int* size) { return nullptr; }
