@@ -2002,10 +2002,10 @@ var SKELETON_RANGED_COOLDOWN_TICKS = TICKS_PER_SECOND * 3;
 
 // src/game/world/entity/entity.ts
 var TOTAL_AIR_SUPPLY2 = 15 * TICKS_PER_SECOND;
-var RADDEG = 180 / Math.PI;
-var DEGRAD = Math.PI / 180;
+var RADDEG2 = 180 / Math.PI;
+var DEGRAD2 = Math.PI / 180;
 
-class Entity {
+class Entity2 {
   static entityCounter = 0;
   static sharedRandom = {
     nextFloat: () => Math.random(),
@@ -2072,7 +2072,7 @@ class Entity {
   constructor(level) {
     this.level = level;
     this._init();
-    this.entityId = ++Entity.entityCounter;
+    this.entityId = ++Entity2.entityCounter;
     this.setPos(0, 0, 0);
   }
   reset() {
@@ -2322,8 +2322,8 @@ class Entity {
     dist = speed / dist;
     const xa2 = xa * dist;
     const za2 = za * dist;
-    const sin_ = Math.sin(this.yRot * DEGRAD);
-    const cos_ = Math.cos(this.yRot * DEGRAD);
+    const sin_ = Math.sin(this.yRot * DEGRAD2);
+    const cos_ = Math.cos(this.yRot * DEGRAD2);
     this.xd += xa2 * cos_ - za2 * sin_;
     this.zd += za2 * cos_ + xa2 * sin_;
   }
@@ -2703,7 +2703,7 @@ var DEFAULT_RUN_SPEED = 0.7;
 var DEFAULT_WALKING_SPEED = 0.1;
 var DEFAULT_FLYING_SPEED = 0.02;
 
-class Mob extends Entity {
+class Mob2 extends Entity2 {
   invulnerableDuration = 20;
   timeOffs = 0;
   rotA = 0;
@@ -2790,7 +2790,7 @@ class Mob extends Entity {
     this.timeOffs = Math.random() * 12398;
     this.yRot = Math.random() * Math.PI * 2;
     this.footSize = 0.5;
-    this.random = level?.random ?? Entity.sharedRandom;
+    this.random = level?.random ?? Entity2.sharedRandom;
   }
   _init() {
     super._init();
@@ -3415,7 +3415,7 @@ var MAX_TURN = 30;
 var DATA_FLAGS_ID_AGEABLE = 14;
 var DATAFLAG_ISBABY = 0;
 
-class PathfinderMob extends Mob {
+class PathfinderMob extends Mob2 {
   attackTargetId = 0;
   holdGround = false;
   fleeTime = 0;
@@ -7683,7 +7683,7 @@ class FillingContainer extends Container {
 var entityCounter = 0;
 var TOTAL_AIR_SUPPLY3 = 15 * 20;
 
-class Entity2 {
+class Entity3 {
   x = 0;
   y = 0;
   z = 0;
@@ -8618,7 +8618,7 @@ class Random {
 // src/game/world/entity/translated/Mob.ts
 var SWING_DURATION = 8;
 
-class Mob2 extends Entity2 {
+class Mob3 extends Entity3 {
   invulnerableDuration = 20;
   timeOffs = 0;
   rotA = 0;
@@ -9490,7 +9490,7 @@ var BedSleepingResult = {
   NOT_SAFE: 5
 };
 
-class Player extends Mob2 {
+class Player extends Mob3 {
   static DATA_PLAYER_FLAGS_ID = 16;
   static DATA_BED_POSITION_ID = 17;
   static PLAYER_SLEEP_FLAG = 1;
@@ -10932,6 +10932,9 @@ class ChunkCache extends ChunkSource {
   }
 }
 
+// src/game/util/translated/SharedConstants.ts
+var TicksPerSecond = 20;
+
 // src/game/world/level/translated/world-systems.ts
 var LEVEL_HEIGHT = 128;
 var CHUNK_CACHE_WIDTH = 16;
@@ -11296,43 +11299,6 @@ class RandomLevelSource {
   }
 }
 
-// src/game/util/translated/Mth.ts
-var _rand = new Random;
-var PI = 3.141592653589793;
-var TWO_PI = 2 * PI;
-var DEGRAD2 = PI / 180;
-var RADDEG2 = 180 / PI;
-var _sin = new Array(65536);
-var _sinScale = 65536 / (2 * PI);
-function initMth() {
-  for (let i = 0;i < 65536; i++) {
-    _sin[i] = Math.sin(i / _sinScale);
-  }
-}
-function sqrt(x) {
-  return Math.sqrt(x);
-}
-function floor(v) {
-  const i = Math.trunc(v);
-  return v < i ? i - 1 : i;
-}
-function cos(x) {
-  return _sin[Math.trunc(x * _sinScale + 65536 / 4) & 65535];
-}
-function sin(x) {
-  return _sin[Math.trunc(x * _sinScale) & 65535];
-}
-function atan(x) {
-  return Math.atan(x);
-}
-function atan2(dy, dx) {
-  return Math.atan2(dy, dx);
-}
-initMth();
-
-// src/game/util/translated/SharedConstants.ts
-var TicksPerSecond = 20;
-
 // src/game/browser-entry.ts
 window.VoxelCraftEngine = VoxelCraftEngine;
 window.VoxelCraftBlockRegistry = BlockRegistry;
@@ -11356,7 +11322,27 @@ window.VoxelCraftSignTileEntity = SignTileEntity;
 window.VoxelCraftCreateTileEntity = createTileEntity;
 window.VoxelCraftRecipes = Recipes;
 window.VoxelCraftFurnaceRecipes = FurnaceRecipes;
-window.VoxelCraftTile = Tile;
+window.VoxelCraftInitTiles = initTiles;
+window.VoxelCraftTiles = tiles;
+window.VoxelCraftInitItems = initItems;
+window.VoxelCraftItemInstance = ItemInstance;
+window.VoxelCraftInitMaterials = initMaterials;
+window.VoxelCraftFillingContainer = FillingContainer;
+window.VoxelCraftPlayer = Player;
+window.VoxelCraftLevel = Level;
+window.VoxelCraftLevelChunk = LevelChunk;
+window.VoxelCraftChunkCache = ChunkCache;
+window.VoxelCraftVec3 = Vec3;
+window.VoxelCraftHitResult = HitResult;
+window.VoxelCraftRandom = Random;
+window.VoxelCraftTicksPerSecond = TicksPerSecond;
+window.VoxelCraftDimension = Dimension;
+window.VoxelCraftTileEntity = TileEntity2;
+window.VoxelCraftGameMode = GameMode;
+window.VoxelCraftCreativeMode = CreativeMode;
+window.VoxelCraftSurvivalMode = SurvivalMode;
+window.VoxelCraftBiome = Biome;
+window.VoxelCraftBiomeSource = BiomeSource;
 window.VoxelCraftInitTiles = initTiles;
 window.VoxelCraftTiles = tiles;
 window.VoxelCraftItem = Item;
@@ -11365,16 +11351,16 @@ window.VoxelCraftItemInstance = ItemInstance;
 window.VoxelCraftMaterial = Material;
 window.VoxelCraftInitMaterials = initMaterials;
 window.VoxelCraftFillingContainer = FillingContainer;
-window.VoxelCraftEntity = Entity2;
-window.VoxelCraftMob = Mob2;
+window.VoxelCraftEntity = Entity;
+window.VoxelCraftMob = Mob;
 window.VoxelCraftPlayer = Player;
 window.VoxelCraftLevel = Level;
 window.VoxelCraftLevelChunk = LevelChunk;
 window.VoxelCraftChunkCache = ChunkCache;
-window.VoxelCraftAABB_Cpp = AABB;
+window.VoxelCraftAABB_Cpp = AABB_Cpp;
 window.VoxelCraftVec3 = Vec3;
 window.VoxelCraftHitResult = HitResult;
-window.VoxelCraftMth = { sqrt, floor, sin, cos, atan, atan2, PI, TWO_PI, DEGRAD: DEGRAD2, RADDEG: RADDEG2 };
+window.VoxelCraftMth = { sqrt: mthSqrt, floor: mthFloor, sin: mthSin, cos: mthCos, atan: mthAtan, atan2: mthAtan2, PI, TWO_PI, DEGRAD, RADDEG };
 window.VoxelCraftRandom = Random;
 window.VoxelCraftTicksPerSecond = TicksPerSecond;
 window.VoxelCraftDimension = Dimension;
