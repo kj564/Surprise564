@@ -26,7 +26,7 @@
     <p>Loading MCPE 2013 engine compiled to WebAssembly (342 C++ files linked)…</p>
     <div class="log" id="log"></div>
   </div>
-  <canvas id="canvas"></canvas>
+  <canvas id="canvas" width="854" height="480"></canvas>
   <div id="hud" style="display:none">
     <div class="title">MCPE·WASM NATIVE</div>
     <div id="hud-info">booting…</div>
@@ -44,8 +44,14 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
+    // §Pre-create WebGL context BEFORE Emscripten loads
+    // This ensures s_texUnits and GL emulation are properly initialized
+    var preGL = canvas.getContext('webgl', {alpha: false, depth: true, stencil: false, antialias: false});
+    logMsg('Pre-created WebGL context: ' + (preGL ? 'OK (' + preGL.getParameter(preGL.VERSION) + ')' : 'FAILED'));
+
     var Module = {
       canvas: canvas,
+      preinitializedWebGLContext: preGL,  // §Pass pre-created context to Emscripten
       print: function(text) { logMsg('[stdout] ' + text); },
       printErr: function(text) { logMsg('[stderr] ' + text); },
       locateFile: function(path) { return './' + path; },
