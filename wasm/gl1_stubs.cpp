@@ -1,0 +1,215 @@
+// §GL1 stubs — functions not in GLES2/WebGL2
+// GLES2 provides: glClearColor, glClear, glViewport, glEnable, glDisable,
+//   glGenTextures, glBindTexture, glTexImage2D, glDrawArrays, glDrawElements,
+//   glDepthFunc, glCullFace, glBlendFunc, etc.
+// GL1-only (stubbed as no-op): glBegin/glEnd, glPushMatrix/glPopMatrix,
+//   glTranslatef/glRotatef/glScalef, glColor4f/glVertex3f/glTexCoord2f,
+//   glMatrixMode/glLoadIdentity, glOrtho/glFrustum, glNewList/glCallList,
+//   glColorMaterial/glShadeModel, glAlphaFunc, glLightfv/glMaterialfv,
+//   glColorPointer/glVertexPointer/glTexCoordPointer (replaced by glVertexAttribPointer in GLES2)
+
+#include <cstdio>
+
+extern "C" {
+
+// GL1 immediate mode — no-op (MCPE uses Tesselator which produces vertex arrays)
+void glBegin(unsigned int) {}
+void glEnd() {}
+
+// Matrix stack — simple implementation (no actual matrix math, just no-op)
+void glMatrixMode(unsigned int) {}
+void glLoadIdentity() {}
+void glPushMatrix() {}
+void glPopMatrix() {}
+void glTranslatef(float, float, float) {}
+void glRotatef(float, float, float, float) {}
+void glScalef(float, float, float) {}
+void glMultMatrixf(const float*) {}
+void glLoadMatrixf(const float*) {}
+
+// Projection — no-op (GLES2 uses shaders for projection)
+void glOrtho(double, double, double, double, double, double) {}
+void glOrthof(float, float, float, float, float, float) {}
+void glFrustum(double, double, double, double, double, double) {}
+void glFrustumf(float, float, float, float, float, float) {}
+
+// Color/vertex/normal/texcoord (immediate mode — not used by Tesselator)
+void glColor3f(float, float, float) {}
+void glColor4f(float, float, float, float) {}
+void glColor4ub(unsigned char, unsigned char, unsigned char, unsigned char) {}
+void glVertex3f(float, float, float) {}
+void glVertex2f(float, float) {}
+void glTexCoord2f(float, float) {}
+void glNormal3f(float, float, float) {}
+
+// Display lists — stubbed
+unsigned int glGenLists(int) { return 1; }
+void glNewList(unsigned int, unsigned int) {}
+void glEndList() {}
+void glCallList(unsigned int) {}
+void glCallLists(int, unsigned int, const void*) {}
+void glDeleteLists(unsigned int, int) {}
+void glListBase(unsigned int) {}
+
+// GL1 client state (replaced by vertex attrib arrays in GLES2)
+void glEnableClientState(unsigned int) {}
+void glDisableClientState(unsigned int) {}
+void glVertexPointer(int, unsigned int, int, const void*) {}
+void glTexCoordPointer(int, unsigned int, int, const void*) {}
+void glNormalPointer(unsigned int, int, const void*) {}
+void glColorPointer(int, unsigned int, int, const void*) {}
+
+// GL1 fixed-function — stubbed
+void glAlphaFunc(unsigned int, float) {}
+void glColorMaterial(unsigned int, unsigned int) {}
+void glShadeModel(unsigned int) {}
+void glPolygonMode(unsigned int, unsigned int) {}
+void glPointSize(float) {}
+void glFogf(unsigned int, float) {}
+void glFogfv(unsigned int, const float*) {}
+void glFogi(unsigned int, int) {}
+void glFogx(unsigned int, int) {}
+void glFogxv(unsigned int, const int*) {}
+void glLightfv(unsigned int, unsigned int, const float*) {}
+void glMaterialfv(unsigned int, unsigned int, const float*) {}
+void glClipPlanex(unsigned int, const int*) {}
+void glDepthRangef(float, float) {}
+void glDepthRangex(int, int) {}
+void glClearDepthf(float) {}
+void glClearDepthx(int) {}
+void glAlphaFuncx(unsigned int, int) {}
+void glColor4x(int, int, int, int) {}
+void glLightxv(unsigned int, unsigned int, const int*) {}
+void glMaterialxv(unsigned int, unsigned int, const int*) {}
+void glPointSizex(int) {}
+void glPointParameterx(unsigned int, int) {}
+void glPointParameterxv(unsigned int, const int*) {}
+void glLineWidthx(int) {}
+void glPolygonOffset(float, float) {}
+void glDepthMask(unsigned char) {}
+void glColorMask(unsigned char, unsigned char, unsigned char, unsigned char) {}
+
+// GLES1 fixed-point matrix
+void glMultMatrixx(const int*) {}
+void glLoadMatrixx(const int*) {}
+void glOrthox(int, int, int, int, int, int) {}
+void glFrustumx(int, int, int, int, int, int) {}
+
+// Tex parameter fixed-point
+void glTexParameterx(unsigned int, unsigned int, int) {}
+void glTexParameteriv(unsigned int, unsigned int, const int*) {}
+
+// MCPE custom GL wrapper functions
+void glEnable2(unsigned int cap) { /* glEnable(cap) provided by GLES2 */ }
+void glDisable2(unsigned int cap) {}
+void glDepthFunc2(unsigned int f) {}
+void glDepthRangef2(float n, float f) {}
+void glAlphaFunc2(unsigned int f, float r) {}
+void glTranslatef2(float x, float y, float z) {}
+void glRotatef2(float a, float x, float y, float z) {}
+void glScalef2(float x, float y, float z) {}
+void glPushMatrix2() {}
+void glPopMatrix2() {}
+void glColor4f2(float r, float g, float b, float a) {}
+void glBindTexture2(unsigned int t, unsigned int id) {}
+void glTexCoordPointer2(int s, unsigned int t, int st, const void* p) {}
+void glEnableClientState2(unsigned int c) {}
+void glDisableClientState2(unsigned int c) {}
+void glTexParameteri2(unsigned int t, unsigned int n, int v) {}
+void glTexImage2D2(unsigned int t, int l, int i, int w, int h, int b, unsigned int f, unsigned int ty, const void* d) {}
+void glDrawElements2(unsigned int m, int c, unsigned int t, const void* p) {}
+void glDrawArrays2(unsigned int m, int f, int c) {}
+void glGenTextures2(int n, unsigned int* t) {}
+void glActiveTexture2(unsigned int t) {}
+void glClientActiveTexture2(unsigned int t) {}
+void glBlendFunc2(unsigned int s, unsigned int d) {}
+void glFogfv2(unsigned int n, const float* p) {}
+void glFogf2(unsigned int n, float p) {}
+void glShadeModel2(unsigned int m) {}
+void glFogi2(unsigned int n, int p) {}
+void glCullFace2(unsigned int f) {}
+
+// MCPE Tesselator draw functions — stubbed (no rendering yet)
+void drawArrayVT(int, int, int, int, const void*, ...) {}
+void drawArrayVT_NoState(int, int, int, int, const void*, ...) {}
+void drawArrayVTC(int, int, int, ...) {}
+void drawArrayVTC_NoState(int, int, int, ...) {}
+
+// Misc GL1 functions
+void glSampleCoverage(float, unsigned char) {}
+void glStencilFunc(unsigned int, int, unsigned int) {}
+void glStencilOp(unsigned int, unsigned int, unsigned int) {}
+void glStencilMask(unsigned int) {}
+void glFrontFace(unsigned int) {}
+void glPixelStorei(unsigned int, int) {}
+void glReadPixels(int, int, int, int, unsigned int, unsigned int, void*) {}
+void glCopyTexImage2D(unsigned int, int, unsigned int, int, int, int, int, int) {}
+void glCopyTexSubImage2D(unsigned int, int, int, int, int, int, int, int) {}
+void glCompressedTexImage2D(unsigned int, int, unsigned int, int, int, int, int, const void*) {}
+void glGetTexParameteriv(unsigned int, unsigned int, int*) {}
+void glGetTexLevelParameteriv(unsigned int, int, unsigned int, int*) {}
+void glTexSubImage2D(unsigned int, int, int, int, int, int, unsigned int, unsigned int, const void*) {}
+void glGetIntegerv(unsigned int, int*) {}
+void glGetFloatv(unsigned int, float*) {}
+const unsigned char* glGetString(unsigned int) { return (const unsigned char*)""; }
+void glFinish() {}
+void glFlush() {}
+
+// Shaders (GLES2 has these, but stub in case)
+unsigned int glCreateShader(unsigned int) { return 0; }
+void glShaderSource(unsigned int, int, const char**, const int*) {}
+void glCompileShader(unsigned int) {}
+unsigned int glCreateProgram() { return 0; }
+void glAttachShader(unsigned int, unsigned int) {}
+void glLinkProgram(unsigned int) {}
+void glUseProgram(unsigned int) {}
+void glDeleteShader(unsigned int) {}
+void glDeleteProgram(unsigned int) {}
+void glDetachShader(unsigned int, unsigned int) {}
+void glBindAttribLocation(unsigned int, int, const char*) {}
+void glUniform1i(int, int) {}
+void glUniform1f(int, float) {}
+void glUniformMatrix4fv(int, int, unsigned char, const float*) {}
+void glVertexAttribPointer(unsigned int, int, unsigned int, unsigned char, int, const void*) {}
+void glEnableVertexAttribArray(unsigned int) {}
+void glDisableVertexAttribArray(unsigned int) {}
+int glGetAttribLocation(unsigned int, const char*) { return 0; }
+int glGetUniformLocation(unsigned int, const char*) { return 0; }
+void glGetShaderiv(unsigned int, unsigned int, int*) {}
+void glGetProgramiv(unsigned int, unsigned int, int*) {}
+void glGetShaderInfoLog(unsigned int, int, int*, char*) {}
+void glGetProgramInfoLog(unsigned int, int, int*, char*) {}
+
+// Framebuffers
+void glGenFramebuffers(int, unsigned int*) {}
+void glDeleteFramebuffers(int, const unsigned int*) {}
+void glBindFramebuffer(unsigned int, unsigned int) {}
+void glFramebufferTexture2D(unsigned int, unsigned int, unsigned int, unsigned int, int) {}
+void glGenRenderbuffers(int, unsigned int*) {}
+void glDeleteRenderbuffers(int, const unsigned int*) {}
+void glBindRenderbuffer(unsigned int, unsigned int) {}
+void glRenderbufferStorage(unsigned int, unsigned int, int, int) {}
+void glFramebufferRenderbuffer(unsigned int, unsigned int, unsigned int, unsigned int) {}
+int glCheckFramebufferStatus(unsigned int) { return 0x8CD5; }
+
+// Buffers
+void glGenBuffers(int, unsigned int*) {}
+void glDeleteBuffers(int, const unsigned int*) {}
+void glBindBuffer(unsigned int, unsigned int) {}
+void glBufferData(unsigned int, int, const void*, unsigned int) {}
+void glBufferSubData(unsigned int, int, int, const void*) {}
+
+// Textures
+void glActiveTexture(unsigned int) {}
+void glClientActiveTexture(unsigned int) {}
+void glScissor(int, int, int, int) {}
+void glBlendFuncSeparate(unsigned int, unsigned int, unsigned int, unsigned int) {}
+
+// gluPerspective (from gles.cpp)
+void gluPerspective(float, float, float, float) {}
+void gluLookAt(float, float, float, float, float, float, float, float, float) {}
+
+// glewInit
+int glewInit() { return 0; }
+
+} // extern "C"
