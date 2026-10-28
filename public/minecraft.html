@@ -1013,32 +1013,17 @@
     <button id="invClose" class="inv-done" title="Done" aria-label="Done">×</button>
     <h2 id="inventoryTitle">Select Block</h2>
     <div class="inv-tabs" role="tablist" aria-label="Kategori inventaris">
-      <button type="button" id="inventoryTabAll" role="tab" aria-selected="true" aria-controls="invGrid" class="active" data-inv-filter="all">Semua</button>
-      <button type="button" id="inventoryTabNature" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="nature">Alam</button>
-      <button type="button" id="inventoryTabBuilding" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="building">Bangunan</button>
-      <button type="button" id="inventoryTabMinerals" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="minerals">Mineral</button>
+      <button type="button" id="inventoryTabAll" role="tab" aria-selected="true" aria-controls="invGrid" class="active" data-inv-filter="all">All</button>
+      <button type="button" id="inventoryTabNature" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="nature">Nature</button>
+      <button type="button" id="inventoryTabBuilding" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="building">Building</button>
+      <button type="button" id="inventoryTabMineralss" role="tab" aria-selected="false" aria-controls="invGrid" tabindex="-1" data-inv-filter="minerals">Minerals</button>
     </div>
     <div class="inv-grid" id="invGrid" role="tabpanel" aria-labelledby="inventoryTabAll" tabindex="0"></div>
     <p class="inv-hint">Select a block to assign to the current hotbar slot. Close with E or the button in the top-right corner.</p>
   </div>
 
 
-  <div id="vcGuide" class="hidden" role="dialog" aria-modal="true" aria-labelledby="vcGuideTitle">
-    <div class="vc-form">
-      <h2 class="vc-title" id="vcGuideTitle">VoxelCraft Menu</h2>
-      <p class="vc-body" id="vcGuideBody">Selamat datang di VoxelCraft.</p>
-      <div class="vc-actions">
-        <button type="button" data-vc-action="kit"><span class="vc-action-label">Kit Starter</span><span class="vc-small">Atur blok awal di hotbar</span></button>
-        <button type="button" data-vc-action="heal" disabled><span class="vc-action-label">Pulihkan HP</span><span class="vc-small">Fitur health belum ada di browser</span></button>
-        <button type="button" data-vc-action="fly"><span class="vc-action-label">Mode Terbang</span><span class="vc-small" id="vcFlyStatus">ON / OFF</span></button>
-        <button type="button" data-vc-action="day"><span class="vc-action-label">Waktu: Siang</span><span class="vc-small">Atur siklus siang</span></button>
-        <button type="button" data-vc-action="night"><span class="vc-action-label">Waktu: Malam</span><span class="vc-small">Atur siklus malam</span></button>
-        <button type="button" data-vc-action="weather" disabled><span class="vc-action-label">Cuaca: Cerah</span><span class="vc-small">Cuaca belum didukung browser</span></button>
-        <button type="button" data-vc-action="stats"><span class="vc-action-label">Lihat Statistik</span><span class="vc-small">Status sesi saat ini</span></button>
-      </div>
-      <div class="vc-footer"><button type="button" class="vc-close" data-vc-action="close">Tutup Menu</button></div>
-    </div>
-  </div>
+  
 
   <div id="loading">
     <!-- §ProgressScreen.cpp:24-57 — dirt background + progress bar -->
@@ -4463,10 +4448,10 @@
     // not a 776-icon RP catalog. The "Katalog Item (776)" tab exceeded rujukan scope.
     let inventoryOpen = false;
     let inventoryReturnToGame = false;
-    const vcGuide = document.getElementById('vcGuide');
+    
     const vcGuideBody = document.getElementById('vcGuideBody');
     const vcFlyStatus = document.getElementById('vcFlyStatus');
-    let vcGuideOpen = false;
+    let ;
     let vcGuideReturnToGame = false;
     // Mirror the Behavior Pack's persistent player stats in browser storage.
     const BROWSER_STATS_KEY = 'voxelcraft_browser_stats_v1';
@@ -4539,7 +4524,7 @@
     // renderItemCatalog removed — MCPE 2013 has no item icon catalog, only block inventory.
     function buildInventory(filter = activeInventoryFilter) {
       activeInventoryFilter = filter;
-      inventoryHintEl.textContent = 'Select a block to assign to the current hotbar slot. Close with E or the button in the top-right corner.';
+      inventoryHintEl.textContent = 'Select a block to assign to the current hotbar slot.';
       invGridEl.innerHTML = '';
       const allowedIds = inventoryFilterSets[filter];
       invGridEl.removeAttribute('aria-label');
@@ -5272,7 +5257,7 @@
       voxelEngine.cancelMining();
     }
     function handleBlockBroken(hit, id) {
-      if (!world.setBlock(hit.x, hit.y, hit.z, 0)) { toast('Blok berubah sebelum dapat dihancurkan'); return; }
+      if (!world.setBlock(hit.x, hit.y, hit.z, 0)) { toast('Block changed before it could be destroyed'); return; }
       remeshAround(hit.x, hit.y, hit.z);
       browserBlocksBroken++;
       browserStats.blocksBroken = browserBlocksBroken;
@@ -5512,17 +5497,17 @@
         vcGuideBody.textContent = 'Statistik VoxelCraft\n' +
           'Koin: ' + browserStats.coins + '\n' +
           'Kunjungan browser: ' + browserStats.joins + '\n' +
-          'Blok dihancurkan: ' + browserBlocksBroken + '\n' +
-          'Blok dipasang: ' + browserBlocksPlaced + '\n' +
+          'Block broken: ' + browserBlocksBroken + '\n' +
+          'Block placed: ' + browserBlocksPlaced + '\n' +
           'Posisi: ' + Math.floor(pos.x) + ', ' + Math.floor(pos.y) + ', ' + Math.floor(pos.z) + '\n' +
           'Slot aktif: ' + (selectedSlot + 1) + ' — ' + (selected ? selected.name : 'kosong') + '\n' +
           'Mode terbang: ' + (player.fly ? 'ON' : 'OFF') + ' | Waktu: ' + clock;
       } else {
-        vcGuideBody.textContent = 'Halo, penjelajah!\nPilih aksi VoxelCraft. Tampilan ini memakai tekstur UI dari resource pack; aksi yang belum didukung browser ditandai jelas.';
+        vcGuideBody.textContent = 'Hello, explorer!';
       }
-      vcFlyStatus.textContent = player.fly ? 'Status sekarang: ON' : 'Status sekarang: OFF';
+      vcFlyStatus.textContent = player.fly ? 'Fly ON' : 'Fly OFF';
     }
-    function openVcGuide() {
+    function noopVcGuide() {
       if (vcGuideOpen || inventoryOpen) return;
       vcGuideReturnToGame = locked;
       vcGuideOpen = true;
@@ -5531,7 +5516,7 @@
       if (locked) document.exitPointerLock();
     }
     function closeVcGuide(resume = true) {
-      vcGuideOpen = false;
+      ;
       const shouldResume = resume && vcGuideReturnToGame;
       syncMenuVisibility();
       vcGuideReturnToGame = false;
@@ -5564,9 +5549,9 @@
     document.getElementById('guideButton').addEventListener('click', openVcGuide);
     playButton.addEventListener('click', startGame);
     helpOptionsButton.addEventListener('click', () => {
+      settingsPanel.classList.add('open');
       mainMenuButtons.classList.add('hidden');
-      helpOptionsPanel.classList.add('open');
-      settingsPanel.classList.remove('open');
+      settingsPanel.classList.add('open');
     });
     helpBackButton.addEventListener('click', () => {
       helpOptionsPanel.classList.remove('open');
@@ -5591,7 +5576,7 @@
       if (world.save()) toast('World saved in this browser');
     });
     returnTitleButton.addEventListener('click', () => {
-      if (world.save()) toast('Dunia disimpan sebelum kembali ke menu');
+      if (world.save()) toast('World saved before returning to menu');
       gameStarted = false;
       if (locked && document.exitPointerLock) document.exitPointerLock();
       helpOptionsPanel.classList.remove('open');
@@ -5642,7 +5627,7 @@
       keys[e.code] = true;
       if (e.code === 'Escape' && !e.repeat && !wasDown) {
         if (inventoryOpen) { e.preventDefault(); toggleInventory(); return; }
-        if (vcGuideOpen) { e.preventDefault(); closeVcGuide(); return; }
+        if (vcGuideOpen) { e.preventDefault(); ; return; }
         if (gameStarted && !locked) { e.preventDefault(); resumeGame(); return; }
         if (!gameStarted && settingsPanel?.classList.contains('open')) {
           e.preventDefault();
@@ -5680,7 +5665,7 @@
         document.getElementById('craftingUI')?.classList.remove('hidden');
         return;
       }
-      if (e.code === 'KeyG' && !e.repeat && !wasDown && !inventoryOpen) { e.preventDefault(); openVcGuide(); return; }
+      if (e.code === 'KeyG' && !e.repeat && !wasDown && !inventoryOpen) { e.preventDefault(); ; return; }
       // §Options.cpp:50 — keyChat = KEY_T (no chat in single player, but keep for consistency)
       if (e.code === 'KeyT' && !e.repeat && !wasDown) {
         // no-op in single player
@@ -6489,7 +6474,7 @@
       if (blockId === 26) {
         player.pos.set(bx + 0.5, by + 1, bz + 0.5);
         worldTime = 0.25; // skip to morning
-        toast('Spawn point set. Sweet dreams!');
+        toast('Spawn point set!');
         return true;
       }
       // §Task port-missing-systems — §RedStoneOreTile::use (RedStoneOreTile.h:30-34)
