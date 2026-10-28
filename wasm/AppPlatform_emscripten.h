@@ -21,6 +21,7 @@ public:
     TextureData loadTexture(const std::string& name, bool blur = false);
     void releaseTexture(TextureData* texture);
     
+    BinaryBlob readAssetFile(const std::string& filename);
     void* loadAsset(const std::string& name, int* size);
     void* loadFile(const std::string& path, int* size);
     bool saveFile(const std::string& path, const void* data, int size);
