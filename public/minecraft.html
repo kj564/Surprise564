@@ -2816,7 +2816,7 @@
     // Per §27.14 port note: clipX/Y/ZCollide semantics — `this` = STATIC collision cube,
     // `c` = MOVING box (entity bb), `xa/ya/za` = moving box's velocity on that axis.
     // This matches the C++ call pattern `aABBs[i].clipXCollide(bb, xa)` in §27.1.
-    class AABB {
+    class GameAABB {
       constructor(x0, y0, z0, x1, y1, z1) {
         this.x0 = x0; this.y0 = y0; this.z0 = z0;
         this.x1 = x1; this.y1 = y1; this.z1 = z1;
@@ -2831,16 +2831,16 @@
         if (ya > 0) _y1 += ya;
         if (za < 0) _z0 += za;
         if (za > 0) _z1 += za;
-        return new AABB(_x0, _y0, _z0, _x1, _y1, _z1);
+        return new GameGameAABB(_x0, _y0, _z0, _x1, _y1, _z1);
       }
       // §27.14 grow: SYMMETRIC — subtract from min, add to max.
       grow(xa, ya, za) {
-        return new AABB(this.x0 - xa, this.y0 - ya, this.z0 - za,
+        return new GameGameAABB(this.x0 - xa, this.y0 - ya, this.z0 - za,
                         this.x1 + xa, this.y1 + ya, this.z1 + za);
       }
       // §27.14 cloneMove: returns NEW translated AABB (does not mutate this).
       cloneMove(xa, ya, za) {
-        return new AABB(this.x0 + xa, this.y0 + ya, this.z0 + za,
+        return new GameGameAABB(this.x0 + xa, this.y0 + ya, this.z0 + za,
                         this.x1 + xa, this.y1 + ya, this.z1 + za);
       }
       // §27.14 clipXCollide: this = static cube, c = moving box, xa = moving box's X velocity
@@ -2900,7 +2900,7 @@
       }
       // §27.14 copy: returns a value-copy.
       copy() {
-        return new AABB(this.x0, this.y0, this.z0, this.x1, this.y1, this.z1);
+        return new GameGameAABB(this.x0, this.y0, this.z0, this.x1, this.y1, this.z1);
       }
       // §27.14 intersects: touching faces do NOT count as intersecting.
       intersects(c) {
@@ -2933,7 +2933,7 @@
             // §27.13 simplified: full 1x1x1 cube for any solid block
             const d = BLOCKS[id];
             if (!d || !d.solid) continue;
-            boxes.push(new AABB(x, y, z, x + 1, y + 1, z + 1));
+            boxes.push(new GameGameAABB(x, y, z, x + 1, y + 1, z + 1));
           }
         }
       }
@@ -2971,7 +2971,7 @@
         this.nextStep = 0;
         this.entityId = 0;
         // §27.1 / §27.14 — bounding box + step-up support
-        this.bb = new AABB(0, 0, 0, 0, 0, 0);
+        this.bb = new GameGameAABB(0, 0, 0, 0, 0, 0);
         this.ySlideOffset = 0;
         // §MODLOG Entry 26 (line 15575, 15605, 16332): Entity.h:206 — `slide` defaults to TRUE.
         // This is critical: with slide=true, the "stick-on-landing" zeroing
@@ -3219,7 +3219,7 @@
       recomputeBB() {
         const w = this.bbWidth / 2;
         const y0 = this.y - this.heightOffset + this.ySlideOffset;
-        this.bb.set(new AABB(this.x - w, y0, this.z - w,
+        this.bb.set(new GameGameAABB(this.x - w, y0, this.z - w,
                               this.x + w, y0 + this.bbHeight, this.z + w));
       }
       setSize(w, h) {
@@ -4950,7 +4950,7 @@
       const d = BLOCKS[id];
       return d ? d.solid : false;
     }
-    function collidesAABB(px, py, pz) {
+    function collidesGameAABB(px, py, pz) {
       const w = player.width / 2, h = player.height;
       // Shrink the tested AABB by a tiny epsilon so merely touching a voxel
       // face does not count as an overlap (notably at integer coordinates).
@@ -5015,7 +5015,7 @@
       const stepY = dy / ySteps;
       for (let i = 0; i < ySteps; i++) {
         const ny = player.pos.y + stepY;
-        if (collidesAABB(player.pos.x, ny, player.pos.z)) {
+        if (collidesGameAABB(player.pos.x, ny, player.pos.z)) {
           if (player.vel.y < 0) player.onGround = true;
           player.vel.y = 0;
           break;
@@ -5029,7 +5029,7 @@
       const stepX = dx / xSteps;
       for (let i = 0; i < xSteps; i++) {
         const nx = player.pos.x + stepX;
-        if (collidesAABB(nx, player.pos.y, player.pos.z)) {
+        if (collidesGameAABB(nx, player.pos.y, player.pos.z)) {
           player.vel.x = 0;
           break;
         }
@@ -5041,7 +5041,7 @@
       const stepZ = dz / zSteps;
       for (let i = 0; i < zSteps; i++) {
         const nz = player.pos.z + stepZ;
-        if (collidesAABB(player.pos.x, player.pos.y, nz)) {
+        if (collidesGameAABB(player.pos.x, player.pos.y, nz)) {
           player.vel.z = 0;
           break;
         }

@@ -86,73 +86,13 @@ window.VoxelCraftChestTileEntity = ChestTileEntity;
 window.VoxelCraftSignTileEntity = SignTileEntity;
 window.VoxelCraftCreateTileEntity = createTileEntity;
 
-// §Translated C++ source — non-conflicting imports only
-import { Tile, initTiles, tiles } from './world/level/tile/translated/Tile';
-import { Item, initItems } from './world/item/translated/Item';
-import { ItemInstance } from './world/item/translated/ItemInstance';
-import { Material, initMaterials } from './world/level/material/translated/Material';
-import { FillingContainer } from './world/inventory/translated/FillingContainer';
-import { Player } from './world/entity/translated/Player';
-import { Level } from './world/level/translated/Level';
-import { LevelChunk, ChunkCache } from './world/level/translated/chunk-classes';
-import { Vec3 } from './world/phys/translated/Vec3';
-import { HitResult } from './world/phys/translated/HitResult';
-import { Random } from './util/translated/Random';
-import { TicksPerSecond } from './util/translated/SharedConstants';
-import { Dimension, TileEntity, GameMode, CreativeMode, SurvivalMode, Biome, BiomeSource } from './world/level/translated/world-systems';
-
 // §Expose crafting system so minecraft.html can query recipes
 window.VoxelCraftRecipes = Recipes;
 window.VoxelCraftFurnaceRecipes = FurnaceRecipes;
 
 
-// §Translated C++ source exports (non-conflicting only)
-window.VoxelCraftInitTiles = initTiles;
-window.VoxelCraftTiles = tiles;
-window.VoxelCraftInitItems = initItems;
-window.VoxelCraftItemInstance = ItemInstance;
-window.VoxelCraftInitMaterials = initMaterials;
-window.VoxelCraftFillingContainer = FillingContainer;
-window.VoxelCraftPlayer = Player;
-window.VoxelCraftLevel = Level;
-window.VoxelCraftLevelChunk = LevelChunk;
-window.VoxelCraftChunkCache = ChunkCache;
-window.VoxelCraftVec3 = Vec3;
-window.VoxelCraftHitResult = HitResult;
-window.VoxelCraftRandom = Random;
-window.VoxelCraftTicksPerSecond = TicksPerSecond;
-window.VoxelCraftDimension = Dimension;
-window.VoxelCraftTileEntity = TileEntity;
-window.VoxelCraftGameMode = GameMode;
-window.VoxelCraftCreativeMode = CreativeMode;
-window.VoxelCraftSurvivalMode = SurvivalMode;
-window.VoxelCraftBiome = Biome;
-window.VoxelCraftBiomeSource = BiomeSource;
 
-window.VoxelCraftInitTiles = initTiles;
-window.VoxelCraftTiles = tiles;
-window.VoxelCraftItem = Item;
-window.VoxelCraftInitItems = initItems;
-window.VoxelCraftItemInstance = ItemInstance;
-window.VoxelCraftMaterial = Material;
-window.VoxelCraftInitMaterials = initMaterials;
-window.VoxelCraftFillingContainer = FillingContainer;
 window.VoxelCraftEntity = Entity;
 window.VoxelCraftMob = Mob;
-window.VoxelCraftPlayer = Player;
-window.VoxelCraftLevel = Level;
-window.VoxelCraftLevelChunk = LevelChunk;
-window.VoxelCraftChunkCache = ChunkCache;
 window.VoxelCraftAABB_Cpp = AABB_Cpp;
-window.VoxelCraftVec3 = Vec3;
-window.VoxelCraftHitResult = HitResult;
 window.VoxelCraftMth = { sqrt: mthSqrt, floor: mthFloor, sin: mthSin, cos: mthCos, atan: mthAtan, atan2: mthAtan2, PI, TWO_PI, DEGRAD, RADDEG };
-window.VoxelCraftRandom = Random;
-window.VoxelCraftTicksPerSecond = TicksPerSecond;
-window.VoxelCraftDimension = Dimension;
-window.VoxelCraftTileEntity = TileEntity;
-window.VoxelCraftGameMode = GameMode;
-window.VoxelCraftCreativeMode = CreativeMode;
-window.VoxelCraftSurvivalMode = SurvivalMode;
-window.VoxelCraftBiome = Biome;
-window.VoxelCraftBiomeSource = BiomeSource;
