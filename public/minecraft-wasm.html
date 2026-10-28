@@ -44,14 +44,8 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // §Pre-create WebGL context BEFORE Emscripten loads
-    // This ensures s_texUnits and GL emulation are properly initialized
-    var preGL = canvas.getContext('webgl', {alpha: false, depth: true, stencil: false, antialias: false});
-    logMsg('Pre-created WebGL context: ' + (preGL ? 'OK (' + preGL.getParameter(preGL.VERSION) + ')' : 'FAILED'));
-
     var Module = {
       canvas: canvas,
-      preinitializedWebGLContext: preGL,  // §Pass pre-created context to Emscripten
       print: function(text) { logMsg('[stdout] ' + text); },
       printErr: function(text) { logMsg('[stderr] ' + text); },
       locateFile: function(path) { return './' + path; },
