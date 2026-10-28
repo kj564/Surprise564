@@ -1,4 +1,5 @@
 // §gl/glew.h — Comprehensive GL1 stub for MCPE 2013 + Emscripten LEGACY_GL_EMULATION
+// This file is included when MCPE source does #include <GL/glew.h> or #include "glew.h"
 #pragma once
 #include <GLES/gl.h>
 #include <GLES/glext.h>
@@ -9,6 +10,11 @@
 #define GL_QUADS 0x0007
 #define GL_COLOR_MATERIAL 0x0B57
 #define GL_CURRENT_COLOR 0x0B00
+#define GL_LINE 0x1B01
+#define GL_LINES 0x0001
+#define GL_FILL 0x1B02
+#define GL_POINT 0x1B00
+#define GL_POLYGON_MODE 0x0B40
 
 // GL1 function declarations (provided by LEGACY_GL_EMULATION at link time)
 extern "C" {
@@ -53,4 +59,10 @@ extern "C" {
     void glActiveTexture(unsigned int texture);
     void glClientActiveTexture(unsigned int texture);
     void glPointSize(float size);
+    void glOrtho(double l, double r, double b, double t, double n, double f);
+    void glFogi(unsigned int pname, int param);
 }
+
+// glewInit stub (returns "success" — no real GLEW in browser)
+#define GLEW_OK 0
+inline int glewInit() { return 0; }
