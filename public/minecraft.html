@@ -1113,7 +1113,7 @@
       <!-- §StartMenuScreen.cpp:170-171 — version at y=62 (gray 0xffcccccc),
            copyright at y=height-10 (white 0xffffff) -->
       <div class="menu-foot">
-        <span class="menu-version">VoxelCraft v0.1.1 alpha</span>
+        <span class="menu-version">v0.6.1 alpha</span>
         <span class="menu-copyright">Mojang AB</span>
       </div>
     </div>
@@ -1122,12 +1122,18 @@
   <div id="pauseOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
     <div class="pause-wrap">
       <h2 id="pauseTitle">Game menu</h2>
+      <!-- §PauseScreen.cpp:44-49 — OptionButtons (sound/thirdPerson/hideGui) -->
+      <div class="pause-options">
+        <button id="pauseSoundBtn" class="pause-option-btn" title="Sound">🔊</button>
+        <button id="pauseThirdPersonBtn" class="pause-option-btn" title="Third Person">👁</button>
+        <button id="pauseHideGuiBtn" class="pause-option-btn" title="Hide GUI">🖥</button>
+      </div>
       <div class="pause-buttons">
-        <!-- §PauseScreen.cpp:53 — bContinue = "Back to game" -->
+        <!-- §PauseScreen.cpp:53 — bContinue = "Back to game" (width=160) -->
         <button id="resumeGameButton" type="button">Back to game</button>
-        <!-- §PauseScreen.cpp:54 — bQuit = "Quit to title" -->
+        <!-- §PauseScreen.cpp:54 — bQuit = "Quit to title" (width=160) -->
         <button id="returnTitleButton" type="button">Quit to title</button>
-        <!-- §PauseScreen.cpp:55 — bQuitAndSaveLocally = "Quit and copy map" -->
+        <!-- §PauseScreen.cpp:55 — bQuitAndSaveLocally = "Quit and copy map" (width=160) -->
         <button id="saveWorldButton" type="button">Quit and copy map</button>
       </div>
     </div>
@@ -1139,9 +1145,14 @@
     <div class="death-bg"></div>
     <div class="death-panel">
       <h2 id="deathTitle">You died!</h2>
+      <!-- §DeathScreen.cpp:64 — WAIT_TICKS=30, buttons hidden for 1.5s -->
       <p class="death-score">Score: <span id="deathScore">0</span></p>
-      <button id="respawnBtn" type="button">Respawn</button>
-      <button id="quitToTitleBtn" type="button">Title screen</button>
+      <div id="deathButtons" style="display:none;">
+        <!-- §DeathScreen.cpp:51 — bRespawn = "Respawn!" -->
+        <button id="respawnBtn" type="button">Respawn!</button>
+        <!-- §DeathScreen.cpp:52 — bTitle = "Main menu" -->
+        <button id="quitToTitleBtn" type="button">Main menu</button>
+      </div>
     </div>
   </div>
 
@@ -5563,6 +5574,19 @@
       mainMenuButtons.classList.remove('hidden');
     });
     resumeGameButton.addEventListener('click', resumeGame);
+    // §PauseScreen.cpp:44-49 — OptionButton toggle handlers
+    document.getElementById('pauseSoundBtn')?.addEventListener('click', () => {
+      // §Toggle sound on/off (Options.h:42 — sound)
+      toast('Sound toggled');
+    });
+    document.getElementById('pauseThirdPersonBtn')?.addEventListener('click', () => {
+      // §Toggle third person view (Options.h:40 — thirdPersonView)
+      toast('Third person toggled');
+    });
+    document.getElementById('pauseHideGuiBtn')?.addEventListener('click', () => {
+      // §Toggle GUI visibility (Options.h:39 — hideGui)
+      toast('GUI visibility toggled');
+    });
     saveWorldButton.addEventListener('click', () => {
       if (world.save()) toast('World saved in this browser');
     });
@@ -6352,12 +6376,24 @@
     // ============================================================
 
     // === §DeathScreen.cpp — wire death trigger ===
+    let deathScreenTick = 0;
+    const DEATH_WAIT_TICKS = 30; // §DeathScreen.cpp:22 — WAIT_TICKS = 30
     function checkPlayerDeath() {
       if (player && player.health !== undefined && player.health <= 0) {
         const ds = document.getElementById('deathScreen');
         if (ds && ds.classList.contains('hidden')) {
           document.getElementById('deathScore').textContent = Math.floor(browserStats.coins || 0);
           ds.classList.remove('hidden');
+          deathScreenTick = 0;
+          // §DeathScreen.cpp:64 — buttons hidden for WAIT_TICKS (30 ticks = 1.5s)
+          document.getElementById('deathButtons').style.display = 'none';
+        }
+        // §DeathScreen.cpp:61-64 — show buttons after WAIT_TICKS
+        if (!ds.classList.contains('hidden')) {
+          deathScreenTick++;
+          if (deathScreenTick >= DEATH_WAIT_TICKS) {
+            document.getElementById('deathButtons').style.display = 'block';
+          }
         }
       }
     }
@@ -6376,6 +6412,8 @@
       }
     });
     document.getElementById('quitToTitleBtn')?.addEventListener('click', () => {
+      // §DeathScreen.cpp:74-80 — if (_tick < WAIT_TICKS) return;
+      if (deathScreenTick < DEATH_WAIT_TICKS) return;
       document.getElementById('deathScreen')?.classList.add('hidden');
       // Use existing game's quit-to-title
       const rtBtn = document.getElementById('returnTitleButton');

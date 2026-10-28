@@ -5461,6 +5461,5878 @@ class FurnaceRecipes {
   }
 }
 
+// src/game/world/level/tile/translated/Tile.ts
+var TILE_DESCRIPTION_PREFIX = "tile.";
+
+class SoundType {
+  volume;
+  pitch;
+  breakSound;
+  stepSound;
+  constructor(name, volume, pitch) {
+    this.volume = volume;
+    this.pitch = pitch;
+    this.breakSound = "step." + name;
+    this.stepSound = "step." + name;
+  }
+  getVolume() {
+    return this.volume;
+  }
+  getPitch() {
+    return this.pitch;
+  }
+  getBreakSound() {
+    return this.breakSound;
+  }
+  getStepSound() {
+    return this.stepSound;
+  }
+}
+var SOUND_NORMAL = new SoundType("stone", 1, 1);
+var SOUND_WOOD = new SoundType("wood", 1, 1);
+var SOUND_GRAVEL = new SoundType("gravel", 1, 1);
+var SOUND_GRASS = new SoundType("grass", 0.5, 1);
+var SOUND_STONE = new SoundType("stone", 1, 1);
+var SOUND_METAL = new SoundType("stone", 1, 1.5);
+var SOUND_GLASS = new SoundType("stone", "random.glass", 1, 1);
+var SOUND_CLOTH = new SoundType("cloth", 1, 1);
+var SOUND_SAND = new SoundType("sand", "step.gravel", 1, 1);
+var SOUND_SILENT = new SoundType("", 0, 0);
+var SHAPE_BLOCK = 0;
+var NUM_BLOCK_TYPES = 256;
+var tiles = new Array(NUM_BLOCK_TYPES).fill(null);
+var sendTileData = new Array(NUM_BLOCK_TYPES).fill(false);
+var shouldTick = new Array(NUM_BLOCK_TYPES).fill(false);
+var solid = new Array(NUM_BLOCK_TYPES).fill(false);
+var isEntityTile = new Array(NUM_BLOCK_TYPES).fill(false);
+var lightBlock = new Array(NUM_BLOCK_TYPES).fill(0);
+var translucent = new Array(NUM_BLOCK_TYPES).fill(false);
+translucent[0] = true;
+var lightEmission = new Array(NUM_BLOCK_TYPES).fill(0);
+var RENDERLAYER_OPAQUE = 0;
+var SANDSTONE_TEXTURES = [0 + 16 * 12, 5 + 16 * 14, 6 + 16 * 14];
+var STONE_BRICK_TEXTURES = [6 + 16 * 3, 4 + 16 * 6, 5 + 16 * 6];
+class Tile {
+  tex;
+  id;
+  xx0;
+  yy0;
+  zz0;
+  xx1;
+  yy1;
+  zz1;
+  soundType;
+  gravity;
+  material;
+  friction;
+  destroySpeed;
+  explosionResistance;
+  category;
+  descriptionId;
+  constructor(id2, texOrMaterial, material) {
+    if (typeof texOrMaterial === "string") {
+      this.id = id2;
+      this.material = texOrMaterial;
+      this.tex = 1;
+      this.category = -1;
+      this.gravity = 1;
+      this.friction = 0.6;
+      this.soundType = SOUND_NORMAL;
+      this.xx0 = 0;
+      this.yy0 = 0;
+      this.zz0 = 0;
+      this.xx1 = 1;
+      this.yy1 = 1;
+      this.zz1 = 1;
+      this.destroySpeed = 0;
+      this.explosionResistance = 0;
+      this.descriptionId = "";
+    } else {
+      this.id = id2;
+      this.tex = texOrMaterial;
+      this.material = material;
+      this.category = -1;
+      this.gravity = 1;
+      this.friction = 0.6;
+      this.soundType = SOUND_NORMAL;
+      this.xx0 = 0;
+      this.yy0 = 0;
+      this.zz0 = 0;
+      this.xx1 = 1;
+      this.yy1 = 1;
+      this.zz1 = 1;
+      this.destroySpeed = 0;
+      this.explosionResistance = 0;
+      this.descriptionId = "";
+    }
+    if (tiles[id2]) {
+      console.warn(`Slot ${id2} is already occupied by ${tiles[id2]} when adding ${this}`);
+    }
+  }
+  init() {
+    tiles[this.id] = this;
+    this.setShape(this.xx0, this.yy0, this.zz0, this.xx1, this.yy1, this.zz1);
+    solid[this.id] = this.isSolidRender();
+    lightBlock[this.id] = this.isSolidRender() ? 255 : 0;
+    translucent[this.id] = !this.materialBlocksLight();
+    return this;
+  }
+  isCubeShaped() {
+    return true;
+  }
+  getRenderShape() {
+    return SHAPE_BLOCK;
+  }
+  getTexture(face) {
+    return this.tex;
+  }
+  getTextureWithData(face, data) {
+    return this.getTexture(face);
+  }
+  shouldRenderFace(level, x, y, z, face) {
+    if (face === 0 && y === -1)
+      return false;
+    if (face === 2 && z === -1)
+      return false;
+    if (face === 3 && z === 256)
+      return false;
+    if (face === 4 && x === -1)
+      return false;
+    if (face === 5 && x === 256)
+      return false;
+    if (face === 0 && this.yy0 > 0)
+      return true;
+    if (face === 1 && this.yy1 < 1)
+      return true;
+    if (face === 2 && this.zz0 > 0)
+      return true;
+    if (face === 3 && this.zz1 < 1)
+      return true;
+    if (face === 4 && this.xx0 > 0)
+      return true;
+    if (face === 5 && this.xx1 < 1)
+      return true;
+    const t = tiles[level.getTile(x, y, z)];
+    if (!t)
+      return true;
+    if (face === 1 && t.id === topSnow?.id)
+      return false;
+    return !t.isSolidRender();
+  }
+  isSolidRender() {
+    return true;
+  }
+  mayPick() {
+    return true;
+  }
+  mayPickWithData(data, liquid) {
+    return this.mayPick();
+  }
+  getTickDelay() {
+    return 10;
+  }
+  getResourceCount(random) {
+    return 1;
+  }
+  getResource(data, random) {
+    return this.id;
+  }
+  getExplosionResistance(source) {
+    return this.explosionResistance / 5;
+  }
+  getRenderLayer() {
+    return RENDERLAYER_OPAQUE;
+  }
+  use(level, x, y, z, player) {
+    return false;
+  }
+  getColor(level, x, y, z) {
+    return 16777215;
+  }
+  getSignal(level, x, y, z) {
+    return false;
+  }
+  getSignalWithDir(level, x, y, z, dir) {
+    return false;
+  }
+  isSignalSource() {
+    return false;
+  }
+  getDirectSignal(level, x, y, z, dir) {
+    return false;
+  }
+  playerDestroy(level, player, x, y, z, data) {
+    this.spawnResources(level, x, y, z, data);
+  }
+  canSurvive(level, x, y, z) {
+    return true;
+  }
+  setDescriptionId(id2) {
+    this.descriptionId = TILE_DESCRIPTION_PREFIX + id2;
+    return this;
+  }
+  getName() {
+    return this.descriptionId + ".name";
+  }
+  getDescriptionId() {
+    return this.descriptionId;
+  }
+  setSoundType(soundType) {
+    this.soundType = soundType;
+    return this;
+  }
+  setLightBlock(i) {
+    lightBlock[this.id] = i;
+    return this;
+  }
+  setExplodeable(explosionResistance) {
+    this.explosionResistance = explosionResistance * 3;
+    return this;
+  }
+  setDestroyTime(destroySpeed) {
+    this.destroySpeed = destroySpeed;
+    if (this.explosionResistance < destroySpeed * 5)
+      this.explosionResistance = destroySpeed * 5;
+    return this;
+  }
+  setTicking(tick) {
+    shouldTick[this.id] = tick;
+  }
+  getSpawnResourcesAuxValue(data) {
+    return 0;
+  }
+  setLightEmission(f) {
+    lightEmission[this.id] = Math.floor(15 * f);
+    return this;
+  }
+  setCategory(category) {
+    this.category = category;
+    return this;
+  }
+  setShape(x0, y0, z0, x1, y1, z1) {
+    this.xx0 = x0;
+    this.yy0 = y0;
+    this.zz0 = z0;
+    this.xx1 = x1;
+    this.yy1 = y1;
+    this.zz1 = z1;
+  }
+  mayPlace(level, x, y, z) {
+    const t = level.getTile(x, y, z);
+    return t === 0 || tiles[t]?.material === "replaceable";
+  }
+  getDestroyProgress(player) {
+    if (this.destroySpeed < 0)
+      return 0;
+    if (!player.canDestroy(this))
+      return 1 / this.destroySpeed / 100;
+    return player.getDestroySpeed(this) / this.destroySpeed / 30;
+  }
+  spawnResources(level, x, y, z, data, odds) {
+    if (odds === undefined)
+      odds = 1;
+    if (level.isClientSide)
+      return;
+    const count = this.getResourceCount(level.random);
+    for (let i = 0;i < count; i++) {
+      if (level.random.nextFloat() > odds)
+        continue;
+      const type = this.getResource(data, level.random);
+      if (type <= 0)
+        continue;
+      const s = 0.7;
+      const xo = level.random.nextFloat() * s + (1 - s) * 0.5;
+      const yo = level.random.nextFloat() * s + (1 - s) * 0.5;
+      const zo = level.random.nextFloat() * s + (1 - s) * 0.5;
+      if (level.spawnItemEntity) {
+        level.spawnItemEntity(x + xo, y + yo, z + zo, type, 1, this.getSpawnResourcesAuxValue(data));
+      }
+    }
+  }
+  popResource(level, x, y, z, itemInstance) {
+    if (level.isClientSide)
+      return;
+    const s = 0.7;
+    const xo = level.random.nextFloat() * s + (1 - s) * 0.5;
+    const yo = level.random.nextFloat() * s + (1 - s) * 0.5;
+    const zo = level.random.nextFloat() * s + (1 - s) * 0.5;
+    if (level.spawnItemEntity) {
+      level.spawnItemEntity(x + xo, y + yo, z + zo, itemInstance.id, itemInstance.count, itemInstance.auxValue || 0);
+    }
+  }
+  destroy(level, x, y, z, data) {}
+  getBrightness(level, x, y, z) {
+    return level.getBrightness(x, y, z);
+  }
+  materialBlocksLight() {
+    return this.material !== "water" && this.material !== "lava" && this.material !== "glass";
+  }
+}
+var rock = null;
+var grass = null;
+var dirt = null;
+var stoneBrick = null;
+var wood = null;
+var sapling = null;
+var unbreakable = null;
+var water = null;
+var calmWater = null;
+var lava = null;
+var calmLava = null;
+var sand = null;
+var gravel = null;
+var goldOre = null;
+var ironOre = null;
+var coalOre = null;
+var treeTrunk = null;
+var leaves = null;
+var glass = null;
+var lapisOre = null;
+var lapisBlock = null;
+var sandStone = null;
+var bed = null;
+var web = null;
+var tallgrass = null;
+var cloth = null;
+var flower = null;
+var rose = null;
+var mushroom1 = null;
+var mushroom2 = null;
+var goldBlock = null;
+var ironBlock = null;
+var stoneSlab = null;
+var stoneSlabHalf = null;
+var redBrick = null;
+var tnt = null;
+var bookshelf = null;
+var mossStone = null;
+var obsidian = null;
+var torch = null;
+var stairs_wood = null;
+var chest = null;
+var emeraldOre = null;
+var emeraldBlock = null;
+var workBench = null;
+var stonecutterBench = null;
+var crops = null;
+var farmland = null;
+var furnace = null;
+var furnace_lit = null;
+var sign = null;
+var door_wood = null;
+var ladder = null;
+var stairs_stone = null;
+var wallSign = null;
+var door_iron = null;
+var redStoneOre = null;
+var redStoneOre_lit = null;
+var topSnow = null;
+var ice = null;
+var snow = null;
+var cactus = null;
+var clay = null;
+var reeds = null;
+var fence = null;
+var netherrack = null;
+var lightGem = null;
+var invisible_bedrock = null;
+var trapdoor = null;
+var stoneBrickSmooth = null;
+var thinGlass = null;
+var melon = null;
+var melonStem = null;
+var fenceGate = null;
+var stairs_brick = null;
+var stairs_stoneBrickSmooth = null;
+var netherBrick = null;
+var stairs_netherBricks = null;
+var stairs_sandStone = null;
+var quartzBlock = null;
+var stairs_quartz = null;
+var info_updateGame1 = null;
+var info_updateGame2 = null;
+var info_reserved6 = null;
+var grass_carried = null;
+var leaves_carried = null;
+var netherReactor = null;
+var glowingObsidian = null;
+function initTiles() {
+  rock = new Tile(1, 1, "stone");
+  rock.init();
+  rock.setDestroyTime(1.5);
+  rock.setExplodeable(10);
+  rock.setSoundType(SOUND_STONE);
+  rock.setCategory(0);
+  rock.setDescriptionId("stone");
+  grass = new Tile(2, "dirt");
+  grass.init();
+  grass.setDestroyTime(0.6);
+  grass.setSoundType(SOUND_GRASS);
+  grass.setCategory(0);
+  grass.setDescriptionId("grass");
+  dirt = new Tile(3, 2, "dirt");
+  dirt.init();
+  dirt.setDestroyTime(0.5);
+  dirt.setSoundType(SOUND_GRAVEL);
+  dirt.setCategory(0);
+  dirt.setDescriptionId("dirt");
+  stoneBrick = new Tile(4, 16, "stone");
+  stoneBrick.init();
+  stoneBrick.setDestroyTime(2);
+  stoneBrick.setExplodeable(10);
+  stoneBrick.setSoundType(SOUND_STONE);
+  stoneBrick.setCategory(0);
+  stoneBrick.setDescriptionId("stonebrick");
+  wood = new Tile(5, 4, "wood");
+  wood.init();
+  wood.setDestroyTime(2);
+  wood.setExplodeable(5);
+  wood.setSoundType(SOUND_WOOD);
+  wood.setCategory(0);
+  wood.setDescriptionId("wood");
+  sapling = new Tile(6, 15, "plant");
+  sapling.init();
+  sapling.setDestroyTime(0);
+  sapling.setSoundType(SOUND_GRASS);
+  sapling.setCategory(0);
+  sapling.setDescriptionId("sapling");
+  unbreakable = new Tile(7, 17, "stone");
+  unbreakable.init();
+  unbreakable.setDestroyTime(-1);
+  unbreakable.setExplodeable(6000000);
+  unbreakable.setSoundType(SOUND_STONE);
+  unbreakable.setCategory(0);
+  unbreakable.setDescriptionId("bedrock");
+  water = new Tile(8, "water");
+  water.init();
+  water.setDestroyTime(100);
+  water.setLightBlock(3);
+  water.setCategory(0);
+  water.setDescriptionId("water");
+  calmWater = new Tile(9, "water");
+  calmWater.init();
+  calmWater.setDestroyTime(100);
+  calmWater.setLightBlock(3);
+  calmWater.setCategory(0);
+  calmWater.setDescriptionId("water");
+  lava = new Tile(10, "lava");
+  lava.init();
+  lava.setDestroyTime(0);
+  lava.setLightEmission(1);
+  lava.setLightBlock(255);
+  lava.setCategory(0);
+  lava.setDescriptionId("lava");
+  calmLava = new Tile(11, "lava");
+  calmLava.init();
+  calmLava.setDestroyTime(100);
+  calmLava.setLightEmission(1);
+  calmLava.setLightBlock(255);
+  calmLava.setCategory(0);
+  calmLava.setDescriptionId("lava");
+  sand = new Tile(12, 18, "sand");
+  sand.init();
+  sand.setDestroyTime(0.5);
+  sand.setSoundType(SOUND_SAND);
+  sand.setCategory(0);
+  sand.setDescriptionId("sand");
+  gravel = new Tile(13, 19, "sand");
+  gravel.init();
+  gravel.setDestroyTime(0.6);
+  gravel.setSoundType(SOUND_GRAVEL);
+  gravel.setCategory(0);
+  gravel.setDescriptionId("gravel");
+  goldOre = new Tile(14, 32, "stone");
+  goldOre.init();
+  goldOre.setDestroyTime(3);
+  goldOre.setExplodeable(5);
+  goldOre.setSoundType(SOUND_STONE);
+  goldOre.setCategory(1);
+  goldOre.setDescriptionId("oreGold");
+  ironOre = new Tile(15, 33, "stone");
+  ironOre.init();
+  ironOre.setDestroyTime(3);
+  ironOre.setExplodeable(5);
+  ironOre.setSoundType(SOUND_STONE);
+  ironOre.setCategory(1);
+  ironOre.setDescriptionId("oreIron");
+  coalOre = new Tile(16, 34, "stone");
+  coalOre.init();
+  coalOre.setDestroyTime(3);
+  coalOre.setExplodeable(5);
+  coalOre.setSoundType(SOUND_STONE);
+  coalOre.setCategory(0);
+  coalOre.setDescriptionId("oreCoal");
+  treeTrunk = new Tile(17, 20, "wood");
+  treeTrunk.init();
+  treeTrunk.setDestroyTime(2);
+  treeTrunk.setSoundType(SOUND_WOOD);
+  treeTrunk.setCategory(0);
+  treeTrunk.setDescriptionId("log");
+  leaves = new Tile(18, 4 + 3 * 16, "leaves");
+  leaves.init();
+  leaves.setDestroyTime(0.2);
+  leaves.setLightBlock(1);
+  leaves.setSoundType(SOUND_GRASS);
+  leaves.setCategory(0);
+  leaves.setDescriptionId("leaves");
+  glass = new Tile(20, 49, "glass");
+  glass.init();
+  glass.setDestroyTime(0.3);
+  glass.setSoundType(SOUND_GLASS);
+  glass.setCategory(0);
+  glass.setDescriptionId("glass");
+  lapisOre = new Tile(21, 10 * 16, "stone");
+  lapisOre.init();
+  lapisOre.setDestroyTime(3);
+  lapisOre.setExplodeable(5);
+  lapisOre.setSoundType(SOUND_STONE);
+  lapisOre.setCategory(0);
+  lapisOre.setDescriptionId("oreLapis");
+  lapisBlock = new Tile(22, 9 * 16, "stone");
+  lapisBlock.init();
+  lapisBlock.setDestroyTime(3);
+  lapisBlock.setExplodeable(5);
+  lapisBlock.setSoundType(SOUND_STONE);
+  lapisBlock.setCategory(1);
+  lapisBlock.setDescriptionId("blockLapis");
+  sandStone = new Tile(24, 0 + 16 * 12, "stone");
+  sandStone.init();
+  sandStone.setSoundType(SOUND_STONE);
+  sandStone.setDestroyTime(0.8);
+  sandStone.setCategory(0);
+  sandStone.setDescriptionId("sandStone");
+  bed = new Tile(26, 0, "wood");
+  bed.init();
+  bed.setDestroyTime(0.2);
+  bed.setCategory(0);
+  bed.setDescriptionId("bed");
+  web = new Tile(30, 11, "web");
+  web.init();
+  web.setLightBlock(1);
+  web.setDestroyTime(4);
+  web.setCategory(1);
+  web.setDescriptionId("web");
+  tallgrass = new Tile(31, 2 * 16 + 7, "replaceable_plant");
+  tallgrass.init();
+  tallgrass.setDestroyTime(0);
+  tallgrass.setSoundType(SOUND_GRASS);
+  tallgrass.setCategory(1);
+  tallgrass.setDescriptionId("tallgrass");
+  cloth = new Tile(35, 64, "cloth");
+  cloth.init();
+  cloth.setDestroyTime(0.8);
+  cloth.setSoundType(SOUND_CLOTH);
+  cloth.setCategory(0);
+  cloth.setDescriptionId("cloth");
+  flower = new Tile(37, 13, "plant");
+  flower.init();
+  flower.setDestroyTime(0);
+  flower.setSoundType(SOUND_GRASS);
+  flower.setCategory(1);
+  flower.setDescriptionId("flower");
+  rose = new Tile(38, 12, "plant");
+  rose.init();
+  rose.setDestroyTime(0);
+  rose.setSoundType(SOUND_GRASS);
+  rose.setCategory(1);
+  rose.setDescriptionId("rose");
+  mushroom1 = new Tile(39, 13 + 16, "plant");
+  mushroom1.init();
+  mushroom1.setDestroyTime(0);
+  mushroom1.setSoundType(SOUND_GRASS);
+  mushroom1.setLightEmission(2 / 16);
+  mushroom1.setCategory(1);
+  mushroom1.setDescriptionId("mushroom");
+  mushroom2 = new Tile(40, 12 + 16, "plant");
+  mushroom2.init();
+  mushroom2.setDestroyTime(0);
+  mushroom2.setSoundType(SOUND_GRASS);
+  mushroom2.setCategory(1);
+  mushroom2.setDescriptionId("mushroom");
+  goldBlock = new Tile(41, 39 - 16, "metal");
+  goldBlock.init();
+  goldBlock.setDestroyTime(3);
+  goldBlock.setExplodeable(10);
+  goldBlock.setSoundType(SOUND_METAL);
+  goldBlock.setCategory(1);
+  goldBlock.setDescriptionId("blockGold");
+  ironBlock = new Tile(42, 38 - 16, "metal");
+  ironBlock.init();
+  ironBlock.setDestroyTime(5);
+  ironBlock.setExplodeable(10);
+  ironBlock.setSoundType(SOUND_METAL);
+  ironBlock.setCategory(1);
+  ironBlock.setDescriptionId("blockIron");
+  stoneSlab = new Tile(43, 6, "stone");
+  stoneSlab.init();
+  stoneSlab.setDestroyTime(2);
+  stoneSlab.setExplodeable(10);
+  stoneSlab.setSoundType(SOUND_STONE);
+  stoneSlab.setCategory(0);
+  stoneSlab.setDescriptionId("stoneSlab");
+  stoneSlabHalf = new Tile(44, 6, "stone");
+  stoneSlabHalf.init();
+  stoneSlabHalf.setDestroyTime(2);
+  stoneSlabHalf.setExplodeable(10);
+  stoneSlabHalf.setSoundType(SOUND_STONE);
+  stoneSlabHalf.setCategory(0);
+  stoneSlabHalf.setDescriptionId("stoneSlab");
+  redBrick = new Tile(45, 7, "stone");
+  redBrick.init();
+  redBrick.setDestroyTime(2);
+  redBrick.setExplodeable(10);
+  redBrick.setSoundType(SOUND_STONE);
+  redBrick.setCategory(0);
+  redBrick.setDescriptionId("brick");
+  tnt = new Tile(46, 8, "explosive");
+  tnt.init();
+  tnt.setDestroyTime(0);
+  tnt.setSoundType(SOUND_GRASS);
+  tnt.setCategory(2);
+  tnt.setDescriptionId("tnt");
+  bookshelf = new Tile(47, 35, "wood");
+  bookshelf.init();
+  bookshelf.setDestroyTime(1.5);
+  bookshelf.setSoundType(SOUND_WOOD);
+  bookshelf.setCategory(1);
+  bookshelf.setDescriptionId("bookshelf");
+  mossStone = new Tile(48, 36, "stone");
+  mossStone.init();
+  mossStone.setDestroyTime(2);
+  mossStone.setExplodeable(10);
+  mossStone.setSoundType(SOUND_STONE);
+  mossStone.setCategory(0);
+  mossStone.setDescriptionId("stoneMoss");
+  obsidian = new Tile(49, 37, "stone");
+  obsidian.init();
+  obsidian.setDestroyTime(10);
+  obsidian.setExplodeable(2000);
+  obsidian.setSoundType(SOUND_STONE);
+  obsidian.setCategory(0);
+  obsidian.setDescriptionId("obsidian");
+  torch = new Tile(50, 5 * 16, "decoration");
+  torch.init();
+  torch.setDestroyTime(0);
+  torch.setLightEmission(15 / 16);
+  torch.setSoundType(SOUND_WOOD);
+  torch.setCategory(2);
+  torch.setDescriptionId("torch");
+  stairs_wood = new Tile(53, 4, "wood");
+  stairs_wood.init();
+  stairs_wood.setCategory(0);
+  stairs_wood.setDescriptionId("stairsWood");
+  chest = new Tile(54, 26, "wood");
+  chest.init();
+  chest.setCategory(0);
+  chest.setDestroyTime(2.5);
+  chest.setSoundType(SOUND_WOOD);
+  chest.setDescriptionId("chest");
+  emeraldOre = new Tile(56, 16 * 3 + 2, "stone");
+  emeraldOre.init();
+  emeraldOre.setDestroyTime(3);
+  emeraldOre.setExplodeable(5);
+  emeraldOre.setSoundType(SOUND_STONE);
+  emeraldOre.setCategory(1);
+  emeraldOre.setDescriptionId("oreDiamond");
+  emeraldBlock = new Tile(57, 40 - 16, "metal");
+  emeraldBlock.init();
+  emeraldBlock.setDestroyTime(5);
+  emeraldBlock.setExplodeable(10);
+  emeraldBlock.setSoundType(SOUND_METAL);
+  emeraldBlock.setCategory(1);
+  emeraldBlock.setDescriptionId("blockDiamond");
+  workBench = new Tile(58, 59, "wood");
+  workBench.init();
+  workBench.setDestroyTime(2.5);
+  workBench.setSoundType(SOUND_WOOD);
+  workBench.setCategory(0);
+  workBench.setDescriptionId("workbench");
+  crops = new Tile(59, 8 + 5 * 16, "plant");
+  crops.init();
+  crops.setDestroyTime(0);
+  crops.setSoundType(SOUND_GRASS);
+  crops.setCategory(0);
+  crops.setDescriptionId("crops");
+  farmland = new Tile(60, 87, "dirt");
+  farmland.init();
+  farmland.setDestroyTime(0.6);
+  farmland.setSoundType(SOUND_GRAVEL);
+  farmland.setCategory(0);
+  farmland.setDescriptionId("farmland");
+  furnace = new Tile(61, 45, "stone");
+  furnace.init();
+  furnace.setDestroyTime(3.5);
+  furnace.setSoundType(SOUND_STONE);
+  furnace.setCategory(0);
+  furnace.setDescriptionId("furnace");
+  furnace_lit = new Tile(62, 45, "stone");
+  furnace_lit.init();
+  furnace_lit.setDestroyTime(3.5);
+  furnace_lit.setSoundType(SOUND_STONE);
+  furnace_lit.setLightEmission(14 / 16);
+  furnace_lit.setCategory(0);
+  furnace_lit.setDescriptionId("furnace");
+  sign = new Tile(63, 4, "wood");
+  sign.init();
+  sign.setDestroyTime(1);
+  sign.setSoundType(SOUND_WOOD);
+  sign.setCategory(1);
+  sign.setDescriptionId("sign");
+  door_wood = new Tile(64, 97, "wood");
+  door_wood.init();
+  door_wood.setDestroyTime(3);
+  door_wood.setSoundType(SOUND_WOOD);
+  door_wood.setCategory(0);
+  door_wood.setDescriptionId("doorWood");
+  ladder = new Tile(65, 3 + 5 * 16, "decoration");
+  ladder.init();
+  ladder.setDestroyTime(0.4);
+  ladder.setSoundType(SOUND_WOOD);
+  ladder.setCategory(0);
+  ladder.setDescriptionId("ladder");
+  stairs_stone = new Tile(67, 16, "stone");
+  stairs_stone.init();
+  stairs_stone.setCategory(0);
+  stairs_stone.setDescriptionId("stairsStone");
+  wallSign = new Tile(68, 4, "wood");
+  wallSign.init();
+  wallSign.setDestroyTime(1);
+  wallSign.setSoundType(SOUND_WOOD);
+  wallSign.setCategory(1);
+  wallSign.setDescriptionId("sign");
+  door_iron = new Tile(71, 98, "metal");
+  door_iron.init();
+  door_iron.setDestroyTime(5);
+  door_iron.setSoundType(SOUND_METAL);
+  door_iron.setCategory(0);
+  door_iron.setDescriptionId("doorIron");
+  redStoneOre = new Tile(73, 16 * 3 + 3, "stone");
+  redStoneOre.init();
+  redStoneOre.setDestroyTime(3);
+  redStoneOre.setExplodeable(5);
+  redStoneOre.setSoundType(SOUND_STONE);
+  redStoneOre.setCategory(3);
+  redStoneOre.setDescriptionId("oreRedstone");
+  redStoneOre_lit = new Tile(74, 16 * 3 + 3, "stone");
+  redStoneOre_lit.init();
+  redStoneOre_lit.setDestroyTime(3);
+  redStoneOre_lit.setLightEmission(10 / 16);
+  redStoneOre_lit.setExplodeable(5);
+  redStoneOre_lit.setSoundType(SOUND_STONE);
+  redStoneOre_lit.setCategory(3);
+  redStoneOre_lit.setDescriptionId("oreRedstone");
+  topSnow = new Tile(78, 16 * 4 + 2, "topSnow");
+  topSnow.init();
+  topSnow.setDestroyTime(0.1);
+  topSnow.setSoundType(SOUND_CLOTH);
+  topSnow.setCategory(0);
+  topSnow.setDescriptionId("snow");
+  ice = new Tile(79, 16 * 4 + 3, "ice");
+  ice.init();
+  ice.setDestroyTime(0.5);
+  ice.setLightBlock(3);
+  ice.setSoundType(SOUND_GLASS);
+  ice.setCategory(0);
+  ice.setDescriptionId("ice");
+  snow = new Tile(80, 16 * 4 + 2, "snow");
+  snow.init();
+  snow.setDestroyTime(0.2);
+  snow.setSoundType(SOUND_CLOTH);
+  snow.setCategory(0);
+  snow.setDescriptionId("snow");
+  cactus = new Tile(81, 16 * 4 + 6, "cactus");
+  cactus.init();
+  cactus.setDestroyTime(0.4);
+  cactus.setSoundType(SOUND_CLOTH);
+  cactus.setCategory(0);
+  cactus.setDescriptionId("cactus");
+  clay = new Tile(82, 16 * 4 + 8, "clay");
+  clay.init();
+  clay.setDestroyTime(0.6);
+  clay.setSoundType(SOUND_GRAVEL);
+  clay.setCategory(0);
+  clay.setDescriptionId("clay");
+  reeds = new Tile(83, 16 * 4 + 9, "plant");
+  reeds.init();
+  reeds.setDestroyTime(0);
+  reeds.setSoundType(SOUND_GRASS);
+  reeds.setCategory(0);
+  reeds.setDescriptionId("reeds");
+  fence = new Tile(85, 4, "wood");
+  fence.init();
+  fence.setDestroyTime(2);
+  fence.setExplodeable(5);
+  fence.setSoundType(SOUND_WOOD);
+  fence.setCategory(0);
+  fence.setDescriptionId("fence");
+  netherrack = new Tile(87, 7 + 6 * 16, "stone");
+  netherrack.init();
+  netherrack.setDestroyTime(0.4);
+  netherrack.setSoundType(SOUND_STONE);
+  netherrack.setDescriptionId("hellrock");
+  lightGem = new Tile(89, 9 + 16 * 6, "glass");
+  lightGem.init();
+  lightGem.setDestroyTime(0.3);
+  lightGem.setCategory(0);
+  lightGem.setSoundType(SOUND_GLASS);
+  lightGem.setLightEmission(1);
+  lightGem.setDescriptionId("lightgem");
+  invisible_bedrock = new Tile(95, 0, "stone");
+  invisible_bedrock.init();
+  invisible_bedrock.setDestroyTime(-1);
+  invisible_bedrock.setExplodeable(6000000);
+  trapdoor = new Tile(96, 84, "wood");
+  trapdoor.init();
+  trapdoor.setDestroyTime(3);
+  trapdoor.setSoundType(SOUND_WOOD);
+  trapdoor.setCategory(0);
+  trapdoor.setDescriptionId("trapdoor");
+  stoneBrickSmooth = new Tile(98, 6 + 16 * 3, "stone");
+  stoneBrickSmooth.init();
+  stoneBrickSmooth.setDestroyTime(1.5);
+  stoneBrickSmooth.setExplodeable(10);
+  stoneBrickSmooth.setSoundType(SOUND_STONE);
+  stoneBrickSmooth.setCategory(0);
+  stoneBrickSmooth.setDescriptionId("stonebricksmooth");
+  thinGlass = new Tile(102, 1 + 3 * 16, "glass");
+  thinGlass.init();
+  thinGlass.setDestroyTime(0.3);
+  thinGlass.setSoundType(SOUND_GLASS);
+  thinGlass.setCategory(0);
+  thinGlass.setDescriptionId("thinGlass");
+  melon = new Tile(103, 137, "vegetable");
+  melon.init();
+  melon.setDestroyTime(1);
+  melon.setSoundType(SOUND_WOOD);
+  melon.setCategory(4);
+  melon.setDescriptionId("melon");
+  melonStem = new Tile(105, 88, "plant");
+  melonStem.init();
+  melonStem.setDestroyTime(0);
+  melonStem.setSoundType(SOUND_WOOD);
+  melonStem.setCategory(4);
+  melonStem.setDescriptionId("pumpkinStem");
+  fenceGate = new Tile(107, 4, "wood");
+  fenceGate.init();
+  fenceGate.setDestroyTime(2);
+  fenceGate.setExplodeable(5);
+  fenceGate.setSoundType(SOUND_WOOD);
+  fenceGate.setCategory(0);
+  fenceGate.setDescriptionId("fenceGate");
+  stairs_brick = new Tile(108, 7, "stone");
+  stairs_brick.init();
+  stairs_brick.setCategory(0);
+  stairs_brick.setDescriptionId("stairsBrick");
+  stairs_stoneBrickSmooth = new Tile(109, 6 + 16 * 3, "stone");
+  stairs_stoneBrickSmooth.init();
+  stairs_stoneBrickSmooth.setCategory(0);
+  stairs_stoneBrickSmooth.setDescriptionId("stairsStoneBrickSmooth");
+  netherBrick = new Tile(112, 0 + 14 * 16, "stone");
+  netherBrick.init();
+  netherBrick.setDestroyTime(2);
+  netherBrick.setExplodeable(10);
+  netherBrick.setSoundType(SOUND_STONE);
+  netherBrick.setCategory(0);
+  netherBrick.setDescriptionId("netherBrick");
+  stairs_netherBricks = new Tile(114, 0 + 14 * 16, "stone");
+  stairs_netherBricks.init();
+  stairs_netherBricks.setCategory(0);
+  stairs_netherBricks.setDescriptionId("stairsNetherBrick");
+  stairs_sandStone = new Tile(128, 0 + 16 * 12, "stone");
+  stairs_sandStone.init();
+  stairs_sandStone.setCategory(0);
+  stairs_sandStone.setDescriptionId("stairsSandStone");
+  quartzBlock = new Tile(155, 15, "stone");
+  quartzBlock.init();
+  quartzBlock.setSoundType(SOUND_STONE);
+  quartzBlock.setDestroyTime(0.8);
+  quartzBlock.setCategory(0);
+  quartzBlock.setDescriptionId("quartzBlock");
+  stairs_quartz = new Tile(156, 15, "stone");
+  stairs_quartz.init();
+  stairs_quartz.setCategory(0);
+  stairs_quartz.setDescriptionId("stairsQuartz");
+  stonecutterBench = new Tile(245, 169, "stone");
+  stonecutterBench.init();
+  stonecutterBench.setDestroyTime(2.5);
+  stonecutterBench.setSoundType(SOUND_STONE);
+  stonecutterBench.setCategory(0);
+  stonecutterBench.setDescriptionId("stonecutter");
+  glowingObsidian = new Tile(246, 10 + 16 * 13, "stone");
+  glowingObsidian.init();
+  glowingObsidian.setDestroyTime(10);
+  glowingObsidian.setLightEmission(14 / 16);
+  glowingObsidian.setExplodeable(2000);
+  glowingObsidian.setSoundType(SOUND_STONE);
+  glowingObsidian.setCategory(0);
+  glowingObsidian.setDescriptionId("glowingobsidian");
+  netherReactor = new Tile(247, 10 + 14 * 16, "metal");
+  netherReactor.init();
+  netherReactor.setDestroyTime(3);
+  netherReactor.setSoundType(SOUND_METAL);
+  netherReactor.setCategory(0);
+  netherReactor.setDescriptionId("netherreactor");
+  info_updateGame1 = new Tile(248, 252, "dirt");
+  info_updateGame1.init();
+  info_updateGame1.setDestroyTime(1);
+  info_updateGame1.setSoundType(SOUND_GRAVEL);
+  info_updateGame1.setCategory(0);
+  info_updateGame1.setDescriptionId("info_update");
+  info_updateGame2 = new Tile(249, 253, "dirt");
+  info_updateGame2.init();
+  info_updateGame2.setDestroyTime(1);
+  info_updateGame2.setSoundType(SOUND_GRAVEL);
+  info_updateGame2.setCategory(0);
+  info_updateGame2.setDescriptionId("info_update");
+  grass_carried = new Tile(253, 3, "dirt");
+  grass_carried.init();
+  grass_carried.setDescriptionId("grass");
+  leaves_carried = new Tile(254, 11 + 14 * 16, "leaves");
+  leaves_carried.init();
+  leaves_carried.setDestroyTime(0.2);
+  leaves_carried.setLightBlock(1);
+  leaves_carried.setSoundType(SOUND_GRASS);
+  leaves_carried.setCategory(0);
+  leaves_carried.setDescriptionId("leaves");
+  info_reserved6 = new Tile(255, "dirt");
+  info_reserved6.init();
+}
+
+// src/game/world/item/translated/Item.ts
+var MAX_STACK_SIZE = 64;
+var MAX_ITEMS = 512;
+var ICON_COLUMNS = 16;
+var ICON_DESCRIPTION_PREFIX = "item.";
+
+class Tier {
+  level;
+  uses;
+  speed;
+  damage;
+  constructor(level, uses, speed, damage) {
+    this.level = level;
+    this.uses = uses;
+    this.speed = speed;
+    this.damage = damage;
+  }
+  getUses() {
+    return this.uses;
+  }
+  getSpeed() {
+    return this.speed;
+  }
+  getAttackDamageBonus() {
+    return this.damage;
+  }
+  getLevel() {
+    return this.level;
+  }
+}
+var TIER_WOOD = new Tier(0, 59, 2, 0);
+var TIER_STONE = new Tier(1, 131, 4, 1);
+var TIER_IRON = new Tier(2, 250, 6, 2);
+var TIER_EMERALD = new Tier(3, 1561, 8, 3);
+var TIER_GOLD = new Tier(0, 32, 12, 0);
+
+class Item {
+  static items = new Array(MAX_ITEMS).fill(null);
+  static shovel_iron = null;
+  static pickAxe_iron = null;
+  static hatchet_iron = null;
+  static flintAndSteel = null;
+  static apple = null;
+  static bow = null;
+  static arrow = null;
+  static coal = null;
+  static emerald = null;
+  static ironIngot = null;
+  static goldIngot = null;
+  static sword_iron = null;
+  static sword_wood = null;
+  static shovel_wood = null;
+  static pickAxe_wood = null;
+  static hatchet_wood = null;
+  static sword_stone = null;
+  static shovel_stone = null;
+  static pickAxe_stone = null;
+  static hatchet_stone = null;
+  static sword_emerald = null;
+  static shovel_emerald = null;
+  static pickAxe_emerald = null;
+  static hatchet_emerald = null;
+  static stick = null;
+  static bowl = null;
+  static mushroomStew = null;
+  static sword_gold = null;
+  static shovel_gold = null;
+  static pickAxe_gold = null;
+  static hatchet_gold = null;
+  static string = null;
+  static feather = null;
+  static sulphur = null;
+  static hoe_wood = null;
+  static hoe_stone = null;
+  static hoe_iron = null;
+  static hoe_emerald = null;
+  static hoe_gold = null;
+  static seeds_wheat = null;
+  static wheat = null;
+  static bread = null;
+  static helmet_cloth = null;
+  static chestplate_cloth = null;
+  static leggings_cloth = null;
+  static boots_cloth = null;
+  static helmet_chain = null;
+  static chestplate_chain = null;
+  static leggings_chain = null;
+  static boots_chain = null;
+  static helmet_iron = null;
+  static chestplate_iron = null;
+  static leggings_iron = null;
+  static boots_iron = null;
+  static helmet_diamond = null;
+  static chestplate_diamond = null;
+  static leggings_diamond = null;
+  static boots_diamond = null;
+  static helmet_gold = null;
+  static chestplate_gold = null;
+  static leggings_gold = null;
+  static boots_gold = null;
+  static flint = null;
+  static porkChop_raw = null;
+  static porkChop_cooked = null;
+  static painting = null;
+  static sign = null;
+  static door_wood = null;
+  static door_iron = null;
+  static snowBall = null;
+  static leather = null;
+  static brick = null;
+  static clay = null;
+  static reeds = null;
+  static paper = null;
+  static book = null;
+  static slimeBall = null;
+  static egg = null;
+  static compass = null;
+  static clock = null;
+  static yellowDust = null;
+  static melon = null;
+  static seeds_melon = null;
+  static dye_powder = null;
+  static bone = null;
+  static sugar = null;
+  static bed = null;
+  static shears = null;
+  static beef_raw = null;
+  static beef_cooked = null;
+  static chicken_raw = null;
+  static chicken_cooked = null;
+  static netherbrick = null;
+  static netherQuartz = null;
+  static camera = null;
+  id;
+  maxDamage;
+  icon;
+  category;
+  maxStackSize;
+  _handEquipped;
+  _isStackedByData;
+  craftingRemainingItem;
+  descriptionId;
+  constructor(id2) {
+    this.id = 256 + id2;
+    this.craftingRemainingItem = null;
+    this.maxStackSize = MAX_STACK_SIZE;
+    this.maxDamage = 32;
+    this.category = -1;
+    this._handEquipped = false;
+    this._isStackedByData = false;
+    this.icon = 0;
+    this.descriptionId = "";
+    if (Item.items[this.id] != null) {
+      console.warn("Item conflict id @ " + this.id + "! Id already used");
+    }
+    Item.items[this.id] = this;
+  }
+  setIcon(icon) {
+    this.icon = icon;
+    return this;
+  }
+  setIconPos(column, row) {
+    this.icon = column + row * ICON_COLUMNS;
+    return this;
+  }
+  setMaxStackSize(max) {
+    this.maxStackSize = max;
+    return this;
+  }
+  canBeDepleted() {
+    return this.maxDamage > 0 && !this._isStackedByData;
+  }
+  getIcon(auxValue) {
+    return this.icon;
+  }
+  useOn(itemInstance, level, x, y, z, face) {
+    return false;
+  }
+  useOnWithClick(itemInstance, player, level, x, y, z, face, clickX, clickY, clickZ) {
+    return false;
+  }
+  getUseDuration(itemInstance) {
+    return 0;
+  }
+  useTimeDepleted(itemInstance, level, player) {
+    return itemInstance;
+  }
+  getDestroySpeed(itemInstance, tile) {
+    return 1;
+  }
+  use(itemInstance, level, player) {
+    return itemInstance;
+  }
+  getMaxStackSize() {
+    return this.maxStackSize;
+  }
+  getLevelDataForAuxValue(auxValue) {
+    return 0;
+  }
+  isStackedByData() {
+    return this._isStackedByData;
+  }
+  setCategory(category) {
+    this.category = category;
+    return this;
+  }
+  getMaxDamage() {
+    return this.maxDamage;
+  }
+  hurtEnemy(itemInstance, mob) {}
+  mineBlock(itemInstance, tile, x, y, z) {
+    return false;
+  }
+  getAttackDamage(entity) {
+    return 1;
+  }
+  canDestroySpecial(tile) {
+    return false;
+  }
+  interactEnemy(itemInstance, mob) {}
+  handEquipped() {
+    this._handEquipped = true;
+    return this;
+  }
+  isHandEquipped() {
+    return this._handEquipped;
+  }
+  isMirroredArt() {
+    return false;
+  }
+  isFood() {
+    return false;
+  }
+  isArmor() {
+    return false;
+  }
+  setDescriptionId(id2) {
+    this.descriptionId = ICON_DESCRIPTION_PREFIX + id2;
+    return this;
+  }
+  getDescription() {
+    return this.descriptionId;
+  }
+  getDescriptionWithInstance(instance) {
+    return this.descriptionId;
+  }
+  getDescriptionId() {
+    return this.descriptionId;
+  }
+  getDescriptionIdWithInstance(instance) {
+    return this.descriptionId;
+  }
+  setCraftingRemainingItem(craftingRemainingItem) {
+    if (this.maxStackSize > 1) {
+      console.warn("Max stack size must be 1 for items with crafting results");
+    }
+    this.craftingRemainingItem = craftingRemainingItem;
+    return this;
+  }
+  getCraftingRemainingItem() {
+    return this.craftingRemainingItem;
+  }
+  hasCraftingRemainingItem() {
+    return this.craftingRemainingItem != null;
+  }
+  getName() {
+    return this.descriptionId + ".name";
+  }
+  releaseUsing(itemInstance, level, player, durationLeft) {}
+  getUseAnimation() {
+    return "none";
+  }
+  setStackedByData(isStackedByData) {
+    this._isStackedByData = isStackedByData;
+    return this;
+  }
+  setMaxDamage(maxDamage) {
+    this.maxDamage = maxDamage;
+    return this;
+  }
+}
+function initItems() {
+  let isInited = false;
+  if (isInited)
+    return;
+  isInited = true;
+  Item.shovel_iron = new Item(0);
+  Item.shovel_iron.setIconPos(2, 5).setCategory(0).setDescriptionId("shovelIron");
+  Item.pickAxe_iron = new Item(1);
+  Item.pickAxe_iron.setIconPos(2, 6).setCategory(0).setDescriptionId("pickaxeIron");
+  Item.hatchet_iron = new Item(2);
+  Item.hatchet_iron.setIconPos(2, 7).setCategory(0).setDescriptionId("hatchetIron");
+  Item.flintAndSteel = new Item(3);
+  Item.flintAndSteel.setIconPos(5, 0).setCategory(0).setDescriptionId("flintAndSteel");
+  Item.apple = new Item(4);
+  Item.apple.setIconPos(10, 0).setCategory(4).setDescriptionId("apple");
+  Item.bow = new Item(5);
+  Item.bow.setIconPos(5, 1).setCategory(0).setDescriptionId("bow");
+  Item.arrow = new Item(6);
+  Item.arrow.setIconPos(5, 2).setCategory(0).setDescriptionId("arrow");
+  Item.coal = new Item(7);
+  Item.coal.setIconPos(7, 0).setCategory(0).setDescriptionId("coal");
+  Item.emerald = new Item(8);
+  Item.emerald.setIconPos(7, 3).setCategory(1).setDescriptionId("emerald");
+  Item.ironIngot = new Item(9);
+  Item.ironIngot.setIconPos(7, 1).setCategory(1).setDescriptionId("ingotIron");
+  Item.goldIngot = new Item(10);
+  Item.goldIngot.setIconPos(7, 2).setCategory(1).setDescriptionId("ingotGold");
+  Item.sword_iron = new Item(11);
+  Item.sword_iron.setIconPos(2, 4).setCategory(0).setDescriptionId("swordIron");
+  Item.sword_wood = new Item(12);
+  Item.sword_wood.setIconPos(0, 4).setCategory(0).setDescriptionId("swordWood");
+  Item.shovel_wood = new Item(13);
+  Item.shovel_wood.setIconPos(0, 5).setCategory(0).setDescriptionId("shovelWood");
+  Item.pickAxe_wood = new Item(14);
+  Item.pickAxe_wood.setIconPos(0, 6).setCategory(0).setDescriptionId("pickaxeWood");
+  Item.hatchet_wood = new Item(15);
+  Item.hatchet_wood.setIconPos(0, 7).setCategory(0).setDescriptionId("hatchetWood");
+  Item.sword_stone = new Item(16);
+  Item.sword_stone.setIconPos(1, 4).setCategory(0).setDescriptionId("swordStone");
+  Item.shovel_stone = new Item(17);
+  Item.shovel_stone.setIconPos(1, 5).setCategory(0).setDescriptionId("shovelStone");
+  Item.pickAxe_stone = new Item(18);
+  Item.pickAxe_stone.setIconPos(1, 6).setCategory(0).setDescriptionId("pickaxeStone");
+  Item.hatchet_stone = new Item(19);
+  Item.hatchet_stone.setIconPos(1, 7).setCategory(0).setDescriptionId("hatchetStone");
+  Item.sword_emerald = new Item(20);
+  Item.sword_emerald.setIconPos(3, 4).setCategory(0).setDescriptionId("swordDiamond");
+  Item.shovel_emerald = new Item(21);
+  Item.shovel_emerald.setIconPos(3, 5).setCategory(0).setDescriptionId("shovelDiamond");
+  Item.pickAxe_emerald = new Item(22);
+  Item.pickAxe_emerald.setIconPos(3, 6).setCategory(0).setDescriptionId("pickaxeDiamond");
+  Item.hatchet_emerald = new Item(23);
+  Item.hatchet_emerald.setIconPos(3, 7).setCategory(0).setDescriptionId("hatchetDiamond");
+  Item.stick = new Item(24);
+  Item.stick.setIconPos(5, 3).handEquipped().setCategory(0).setDescriptionId("stick");
+  Item.bowl = new Item(25);
+  Item.bowl.setIconPos(7, 4).setCategory(4).setDescriptionId("bowl");
+  Item.mushroomStew = new Item(26);
+  Item.mushroomStew.setIconPos(8, 4).setCategory(4).setDescriptionId("mushroomStew");
+  Item.sword_gold = new Item(27);
+  Item.sword_gold.setIconPos(4, 4).setCategory(0).setDescriptionId("swordGold");
+  Item.shovel_gold = new Item(28);
+  Item.shovel_gold.setIconPos(4, 5).setCategory(0).setDescriptionId("shovelGold");
+  Item.pickAxe_gold = new Item(29);
+  Item.pickAxe_gold.setIconPos(4, 6).setCategory(0).setDescriptionId("pickaxeGold");
+  Item.hatchet_gold = new Item(30);
+  Item.hatchet_gold.setIconPos(4, 7).setCategory(0).setDescriptionId("hatchetGold");
+  Item.string = new Item(31);
+  Item.string.setIconPos(8, 0).setCategory(0).setDescriptionId("string");
+  Item.feather = new Item(32);
+  Item.feather.setIconPos(8, 1).setCategory(0).setDescriptionId("feather");
+  Item.sulphur = new Item(33);
+  Item.sulphur.setIconPos(8, 2).setCategory(0).setDescriptionId("sulphur");
+  Item.hoe_wood = new Item(34);
+  Item.hoe_wood.setIconPos(0, 8).setCategory(0).setDescriptionId("hoeWood");
+  Item.hoe_stone = new Item(35);
+  Item.hoe_stone.setIconPos(1, 8).setCategory(0).setDescriptionId("hoeStone");
+  Item.hoe_iron = new Item(36);
+  Item.hoe_iron.setIconPos(2, 8).setCategory(0).setDescriptionId("hoeIron");
+  Item.hoe_emerald = new Item(37);
+  Item.hoe_emerald.setIconPos(3, 8).setCategory(0).setDescriptionId("hoeDiamond");
+  Item.hoe_gold = new Item(38);
+  Item.hoe_gold.setIconPos(4, 8).setCategory(0).setDescriptionId("hoeGold");
+  Item.seeds_wheat = new Item(39);
+  Item.seeds_wheat.setIconPos(9, 0).setCategory(4).setDescriptionId("seeds");
+  Item.wheat = new Item(40);
+  Item.wheat.setIconPos(9, 1).setCategory(4).setDescriptionId("wheat");
+  Item.bread = new Item(41);
+  Item.bread.setIconPos(9, 2).setCategory(4).setDescriptionId("bread");
+  Item.helmet_cloth = new Item(42);
+  Item.helmet_cloth.setIconPos(0, 0).setCategory(4).setDescriptionId("helmetCloth");
+  Item.chestplate_cloth = new Item(43);
+  Item.chestplate_cloth.setIconPos(0, 1).setCategory(4).setDescriptionId("chestplateCloth");
+  Item.leggings_cloth = new Item(44);
+  Item.leggings_cloth.setIconPos(0, 2).setCategory(4).setDescriptionId("leggingsCloth");
+  Item.boots_cloth = new Item(45);
+  Item.boots_cloth.setIconPos(0, 3).setCategory(4).setDescriptionId("bootsCloth");
+  Item.helmet_chain = new Item(46);
+  Item.helmet_chain.setIconPos(1, 0).setCategory(4).setDescriptionId("helmetChain");
+  Item.chestplate_chain = new Item(47);
+  Item.chestplate_chain.setIconPos(1, 1).setCategory(4).setDescriptionId("chestplateChain");
+  Item.leggings_chain = new Item(48);
+  Item.leggings_chain.setIconPos(1, 2).setCategory(4).setDescriptionId("leggingsChain");
+  Item.boots_chain = new Item(49);
+  Item.boots_chain.setIconPos(1, 3).setCategory(4).setDescriptionId("bootsChain");
+  Item.helmet_iron = new Item(50);
+  Item.helmet_iron.setIconPos(2, 0).setCategory(4).setDescriptionId("helmetIron");
+  Item.chestplate_iron = new Item(51);
+  Item.chestplate_iron.setIconPos(2, 1).setCategory(4).setDescriptionId("chestplateIron");
+  Item.leggings_iron = new Item(52);
+  Item.leggings_iron.setIconPos(2, 2).setCategory(4).setDescriptionId("leggingsIron");
+  Item.boots_iron = new Item(53);
+  Item.boots_iron.setIconPos(2, 3).setCategory(4).setDescriptionId("bootsIron");
+  Item.helmet_diamond = new Item(54);
+  Item.helmet_diamond.setIconPos(3, 0).setCategory(4).setDescriptionId("helmetDiamond");
+  Item.chestplate_diamond = new Item(55);
+  Item.chestplate_diamond.setIconPos(3, 1).setCategory(4).setDescriptionId("chestplateDiamond");
+  Item.leggings_diamond = new Item(56);
+  Item.leggings_diamond.setIconPos(3, 2).setCategory(4).setDescriptionId("leggingsDiamond");
+  Item.boots_diamond = new Item(57);
+  Item.boots_diamond.setIconPos(3, 3).setCategory(4).setDescriptionId("bootsDiamond");
+  Item.helmet_gold = new Item(58);
+  Item.helmet_gold.setIconPos(4, 0).setCategory(4).setDescriptionId("helmetGold");
+  Item.chestplate_gold = new Item(59);
+  Item.chestplate_gold.setIconPos(4, 1).setCategory(4).setDescriptionId("chestplateGold");
+  Item.leggings_gold = new Item(60);
+  Item.leggings_gold.setIconPos(4, 2).setCategory(4).setDescriptionId("leggingsGold");
+  Item.boots_gold = new Item(61);
+  Item.boots_gold.setIconPos(4, 3).setCategory(4).setDescriptionId("bootsGold");
+  Item.flint = new Item(62);
+  Item.flint.setIconPos(6, 0).setCategory(0).setDescriptionId("flint");
+  Item.porkChop_raw = new Item(63);
+  Item.porkChop_raw.setIconPos(7, 5).setCategory(4).setDescriptionId("porkchopRaw");
+  Item.porkChop_cooked = new Item(64);
+  Item.porkChop_cooked.setIconPos(8, 5).setCategory(4).setDescriptionId("porkchopCooked");
+  Item.painting = new Item(65);
+  Item.painting.setIconPos(10, 1).setCategory(1).setDescriptionId("painting");
+  Item.sign = new Item(67);
+  Item.sign.setIconPos(10, 2).setCategory(1).setDescriptionId("sign");
+  Item.door_wood = new Item(68);
+  Item.door_wood.setIconPos(11, 2).setCategory(0).setDescriptionId("doorWood");
+  Item.door_iron = new Item(74);
+  Item.door_iron.setIconPos(12, 2).setCategory(0).setDescriptionId("doorIron");
+  Item.snowBall = new Item(76);
+  Item.snowBall.setIconPos(14, 0).setCategory(1).setDescriptionId("snowball");
+  Item.leather = new Item(78);
+  Item.leather.setIconPos(7, 6).setCategory(0).setDescriptionId("leather");
+  Item.brick = new Item(80);
+  Item.brick.setIconPos(6, 1).setCategory(0).setDescriptionId("brick");
+  Item.clay = new Item(81);
+  Item.clay.setIconPos(9, 3).setCategory(0).setDescriptionId("clay");
+  Item.reeds = new Item(82);
+  Item.reeds.setIconPos(11, 1).setCategory(4).setDescriptionId("reeds");
+  Item.paper = new Item(83);
+  Item.paper.setIconPos(10, 3).setCategory(1).setDescriptionId("paper");
+  Item.book = new Item(84);
+  Item.book.setIconPos(11, 3).setCategory(1).setDescriptionId("book");
+  Item.slimeBall = new Item(85);
+  Item.slimeBall.setIconPos(14, 1).setCategory(1).setDescriptionId("slimeball");
+  Item.egg = new Item(88);
+  Item.egg.setIconPos(12, 0).setCategory(4).setDescriptionId("egg");
+  Item.compass = new Item(89);
+  Item.compass.setIconPos(6, 3).setCategory(0).setDescriptionId("compass");
+  Item.clock = new Item(91);
+  Item.clock.setIconPos(6, 4).setCategory(0).setDescriptionId("clock");
+  Item.yellowDust = new Item(92);
+  Item.yellowDust.setIconPos(9, 4).setCategory(0).setDescriptionId("yellowDust");
+  Item.dye_powder = new Item(95);
+  Item.dye_powder.setIconPos(14, 4).setCategory(1).setDescriptionId("dyePowder");
+  Item.bone = new Item(96);
+  Item.bone.setIconPos(12, 1).setCategory(0).setDescriptionId("bone").handEquipped();
+  Item.sugar = new Item(97);
+  Item.sugar.setIconPos(13, 0).setCategory(4).setDescriptionId("sugar").handEquipped();
+  Item.bed = new Item(99);
+  Item.bed.setMaxStackSize(1).setIconPos(13, 2).setCategory(0).setDescriptionId("bed");
+  Item.shears = new Item(103);
+  Item.shears.setIconPos(13, 5).setCategory(0).setDescriptionId("shears");
+  Item.melon = new Item(104);
+  Item.melon.setIconPos(13, 6).setCategory(4).setDescriptionId("melon");
+  Item.seeds_melon = new Item(106);
+  Item.seeds_melon.setIconPos(14, 3).setCategory(4).setDescriptionId("seedsMelon");
+  Item.beef_raw = new Item(107);
+  Item.beef_raw.setIconPos(9, 6).setCategory(4).setDescriptionId("beefRaw");
+  Item.beef_cooked = new Item(108);
+  Item.beef_cooked.setIconPos(10, 6).setCategory(4).setDescriptionId("beefCooked");
+  Item.chicken_raw = new Item(109);
+  Item.chicken_raw.setIconPos(9, 7).setCategory(4).setDescriptionId("chickenRaw");
+  Item.chicken_cooked = new Item(110);
+  Item.chicken_cooked.setIconPos(10, 7).setCategory(4).setDescriptionId("chickenCooked");
+  Item.netherbrick = new Item(149);
+  Item.netherbrick.setIconPos(5, 9).setDescriptionId("netherbrickItem").setCategory(0);
+  Item.netherQuartz = new Item(150);
+  Item.netherQuartz.setIconPos(5, 10).setDescriptionId("netherquartz").setCategory(3);
+  Item.camera = new Item(200);
+  Item.camera.setIconPos(2, 15).setCategory(1).setDescriptionId("camera");
+  for (let i = 256;i < MAX_ITEMS; i++) {
+    if (Item.items[i] && Item.items[i].category === -1) {
+      console.warn("Error: Missing category for item " + Item.items[i].id + ": " + Item.items[i].getDescriptionId());
+    }
+  }
+}
+
+// src/game/world/item/translated/ItemInstance.ts
+class ItemInstance {
+  count;
+  id;
+  auxValue;
+  constructor(arg1, arg2, arg3) {
+    if (arg1 === undefined) {
+      this.init(0, 0, 0);
+    } else if (typeof arg1 === "number") {
+      this.init(arg1, arg2, arg3);
+    } else {
+      const id2 = arg1.id;
+      const count = arg2 ?? 1;
+      const aux = arg3 ?? 0;
+      this.init(id2, count, aux);
+    }
+  }
+  init(id2, count, damage) {
+    this.id = id2;
+    this.count = count;
+    this.auxValue = damage;
+  }
+  isNull() {
+    return (this.id | this.count | this.auxValue) === 0;
+  }
+  setNull() {
+    this.id = this.count = this.auxValue = 0;
+  }
+  remove(count) {
+    this.count -= count;
+    return new ItemInstance(this.id, count, this.auxValue);
+  }
+  useOn(player, level, x, y, z, face, clickX, clickY, clickZ) {
+    const item = this.getItem();
+    if (item && item.useOn && item.useOn(this, player, level, x, y, z, face, clickX, clickY, clickZ)) {
+      return true;
+    }
+    return false;
+  }
+  getDestroySpeed(tile) {
+    const item = this.getItem();
+    return item ? item.getDestroySpeed(this, tile) : 1;
+  }
+  use(level, player) {
+    const item = this.getItem();
+    return item ? item.use(this, level, player) : null;
+  }
+  getMaxStackSize() {
+    const item = this.getItem();
+    return item ? item.getMaxStackSize() : 64;
+  }
+  isStackable() {
+    return this.getMaxStackSize() > 1 && (!this.isDamageableItem() || !this.isDamaged());
+  }
+  static isStackableStatic(a, b) {
+    return !!(a && b && a.id === b.id && b.isStackable() && (!b.isStackedByData() || a.getAuxValue() === b.getAuxValue()));
+  }
+  isDamageableItem() {
+    const item = this.getItem();
+    return item ? item.getMaxDamage() > 0 : false;
+  }
+  isStackedByData() {
+    const item = this.getItem();
+    return item ? item.isStackedByData() : false;
+  }
+  isDamaged() {
+    return this.isDamageableItem() && this.auxValue > 0;
+  }
+  getDamageValue() {
+    return this.auxValue;
+  }
+  getAuxValue() {
+    return this.auxValue;
+  }
+  setAuxValue(value) {
+    this.auxValue = value;
+  }
+  getMaxDamage() {
+    const item = this.getItem();
+    return item ? item.getMaxDamage() : 0;
+  }
+  hurt(i) {
+    if (!this.isDamageableItem())
+      return;
+    this.auxValue += i;
+    if (this.auxValue > this.getMaxDamage()) {
+      this.count--;
+      if (this.count < 0)
+        this.count = 0;
+      this.auxValue = 0;
+    }
+  }
+  hurtEnemy(mob) {
+    const item = this.getItem();
+    if (item && item.hurtEnemy)
+      item.hurtEnemy(this, mob);
+  }
+  mineBlock(tile, x, y, z) {
+    const item = this.getItem();
+    if (item && item.mineBlock)
+      item.mineBlock(this, tile, x, y, z);
+  }
+  getAttackDamage(entity) {
+    const item = this.getItem();
+    return item ? item.getAttackDamage(entity) : 0;
+  }
+  canDestroySpecial(tile) {
+    const item = this.getItem();
+    return item ? item.canDestroySpecial(tile) : false;
+  }
+  snap(player) {}
+  interactEnemy(mob) {
+    const item = this.getItem();
+    if (item && item.interactEnemy)
+      item.interactEnemy(this, mob);
+  }
+  copy() {
+    return new ItemInstance(this.id, this.count, this.auxValue);
+  }
+  static matches(a, b) {
+    if (a === null && b === null)
+      return true;
+    if (a === null || b === null)
+      return false;
+    return a.matchesInternal(b);
+  }
+  static matchesNulls(a, b) {
+    const aNull = !a || a.isNull();
+    const bNull = !b || b.isNull();
+    if (aNull && bNull)
+      return true;
+    if (aNull || bNull)
+      return false;
+    return a.matchesInternal(b);
+  }
+  sameItem(b) {
+    return this.id === b.id && this.auxValue === b.auxValue;
+  }
+  getDescriptionId() {
+    return this.id ? this.getItem()?.getDescriptionId(this) ?? "EmptyItemInstance" : "EmptyItemInstance";
+  }
+  setDescriptionId(id2) {
+    return this;
+  }
+  getName() {
+    return this.getDescriptionId() + ".name";
+  }
+  toString() {
+    return this.count + " x " + this.getDescriptionId() + "(" + this.id + ")" + "@" + this.auxValue;
+  }
+  static clone(item) {
+    return item === null ? null : item.copy();
+  }
+  static cloneSafe(item) {
+    return item ? item.copy() : new ItemInstance;
+  }
+  matchesInternal(b) {
+    return this.id === b.id && this.count === b.count && this.auxValue === b.auxValue;
+  }
+  save(tag) {
+    tag.putShort("id", this.id);
+    tag.putByte("Count", this.count);
+    tag.putShort("Damage", this.auxValue);
+    return tag;
+  }
+  load(tag) {
+    this.id = tag.getShort("id");
+    this.count = tag.getByte("Count");
+    this.auxValue = tag.getShort("Damage");
+  }
+  equals(rhs) {
+    return this.id === rhs.id && this.auxValue === rhs.auxValue && this.count === rhs.count;
+  }
+  static fromTag(tag) {
+    const item = new ItemInstance;
+    item.load(tag);
+    if (item.getItem() === null) {
+      return null;
+    }
+    return item;
+  }
+  getItem() {
+    return globalThis.Item_items?.[this.id] ?? null;
+  }
+  getIcon() {
+    const item = this.getItem();
+    return item ? item.getIcon(this.auxValue) : 0;
+  }
+  releaseUsing(level, player, durationLeft) {
+    const item = this.getItem();
+    if (item && item.releaseUsing)
+      item.releaseUsing(this, level, player, durationLeft);
+  }
+  getUseDuration() {
+    const item = this.getItem();
+    return item ? item.getUseDuration(this) : 0;
+  }
+  getUseAnimation() {
+    const item = this.getItem();
+    return item ? item.getUseAnimation() : null;
+  }
+  useTimeDepleted(level, player) {
+    const item = this.getItem();
+    return item ? item.useTimeDepleted(this, level, player) : this;
+  }
+  static isArmorItem(instance) {
+    if (!instance)
+      return false;
+    const item = instance.getItem();
+    if (!item)
+      return false;
+    return item.isArmor ? item.isArmor() : false;
+  }
+}
+
+// src/game/world/level/material/translated/Material.ts
+class Material {
+  static air = null;
+  static dirt = null;
+  static wood = null;
+  static stone = null;
+  static metal = null;
+  static water = null;
+  static lava = null;
+  static leaves = null;
+  static plant = null;
+  static replaceable_plant = null;
+  static sponge = null;
+  static cloth = null;
+  static fire = null;
+  static sand = null;
+  static decoration = null;
+  static glass = null;
+  static explosive = null;
+  static coral = null;
+  static ice = null;
+  static topSnow = null;
+  static snow = null;
+  static cactus = null;
+  static clay = null;
+  static vegetable = null;
+  static portal = null;
+  static cake = null;
+  static web = null;
+  _flammable;
+  _neverBuildable;
+  _isAlwaysDestroyable;
+  _replaceable;
+  constructor() {
+    this._flammable = false;
+    this._neverBuildable = false;
+    this._isAlwaysDestroyable = true;
+    this._replaceable = false;
+  }
+  isLiquid() {
+    return false;
+  }
+  letsWaterThrough() {
+    return !this.isLiquid() && !this.isSolid();
+  }
+  isSolid() {
+    return true;
+  }
+  blocksLight() {
+    return true;
+  }
+  isSolidBlocking() {
+    if (this._neverBuildable)
+      return false;
+    return this.blocksMotion();
+  }
+  isAlwaysDestroyable() {
+    return this._isAlwaysDestroyable;
+  }
+  blocksMotion() {
+    return true;
+  }
+  isFlammable() {
+    return this._flammable;
+  }
+  isReplaceable() {
+    return this._replaceable;
+  }
+  flammable() {
+    this._flammable = true;
+    return this;
+  }
+  neverBuildable() {
+    this._neverBuildable = true;
+    return this;
+  }
+  notAlwaysDestroyable() {
+    this._isAlwaysDestroyable = false;
+    return this;
+  }
+  replaceable() {
+    this._replaceable = true;
+    return this;
+  }
+}
+
+class GasMaterial extends Material {
+  constructor() {
+    super();
+    this.replaceable();
+  }
+  isSolid() {
+    return false;
+  }
+  blocksLight() {
+    return false;
+  }
+  blocksMotion() {
+    return false;
+  }
+}
+
+class LiquidMaterial extends Material {
+  constructor() {
+    super();
+    this.replaceable();
+  }
+  isLiquid() {
+    return true;
+  }
+  blocksMotion() {
+    return false;
+  }
+  isSolid() {
+    return false;
+  }
+}
+
+class DecorationMaterial extends Material {
+  isSolid() {
+    return false;
+  }
+  blocksLight() {
+    return false;
+  }
+  blocksMotion() {
+    return false;
+  }
+}
+
+class WebMaterial extends Material {
+  constructor() {
+    super();
+    this.notAlwaysDestroyable();
+  }
+  blocksMotion() {
+    return false;
+  }
+}
+function initMaterials() {
+  Material.air = new GasMaterial;
+  Material.dirt = new Material;
+  Material.wood = new Material().flammable();
+  Material.stone = new Material().notAlwaysDestroyable();
+  Material.metal = new Material().notAlwaysDestroyable();
+  Material.water = new LiquidMaterial;
+  Material.lava = new LiquidMaterial;
+  Material.leaves = new Material().flammable().neverBuildable();
+  Material.plant = new DecorationMaterial;
+  Material.replaceable_plant = new DecorationMaterial().replaceable().flammable();
+  Material.sponge = new Material;
+  Material.cloth = new Material().flammable();
+  Material.fire = new GasMaterial;
+  Material.sand = new Material;
+  Material.decoration = new DecorationMaterial;
+  Material.glass = new Material().neverBuildable();
+  Material.explosive = new Material().flammable().neverBuildable();
+  Material.coral = new Material;
+  Material.ice = new Material().neverBuildable();
+  Material.topSnow = new DecorationMaterial().neverBuildable().notAlwaysDestroyable().replaceable();
+  Material.snow = new Material().notAlwaysDestroyable();
+  Material.cactus = new Material().neverBuildable();
+  Material.clay = new Material;
+  Material.vegetable = new Material;
+  Material.portal = new Material;
+  Material.cake = new Material;
+  Material.web = new WebMaterial;
+}
+
+// src/game/world/inventory/translated/Container.ts
+class Container {
+  static LARGE_MAX_STACK_SIZE = 64;
+  containerId;
+  containerType;
+  constructor(containerType) {
+    this.containerId = -1;
+    this.containerType = containerType;
+  }
+  getSlotCopies() {
+    const items = [];
+    const nullItem = new ItemInstance;
+    for (let i = 0;i < this.getContainerSize(); i++) {
+      const item = this.getItem(i);
+      items.push(item ? item : nullItem);
+    }
+    return items;
+  }
+}
+
+// src/game/world/inventory/translated/FillingContainer.ts
+class FillingContainer extends Container {
+  static MAX_INVENTORY_STACK_SIZE = 254;
+  linkedSlots;
+  numTotalSlots;
+  numLinkedSlots;
+  items;
+  _isCreative;
+  constructor(numTotalSlots, numLinkedSlots, containerType, isCreative) {
+    super(containerType);
+    this.numTotalSlots = numTotalSlots;
+    this.numLinkedSlots = numLinkedSlots;
+    this.linkedSlots = [];
+    this._isCreative = isCreative;
+    if (numLinkedSlots > 0) {
+      for (let i = 0;i < numLinkedSlots; i++) {
+        this.linkedSlots.push({ inventorySlot: -1 });
+      }
+    }
+    this.items = new Array(numTotalSlots).fill(null);
+  }
+  destroy() {
+    this.clearInventory();
+    this.linkedSlots = [];
+  }
+  clearInventory() {
+    for (let i = 0;i < this.numLinkedSlots; i++) {
+      this.linkedSlots[i] = { inventorySlot: i };
+    }
+    for (let i = this.numLinkedSlots;i < this.items.length; i++) {
+      this.release(i);
+    }
+    this.items = new Array(this.numTotalSlots).fill(null);
+  }
+  removeResourceByType(type) {
+    if (this._isCreative)
+      return true;
+    const slot = this.getSlot(type);
+    if (slot < 0)
+      return false;
+    const item = this.items[slot];
+    if (item) {
+      item.count--;
+      if (item.count <= 0)
+        this.release(slot);
+    }
+    return true;
+  }
+  removeResourceByItem(item) {
+    return this.removeResourceWithAux(item, false) === 0;
+  }
+  removeResourceWithAux(item, requireExactAux) {
+    if (this._isCreative)
+      return 0;
+    let count = item.count;
+    while (count > 0) {
+      let slot = -1;
+      if (!requireExactAux) {
+        slot = this.getNonEmptySlot(item.id);
+      } else {
+        slot = this.getNonEmptySlotWithData(item.id, item.getAuxValue());
+      }
+      if (slot < 0)
+        return count;
+      const slotItem = this.items[slot];
+      const toRemove = Math.min(count, slotItem.count);
+      slotItem.count -= toRemove;
+      count -= toRemove;
+      if (slotItem.count <= 0)
+        this.clearSlot(slot);
+    }
+    return 0;
+  }
+  hasResource(type) {
+    if (this._isCreative)
+      return true;
+    const slot = this.getSlot(type);
+    return slot >= 0;
+  }
+  swapSlots(from, to) {
+    const tmp = this.items[to];
+    this.items[to] = this.items[from];
+    this.items[from] = tmp;
+  }
+  add(item) {
+    if (this._isCreative)
+      return true;
+    if (!item || item.isNull())
+      return true;
+    if (!item.isDamaged()) {
+      let lastSize;
+      do {
+        lastSize = item.count;
+        item.count = this.addResource(item);
+      } while (item.count > 0 && item.count < lastSize);
+      return item.count < lastSize;
+    }
+    const slot = this.getFreeSlot();
+    if (slot >= 0) {
+      this.items[slot] = ItemInstance.clone(item);
+      this.linkEmptySlot(slot);
+      item.count = 0;
+      return true;
+    }
+    return false;
+  }
+  removeItem(slot, count) {
+    const item = this.getItem(slot);
+    if (item) {
+      if (count > item.count)
+        count = item.count;
+      item.count -= count;
+      if (item.count <= 0)
+        this.clearSlot(slot);
+    }
+    return new ItemInstance;
+  }
+  setItem(slot, item) {
+    if (slot < 0 || slot >= this.numTotalSlots)
+      return;
+    if (item) {
+      if (!this.items[slot]) {
+        this.items[slot] = new ItemInstance(item.id, item.count, item.getAuxValue());
+      } else {
+        this.items[slot].id = item.id;
+        this.items[slot].count = item.count;
+        this.items[slot].setAuxValue(item.getAuxValue());
+      }
+    } else {
+      this.release(slot);
+    }
+  }
+  getContainerSize() {
+    return this.numTotalSlots;
+  }
+  getItem(slot) {
+    if (slot < 0 || slot >= this.numTotalSlots)
+      return null;
+    if (slot >= this.numLinkedSlots)
+      return this.items[slot];
+    return this.getLinked(slot);
+  }
+  getName() {
+    return "Inventory";
+  }
+  getMaxStackSize() {
+    return FillingContainer.MAX_INVENTORY_STACK_SIZE;
+  }
+  dropSlot(slot, onlyClearContainer, randomly = false) {
+    if (slot >= 0 && slot < this.numLinkedSlots) {
+      slot = this.linkedSlots[slot].inventorySlot;
+    }
+    if (slot < 0 || slot >= this.items.length)
+      return;
+    const item = this.items[slot];
+    if (item && item.count) {
+      if (!onlyClearContainer)
+        this.doDrop(item.copy(), randomly);
+      item.count = 0;
+      this.release(slot);
+      this.compressLinkedSlotList(slot);
+    }
+  }
+  dropAll(onlyClearContainer) {
+    for (let i = this.numLinkedSlots;i < this.items.length; i++) {
+      this.dropSlot(i, onlyClearContainer, true);
+    }
+  }
+  setContainerChanged() {}
+  stillValid(player) {
+    return !player.removed;
+  }
+  contains(itemInstance) {
+    for (let i = 0;i < this.items.length; i++) {
+      if (this.items[i] && ItemInstance.matches(this.items[i], itemInstance))
+        return true;
+    }
+    return false;
+  }
+  startOpen() {}
+  stopOpen() {}
+  getSlot(tileId, data) {
+    for (let i = this.numLinkedSlots;i < this.items.length; i++) {
+      const item = this.items[i];
+      if (item && item.id === tileId) {
+        if (data === undefined)
+          return i;
+        if (item.getAuxValue() === data)
+          return i;
+      }
+    }
+    return -1;
+  }
+  getNonEmptySlot(tileId, data) {
+    for (let i = this.numLinkedSlots;i < this.items.length; i++) {
+      const item = this.items[i];
+      if (item && item.id === tileId && item.count > 0) {
+        if (data === undefined)
+          return i;
+        if (item.getAuxValue() === data)
+          return i;
+      }
+    }
+    return -1;
+  }
+  getNumEmptySlots() {
+    let numEmpty = 0;
+    for (let i = this.numLinkedSlots;i < this.items.length; i++) {
+      if (!this.items[i] || this.items[i].isNull())
+        numEmpty++;
+    }
+    return numEmpty;
+  }
+  getNumLinkedSlots() {
+    return this.numLinkedSlots;
+  }
+  getSlotWithRemainingSpace(item) {
+    for (let i = 0;i < this.items.length; i++) {
+      const it = this.items[i];
+      if (it && it.id === item.id && it.isStackable() && it.count < it.getMaxStackSize() && it.count < this.getMaxStackSize() && (!it.isStackedByData() || it.getAuxValue() === item.getAuxValue())) {
+        return i;
+      }
+    }
+    return -1;
+  }
+  addResource(itemInstance) {
+    const type = itemInstance.id;
+    let count = itemInstance.count;
+    if (itemInstance.getMaxStackSize() === 1) {
+      const slot2 = this.getFreeSlot();
+      if (slot2 < 0)
+        return count;
+      if (this.items[slot2] === null) {
+        this.items[slot2] = ItemInstance.clone(itemInstance);
+        this.linkEmptySlot(slot2);
+      } else if (this.items[slot2].isNull()) {
+        this.items[slot2].id = itemInstance.id;
+        this.items[slot2].count = itemInstance.count;
+        this.items[slot2].setAuxValue(itemInstance.getAuxValue());
+        this.linkEmptySlot(slot2);
+      }
+      return 0;
+    }
+    let slot = this.getSlotWithRemainingSpace(itemInstance);
+    if (slot < 0)
+      slot = this.getFreeSlot();
+    if (slot < 0)
+      return count;
+    if (this.items[slot] === null) {
+      this.items[slot] = new ItemInstance(type, 0, itemInstance.getAuxValue());
+    } else if (this.items[slot].isNull()) {
+      this.items[slot].id = type;
+      this.items[slot].setAuxValue(itemInstance.getAuxValue());
+    }
+    this.linkEmptySlot(slot);
+    let toAdd = count;
+    if (toAdd > this.items[slot].getMaxStackSize() - this.items[slot].count) {
+      toAdd = this.items[slot].getMaxStackSize() - this.items[slot].count;
+    }
+    if (toAdd > this.getMaxStackSize() - this.items[slot].count) {
+      toAdd = this.getMaxStackSize() - this.items[slot].count;
+    }
+    if (toAdd === 0)
+      return count;
+    count -= toAdd;
+    this.items[slot].count += toAdd;
+    return count;
+  }
+  getFreeSlot() {
+    for (let i = this.numLinkedSlots;i < this.items.length; i++) {
+      if (this.items[i] === null || this.items[i].isNull())
+        return i;
+    }
+    return -1;
+  }
+  release(slot) {
+    if (this.items[slot]) {
+      this.items[slot] = null;
+    }
+  }
+  clearSlot(slot) {
+    if (slot < 0)
+      return;
+    if (slot < this.numLinkedSlots) {
+      this.release(this.linkedSlots[slot].inventorySlot);
+      this.linkedSlots[slot].inventorySlot = -1;
+    } else {
+      this.release(slot);
+    }
+    this.compressLinkedSlotList(slot);
+  }
+  addItem(item) {
+    for (let i = this.numLinkedSlots;i < this.items.length; i++) {
+      if (!this.items[i]) {
+        this.items[i] = item;
+        return i;
+      }
+    }
+    const newSize = this.items.length + 1;
+    if (this._isCreative && newSize > this.numTotalSlots) {
+      this.numTotalSlots = newSize;
+    }
+    if (newSize <= this.numTotalSlots) {
+      this.items.push(item);
+      return newSize - 1;
+    }
+    console.warn("Error@addItem: adding an item to an already full inventory: " + item.getDescriptionId());
+    return 0;
+  }
+  fixBackwardCompabilityItem(item) {
+    if (item.id === 44) {
+      item.setAuxValue(item.getAuxValue() & 7);
+    }
+  }
+  replace(newItems, maxCount = -1) {
+    this.clearInventory();
+    maxCount = maxCount < 0 ? newItems.length : Math.min(newItems.length, maxCount);
+    const base = this.numLinkedSlots;
+    const iMax = Math.min(this.getContainerSize() - base, maxCount);
+    for (let i = 0;i < iMax; i++) {
+      this.replaceSlot(base + i, newItems[i].isNull() ? null : newItems[i]);
+    }
+  }
+  replaceSlot(slotId, ins) {
+    if (ins) {
+      if (!this.items[slotId]) {
+        this.items[slotId] = new ItemInstance;
+      }
+      this.items[slotId].id = ins.id;
+      this.items[slotId].count = ins.count;
+      this.items[slotId].setAuxValue(ins.getAuxValue());
+    } else {
+      this.release(slotId);
+    }
+  }
+  getSlotList(slot) {
+    return this.items;
+  }
+  linkSlot(selectionSlot, inventorySlot, propagate) {
+    if (selectionSlot < 0 || selectionSlot >= this.numLinkedSlots)
+      return false;
+    if (inventorySlot < this.numLinkedSlots || inventorySlot >= this.numTotalSlots)
+      return false;
+    if (inventorySlot === this.linkedSlots[selectionSlot].inventorySlot)
+      return false;
+    if (propagate) {
+      let i = 0;
+      for (;i < this.numLinkedSlots - 1; i++) {
+        if (this.linkedSlots[i].inventorySlot === inventorySlot)
+          break;
+      }
+      for (;i > selectionSlot; i--) {
+        this.linkedSlots[i].inventorySlot = this.linkedSlots[i - 1].inventorySlot;
+      }
+    }
+    this.linkedSlots[selectionSlot].inventorySlot = inventorySlot;
+    return true;
+  }
+  linkEmptySlot(inventorySlot) {
+    for (let i = 0;i < this.numLinkedSlots; i++) {
+      if (this.linkedSlots[i].inventorySlot === inventorySlot)
+        return true;
+    }
+    for (let i = 0;i < this.numLinkedSlots; i++) {
+      const item = this.getLinked(i);
+      if (!item) {
+        this.linkedSlots[i].inventorySlot = inventorySlot;
+        return true;
+      }
+    }
+    return false;
+  }
+  compressLinkedSlotList(slot) {
+    let i = slot - 1, j = 0;
+    while (++i < this.numLinkedSlots) {
+      this.linkedSlots[i - j] = this.linkedSlots[i];
+      const item = this.getLinked(i);
+      if (!item)
+        j++;
+    }
+    for (let k = i - j;k < i; k++) {
+      this.linkedSlots[k].inventorySlot = -1;
+    }
+  }
+  doDrop(item, randomly) {}
+  getLinked(slot) {
+    if (slot < this.numLinkedSlots && slot >= 0) {
+      const i = this.linkedSlots[slot].inventorySlot;
+      return i >= this.numLinkedSlots && i < this.numTotalSlots ? this.items[i] : null;
+    }
+    return null;
+  }
+}
+
+// src/game/world/entity/translated/Entity.ts
+var entityCounter = 0;
+var TOTAL_AIR_SUPPLY3 = 15 * 20;
+
+class Entity2 {
+  x = 0;
+  y = 0;
+  z = 0;
+  xChunk = 0;
+  yChunk = 0;
+  zChunk = 0;
+  entityId = 0;
+  viewScale = 1;
+  level;
+  xo = 0;
+  yo = 0;
+  zo = 0;
+  xd = 0;
+  yd = 0;
+  zd = 0;
+  yRot = 0;
+  xRot = 0;
+  yRotO = 0;
+  xRotO = 0;
+  bb;
+  heightOffset = 0;
+  bbWidth = 0.6;
+  bbHeight = 1.8;
+  walkDistO = 0;
+  walkDist = 0;
+  xOld = 0;
+  yOld = 0;
+  zOld = 0;
+  ySlideOffset = 0;
+  footSize = 0;
+  pushthrough = 0;
+  tickCount = 0;
+  invulnerableTime = 0;
+  airSupply = TOTAL_AIR_SUPPLY3;
+  onFire = 0;
+  flameTime = 1;
+  entityRendererId = 0;
+  fallDistance = 0;
+  blocksBuilding = false;
+  inChunk = false;
+  onGround = false;
+  horizontalCollision = false;
+  verticalCollision = false;
+  collision = false;
+  hurtMarked = false;
+  slide = true;
+  removed = false;
+  noPhysics = false;
+  canRemove = true;
+  invisible = false;
+  reallyRemoveIfPlayer = false;
+  airCapacity = TOTAL_AIR_SUPPLY3;
+  makeStepSound = true;
+  wasInWater = false;
+  fireImmune = false;
+  firstTick = true;
+  nextStep = 1;
+  isStuckInWeb = false;
+  constructor(level) {
+    this.level = level;
+    this.viewScale = 1;
+    this.blocksBuilding = false;
+    this.onGround = false;
+    this.wasInWater = false;
+    this.collision = false;
+    this.hurtMarked = false;
+    this.slide = true;
+    this.isStuckInWeb = false;
+    this.removed = false;
+    this.reallyRemoveIfPlayer = false;
+    this.canRemove = true;
+    this.noPhysics = false;
+    this.firstTick = true;
+    this.bbWidth = 0.6;
+    this.bbHeight = 1.8;
+    this.heightOffset = 0;
+    this.ySlideOffset = 0;
+    this.fallDistance = 0;
+    this.footSize = 0;
+    this.invulnerableTime = 0;
+    this.pushthrough = 0;
+    this.airCapacity = TOTAL_AIR_SUPPLY3;
+    this.airSupply = TOTAL_AIR_SUPPLY3;
+    this.xOld = 0;
+    this.yOld = 0;
+    this.zOld = 0;
+    this.horizontalCollision = false;
+    this.verticalCollision = false;
+    this.x = 0;
+    this.y = 0;
+    this.z = 0;
+    this.xo = 0;
+    this.yo = 0;
+    this.zo = 0;
+    this.xd = 0;
+    this.yd = 0;
+    this.zd = 0;
+    this.xRot = 0;
+    this.yRot = 0;
+    this.xRotO = 0;
+    this.yRotO = 0;
+    this.xChunk = 0;
+    this.yChunk = 0;
+    this.zChunk = 0;
+    this.inChunk = false;
+    this.fireImmune = false;
+    this.onFire = 0;
+    this.flameTime = 1;
+    this.walkDist = 0;
+    this.walkDistO = 0;
+    this.tickCount = 0;
+    this.entityRendererId = 0;
+    this.nextStep = 1;
+    this.makeStepSound = true;
+    this.invisible = false;
+    this._init();
+    this.entityId = ++entityCounter;
+    this.setPos(0, 0, 0);
+  }
+  _init() {
+    this.xo = this.xOld = this.x;
+    this.yo = this.yOld = this.y;
+    this.zo = this.zOld = this.z;
+    this.xRotO = this.xRot;
+    this.yRotO = this.yRot;
+    this.onFire = 0;
+    this.removed = false;
+    this.fallDistance = 0;
+  }
+  reset() {
+    this._init();
+  }
+  hashCode() {
+    return this.entityId;
+  }
+  equals(rhs) {
+    return this.entityId === rhs.entityId;
+  }
+  setLevel(level) {
+    this.level = level;
+  }
+  remove() {
+    this.removed = true;
+  }
+  setPos(x, y, z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    const w = this.bbWidth / 2;
+    const h = this.bbHeight;
+    if (this.bb) {
+      this.bb.x0 = x - w;
+      this.bb.y0 = y - this.heightOffset + this.ySlideOffset;
+      this.bb.z0 = z - w;
+      this.bb.x1 = x + w;
+      this.bb.y1 = y - this.heightOffset + this.ySlideOffset + h;
+      this.bb.z1 = z + w;
+    }
+  }
+  move(xa, ya, za) {
+    if (this.noPhysics) {
+      if (this.bb) {
+        this.bb.x0 += xa;
+        this.bb.x1 += xa;
+        this.bb.y0 += ya;
+        this.bb.y1 += ya;
+        this.bb.z0 += za;
+        this.bb.z1 += za;
+      }
+      this.x = (this.bb.x0 + this.bb.x1) / 2;
+      this.y = this.bb.y0 + this.heightOffset - this.ySlideOffset;
+      this.z = (this.bb.z0 + this.bb.z1) / 2;
+      return;
+    }
+    if (this.isStuckInWeb) {
+      this.isStuckInWeb = false;
+      xa *= 0.25;
+      ya *= 0.05;
+      za *= 0.25;
+      this.xd = 0;
+      this.yd = 0;
+      this.zd = 0;
+    }
+    const xo = this.x;
+    const zo = this.z;
+    const xaOrg = xa;
+    const yaOrg = ya;
+    const zaOrg = za;
+    if (this.level && this.level.getCubes) {
+      const cubes = this.level.getCubes(this, this.bb);
+      if (cubes.length > 0) {
+        for (const cube of cubes) {
+          if (cube.clipYCollide)
+            ya = cube.clipYCollide(this.bb, ya);
+        }
+        if (this.bb) {
+          this.bb.y0 += ya;
+          this.bb.y1 += ya;
+        }
+        const og = this.onGround || yaOrg !== ya && yaOrg < 0;
+        for (const cube of cubes) {
+          if (cube.clipXCollide)
+            xa = cube.clipXCollide(this.bb, xa);
+        }
+        if (this.bb) {
+          this.bb.x0 += xa;
+          this.bb.x1 += xa;
+        }
+        for (const cube of cubes) {
+          if (cube.clipZCollide)
+            za = cube.clipZCollide(this.bb, za);
+        }
+        if (this.bb) {
+          this.bb.z0 += za;
+          this.bb.z1 += za;
+        }
+        this.onGround = yaOrg !== ya && yaOrg < 0;
+      }
+    }
+    if (!this.slide && yaOrg !== ya) {
+      xa = ya = za = 0;
+    }
+    if (!this.slide && xaOrg !== xa) {
+      xa = ya = za = 0;
+    }
+    if (!this.slide && zaOrg !== za) {
+      xa = ya = za = 0;
+    }
+    this.x = (this.bb.x0 + this.bb.x1) / 2;
+    this.y = this.bb.y0 + this.heightOffset - this.ySlideOffset;
+    this.z = (this.bb.z0 + this.bb.z1) / 2;
+    this.horizontalCollision = xaOrg !== xa || zaOrg !== za;
+    this.verticalCollision = yaOrg !== ya;
+    this.onGround = yaOrg !== ya && yaOrg < 0;
+    this.collision = this.horizontalCollision || this.verticalCollision;
+    this.checkFallDamage(ya, this.onGround);
+    if (xaOrg !== xa)
+      this.xd = 0;
+    if (yaOrg !== ya)
+      this.yd = 0;
+    if (zaOrg !== za)
+      this.zd = 0;
+    const xm = this.x - xo;
+    const zm = this.z - zo;
+    if (this.makeStepSound) {
+      this.walkDist += Math.sqrt(xm * xm + zm * zm) * 0.6;
+    }
+    this.ySlideOffset *= 0.4;
+  }
+  makeStuckInWeb() {
+    this.isStuckInWeb = true;
+    this.fallDistance = 0;
+  }
+  isUnderLiquid(material) {
+    const yp = this.y + this.getHeadHeight();
+    const xt = Math.floor(this.x);
+    const yt = Math.floor(yp);
+    const zt = Math.floor(this.z);
+    const t = this.level.getTile(xt, yt, zt);
+    if (t !== 0 && this.level.tiles && this.level.tiles[t]) {
+      return this.level.tiles[t].material === material;
+    }
+    return false;
+  }
+  setPosFromEntityPos(pos) {
+    if (pos.move)
+      this.setPos(pos.x, pos.y, pos.z);
+    else
+      this.setPos(this.x, this.y, this.z);
+    if (pos.rot)
+      this.setRot(pos.yRot, pos.xRot);
+    else
+      this.setRot(this.yRot, this.xRot);
+  }
+  getBrightness(a) {
+    const xTile = Math.floor(this.x);
+    const hh = (this.bb.y1 - this.bb.y0) * 0.66;
+    const yTile = Math.floor(this.y - this.heightOffset + hh);
+    const zTile = Math.floor(this.z);
+    if (this.level && this.level.getBrightness) {
+      return this.level.getBrightness(xTile, yTile, zTile);
+    }
+    return 0;
+  }
+  setSize(w, h) {
+    this.bbWidth = w;
+    this.bbHeight = h;
+  }
+  setRot(yRot, xRot) {
+    this.yRot = this.yRotO = yRot;
+    this.xRot = this.xRotO = xRot;
+  }
+  turn(xo, yo) {
+    const xRotOld = this.xRot;
+    const yRotOld = this.yRot;
+    this.yRot += xo * 0.15;
+    this.xRot -= yo * 0.15;
+    if (this.xRot < -90)
+      this.xRot = -90;
+    if (this.xRot > 90)
+      this.xRot = 90;
+    this.xRotO += this.xRot - xRotOld;
+    this.yRotO += this.yRot - yRotOld;
+  }
+  interpolateTurn(xo, yo) {
+    this.yRot += xo * 0.15;
+    this.xRot -= yo * 0.15;
+    if (this.xRot < -90)
+      this.xRot = -90;
+    if (this.xRot > 90)
+      this.xRot = 90;
+  }
+  tick() {
+    this.baseTick();
+  }
+  baseTick() {
+    this.tickCount++;
+    this.walkDistO = this.walkDist;
+    this.xo = this.x;
+    this.yo = this.y;
+    this.zo = this.z;
+    this.xRotO = this.xRot;
+    this.yRotO = this.yRot;
+    if (this.isInWater()) {
+      if (!this.wasInWater && !this.firstTick) {}
+      this.fallDistance = 0;
+      this.wasInWater = true;
+      this.onFire = 0;
+    } else {
+      this.wasInWater = false;
+    }
+    if (this.onFire > 0) {
+      if (this.fireImmune) {
+        this.onFire -= 4;
+        if (this.onFire < 0)
+          this.onFire = 0;
+      } else {
+        if (this.onFire % 20 === 0) {
+          this.hurt(null, 1);
+        }
+        this.onFire--;
+      }
+    }
+    if (this.isInLava()) {
+      this.lavaHurt();
+    }
+    if (this.y < -64) {
+      this.outOfWorld();
+    }
+    this.firstTick = false;
+  }
+  outOfWorld() {
+    this.remove();
+  }
+  checkFallDamage(ya, onGround) {
+    if (onGround) {
+      if (this.fallDistance > 0) {
+        this.causeFallDamage(this.fallDistance);
+        this.fallDistance = 0;
+      }
+    } else {
+      if (ya < 0)
+        this.fallDistance -= ya;
+    }
+  }
+  causeFallDamage(fallDamage2) {}
+  getHeadHeight() {
+    return 0;
+  }
+  moveRelative(xa, za, speed) {
+    let dist = Math.sqrt(xa * xa + za * za);
+    if (dist < 0.01)
+      return;
+    if (dist < 1)
+      dist = 1;
+    dist = speed / dist;
+    xa *= dist;
+    za *= dist;
+    const sin_ = Math.sin(this.yRot * Math.PI / 180);
+    const cos_ = Math.cos(this.yRot * Math.PI / 180);
+    this.xd += xa * cos_ - za * sin_;
+    this.zd += za * cos_ + xa * sin_;
+  }
+  moveTo(x, y, z, yRot, xRot) {
+    this.xOld = this.xo = this.x = x;
+    this.yOld = this.yo = this.y = y + this.heightOffset;
+    this.zOld = this.zo = this.z = z;
+    this.yRot = this.yRotO = yRot;
+    this.xRot = this.xRotO = xRot;
+    this.setPos(this.x, this.y, this.z);
+  }
+  distanceToEntity(e) {
+    const xd = this.x - e.x;
+    const yd = this.y - e.y;
+    const zd = this.z - e.z;
+    return Math.sqrt(xd * xd + yd * yd + zd * zd);
+  }
+  distanceTo(x2, y2, z2) {
+    const xd = this.x - x2;
+    const yd = this.y - y2;
+    const zd = this.z - z2;
+    return Math.sqrt(xd * xd + yd * yd + zd * zd);
+  }
+  distanceToSqr(x2, y2, z2) {
+    const xd = this.x - x2;
+    const yd = this.y - y2;
+    const zd = this.z - z2;
+    return xd * xd + yd * yd + zd * zd;
+  }
+  distanceToSqrEntity(e) {
+    const xd = this.x - e.x;
+    const yd = this.y - e.y;
+    const zd = this.z - e.z;
+    return xd * xd + yd * yd + zd * zd;
+  }
+  playerTouch(player) {}
+  pushEntity(e) {
+    let xa = e.x - this.x;
+    let za = e.z - this.z;
+    let dd = Math.abs(xa) > Math.abs(za) ? Math.abs(xa) : Math.abs(za);
+    if (dd >= 0.01) {
+      dd = Math.sqrt(dd);
+      xa /= dd;
+      za /= dd;
+      let pow = 1 / dd;
+      if (pow > 1)
+        pow = 1;
+      xa *= pow;
+      za *= pow;
+      xa *= 0.05;
+      za *= 0.05;
+      xa *= 1 - this.pushthrough;
+      za *= 1 - this.pushthrough;
+      this.push(-xa, 0, -za);
+      e.push(xa, 0, za);
+    }
+  }
+  push(xa, ya, za) {
+    this.xd += xa;
+    this.yd += ya;
+    this.zd += za;
+  }
+  markHurt() {
+    this.hurtMarked = true;
+  }
+  hurt(source, damage) {
+    this.markHurt();
+    return false;
+  }
+  intersects(x0, y0, z0, x1, y1, z1) {
+    if (!this.bb)
+      return false;
+    return this.bb.x0 < x1 && this.bb.x1 > x0 && this.bb.y0 < y1 && this.bb.y1 > y0 && this.bb.z0 < z1 && this.bb.z1 > z0;
+  }
+  isPickable() {
+    return false;
+  }
+  isPushable() {
+    return false;
+  }
+  isShootable() {
+    return false;
+  }
+  awardKillScore(victim, score) {}
+  shouldRender(c) {
+    if (this.invisible)
+      return false;
+    const xd = this.x - c.x;
+    const yd = this.y - c.y;
+    const zd = this.z - c.z;
+    const distance = xd * xd + yd * yd + zd * zd;
+    return this.shouldRenderAtSqrDistance(distance);
+  }
+  shouldRenderAtSqrDistance(distance) {
+    let size = this.bb ? (this.bb.x1 - this.bb.x0 + this.bb.y1 - this.bb.y0 + this.bb.z1 - this.bb.z0) / 3 : 0.6;
+    size *= 64 * this.viewScale;
+    return distance < size * size;
+  }
+  isCreativeModeAllowed() {
+    return false;
+  }
+  getShadowHeightOffs() {
+    return this.bbHeight / 2;
+  }
+  isAlive() {
+    return !this.removed;
+  }
+  interact(player) {
+    return false;
+  }
+  lerpTo(x, y, z, yRot, xRot, steps) {
+    this.setPos(x, y, z);
+    this.setRot(yRot, xRot);
+  }
+  getPickRadius() {
+    return 0.1;
+  }
+  lerpMotion(xd, yd, zd) {
+    this.xd = xd;
+    this.yd = yd;
+    this.zd = zd;
+  }
+  animateHurt() {}
+  setEquippedSlot(slot, item, auxValue) {}
+  isSneaking() {
+    return false;
+  }
+  isPlayer() {
+    return false;
+  }
+  lavaHurt() {
+    if (!this.fireImmune) {
+      this.hurt(null, 4);
+      this.onFire = 30 * 20;
+    }
+  }
+  burn(dmg) {
+    if (!this.fireImmune) {
+      this.hurt(null, dmg);
+    }
+  }
+  save(entityTag) {
+    const id2 = this.getEntityTypeId();
+    if (this.removed || id2 === 0)
+      return false;
+    entityTag.putInt("id", id2);
+    this.saveWithoutId(entityTag);
+    return true;
+  }
+  saveWithoutId(entityTag) {
+    entityTag.putFloat("FallDistance", this.fallDistance);
+    entityTag.putShort("Fire", this.onFire);
+    entityTag.putShort("Air", this.airSupply);
+    entityTag.putBoolean("OnGround", this.onGround);
+    this.addAdditionalSaveData(entityTag);
+  }
+  load(tag) {
+    this.fallDistance = tag.getFloat("FallDistance");
+    this.onFire = tag.getShort("Fire");
+    this.airSupply = tag.getShort("Air");
+    this.onGround = tag.getBoolean("OnGround");
+    this.setPos(this.x, this.y, this.z);
+    return true;
+  }
+  spawnAtLocation(resource, count) {
+    return this.spawnAtLocationWithOffset(resource, count, 0);
+  }
+  spawnAtLocationWithOffset(resource, count, yOffs) {
+    return this.spawnAtLocationItem({ id: resource, count, auxValue: 0 }, yOffs);
+  }
+  spawnAtLocationItem(itemInstance, yOffs) {
+    if (this.level && this.level.spawnItemEntity) {
+      this.level.spawnItemEntity(this.x, this.y + yOffs, this.z, itemInstance.id, itemInstance.count, itemInstance.auxValue);
+    }
+    return null;
+  }
+  isOnFire() {
+    return this.onFire > 0;
+  }
+  interactPreventDefault() {
+    return false;
+  }
+  isItemEntity() {
+    return false;
+  }
+  isHangingEntity() {
+    return false;
+  }
+  getAuxData() {
+    return 0;
+  }
+  playStepSound(xt, yt, zt, t) {
+    if (this.level && this.level.playSound) {
+      this.level.playSound(this, "step.stone", 0.25, 1);
+    }
+  }
+  isInWall() {
+    if (!this.level)
+      return false;
+    const xt = Math.floor(this.x);
+    const yt = Math.floor(this.y + this.getHeadHeight());
+    const zt = Math.floor(this.z);
+    return this.level.isSolidBlockingTile ? this.level.isSolidBlockingTile(xt, yt, zt) : false;
+  }
+  isInWater() {
+    if (!this.level || !this.level.containsMaterial)
+      return false;
+    return this.level.containsMaterial(this.bb, "water");
+  }
+  isInLava() {
+    if (!this.level || !this.level.containsMaterial)
+      return false;
+    return this.level.containsMaterial(this.bb, "lava");
+  }
+  isFree(xa, ya, za, grow) {
+    if (!this.level || !this.level.getCubes)
+      return true;
+    return true;
+  }
+  isMob() {
+    return false;
+  }
+}
+
+// src/game/world/phys/translated/Vec3.ts
+class Vec3 {
+  x;
+  y;
+  z;
+  constructor(x, y, z) {
+    if (x === undefined) {
+      this.x = 0;
+      this.y = 0;
+      this.z = 0;
+    } else {
+      if (x === -0)
+        x = 0;
+      if (y === -0)
+        y = 0;
+      if (z === -0)
+        z = 0;
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+  }
+  set(x, y, z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    return this;
+  }
+  add(rhs) {
+    return new Vec3(this.x + rhs.x, this.y + rhs.y, this.z + rhs.z);
+  }
+  sub(rhs) {
+    return new Vec3(this.x - rhs.x, this.y - rhs.y, this.z - rhs.z);
+  }
+  multiply(k) {
+    return new Vec3(this.x * k, this.y * k, this.z * k);
+  }
+  normalized() {
+    const dist = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    if (dist < 0.0001)
+      return new Vec3;
+    return new Vec3(this.x / dist, this.y / dist, this.z / dist);
+  }
+  dot(p) {
+    return this.x * p.x + this.y * p.y + this.z * p.z;
+  }
+  cross(p) {
+    return new Vec3(this.y * p.z - this.z * p.y, this.z * p.x - this.x * p.z, this.x * p.y - this.y * p.x);
+  }
+  addXYZ(x, y, z) {
+    return new Vec3(this.x + x, this.y + y, this.z + z);
+  }
+  subXYZ(x, y, z) {
+    return new Vec3(this.x - x, this.y - y, this.z - z);
+  }
+  negate() {
+    this.x = -this.x;
+    this.y = -this.y;
+    this.z = -this.z;
+  }
+  negated() {
+    return new Vec3(-this.x, -this.y, -this.z);
+  }
+  distanceTo(p) {
+    const xd = p.x - this.x, yd = p.y - this.y, zd = p.z - this.z;
+    return Math.sqrt(xd * xd + yd * yd + zd * zd);
+  }
+  distanceToSqr(p) {
+    const xd = p.x - this.x, yd = p.y - this.y, zd = p.z - this.z;
+    return xd * xd + yd * yd + zd * zd;
+  }
+  distanceToSqrXYZ(x2, y2, z2) {
+    const xd = x2 - this.x, yd = y2 - this.y, zd = z2 - this.z;
+    return xd * xd + yd * yd + zd * zd;
+  }
+  length() {
+    return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+  }
+  clipX(b, xt, result) {
+    const xd = b.x - this.x, yd = b.y - this.y, zd = b.z - this.z;
+    if (xd * xd < 0.0000001)
+      return false;
+    const d = (xt - this.x) / xd;
+    if (d < 0 || d > 1)
+      return false;
+    result.set(this.x + xd * d, this.y + yd * d, this.z + zd * d);
+    return true;
+  }
+  clipY(b, yt, result) {
+    const xd = b.x - this.x, yd = b.y - this.y, zd = b.z - this.z;
+    if (yd * yd < 0.0000001)
+      return false;
+    const d = (yt - this.y) / yd;
+    if (d < 0 || d > 1)
+      return false;
+    result.set(this.x + xd * d, this.y + yd * d, this.z + zd * d);
+    return true;
+  }
+  clipZ(b, zt, result) {
+    const xd = b.x - this.x, yd = b.y - this.y, zd = b.z - this.z;
+    if (zd * zd < 0.0000001)
+      return false;
+    const d = (zt - this.z) / zd;
+    if (d < 0 || d > 1)
+      return false;
+    result.set(this.x + xd * d, this.y + yd * d, this.z + zd * d);
+    return true;
+  }
+  toString() {
+    return "Vec3(" + this.x + "," + this.y + "," + this.z + ")";
+  }
+  lerp(v, a) {
+    return new Vec3(this.x + (v.x - this.x) * a, this.y + (v.y - this.y) * a, this.z + (v.z - this.z) * a);
+  }
+  xRot(degs) {
+    const cosv = Math.cos(degs), sinv = Math.sin(degs);
+    const xx = this.x;
+    const yy = this.y * cosv + this.z * sinv;
+    const zz = this.z * cosv - this.y * sinv;
+    this.x = xx;
+    this.y = yy;
+    this.z = zz;
+  }
+  yRot(degs) {
+    const cosv = Math.cos(degs), sinv = Math.sin(degs);
+    const xx = this.x * cosv + this.z * sinv;
+    const yy = this.y;
+    const zz = this.z * cosv - this.x * sinv;
+    this.x = xx;
+    this.y = yy;
+    this.z = zz;
+  }
+  zRot(degs) {
+    const cosv = Math.cos(degs), sinv = Math.sin(degs);
+    const xx = this.x * cosv + this.y * sinv;
+    const yy = this.y * cosv - this.x * sinv;
+    const zz = this.z;
+    this.x = xx;
+    this.y = yy;
+    this.z = zz;
+  }
+  static fromPolarXY(angle, radius) {
+    return new Vec3(radius * Math.cos(angle), radius * Math.sin(angle), 0);
+  }
+}
+
+// src/game/world/phys/translated/HitResult.ts
+class HitResult {
+  type;
+  x;
+  y;
+  z;
+  f;
+  pos;
+  entity;
+  indirectHit;
+  constructor(...args) {
+    if (args.length === 0) {
+      this.type = 2 /* NO_HIT */;
+      this.x = 0;
+      this.y = 0;
+      this.z = 0;
+      this.f = 0;
+      this.pos = new Vec3;
+      this.entity = null;
+      this.indirectHit = false;
+    } else if (args.length === 5) {
+      this.type = 0 /* TILE */;
+      this.x = args[0];
+      this.y = args[1];
+      this.z = args[2];
+      this.f = args[3];
+      this.pos = args[4];
+      this.entity = null;
+      this.indirectHit = false;
+    } else {
+      this.type = 1 /* ENTITY */;
+      this.x = 0;
+      this.y = 0;
+      this.z = 0;
+      this.f = 0;
+      this.pos = new Vec3;
+      this.entity = args[0];
+      this.indirectHit = false;
+    }
+  }
+  distanceTo(entity) {
+    if (this.entity && this.entity.x !== undefined) {
+      const xd = this.pos.x - entity.x;
+      const yd = this.pos.y - entity.y;
+      const zd = this.pos.z - entity.z;
+      return Math.sqrt(xd * xd + yd * yd + zd * zd);
+    }
+    return 0;
+  }
+  isHit() {
+    return this.type !== 2 /* NO_HIT */;
+  }
+}
+
+// src/game/util/translated/Random.ts
+class Random {
+  constructor() {
+    this.setSeed(Date.now() & 2147483647);
+  }
+  constructor_seed;
+  _seed;
+  static N = 624;
+  static M = 397;
+  static MATRIX_A = 2567483615;
+  static UPPER_MASK = 2147483648;
+  static LOWER_MASK = 2147483647;
+  _mt = new Array(Random.N);
+  _mti = Random.N + 1;
+  haveNextNextGaussian = false;
+  nextNextGaussian = 0;
+  setSeed(seed) {
+    this._seed = seed;
+    this._mti = Random.N + 1;
+    this.haveNextNextGaussian = false;
+    this.nextNextGaussian = 0;
+    this.init_genrand(seed);
+  }
+  getSeed() {
+    return this._seed;
+  }
+  nextBoolean() {
+    return (this.genrand_int32() & 134217728) > 0;
+  }
+  nextFloat() {
+    return this.genrand_real2();
+  }
+  nextDouble() {
+    return this.genrand_real2();
+  }
+  nextInt() {
+    return this.genrand_int32() >> 1 | 0;
+  }
+  nextInt(n) {
+    return this.genrand_int32() % n;
+  }
+  nextLong() {
+    return this.genrand_int32() >> 1 | 0;
+  }
+  nextLong(n) {
+    return this.genrand_int32() % n;
+  }
+  nextGaussian() {
+    if (this.haveNextNextGaussian) {
+      this.haveNextNextGaussian = false;
+      return this.nextNextGaussian;
+    } else {
+      let v1, v2, s;
+      do {
+        v1 = 2 * this.nextFloat() - 1;
+        v2 = 2 * this.nextFloat() - 1;
+        s = v1 * v1 + v2 * v2;
+      } while (s >= 1 || s === 0);
+      const multiplier = Math.sqrt(-2 * Math.log(s) / s);
+      this.nextNextGaussian = v2 * multiplier;
+      this.haveNextNextGaussian = true;
+      return v1 * multiplier;
+    }
+  }
+  init_genrand(s) {
+    this._mt[0] = s >>> 0;
+    for (this._mti = 1;this._mti < Random.N; this._mti++) {
+      this._mt[this._mti] = 1812433253 * (this._mt[this._mti - 1] ^ this._mt[this._mti - 1] >> 30) + this._mti >>> 0;
+      this._mt[this._mti] &= 4294967295;
+    }
+  }
+  genrand_int32() {
+    let y;
+    const mag01 = [0, Random.MATRIX_A];
+    if (this._mti >= Random.N) {
+      let kk;
+      if (this._mti === Random.N + 1) {
+        this.init_genrand(5489);
+      }
+      for (kk = 0;kk < Random.N - Random.M; kk++) {
+        y = (this._mt[kk] & Random.UPPER_MASK | this._mt[kk + 1] & Random.LOWER_MASK) >>> 0;
+        this._mt[kk] = (this._mt[kk + Random.M] ^ y >> 1 ^ mag01[y & 1]) >>> 0;
+      }
+      for (;kk < Random.N - 1; kk++) {
+        y = (this._mt[kk] & Random.UPPER_MASK | this._mt[kk + 1] & Random.LOWER_MASK) >>> 0;
+        this._mt[kk] = (this._mt[kk + (Random.M - Random.N)] ^ y >> 1 ^ mag01[y & 1]) >>> 0;
+      }
+      y = (this._mt[Random.N - 1] & Random.UPPER_MASK | this._mt[0] & Random.LOWER_MASK) >>> 0;
+      this._mt[Random.N - 1] = (this._mt[Random.M - 1] ^ y >> 1 ^ mag01[y & 1]) >>> 0;
+      this._mti = 0;
+    }
+    y = this._mt[this._mti++];
+    y ^= y >> 11;
+    y ^= y << 7 & 2636928640;
+    y ^= y << 15 & 4022730752;
+    y ^= y >> 18;
+    return y >>> 0;
+  }
+  genrand_real2() {
+    return this.genrand_int32() * (1 / 4294967296);
+  }
+  rrDiff_x() {
+    const u = this.genrand_int32();
+    const xx0 = (u & 65535) / 65536;
+    const xx1 = (u >> 16 & 65535) / 65536;
+    return xx0 - xx1;
+  }
+  rrDiff_xy() {
+    const u = this.genrand_int32();
+    const xx0 = (u & 255) / 256;
+    const xx1 = (u >> 8 & 255) / 256;
+    const yy0 = (u >> 16 & 255) / 256;
+    const yy1 = (u >> 24 & 255) / 256;
+    return [xx0 - xx1, yy0 - yy1];
+  }
+  rrDiff_xyz() {
+    const u = this.genrand_int32();
+    const xx0 = (u & 31) / 32;
+    const xx1 = (u >> 5 & 31) / 32;
+    const yy0 = (u >> 10 & 31) / 32;
+    const yy1 = (u >> 15 & 31) / 32;
+    const zz0 = (u >> 20 & 31) / 32;
+    const zz1 = (u >> 25 & 31) / 32;
+    return [xx0 - xx1, yy0 - yy1, zz0 - zz1];
+  }
+}
+
+// src/game/world/entity/translated/Mob.ts
+var SWING_DURATION = 8;
+
+class Mob2 extends Entity2 {
+  invulnerableDuration = 20;
+  timeOffs = 0;
+  rotA = 0;
+  yBodyRot = 0;
+  yBodyRotO = 0;
+  oAttackAnim = 0;
+  attackAnim = 0;
+  health = 10;
+  lastHealth = 20;
+  hurtTime = 0;
+  hurtDuration = 0;
+  hurtDir = 0;
+  deathTime = 0;
+  attackTime = 0;
+  oTilt = 0;
+  tilt = 0;
+  lookTime = 0;
+  fallTime = 0;
+  walkAnimSpeedO = 0;
+  walkAnimSpeed = 0;
+  walkAnimPos = 0;
+  aimDirection = new Vec3;
+  arrowCount = 0;
+  removeArrowTime = 0;
+  random = new Random;
+  sensing = null;
+  bypassArmor = false;
+  entityData;
+  swinging = false;
+  swingTime = 0;
+  noActionTime = 0;
+  xxa = 0;
+  yya = 0;
+  yRotA = 0;
+  defaultLookAngle = 0;
+  runSpeed = 0.7;
+  walkingSpeed = 0.1;
+  flyingSpeed = 0.02;
+  textureName = "mob/char.png";
+  modelName = "";
+  deathScore = 0;
+  oRun = 0;
+  run = 0;
+  animStep = 0;
+  animStepO = 0;
+  rotOffs = 0;
+  bobStrength = 1;
+  renderOffset = 0;
+  lSteps = 0;
+  lx = 0;
+  ly = 0;
+  lz = 0;
+  lyr = 0;
+  lxr = 0;
+  lastHurt = 0;
+  dmgSpill = 0;
+  sentX = 0;
+  sentY = 0;
+  sentZ = 0;
+  sentRotX = 0;
+  sentRotY = 0;
+  sentXd = 0;
+  sentYd = 0;
+  sentZd = 0;
+  allowAlpha = true;
+  jumping = false;
+  autoSendPosRot = true;
+  moveControl = null;
+  jumpControl = null;
+  navigation = null;
+  goalSelector = null;
+  targetSelector = null;
+  lookingAtId = 0;
+  ambientSoundTime = 0;
+  speed = 0;
+  constructor(level) {
+    super(level);
+    this.invulnerableDuration = 20;
+    this.textureName = "mob/char.png";
+    this.allowAlpha = true;
+    this.modelName = "";
+    this.bobStrength = 1;
+    this.deathScore = 0;
+    this.renderOffset = 0;
+    this.lookingAtId = 0;
+    this.jumping = false;
+    this.defaultLookAngle = 0;
+    this.runSpeed = 0.7;
+    this.walkingSpeed = 0.1;
+    this.flyingSpeed = 0.02;
+    this.run = 0;
+    this.oRun = 0;
+    this.animStep = 0;
+    this.animStepO = 0;
+    this.lx = 0;
+    this.ly = 0;
+    this.lz = 0;
+    this.lxr = 0;
+    this.lyr = 0;
+    this.lSteps = 0;
+    this.walkAnimSpeed = 0;
+    this.walkAnimSpeedO = 0;
+    this.walkAnimPos = 0;
+    this.attackAnim = 0;
+    this.oAttackAnim = 0;
+    this.autoSendPosRot = true;
+    this.sentX = 0;
+    this.sentY = 0;
+    this.sentZ = 0;
+    this.sentRotX = 0;
+    this.sentRotY = 0;
+    this.sentXd = 0;
+    this.sentYd = 0;
+    this.sentZd = 0;
+    this.arrowCount = 0;
+    this.removeArrowTime = 0;
+    this.speed = 0;
+    this.moveControl = null;
+    this.jumpControl = null;
+    this.navigation = null;
+    this.goalSelector = null;
+    this.targetSelector = null;
+    this.sensing = null;
+    this.swinging = false;
+    this.swingTime = 0;
+    this.lastHurt = 0;
+    this.dmgSpill = 0;
+    this.bypassArmor = false;
+    this._init();
+    this.health = this.getMaxHealth();
+    this.blocksBuilding = true;
+    this.ambientSoundTime = -level.random.nextInt(100);
+    this.rotA = (Math.random() + 1) * 0.01;
+    this.setPos(this.x, this.y, this.z);
+    this.timeOffs = Math.random() * 12398;
+    this.yRot = Math.random() * Math.PI * 2;
+    this.footSize = 0.5;
+  }
+  destroy() {}
+  getWalkingSpeedModifier() {
+    let speed = 0.7;
+    return speed;
+  }
+  canSee(target) {
+    if (!this.level || !this.level.clip)
+      return false;
+    const from = new Vec3(this.x, this.y + this.getHeadHeight(), this.z);
+    const to = new Vec3(target.x, target.y + target.getHeadHeight(), target.z);
+    const hit = this.level.clip(from, to);
+    return !hit || !hit.isHit();
+  }
+  getTexture() {
+    return this.textureName;
+  }
+  isPickable() {
+    return !this.removed;
+  }
+  isPushable() {
+    return !this.removed;
+  }
+  getHeadHeight() {
+    return this.bbHeight * 0.85;
+  }
+  getVoicePitch() {
+    if (this.isBaby()) {
+      return (this.random.nextFloat() - this.random.nextFloat()) * 0.2 + 1.5;
+    }
+    return (this.random.nextFloat() - this.random.nextFloat()) * 0.2 + 1;
+  }
+  getAmbientSoundInterval() {
+    return 8 * 20;
+  }
+  playAmbientSound() {
+    const ambient = this.getAmbientSound();
+    if (ambient !== null) {
+      this.level.playSound(this, ambient, this.getSoundVolume(), this.getVoicePitch());
+    }
+  }
+  baseTick() {
+    this.oAttackAnim = this.attackAnim;
+    super.baseTick();
+    if ((this.ambientSoundTime++ & 15) === 0 && this.random.nextInt(2000) < this.ambientSoundTime) {
+      this.ambientSoundTime = -this.getAmbientSoundInterval();
+      this.playAmbientSound();
+    }
+    if (this.isAlive() && this.isInWall()) {
+      this.hurt(null, 1);
+    }
+    if (this.isAlive() && this.isUnderLiquid("water") && !this.isWaterMob()) {
+      this.airSupply--;
+      if (this.airSupply === -20) {
+        this.airSupply = 0;
+        this.hurt(null, 2);
+      }
+    } else {
+      this.airSupply = this.airCapacity;
+    }
+    this.oTilt = this.tilt;
+    if (this.attackTime > 0)
+      this.attackTime--;
+    if (this.hurtTime > 0)
+      this.hurtTime--;
+    if (this.invulnerableTime > 0)
+      this.invulnerableTime--;
+    if (this.health <= 0) {
+      this.deathTime++;
+      if (this.deathTime > 20) {
+        this.beforeRemove();
+        this.remove();
+      }
+    }
+    this.animStepO = this.animStep;
+    this.yBodyRotO = this.yBodyRot;
+    this.yRotO = this.yRot;
+    this.xRotO = this.xRot;
+  }
+  spawnAnim() {}
+  lerpTo(x, y, z, yRot, xRot, steps) {
+    this.lx = x;
+    this.ly = y + this.heightOffset;
+    this.lz = z;
+    this.lyr = yRot;
+    this.lxr = xRot;
+    this.lSteps = steps;
+  }
+  superTick() {
+    super.tick();
+  }
+  tick() {
+    super.tick();
+    if (this.arrowCount > 0) {
+      if (this.removeArrowTime <= 0) {
+        this.removeArrowTime = 20 * 3;
+      }
+      this.removeArrowTime--;
+      if (this.removeArrowTime <= 0) {
+        this.arrowCount--;
+      }
+    }
+    if (this.lSteps > 0) {
+      const xt = this.x + (this.lx - this.x) / this.lSteps;
+      const yt = this.y + (this.ly - this.y) / this.lSteps;
+      const zt = this.z + (this.lz - this.z) / this.lSteps;
+      let yrd = this.lyr - this.yRot;
+      while (yrd < -180)
+        yrd += 360;
+      while (yrd >= 180)
+        yrd -= 360;
+      this.yRot += yrd / this.lSteps;
+      this.xRot += (this.lxr - this.xRot) / this.lSteps;
+      this.lSteps--;
+      this.setPos(xt, yt, zt);
+      this.setRot(this.yRot, this.xRot);
+    }
+    this.aiStep();
+    this.updateWalkAnim();
+    const xd = this.x - this.xo;
+    const zd = this.z - this.zo;
+    const sideDist = Math.sqrt(xd * xd + zd * zd);
+    let yBodyRotT = this.yBodyRot;
+    let walkSpeed = 0;
+    this.oRun = this.run;
+    let tRun = 0;
+    if (sideDist <= 0.05) {} else {
+      tRun = 1;
+      walkSpeed = sideDist * 3;
+      yBodyRotT = Math.atan2(zd, xd) * (180 / Math.PI) - 90;
+    }
+    if (this.attackAnim > 0) {
+      yBodyRotT = this.yRot;
+    }
+    if (!this.onGround) {
+      tRun = 0;
+    }
+    this.run = this.run + (tRun - this.run) * 0.3;
+    let yBodyRotD = yBodyRotT - this.yBodyRot;
+    while (yBodyRotD < -180)
+      yBodyRotD += 360;
+    while (yBodyRotD >= 180)
+      yBodyRotD -= 360;
+    this.yBodyRot += yBodyRotD * 0.3;
+    let headDiff = this.yRot - this.yBodyRot;
+    while (headDiff < -180)
+      headDiff += 360;
+    while (headDiff >= 180)
+      headDiff -= 360;
+    const behind = headDiff < -90 || headDiff >= 90;
+    if (headDiff < -75)
+      headDiff = -75;
+    if (headDiff >= 75)
+      headDiff = 75;
+    this.yBodyRot = this.yRot - headDiff;
+    if (headDiff * headDiff > 2500) {
+      this.yBodyRot += headDiff * 0.2;
+    }
+    if (behind) {
+      walkSpeed *= -1;
+    }
+    while (this.yRot - this.yRotO < -180)
+      this.yRotO -= 360;
+    while (this.yRot - this.yRotO >= 180)
+      this.yRotO += 360;
+    while (this.yBodyRot - this.yBodyRotO < -180)
+      this.yBodyRotO -= 360;
+    while (this.yBodyRot - this.yBodyRotO >= 180)
+      this.yBodyRotO += 360;
+    while (this.xRot - this.xRotO < -180)
+      this.xRotO -= 360;
+    while (this.xRot - this.xRotO >= 180)
+      this.xRotO += 360;
+    this.animStep += walkSpeed;
+  }
+  setSize(w, h) {
+    super.setSize(w, h);
+  }
+  heal(healAmount) {
+    if (this.health <= 0)
+      return;
+    this.health += healAmount;
+    if (this.health > 20)
+      this.health = 20;
+    this.invulnerableTime = this.invulnerableDuration / 2;
+  }
+  hurt(source, dmg) {
+    if (this.level && this.level.isClientSide)
+      return false;
+    this.noActionTime = 0;
+    if (this.health <= 0)
+      return false;
+    this.walkAnimSpeed = 1.5;
+    let sound = true;
+    if (this.invulnerableTime > this.invulnerableDuration / 2) {
+      if (dmg <= this.lastHurt)
+        return false;
+      this.actuallyHurt(dmg - this.lastHurt);
+      this.lastHurt = dmg;
+      sound = false;
+    } else {
+      this.lastHurt = dmg;
+      this.lastHealth = this.health;
+      this.invulnerableTime = this.invulnerableDuration;
+      this.actuallyHurt(dmg);
+      this.hurtTime = this.hurtDuration = 10;
+      this.hurtDuration = 10;
+    }
+    this.hurtDir = 0;
+    if (sound) {
+      this.markHurt();
+      if (source !== null) {
+        let xd = source.x - this.x;
+        let zd = source.z - this.z;
+        while (xd * xd + zd * zd < 0.0001) {
+          xd = (Math.random() - Math.random()) * 0.01;
+          zd = (Math.random() - Math.random()) * 0.01;
+        }
+        this.hurtDir = Math.atan2(zd, xd) * (180 / Math.PI) - this.yRot;
+        this.knockback(source, dmg, xd, zd);
+      } else {
+        this.hurtDir = Math.floor(Math.random() * 2) * 180;
+      }
+    }
+    if (this.health <= 0) {
+      if (sound)
+        this.level.playSound(this, this.getDeathSound(), this.getSoundVolume(), this.getVoicePitch());
+      this.die(source);
+    } else {
+      if (sound)
+        this.level.playSound(this, this.getHurtSound(), this.getSoundVolume(), this.getVoicePitch());
+    }
+    return true;
+  }
+  actuallyHurt(dmg) {
+    if (!this.bypassArmor) {
+      dmg = this.getDamageAfterArmorAbsorb(dmg);
+    }
+    this.health = Math.max(0, this.health - dmg);
+  }
+  getSoundVolume() {
+    return 1;
+  }
+  getAmbientSound() {
+    return null;
+  }
+  getHurtSound() {
+    return "random.hurt";
+  }
+  getDeathSound() {
+    return "random.hurt";
+  }
+  knockback(source, dmg, xd, zd) {
+    const dd = 1 / Math.sqrt(xd * xd + zd * zd);
+    const pow = 0.4;
+    this.xd *= 0.5;
+    this.yd *= 0.5;
+    this.zd *= 0.5;
+    this.xd -= xd * dd * pow;
+    this.yd += 0.4;
+    this.zd -= zd * dd * pow;
+    if (this.yd > 0.4)
+      this.yd = 0.4;
+  }
+  die(source) {
+    if (this.deathScore > 0 && source !== null) {
+      if (source.awardKillScore)
+        source.awardKillScore(this, this.deathScore);
+    }
+    if (!this.level.isClientSide) {
+      if (!this.isBaby()) {
+        this.dropDeathLoot();
+      }
+    }
+  }
+  dropDeathLoot() {
+    const loot = this.getDeathLoot();
+    if (loot > 0) {
+      const count = this.random.nextInt(3);
+      for (let i = 0;i < count; i++) {
+        this.spawnAtLocation(loot, 1);
+      }
+    }
+  }
+  getDeathLoot() {
+    return 0;
+  }
+  reset() {
+    super.reset();
+    this._init();
+  }
+  _init() {
+    this.yBodyRot = 0;
+    this.yBodyRotO = 0;
+    this.rotOffs = 0;
+    this.fallTime = 0;
+    this.lastHurt = 0;
+    this.deathTime = 0;
+    this.attackTime = 0;
+    this.tilt = 0;
+    this.oTilt = 0;
+    this.hurtDuration = 0;
+    this.hurtTime = 0;
+    this.hurtDir = 0;
+    this.lookTime = 0;
+    this.noActionTime = 0;
+    this.xxa = 0;
+    this.yya = 0;
+    this.yRotA = 0;
+    this.health = 10;
+    this.lastHealth = 20;
+  }
+  causeFallDamage(distance) {
+    const dmg = Math.ceil(distance - 3);
+    if (dmg > 0) {
+      this.hurt(null, dmg);
+    }
+  }
+  travel(xa, ya) {
+    if (this.isInWater()) {
+      const yo = this.y;
+      this.moveRelative(xa, ya, 0.02);
+      this.move(this.xd, this.yd, this.zd);
+      this.xd *= 0.8;
+      this.yd *= 0.8;
+      this.zd *= 0.8;
+      this.yd -= 0.02;
+      if (this.horizontalCollision && this.isFree(this.xd, this.yd + 0.6 - this.y + yo, this.zd, 0)) {
+        this.yd = 0.3;
+      }
+    } else if (this.isInLava()) {
+      const yo = this.y;
+      this.moveRelative(xa, ya, 0.02);
+      this.move(this.xd, this.yd, this.zd);
+      this.xd *= 0.5;
+      this.yd *= 0.5;
+      this.zd *= 0.5;
+      this.yd -= 0.02;
+      if (this.horizontalCollision && this.isFree(this.xd, this.yd + 0.6 - this.y + yo, this.zd, 0)) {
+        this.yd = 0.3;
+      }
+    } else {
+      let friction = 0.91;
+      if (this.onGround) {
+        friction = 0.6 * 0.91;
+        const t = this.level.getTile(Math.floor(this.x), Math.floor(this.bb.y0 - 0.5), Math.floor(this.z));
+        if (t > 0) {
+          friction = 0.6 * 0.91;
+        }
+      }
+      const friction2 = 0.6 * 0.6 * 0.91 * 0.91 * 0.6 * 0.91 / (friction * friction * friction);
+      this.moveRelative(xa, ya, this.onGround ? this.walkingSpeed * friction2 : this.flyingSpeed);
+      friction = 0.91;
+      if (this.onGround) {
+        friction = 0.6 * 0.91;
+        const t = this.level.getTile(Math.floor(this.x), Math.floor(this.bb.y0 - 0.5), Math.floor(this.z));
+        if (t > 0) {
+          friction = 0.6 * 0.91;
+        }
+      }
+      if (this.onLadder()) {
+        this.fallDistance = 0;
+        if (this.yd < -0.15)
+          this.yd = -0.15;
+        if (this.isSneaking() && this.yd < 0)
+          this.yd = 0;
+      }
+      this.move(this.xd, this.yd, this.zd);
+      if (this.horizontalCollision && this.onLadder()) {
+        this.yd = 0.2;
+      }
+      this.yd -= 0.08;
+      this.yd *= 0.98;
+      this.xd *= friction;
+      this.zd *= friction;
+    }
+  }
+  updateWalkAnim() {
+    this.walkAnimSpeedO = this.walkAnimSpeed;
+    const xxd = this.x - this.xo;
+    const zzd = this.z - this.zo;
+    let wst = Math.sqrt(xxd * xxd + zzd * zzd) * 4;
+    if (wst > 1)
+      wst = 1;
+    this.walkAnimSpeed += (wst - this.walkAnimSpeed) * 0.4;
+    this.walkAnimPos += this.walkAnimSpeed;
+  }
+  onLadder() {
+    const xt = Math.floor(this.x);
+    const yt = Math.floor(this.bb.y0);
+    const zt = Math.floor(this.z);
+    return this.level.getTile(xt, yt, zt) === 65 || this.level.getTile(xt, yt + 1, zt) === 65;
+  }
+  isShootable() {
+    return true;
+  }
+  addAdditionalSaveData(entityTag) {
+    entityTag.putShort("Health", this.health);
+    entityTag.putShort("HurtTime", this.hurtTime);
+    entityTag.putShort("DeathTime", this.deathTime);
+    entityTag.putShort("AttackTime", this.attackTime);
+  }
+  readAdditionalSaveData(tag) {
+    this.health = tag.getShort("Health");
+    this.hurtTime = tag.getShort("HurtTime");
+    this.deathTime = tag.getShort("DeathTime");
+    this.attackTime = tag.getShort("AttackTime");
+  }
+  animateHurt() {
+    this.hurtTime = this.hurtDuration = 10;
+    this.hurtDir = 0;
+  }
+  isAlive() {
+    return !this.removed && this.health > 0;
+  }
+  isWaterMob() {
+    return false;
+  }
+  aiStep() {
+    if (this.isImmobile()) {
+      this.jumping = false;
+      this.xxa = 0;
+      this.yya = 0;
+      this.yRotA = 0;
+    } else {
+      if (!this.interpolateOnly()) {
+        if (this.useNewAi()) {
+          this.newServerAiStep();
+        } else {
+          this.updateAi();
+        }
+      }
+    }
+    const inWater = this.isInWater();
+    const inLava = this.isInLava();
+    if (this.jumping) {
+      if (inWater) {
+        this.yd += 0.04;
+      } else if (inLava) {
+        this.yd += 0.04;
+      } else if (this.onGround) {
+        this.jumpFromGround();
+      }
+    }
+    this.xxa *= 0.98;
+    this.yya *= 0.98;
+    this.yRotA *= 0.9;
+    const normalSpeed = this.walkingSpeed;
+    const normalAirControlSpeed = this.flyingSpeed;
+    this.walkingSpeed *= this.getWalkingSpeedModifier();
+    this.flyingSpeed *= this.getWalkingSpeedModifier();
+    this.travel(this.xxa, this.yya);
+    this.walkingSpeed = normalSpeed;
+    this.flyingSpeed = normalAirControlSpeed;
+  }
+  updateAi() {
+    this.noActionTime++;
+    const player = this.level.getNearestPlayer ? this.level.getNearestPlayer(this, -1) : null;
+    this.checkDespawn(player);
+    this.xxa = 0;
+    this.yya = 0;
+    const lookDistance = 8;
+    if (this.random.nextFloat() < 0.02) {
+      const p = this.level.getNearestPlayer ? this.level.getNearestPlayer(this, lookDistance) : null;
+      if (p !== null) {
+        this.lookingAtId = p.entityId;
+        this.lookTime = 10 + this.random.nextInt(20);
+      } else {
+        this.yRotA = (this.random.nextFloat() - 0.5) * 20;
+      }
+    }
+    if (this.lookingAtId !== 0) {
+      const lookingAt = this.level.getEntity ? this.level.getEntity(this.lookingAtId) : null;
+      this.lookingAtId = 0;
+      if (lookingAt !== null) {
+        this.lookAt(lookingAt, 10, this.getMaxHeadXRot());
+        if (this.lookTime-- <= 0 || lookingAt.removed || this.distanceToSqrEntity(lookingAt) > lookDistance * lookDistance) {
+          this.lookingAtId = 0;
+        } else {
+          this.lookingAtId = lookingAt.entityId;
+        }
+      }
+    } else {
+      if (this.random.nextFloat() < 0.05) {
+        this.yRotA = (this.random.nextFloat() - 0.5) * 20;
+      }
+      this.yRot += this.yRotA;
+      this.xRot = this.defaultLookAngle;
+    }
+    const inWater = this.isInWater();
+    const inLava = this.isInLava();
+    if (inWater || inLava)
+      this.jumping = this.random.nextFloat() < 0.8;
+  }
+  newServerAiStep() {
+    this.noActionTime++;
+    this.checkDespawn();
+    this.jumping = false;
+    if (this.sensing && this.sensing.tick)
+      this.sensing.tick();
+    if (this.random.nextInt(5) === 0) {
+      if (this.targetSelector && this.targetSelector.tick)
+        this.targetSelector.tick();
+      if (this.goalSelector && this.goalSelector.tick)
+        this.goalSelector.tick();
+    }
+    if (this.navigation && this.navigation.tick)
+      this.navigation.tick();
+    if (this.moveControl && this.moveControl.tick)
+      this.moveControl.tick();
+    if (this.jumpControl && this.jumpControl.tick)
+      this.jumpControl.tick();
+  }
+  isImmobile() {
+    return this.health <= 0;
+  }
+  jumpFromGround() {
+    this.yd = 0.42;
+  }
+  removeWhenFarAway() {
+    return true;
+  }
+  getMaxHeadXRot() {
+    return 10;
+  }
+  lookAt(e, yMax, xMax) {
+    const xd = e.x - this.x;
+    let yd;
+    const zd = e.z - this.z;
+    yd = (e.bb.y0 + e.bb.y1) / 2 - (this.y + this.getHeadHeight());
+    const sd = Math.sqrt(xd * xd + zd * zd);
+    const yRotD = Math.atan2(zd, xd) * 180 / Math.PI - 90;
+    const xRotD = Math.atan2(yd, sd) * 180 / Math.PI;
+    this.xRot = -this.rotlerp(this.xRot, xRotD, xMax);
+    this.yRot = this.rotlerp(this.yRot, yRotD, yMax);
+  }
+  isLookingAtAnEntity() {
+    return this.lookingAtId !== 0;
+  }
+  rotlerp(a, b, max) {
+    let diff = b - a;
+    while (diff < -180)
+      diff += 360;
+    while (diff >= 180)
+      diff -= 360;
+    if (diff > max)
+      diff = max;
+    if (diff < -max)
+      diff = -max;
+    return a + diff;
+  }
+  beforeRemove() {}
+  canSpawn() {
+    return this.level.isUnobstructed(this.bb) && this.level.getCubes(this, this.bb).length === 0 && !this.level.containsAnyLiquid(this.bb);
+  }
+  outOfWorld() {
+    const oldHealth = this.health;
+    this.hurt(null, 4);
+    if (this.health >= oldHealth) {
+      this.actuallyHurt(4);
+    }
+  }
+  getAttackAnim(a) {
+    let diff = this.attackAnim - this.oAttackAnim;
+    if (diff < 0)
+      diff += 1;
+    return this.oAttackAnim + diff * a;
+  }
+  getPos(a) {
+    if (a === 1) {
+      return new Vec3(this.x, this.y, this.z);
+    }
+    const x = this.xo + (this.x - this.xo) * a;
+    const y = this.yo + (this.y - this.yo) * a;
+    const z = this.zo + (this.z - this.zo) * a;
+    return new Vec3(x, y, z);
+  }
+  getLookAngle() {
+    return this.getViewVector(1);
+  }
+  getViewVector(a) {
+    let yRot, xRot;
+    if (a === 1) {
+      yRot = this.yRot;
+      xRot = this.xRot;
+    } else {
+      xRot = this.xRotO + (this.xRot - this.xRotO) * a;
+      yRot = this.yRotO + (this.yRot - this.yRotO) * a;
+    }
+    const yCos = Math.cos(-yRot * (Math.PI / 180) - Math.PI);
+    const ySin = Math.sin(-yRot * (Math.PI / 180) - Math.PI);
+    const xCos = -Math.cos(-xRot * (Math.PI / 180));
+    const xSin = Math.sin(-xRot * (Math.PI / 180));
+    return new Vec3(ySin * xCos, xSin, yCos * xCos);
+  }
+  pick(range, a) {
+    const from = this.getPos(a);
+    const dir = this.getViewVector(a);
+    const to = new Vec3(from.x + dir.x * range, from.y + dir.y * range, from.z + dir.z * range);
+    if (this.level && this.level.clip) {
+      return this.level.clip(from, to);
+    }
+    return new HitResult;
+  }
+  getMaxSpawnClusterSize() {
+    return 4;
+  }
+  interpolateOnly() {
+    return this.level && this.level.isClientSide ? this.level.isClientSide : false;
+  }
+  handleEntityEvent(id2) {
+    if (id2 === 2) {
+      this.walkAnimSpeed = 1.5;
+      this.invulnerableTime = this.invulnerableDuration;
+      this.hurtTime = this.hurtDuration = 10;
+      this.hurtDir = 0;
+      this.level.playSound(this, this.getHurtSound(), this.getSoundVolume(), this.getVoicePitch());
+      this.hurt(null, 0);
+    } else if (id2 === 3) {
+      this.level.playSound(this, this.getDeathSound(), this.getSoundVolume(), this.getVoicePitch());
+      this.health = 0;
+      this.die(null);
+    } else {
+      super.handleEntityEvent(id2);
+    }
+  }
+  getMoveControl() {
+    return this.moveControl;
+  }
+  getJumpControl() {
+    return this.jumpControl;
+  }
+  setYya(yya) {
+    this.yya = yya;
+  }
+  getSpeed() {
+    return this.speed;
+  }
+  setSpeed(speed) {
+    this.speed = speed;
+    this.yya = speed;
+  }
+  setJumping(jump) {
+    this.jumping = jump;
+  }
+  useNewAi() {
+    return false;
+  }
+  checkDespawn(nearestBlocking) {
+    if (nearestBlocking === undefined) {
+      nearestBlocking = this.level.getNearestPlayer ? this.level.getNearestPlayer(this, -1) : null;
+    }
+    if (nearestBlocking !== null) {
+      const removeIfFar = this.removeWhenFarAway();
+      const xd = nearestBlocking.x - this.x;
+      const yd = nearestBlocking.y - this.y;
+      const zd = nearestBlocking.z - this.z;
+      const sd = xd * xd + yd * yd + zd * zd;
+      if (removeIfFar && sd > 96 * 96) {
+        this.remove();
+      }
+      if (this.noActionTime > 30 * 20 && this.random.nextInt(800) === 0 && removeIfFar && sd > 32 * 32) {
+        this.remove();
+      } else {
+        this.noActionTime = 0;
+      }
+    }
+  }
+  updateAttackAnim() {
+    if (this.swinging) {
+      if (++this.swingTime >= SWING_DURATION) {
+        this.swingTime = 0;
+        this.swinging = false;
+      }
+    } else {
+      this.swingTime = 0;
+    }
+    this.attackAnim = this.swingTime / SWING_DURATION;
+  }
+  swing() {
+    if (!this.swinging || this.swingTime >= 3 || this.swingTime < 0) {
+      this.swingTime = -1;
+      this.swinging = true;
+    }
+  }
+  isSneaking() {
+    return false;
+  }
+  isSleeping() {
+    return false;
+  }
+  setSneaking(value) {}
+  getMaxHealth() {
+    return 10;
+  }
+  isMob() {
+    return true;
+  }
+  isBaby() {
+    return false;
+  }
+  getItemInHandIcon(item, layer) {
+    return item ? item.getIcon() : 0;
+  }
+  getCarriedItem() {
+    return null;
+  }
+  getUseItemDuration() {
+    return 0;
+  }
+  hurtArmor(damage) {}
+  getDamageAfterArmorAbsorb(damage) {
+    const absorb = 25 - this.getArmorValue();
+    const v = damage * absorb + this.dmgSpill;
+    this.hurtArmor(damage);
+    damage = Math.floor(v / 25);
+    this.dmgSpill = v % 25;
+    return damage;
+  }
+  getArmorValue() {
+    return 0;
+  }
+}
+
+// src/game/world/entity/translated/Player.ts
+var BedSleepingResult = {
+  OK: 0,
+  NOT_POSSIBLE_HERE: 1,
+  NOT_POSSIBLE_NOW: 2,
+  TOO_FAR_AWAY: 3,
+  OTHER_PROBLEM: 4,
+  NOT_SAFE: 5
+};
+
+class Player extends Mob2 {
+  static DATA_PLAYER_FLAGS_ID = 16;
+  static DATA_BED_POSITION_ID = 17;
+  static PLAYER_SLEEP_FLAG = 1;
+  static MAX_NAME_LENGTH = 16;
+  static MAX_HEALTH = 20;
+  static DEFAULT_WALK_SPEED = 0.1;
+  static DEFAULT_FLY_SPEED = 0.02;
+  static SLEEP_DURATION = 100;
+  static WAKE_UP_DURATION = 10;
+  userType = 0;
+  score = 0;
+  oBob = 0;
+  bob = 0;
+  name = "";
+  dimension = 0;
+  abilities = { flying: false, instabuild: false, invulnerable: false };
+  foodData = { tick: (p) => {} };
+  containerMenu = null;
+  hasFakeInventory = false;
+  bedPosition = { x: 0, y: 0, z: 0 };
+  bedOffsetX = 0;
+  bedOffsetY = 0;
+  bedOffsetZ = 0;
+  inventory = null;
+  useItem = null;
+  useItemDuration = 0;
+  sleepCounter = 0;
+  static NUM_ARMOR = 4;
+  respawnPosition = { x: 0, y: -1, z: 0 };
+  playerHasRespawnPosition = false;
+  playerIsSleeping = false;
+  allPlayersSleeping = false;
+  armor = [null, null, null, null];
+  constructor(level, isCreative) {
+    super(level);
+    this.userType = 0;
+    this.playerHasRespawnPosition = false;
+    this.hasFakeInventory = false;
+    this.containerMenu = null;
+    this.useItemDuration = 0;
+    this.playerIsSleeping = false;
+    this.sleepCounter = 0;
+    this.bedOffsetX = 0;
+    this.bedOffsetY = 0;
+    this.bedOffsetZ = 0;
+    this.respawnPosition = { x: 0, y: -1, z: 0 };
+    this.allPlayersSleeping = false;
+    this.canRemove = false;
+    this._init();
+    this.autoSendPosRot = false;
+    this.heightOffset = 1.62;
+    this.health = Player.MAX_HEALTH;
+    this.modelName = "humanoid";
+    this.rotOffs = 180;
+    this.flameTime = 20;
+    this.textureName = "mob/char.png";
+  }
+  isSleeping() {
+    return this.playerIsSleeping;
+  }
+  startSleepInBed(x, y, z) {
+    if (!this.level.isClientSide) {
+      if (this.isSleeping() || !this.isAlive())
+        return BedSleepingResult.OTHER_PROBLEM;
+      if (Math.abs(this.x - x) > 3 || Math.abs(this.y - y) > 4 || Math.abs(this.z - z) > 3)
+        return BedSleepingResult.TOO_FAR_AWAY;
+      if (this.level.isDay())
+        return BedSleepingResult.NOT_POSSIBLE_NOW;
+    }
+    this.setSize(0.2, 0.2);
+    this.heightOffset = 0.2;
+    this.setPos(x + 0.5, y + 15 / 16, z + 0.5);
+    this.playerIsSleeping = true;
+    this.sleepCounter = 0;
+    this.bedPosition = { x, y, z };
+    this.xd = this.zd = this.yd = 0;
+    return BedSleepingResult.OK;
+  }
+  stopSleepInBed(forcefulWakeUp, updateLevelList, saveRespawnPoint) {
+    if (!this.isSleeping())
+      return;
+    this.setSize(0.6, 1.8);
+    this.setDefaultHeadHeight();
+    this.playerIsSleeping = false;
+    if (forcefulWakeUp)
+      this.sleepCounter = 0;
+    else
+      this.sleepCounter = Player.SLEEP_DURATION;
+    if (saveRespawnPoint) {
+      this.setRespawnPosition(this.bedPosition);
+    }
+    this.allPlayersSleeping = false;
+  }
+  getSleepTimer() {
+    return this.allPlayersSleeping ? this.sleepCounter : 0;
+  }
+  setAllPlayersSleeping() {
+    this.sleepCounter = 0;
+    this.allPlayersSleeping = true;
+  }
+  setBedOffset(bedDirection) {
+    this.bedOffsetX = 0;
+    this.bedOffsetZ = 0;
+  }
+  isSleepingLongEnough() {
+    return this.isSleeping() && this.sleepCounter >= Player.SLEEP_DURATION;
+  }
+  getSleepRotation() {
+    return 0;
+  }
+  checkBed() {
+    return this.level.getTile(this.bedPosition.x, this.bedPosition.y, this.bedPosition.z) === 26;
+  }
+  tick() {
+    if (this.isSleeping()) {
+      this.sleepCounter++;
+      if (this.sleepCounter > Player.SLEEP_DURATION)
+        this.sleepCounter = Player.SLEEP_DURATION;
+      if (!this.level.isClientSide) {
+        if (!this.checkBed())
+          this.stopSleepInBed(true, true, false);
+        else if (this.level.isDay())
+          this.stopSleepInBed(false, true, true);
+      }
+    } else if (this.sleepCounter > 0) {
+      this.sleepCounter++;
+      if (this.sleepCounter >= Player.SLEEP_DURATION + Player.WAKE_UP_DURATION)
+        this.sleepCounter = 0;
+    }
+    super.tick();
+    if (!this.level.isClientSide) {
+      this.foodData.tick(this);
+    }
+  }
+  getMaxHealth() {
+    return Player.MAX_HEALTH;
+  }
+  isUsingItem() {
+    return this.useItem !== null && !this.useItem.isNull();
+  }
+  getUseItem() {
+    return this.useItem;
+  }
+  startUsingItem(instance, duration) {
+    this.useItem = instance;
+    this.useItemDuration = duration;
+  }
+  stopUsingItem() {
+    this.useItem = null;
+    this.useItemDuration = 0;
+  }
+  releaseUsingItem() {
+    if (this.useItem && !this.useItem.isNull()) {
+      this.useItem.releaseUsing(this.level, this, this.useItemDuration);
+    }
+    this.stopUsingItem();
+  }
+  completeUsingItem() {
+    if (this.useItem && !this.useItem.isNull()) {
+      this.stopUsingItem();
+    }
+  }
+  getUseItemDuration() {
+    return this.useItemDuration;
+  }
+  getTicksUsingItem() {
+    if (this.isUsingItem())
+      return this.useItem.getUseDuration() - this.useItemDuration;
+    return 0;
+  }
+  travel(xa, ya) {
+    if (this.abilities.flying) {
+      const ydo = this.yd;
+      const ofs = this.flyingSpeed;
+      this.flyingSpeed = 0.05;
+      super.travel(xa, ya);
+      this.yd = ydo * 0.6;
+      this.flyingSpeed = ofs;
+    } else {
+      super.travel(xa, ya);
+    }
+  }
+  isImmobileImpl() {
+    return this.health <= 0 || this.isSleeping();
+  }
+  isImmobile() {
+    return this.health <= 0 || this.isSleeping();
+  }
+  closeContainer() {
+    this.containerMenu = null;
+  }
+  resetPos(clearMore) {
+    if (!this.isSleeping()) {
+      this.heightOffset = 1.62;
+      this.setSize(0.6, 1.8);
+      super.resetPos(clearMore);
+    }
+    this.invisible = false;
+    if (clearMore) {
+      this.health = this.getMaxHealth();
+      this.deathTime = 0;
+      this.playerIsSleeping = false;
+    }
+  }
+  updateAi() {
+    this.updateAttackAnim();
+  }
+  getItemInHandIcon(item, layer) {
+    return item ? item.getIcon() : 0;
+  }
+  aiStep() {
+    if (this.level.difficulty === 0 && this.health < Player.MAX_HEALTH) {
+      if (this.tickCount % (12 * 20) === 0)
+        this.heal(1);
+    }
+    this.oBob = this.bob;
+    let tBob = Math.sqrt(this.xd * this.xd + this.zd * this.zd);
+    let tTilt = Math.atan(-this.yd * 0.2) * 15;
+    if (tBob > 0.1)
+      tBob = 0.1;
+    if (!this.onGround || this.health <= 0)
+      tBob = 0;
+    if (this.onGround || this.health <= 0)
+      tTilt = 0;
+    this.bob += (tBob - this.bob) * 0.4;
+    this.tilt += (tTilt - this.tilt) * 0.8;
+  }
+  touch(entity) {
+    entity.playerTouch(this);
+  }
+  getScore() {
+    return this.score;
+  }
+  die(source) {
+    super.die(source);
+    this.setSize(0.2, 0.2);
+    this.setPos(this.x, this.y, this.z);
+    this.yd = 0.1;
+    if (source !== null) {
+      this.xd = -Math.cos((this.hurtDir + this.yRot) * Math.PI / 180) * 0.1;
+      this.zd = -Math.sin((this.hurtDir + this.yRot) * Math.PI / 180) * 0.1;
+    } else {
+      this.xd = this.zd = 0;
+    }
+    this.heightOffset = 0.1;
+  }
+  reset() {
+    super.reset();
+    this._init();
+  }
+  _init() {
+    this.oBob = this.bob = 0;
+    this.swinging = false;
+    this.swingTime = 0;
+    this.score = 0;
+  }
+  getWalkingSpeedModifier() {
+    return 1;
+  }
+  awardKillScore(victim, score) {
+    this.score += score;
+  }
+  isShootable() {
+    return true;
+  }
+  isCreativeModeAllowed() {
+    return true;
+  }
+  drop(item, randomly = false) {
+    if (item === null || item.isNull())
+      return;
+    if (this.level && this.level.spawnItemEntity) {
+      this.level.spawnItemEntity(this.x, this.y - 0.3 + this.getHeadHeight(), this.z, item.id, item.count, item.getAuxValue());
+    }
+  }
+  reallyDrop(thrownItem) {
+    if (this.level && this.level.addEntity)
+      this.level.addEntity(thrownItem);
+  }
+  getDestroySpeed(tile) {
+    return this.inventory ? this.inventory.getDestroySpeed(tile) : 1;
+  }
+  canDestroy(tile) {
+    return this.inventory ? this.inventory.canDestroy(tile) : true;
+  }
+  getHeadHeight() {
+    return 0.12;
+  }
+  setDefaultHeadHeight() {
+    this.heightOffset = 1.62;
+  }
+  isHurt() {
+    return this.health > 0 && this.health < this.getMaxHealth();
+  }
+  hurt(source, dmg) {
+    if (this.abilities.invulnerable)
+      return false;
+    this.noActionTime = 0;
+    if (this.health <= 0)
+      return false;
+    if (this.isSleeping() && !this.level.isClientSide) {
+      this.stopSleepInBed(true, true, false);
+    }
+    if (dmg === 0)
+      return false;
+    return super.hurt(source, dmg);
+  }
+  interactEntity(entity) {
+    if (entity.interact && entity.interact(this))
+      return;
+    const item = this.inventory ? this.inventory.getSelected() : null;
+    if (item !== null && entity.isMob && entity.isMob()) {
+      item.interactEnemy(entity);
+      if (item.count <= 0) {
+        this.inventory.clearSlot(this.inventory.selected);
+      }
+    }
+  }
+  attack(entity) {
+    const dmg = this.inventory ? this.inventory.getAttackDamage(entity) : 1;
+    if (dmg > 0) {
+      entity.hurt(this, dmg);
+      const item = this.inventory ? this.inventory.getSelected() : null;
+      if (item !== null && entity.isMob && entity.isMob() && !this.abilities.instabuild) {
+        item.hurtEnemy(entity);
+        if (item.count <= 0) {
+          this.inventory.clearSlot(this.inventory.selected);
+        }
+      }
+    }
+  }
+  respawn() {}
+  animateRespawn() {}
+  getCarriedItem() {
+    return this.inventory ? this.inventory.getSelected() : null;
+  }
+  remove() {
+    this.invisible = true;
+    super.remove();
+  }
+  isInWall() {
+    return super.isInWall();
+  }
+  hasResource(id2) {
+    return this.inventory ? this.inventory.hasResource(id2) : false;
+  }
+  displayClientMessage(messageId) {}
+  getRespawnPosition() {
+    return this.respawnPosition;
+  }
+  setRespawnPosition(respawnPosition) {
+    if (respawnPosition.y < 0) {
+      this.playerHasRespawnPosition = false;
+    } else {
+      this.playerHasRespawnPosition = true;
+    }
+    this.respawnPosition = respawnPosition;
+  }
+  isPlayer() {
+    return true;
+  }
+  static isPlayerEntity(e) {
+    return e && e.isPlayer();
+  }
+  static asPlayer(e) {
+    return Player.isPlayerEntity(e) ? e : null;
+  }
+  openContainer(container) {}
+  tileEntityDestroyed(tileEntityId) {
+    if (!this.containerMenu)
+      return;
+    if (this.containerMenu.tileEntityDestroyedIsInvalid && this.containerMenu.tileEntityDestroyedIsInvalid(tileEntityId)) {
+      this.closeContainer();
+    }
+  }
+  canUseCarriedItemWhileMoving() {
+    const item = this.getCarriedItem();
+    return item && (item.id === 261 || item.getItem && item.getItem().isFood());
+  }
+  handleEntityEvent(id2) {
+    if (id2 === 9) {
+      this.completeUsingItem();
+    } else {
+      super.handleEntityEvent(id2);
+    }
+  }
+  getSelectedItem() {
+    return this.inventory ? this.inventory.getSelected() : null;
+  }
+  hasRespawnPosition() {
+    return this.playerHasRespawnPosition;
+  }
+  openTextEdit(tileEntity) {}
+  getArmorValue() {
+    let val = 0;
+    for (let i = 0;i < 4; i++) {
+      if (this.armor[i] && !this.armor[i].isNull && !this.armor[i].isNull()) {
+        val += 0;
+      }
+    }
+    return val;
+  }
+  getArmor(slot) {
+    if (slot < 0 || slot >= 4)
+      return null;
+    if (!this.armor[slot] || this.armor[slot].isNull())
+      return null;
+    return this.armor[slot];
+  }
+  setArmor(slot, item) {
+    if (item === null)
+      this.armor[slot] = null;
+    else
+      this.armor[slot] = item;
+  }
+  hurtArmor(dmg) {
+    dmg = Math.max(1, Math.floor(dmg / 4));
+    for (let i = 0;i < 4; i++) {
+      const item = this.armor[i];
+      if (item && !item.isNull()) {
+        item.hurt(dmg);
+        if (item.count === 0)
+          item.setNull();
+      }
+    }
+  }
+  getArmorTypeHash() {
+    const a0 = this.armor[0] ? this.armor[0].id : 0;
+    const a1 = this.armor[1] ? this.armor[1].id : 0;
+    const a2 = this.armor[2] ? this.armor[2].id : 0;
+    const a3 = this.armor[3] ? this.armor[3].id : 0;
+    return a0 + (a1 << 8) + (a2 << 16) + (a3 << 24);
+  }
+  getEntityTypeId() {
+    return 0;
+  }
+  startCrafting(x, y, z, tableSize) {}
+  startStonecutting(x, y, z) {}
+  openFurnace(e) {}
+  take(e, orgCount) {}
+}
+
+// src/game/world/phys/translated/AABB.ts
+class AABB {
+  x0;
+  y0;
+  z0;
+  x1;
+  y1;
+  z1;
+  constructor(x0, y0, z0, x1, y1, z1) {
+    if (x0 === undefined) {
+      this.x0 = 0;
+      this.y0 = 0;
+      this.z0 = 0;
+      this.x1 = 1;
+      this.y1 = 1;
+      this.z1 = 1;
+    } else {
+      this.x0 = x0;
+      this.y0 = y0;
+      this.z0 = z0;
+      this.x1 = x1;
+      this.y1 = y1;
+      this.z1 = z1;
+    }
+  }
+  set(x0, y0, z0, x1, y1, z1) {
+    this.x0 = x0;
+    this.y0 = y0;
+    this.z0 = z0;
+    this.x1 = x1;
+    this.y1 = y1;
+    this.z1 = z1;
+    return this;
+  }
+  expand(xa, ya, za) {
+    let _x0 = this.x0, _y0 = this.y0, _z0 = this.z0;
+    let _x1 = this.x1, _y1 = this.y1, _z1 = this.z1;
+    if (xa < 0)
+      _x0 += xa;
+    if (xa > 0)
+      _x1 += xa;
+    if (ya < 0)
+      _y0 += ya;
+    if (ya > 0)
+      _y1 += ya;
+    if (za < 0)
+      _z0 += za;
+    if (za > 0)
+      _z1 += za;
+    return new AABB(_x0, _y0, _z0, _x1, _y1, _z1);
+  }
+  grow(xa, ya, za) {
+    return new AABB(this.x0 - xa, this.y0 - ya, this.z0 - za, this.x1 + xa, this.y1 + ya, this.z1 + za);
+  }
+  cloneMove(xa, ya, za) {
+    return new AABB(this.x0 + xa, this.y0 + ya, this.z0 + za, this.x1 + xa, this.y1 + ya, this.z1 + za);
+  }
+  clipXCollide(c, xa) {
+    if (c.y1 <= this.y0 || c.y0 >= this.y1)
+      return xa;
+    if (c.z1 <= this.z0 || c.z0 >= this.z1)
+      return xa;
+    if (xa > 0 && c.x1 <= this.x0) {
+      const max = this.x0 - c.x1;
+      if (max < xa)
+        xa = max;
+    }
+    if (xa < 0 && c.x0 >= this.x1) {
+      const max = this.x1 - c.x0;
+      if (max > xa)
+        xa = max;
+    }
+    return xa;
+  }
+  clipYCollide(c, ya) {
+    if (c.x1 <= this.x0 || c.x0 >= this.x1)
+      return ya;
+    if (c.z1 <= this.z0 || c.z0 >= this.z1)
+      return ya;
+    if (ya > 0 && c.y1 <= this.y0) {
+      const max = this.y0 - c.y1;
+      if (max < ya)
+        ya = max;
+    }
+    if (ya < 0 && c.y0 >= this.y1) {
+      const max = this.y1 - c.y0;
+      if (max > ya)
+        ya = max;
+    }
+    return ya;
+  }
+  clipZCollide(c, za) {
+    if (c.x1 <= this.x0 || c.x0 >= this.x1)
+      return za;
+    if (c.y1 <= this.y0 || c.y0 >= this.y1)
+      return za;
+    if (za > 0 && c.z1 <= this.z0) {
+      const max = this.z0 - c.z1;
+      if (max < za)
+        za = max;
+    }
+    if (za < 0 && c.z0 >= this.z1) {
+      const max = this.z1 - c.z0;
+      if (max > za)
+        za = max;
+    }
+    return za;
+  }
+  intersects(a, b, c, d, e, f) {
+    if (a instanceof AABB) {
+      if (a.x1 <= this.x0 || a.x0 >= this.x1)
+        return false;
+      if (a.y1 <= this.y0 || a.y0 >= this.y1)
+        return false;
+      if (a.z1 <= this.z0 || a.z0 >= this.z1)
+        return false;
+      return true;
+    } else {
+      if (d <= this.x0 || a >= this.x1)
+        return false;
+      if (e <= this.y0 || b >= this.y1)
+        return false;
+      if (f <= this.z0 || c >= this.z1)
+        return false;
+      return true;
+    }
+  }
+  intersectsInner(c) {
+    if (c.x1 < this.x0 || c.x0 > this.x1)
+      return false;
+    if (c.y1 < this.y0 || c.y0 > this.y1)
+      return false;
+    if (c.z1 < this.z0 || c.z0 > this.z1)
+      return false;
+    return true;
+  }
+  move(xa, ya, za) {
+    this.x0 += xa;
+    this.y0 += ya;
+    this.z0 += za;
+    this.x1 += xa;
+    this.y1 += ya;
+    this.z1 += za;
+    return this;
+  }
+  contains(p) {
+    if (p.x <= this.x0 || p.x >= this.x1)
+      return false;
+    if (p.y <= this.y0 || p.y >= this.y1)
+      return false;
+    if (p.z <= this.z0 || p.z >= this.z1)
+      return false;
+    return true;
+  }
+  getSize() {
+    const xs = this.x1 - this.x0;
+    const ys = this.y1 - this.y0;
+    const zs = this.z1 - this.z0;
+    return (xs + ys + zs) / 3;
+  }
+  shrink(xa, ya, za) {
+    return new AABB(this.x0 + xa, this.y0 + ya, this.z0 + za, this.x1 - xa, this.y1 - ya, this.z1 - za);
+  }
+  copy() {
+    return new AABB(this.x0, this.y0, this.z0, this.x1, this.y1, this.z1);
+  }
+  setFromAABB(b) {
+    this.x0 = b.x0;
+    this.y0 = b.y0;
+    this.z0 = b.z0;
+    this.x1 = b.x1;
+    this.y1 = b.y1;
+    this.z1 = b.z1;
+  }
+  toString() {
+    return "AABB(" + this.x0 + "," + this.y0 + "," + this.z0 + " to " + this.x1 + "," + this.y1 + "," + this.z1 + ")";
+  }
+}
+
+// src/game/world/level/translated/Level.ts
+var DEPTH = 128;
+var SEA_LEVEL = DEPTH / 2 - 1;
+var TICKS_PER_DAY2 = 20 * 60 * 16;
+class Level {
+  instaTick = false;
+  isClientSide = false;
+  isGeneratingTerrain = false;
+  difficulty = 0;
+  adventureSettings = {
+    doTickTime: true,
+    noPvP: false,
+    noPvM: false,
+    noMvP: false,
+    immutableWorld: false,
+    showNameTags: false
+  };
+  entities = [];
+  entityIdLookup = new Map;
+  tileEntities = [];
+  pendingTileEntities = [];
+  updatingTileEntities = false;
+  players = [];
+  skyDarken = 0;
+  noNeighborUpdate = false;
+  dimension = null;
+  raknetInstance = null;
+  random = { nextInt: (n) => Math.floor(Math.random() * n), nextFloat: () => Math.random() };
+  isFindingSpawn = false;
+  _listeners = [];
+  _chunkSource = null;
+  levelStorage = null;
+  levelData = { getTime: () => 0, getSpawnMobs: () => true };
+  allPlayersAreSleeping = false;
+  _spawnFriendlies = true;
+  _spawnEnemies = true;
+  _randValue = 42184323;
+  _addend = 1013904223;
+  _es = [];
+  _tickNextTickSet = new Set;
+  _lightUpdates = [];
+  _pendingEntityData = new Map;
+  _updateLights = true;
+  _maxRecurse = 0;
+  _isNew = false;
+  _nightMode = false;
+  _lastSavedPlayerTime = 0;
+  _pendingPlayerRemovals = [];
+  constructor(levelStorage, levelName, settings, generatorVersion, fixedDimension) {
+    this.levelStorage = levelStorage;
+    this.isClientSide = false;
+    this.isFindingSpawn = false;
+    this.noNeighborUpdate = false;
+    this.skyDarken = 0;
+    this.instaTick = false;
+    this._isNew = false;
+    this._chunkSource = null;
+    this._randValue = 42184323;
+    this._addend = 1013904223;
+    this._maxRecurse = 0;
+    this._updateLights = true;
+    this._spawnFriendlies = true;
+    this._spawnEnemies = true;
+    this._lastSavedPlayerTime = 0;
+    this.raknetInstance = null;
+    this.updatingTileEntities = false;
+    this.allPlayersAreSleeping = false;
+    this._nightMode = false;
+    this._init(levelName, settings, generatorVersion, fixedDimension);
+  }
+  _init(levelName, settings, generatorVersion, fixedDimension) {
+    this.isGeneratingTerrain = false;
+    this._isNew = true;
+    this.dimension = { brightnessRamp: new Array(16).fill(0).map((_, i) => (15 - i) / (i * 3 + 1) * 0.95 + 0.05 * 3) };
+  }
+  getTile(x, y, z) {
+    if (y < 0)
+      return 0;
+    if (y >= DEPTH)
+      return 0;
+    return this.getChunk(x >> 4, z >> 4)?.getTile(x & 15, y, z & 15) ?? 0;
+  }
+  isEmptyTile(x, y, z) {
+    return this.getTile(x, y, z) === 0;
+  }
+  isSolidRenderTile(x, y, z) {
+    const t = this.getTile(x, y, z);
+    return t > 0;
+  }
+  isSolidBlockingTile(x, y, z) {
+    const t = this.getTile(x, y, z);
+    return t > 0;
+  }
+  hasChunkAt(x, y, z) {
+    if (y < 0 || y >= DEPTH)
+      return false;
+    return this.hasChunk(x >> 4, z >> 4);
+  }
+  hasChunksAt(x, y, z, r) {
+    return this.hasChunksAt6(x - r, y - r, z - r, x + r, y + r, z + r);
+  }
+  hasChunksAt6(x0, y0, z0, x1, y1, z1) {
+    if (y1 < 0 || y0 >= DEPTH)
+      return false;
+    x0 >>= 4;
+    z0 >>= 4;
+    x1 >>= 4;
+    z1 >>= 4;
+    for (let x = x0;x <= x1; x++)
+      for (let z = z0;z <= z1; z++)
+        if (!this.hasChunk(x, z))
+          return false;
+    return true;
+  }
+  hasChunk(x, z) {
+    return this._chunkSource ? this._chunkSource.hasChunk(x, z) : false;
+  }
+  getChunkAt(x, z) {
+    return this.getChunk(x >> 4, z >> 4);
+  }
+  getChunk(x, z) {
+    return this._chunkSource ? this._chunkSource.getChunk(x, z) : null;
+  }
+  setTileAndDataNoUpdate(x, y, z, tile, data) {
+    if (y < 0)
+      return false;
+    if (y >= DEPTH)
+      return false;
+    const c = this.getChunk(x >> 4, z >> 4);
+    return c ? c.setTileAndData(x & 15, y, z & 15, tile, data) : false;
+  }
+  setTileNoUpdate(x, y, z, tile) {
+    if (y < 0)
+      return false;
+    if (y >= DEPTH)
+      return false;
+    const c = this.getChunk(x >> 4, z >> 4);
+    return c ? c.setTile(x & 15, y, z & 15, tile) : false;
+  }
+  getMaterial(x, y, z) {
+    const t = this.getTile(x, y, z);
+    if (t === 0)
+      return "air";
+    return "stone";
+  }
+  getData(x, y, z) {
+    if (y < 0)
+      return 0;
+    if (y >= DEPTH)
+      return 0;
+    const c = this.getChunk(x >> 4, z >> 4);
+    x &= 15;
+    z &= 15;
+    return c ? c.getData(x, y, z) : 0;
+  }
+  setData(x, y, z, data) {
+    if (this.setDataNoUpdate(x, y, z, data)) {
+      this.tileUpdated(x, y, z, this.getTile(x, y, z));
+    }
+  }
+  setDataNoUpdate(x, y, z, data) {
+    if (y < 0)
+      return false;
+    if (y >= DEPTH)
+      return false;
+    const c = this.getChunk(x >> 4, z >> 4);
+    x &= 15;
+    z &= 15;
+    if (c && c.getData(x, y, z) !== data) {
+      c.setData(x, y, z, data);
+      return true;
+    }
+    return false;
+  }
+  setTile(x, y, z, tile) {
+    if (this.setTileNoUpdate(x, y, z, tile)) {
+      this.tileUpdated(x, y, z, tile);
+      return true;
+    }
+    return false;
+  }
+  setTileAndData(x, y, z, tile, data) {
+    if (this.setTileAndDataNoUpdate(x, y, z, tile, data)) {
+      this.tileUpdated(x, y, z, tile);
+      return true;
+    }
+    return false;
+  }
+  tileUpdated(x, y, z, tile) {}
+  addEntity(e) {
+    const prev = this.getEntity(e.entityId);
+    if (prev)
+      this.removeEntity(prev);
+    const xc = Math.floor(e.x / 16);
+    const zc = Math.floor(e.z / 16);
+    const forced = true;
+    if (forced) {
+      if (e.isPlayer && e.isPlayer() && !this.players.includes(e)) {
+        this.players.push(e);
+      }
+      const chunk = this.getChunk(xc, zc);
+      if (chunk && chunk.addEntity)
+        chunk.addEntity(e);
+      this.entities.push(e);
+      this.entityIdLookup.set(e.entityId, e);
+      this.entityAdded(e);
+      return true;
+    }
+    return false;
+  }
+  getEntity(entityId) {
+    return this.entityIdLookup.get(entityId) ?? null;
+  }
+  removeEntity(e) {
+    const idx = this.entities.indexOf(e);
+    if (idx >= 0)
+      this.entities.splice(idx, 1);
+    this.entityIdLookup.delete(e.entityId);
+    const pidx = this.players.indexOf(e);
+    if (pidx >= 0)
+      this.players.splice(pidx, 1);
+    this.entityRemoved(e);
+  }
+  entityAdded(e) {
+    for (const listener of this._listeners) {
+      if (listener.entityAdded)
+        listener.entityAdded(e);
+    }
+  }
+  entityRemoved(e) {
+    for (const listener of this._listeners) {
+      if (listener.entityRemoved)
+        listener.entityRemoved(e);
+    }
+  }
+  boxes = [];
+  getCubes(source, box) {
+    this.boxes = [];
+    const x0 = Math.floor(box.x0);
+    const x1 = Math.floor(box.x1 + 1);
+    const y0 = Math.floor(box.y0);
+    const y1 = Math.floor(box.y1 + 1);
+    const z0 = Math.floor(box.z0);
+    const z1 = Math.floor(box.z1 + 1);
+    for (let x = x0;x < x1; x++) {
+      for (let z = z0;z < z1; z++) {
+        if (this.hasChunkAt(x, DEPTH / 2, z)) {
+          for (let y = y0 - 1;y < y1; y++) {
+            const t = this.getTile(x, y, z);
+            if (t > 0) {
+              this.boxes.push(new AABB(x, y, z, x + 1, y + 1, z + 1));
+            }
+          }
+        }
+      }
+    }
+    return this.boxes;
+  }
+  getRawBrightness(x, y, z, propagate = true) {
+    const c = this.getChunk(x >> 4, z >> 4);
+    if (c && c.getRawBrightness) {
+      return c.getRawBrightness(x & 15, y, z & 15, this.skyDarken);
+    }
+    return 15;
+  }
+  getBrightness(x, y, z) {
+    const br = this.getRawBrightness(x, y, z);
+    const v = 1 - br / 16;
+    return (1 - v) / (v * 3 + 1) * (1 - 0.05) + 0.05 * 3;
+  }
+  isDay() {
+    return this.skyDarken < 4;
+  }
+  clip(A, b, liquid = false, solidOnly = false) {
+    if (isNaN(A.x) || isNaN(A.y) || isNaN(A.z))
+      return new HitResult;
+    if (isNaN(b.x) || isNaN(b.y) || isNaN(b.z))
+      return new HitResult;
+    const a = new Vec3(A.x, A.y, A.z);
+    let xTile1 = Math.floor(b.x);
+    let yTile1 = Math.floor(b.y);
+    let zTile1 = Math.floor(b.z);
+    let xTile0 = Math.floor(a.x);
+    let yTile0 = Math.floor(a.y);
+    let zTile0 = Math.floor(a.z);
+    let maxIterations = 200;
+    while (maxIterations-- >= 0) {
+      if (isNaN(a.x) || isNaN(a.y) || isNaN(a.z))
+        return new HitResult;
+      if (xTile0 === xTile1 && yTile0 === yTile1 && zTile0 === zTile1)
+        return new HitResult;
+      let xClip = 999, yClip = 999, zClip = 999;
+      if (xTile1 > xTile0)
+        xClip = xTile0 + 1;
+      if (xTile1 < xTile0)
+        xClip = xTile0 + 0;
+      if (yTile1 > yTile0)
+        yClip = yTile0 + 1;
+      if (yTile1 < yTile0)
+        yClip = yTile0 + 0;
+      if (zTile1 > zTile0)
+        zClip = zTile0 + 1;
+      if (zTile1 < zTile0)
+        zClip = zTile0 + 0;
+      let xDist = 999, yDist = 999, zDist = 999;
+      const xd = b.x - a.x;
+      const yd = b.y - a.y;
+      const zd = b.z - a.z;
+      if (xClip !== 999)
+        xDist = (xClip - a.x) / xd;
+      if (yClip !== 999)
+        yDist = (yClip - a.y) / yd;
+      if (zClip !== 999)
+        zDist = (zClip - a.z) / zd;
+      let face = 0;
+      if (xDist < yDist && xDist < zDist) {
+        if (xTile1 > xTile0)
+          face = 4;
+        else
+          face = 5;
+        a.x = xClip;
+        a.y += yd * xDist;
+        a.z += zd * xDist;
+      } else if (yDist < zDist) {
+        if (yTile1 > yTile0)
+          face = 0;
+        else
+          face = 1;
+        a.x += xd * yDist;
+        a.y = yClip;
+        a.z += zd * yDist;
+      } else {
+        if (zTile1 > zTile0)
+          face = 2;
+        else
+          face = 3;
+        a.x += xd * zDist;
+        a.y += yd * zDist;
+        a.z = zClip;
+      }
+      const tPos = new Vec3(a.x, a.y, a.z);
+      xTile0 = Math.floor(a.x);
+      if (face === 5) {
+        xTile0--;
+        tPos.x++;
+      }
+      yTile0 = Math.floor(a.y);
+      if (face === 1) {
+        yTile0--;
+        tPos.y++;
+      }
+      zTile0 = Math.floor(a.z);
+      if (face === 3) {
+        zTile0--;
+        tPos.z++;
+      }
+      const t = this.getTile(xTile0, yTile0, zTile0);
+      if (t > 0) {
+        return new HitResult(xTile0, yTile0, zTile0, face, tPos);
+      }
+    }
+    return new HitResult;
+  }
+  getSkyDarken(a) {
+    const td = this.getTimeOfDay(a);
+    let br = 1 - (Math.cos(td * Math.PI * 2) * 2 + 0.5);
+    if (br < 0)
+      br = 0;
+    if (br > 0.8)
+      br = 0.8;
+    return Math.floor(br * 11);
+  }
+  getTimeOfDay(a) {
+    const time = this.levelData.getTime();
+    const t = (time + a) / TICKS_PER_DAY2 % 1;
+    return 0.5 + 2 * t - (t > 0.5 ? 1 : 0) / 2;
+  }
+  getSunAngle(a) {
+    const td = this.getTimeOfDay(a);
+    return td * Math.PI * 2;
+  }
+  containsAnyLiquid(box) {
+    const x0 = Math.floor(box.x0);
+    const x1 = Math.floor(box.x1 + 1);
+    const y0 = Math.floor(box.y0);
+    const y1 = Math.floor(box.y1 + 1);
+    const z0 = Math.floor(box.z0);
+    const z1 = Math.floor(box.z1 + 1);
+    for (let x = x0;x < x1; x++)
+      for (let y = y0;y < y1; y++)
+        for (let z = z0;z < z1; z++) {
+          const t = this.getTile(x, y, z);
+          if (t === 8 || t === 9 || t === 10 || t === 11)
+            return true;
+        }
+    return false;
+  }
+  containsFireTile(box) {
+    const x0 = Math.floor(box.x0);
+    const x1 = Math.floor(box.x1 + 1);
+    const y0 = Math.floor(box.y0);
+    const y1 = Math.floor(box.y1 + 1);
+    const z0 = Math.floor(box.z0);
+    const z1 = Math.floor(box.z1 + 1);
+    if (this.hasChunksAt6(x0, y0, z0, x1, y1, z1)) {
+      for (let x = x0;x < x1; x++)
+        for (let y = y0;y < y1; y++)
+          for (let z = z0;z < z1; z++) {
+            const t = this.getTile(x, y, z);
+            if (t === 10 || t === 11)
+              return true;
+          }
+    }
+    return false;
+  }
+  containsMaterial(box, material) {
+    const x0 = Math.floor(box.x0);
+    const x1 = Math.floor(box.x1 + 1);
+    const y0 = Math.floor(box.y0);
+    const y1 = Math.floor(box.y1 + 1);
+    const z0 = Math.floor(box.z0);
+    const z1 = Math.floor(box.z1 + 1);
+    for (let x = x0;x < x1; x++)
+      for (let y = y0;y < y1; y++)
+        for (let z = z0;z < z1; z++) {
+          const t = this.getTile(x, y, z);
+          if (t > 0 && this.getMaterial(x, y, z) === material)
+            return true;
+        }
+    return false;
+  }
+  containsLiquid(box, material) {
+    const x0 = Math.floor(box.x0);
+    const x1 = Math.floor(box.x1 + 1);
+    const y0 = Math.floor(box.y0);
+    const y1 = Math.floor(box.y1 + 1);
+    const z0 = Math.floor(box.z0);
+    const z1 = Math.floor(box.z1 + 1);
+    for (let x = x0;x < x1; x++)
+      for (let y = y0;y < y1; y++)
+        for (let z = z0;z < z1; z++) {
+          if (this.getMaterial(x, y, z) === material) {
+            const data = this.getData(x, y, z);
+            let yh1 = y + 1;
+            if (data < 8)
+              yh1 = y + 1 - data / 8;
+            if (yh1 >= box.y0)
+              return true;
+          }
+        }
+    return false;
+  }
+  checkAndHandleWater(box, material, e) {
+    const x0 = Math.floor(box.x0);
+    const x1 = Math.floor(box.x1 + 1);
+    const y0 = Math.floor(box.y0);
+    const y1 = Math.floor(box.y1 + 1);
+    const z0 = Math.floor(box.z0);
+    const z1 = Math.floor(box.z1 + 1);
+    if (!this.hasChunksAt6(x0, y0, z0, x1, y1, z1))
+      return false;
+    let ok = false;
+    for (let x = x0;x < x1; x++)
+      for (let y = y0;y < y1; y++)
+        for (let z = z0;z < z1; z++) {
+          if (this.getMaterial(x, y, z) === material) {
+            ok = true;
+          }
+        }
+    return ok;
+  }
+  getNearestPlayer(source, maxDist) {
+    return this.getNearestPlayerXYZ(source.x, source.y, source.z, maxDist);
+  }
+  getNearestPlayerXYZ(x, y, z, maxDist) {
+    const maxDistSqr = maxDist * maxDist;
+    let best = -1;
+    let result = null;
+    for (const p of this.players) {
+      if (p.removed)
+        continue;
+      const dx = p.x - x, dy = p.y - y, dz = p.z - z;
+      const dist = dx * dx + dy * dy + dz * dz;
+      if ((maxDist < 0 || dist < maxDistSqr) && (best === -1 || dist < best)) {
+        best = dist;
+        result = p;
+      }
+    }
+    return result;
+  }
+  getTopSolidBlock(x, z) {
+    let y = DEPTH - 1;
+    while (y > 0) {
+      const t = this.getTile(x, y, z);
+      if (t > 0 && t !== 18)
+        return y + 1;
+      y--;
+    }
+    return -1;
+  }
+  getStarBrightness(a) {
+    const td = this.getTimeOfDay(a);
+    let br = 1 - (Math.cos(td * Math.PI * 2) * 2 + 0.75);
+    if (br < 0)
+      br = 0;
+    if (br > 1)
+      br = 1;
+    return br * br * 0.5;
+  }
+  addParticle(id2, x, y, z, xd, yd, zd, data = 0) {}
+  playSound(entity, name, volume, pitch) {}
+  broadcastEntityEvent(e, eventId) {}
+  isNew() {
+    return this._isNew;
+  }
+  getSeaLevel() {
+    return SEA_LEVEL;
+  }
+  getTime() {
+    return this.levelData.getTime();
+  }
+  setTime(time) {
+    this.levelData.time = time;
+  }
+  isNightMode() {
+    return this._nightMode ? 1 : 0;
+  }
+  setNightMode(isNightMode) {
+    this._nightMode = isNightMode;
+  }
+}
+
+// src/game/world/level/translated/chunk-classes.ts
+class ChunkSource {
+  isChunkCache = false;
+  constructor() {
+    this.isChunkCache = false;
+  }
+  saveAll(onlyUnsaved) {}
+}
+
+class LevelChunk {
+  blocksLength = 0;
+  loaded = false;
+  level = null;
+  data = new Uint8Array(32768);
+  skyLight = new Uint8Array(32768);
+  blockLight = new Uint8Array(32768);
+  heightmap = new Int8Array(256);
+  updateMap = new Uint8Array(256);
+  minHeight = 0;
+  x;
+  z;
+  xt;
+  zt;
+  terrainPopulated = false;
+  unsaved = false;
+  dontSave = false;
+  createdFromSave = false;
+  lastSaveHadEntities = false;
+  lastSaveTime = 0;
+  blocks = new Uint8Array(32768);
+  entityBlocks = [[], [], [], [], [], [], [], []];
+  tileEntities = new Map;
+  static touchedSky = false;
+  static ChunkBlockCount = 32768;
+  static ChunkSize = 32768;
+  static UpdateMapBitShift = 4;
+  constructor(level, arg2, arg3, arg4) {
+    this.level = level;
+    if (arg2 instanceof Uint8Array) {
+      this.blocks = arg2;
+      this.x = arg3;
+      this.z = arg4;
+    } else {
+      this.x = arg2;
+      this.z = arg3;
+    }
+    this.xt = this.x * 16;
+    this.zt = this.z * 16;
+  }
+  init() {}
+  clearUpdateMap() {
+    this.updateMap.fill(0);
+  }
+  deleteBlockData() {
+    this.blocks = new Uint8Array(0);
+  }
+  isAt(x, z) {
+    return this.x === x && this.z === z;
+  }
+  getHeightmap(x, z) {
+    return this.heightmap[(z & 15) << 4 | x & 15];
+  }
+  getBlockData() {
+    return this.blocks;
+  }
+  getTile(x, y, z) {
+    return this.blocks[y << 8 | (z & 15) << 4 | x & 15];
+  }
+  setTile(x, y, z, tile) {
+    return this.setTileAndData(x, y, z, tile, 0);
+  }
+  setTileAndData(x, y, z, tile, data) {
+    const idx = y << 8 | (z & 15) << 4 | x & 15;
+    if (this.blocks[idx] === tile)
+      return false;
+    this.blocks[idx] = tile;
+    this.data[idx] = data;
+    this.unsaved = true;
+    return true;
+  }
+  getData(x, y, z) {
+    return this.data[y << 8 | (z & 15) << 4 | x & 15];
+  }
+  setData(x, y, z, val) {
+    const idx = y << 8 | (z & 15) << 4 | x & 15;
+    this.data[idx] = val;
+    this.unsaved = true;
+  }
+  setTileRaw(x, y, z, tile) {
+    const idx = y << 8 | (z & 15) << 4 | x & 15;
+    this.blocks[idx] = tile;
+  }
+  isEmpty() {
+    return false;
+  }
+  addEntity(e) {
+    const yc = Math.floor(e.y / 16);
+    if (yc >= 0 && yc < 8) {
+      this.entityBlocks[yc].push(e);
+    }
+  }
+  removeEntity(e) {
+    for (let i = 0;i < 8; i++) {
+      const idx = this.entityBlocks[i].indexOf(e);
+      if (idx >= 0) {
+        this.entityBlocks[i].splice(idx, 1);
+        return;
+      }
+    }
+  }
+  getTileEntity(x, y, z) {
+    return this.tileEntities.get(`${x},${y},${z}`);
+  }
+  hasTileEntityAt(x, y, z) {
+    return this.tileEntities.has(`${x},${y},${z}`);
+  }
+  addTileEntity(te) {}
+  setTileEntity(x, y, z, tileEntity) {
+    this.tileEntities.set(`${x},${y},${z}`, tileEntity);
+  }
+  removeTileEntity(x, y, z) {
+    this.tileEntities.delete(`${x},${y},${z}`);
+  }
+  isSkyLit(x, y, z) {
+    return y >= this.getHeightmap(x, z);
+  }
+  load() {
+    this.loaded = true;
+  }
+  unload() {
+    this.loaded = false;
+  }
+  shouldSave(force) {
+    return force || this.unsaved;
+  }
+  markUnsaved() {
+    this.unsaved = true;
+  }
+  countEntities() {
+    let count = 0;
+    for (let i = 0;i < 8; i++)
+      count += this.entityBlocks[i].length;
+    return count;
+  }
+  getRawBrightness(x, y, z, skyDampen) {
+    const idx = y << 8 | (z & 15) << 4 | x & 15;
+    const sky = Math.max(0, this.skyLight[idx] - skyDampen);
+    const block2 = this.blockLight[idx];
+    return Math.max(sky, block2);
+  }
+  getBrightness(layer, x, y, z) {
+    const idx = y << 8 | (z & 15) << 4 | x & 15;
+    if (layer === "sky")
+      return this.skyLight[idx];
+    return this.blockLight[idx];
+  }
+  setBrightness(layer, x, y, z, brightness) {
+    const idx = y << 8 | (z & 15) << 4 | x & 15;
+    if (layer === "sky")
+      this.skyLight[idx] = brightness;
+    else
+      this.blockLight[idx] = brightness;
+  }
+  getTileEntityMap() {
+    return this.tileEntities;
+  }
+}
+
+class ChunkCache extends ChunkSource {
+  static MAX_SAVES = 2;
+  xLast = -999999999;
+  zLast = -999999999;
+  last = null;
+  level;
+  emptyChunk = null;
+  source = null;
+  storage = null;
+  chunks;
+  constructor(level, storage, source) {
+    super();
+    this.isChunkCache = true;
+    this.level = level;
+    this.storage = storage;
+    this.source = source;
+    this.chunks = new Array(32 * 32).fill(null);
+    this.emptyChunk = { isAt: () => false, terrainPopulated: true };
+  }
+  fits(x, z) {
+    return x >= 0 && z >= 0 && x < 32 && z < 32;
+  }
+  hasChunk(x, z) {
+    if (!this.fits(x, z))
+      return true;
+    if (x === this.xLast && z === this.zLast && this.last !== null)
+      return true;
+    const xs = x & 31;
+    const zs = z & 31;
+    const slot = xs + zs * 32;
+    return this.chunks[slot] !== null && (this.chunks[slot] === this.emptyChunk || this.chunks[slot].isAt(x, z));
+  }
+  create(x, z) {
+    return this.getChunk(x, z);
+  }
+  getChunk(x, z) {
+    if (x === this.xLast && z === this.zLast && this.last !== null)
+      return this.last;
+    if (!this.fits(x, z))
+      return this.emptyChunk;
+    const xs = x & 31;
+    const zs = z & 31;
+    const slot = xs + zs * 32;
+    if (!this.hasChunk(x, z)) {
+      if (this.chunks[slot] !== null) {
+        this.chunks[slot].unload();
+      }
+      let newChunk = this.load(x, z);
+      let updateLights = false;
+      if (newChunk === null) {
+        if (this.source === null)
+          newChunk = this.emptyChunk;
+        else
+          newChunk = this.source.getChunk(x, z);
+      } else {
+        updateLights = true;
+      }
+      this.chunks[slot] = newChunk;
+      if (this.chunks[slot] !== null) {
+        this.chunks[slot].load();
+      }
+      if (!this.chunks[slot].terrainPopulated && this.hasChunk(x + 1, z + 1) && this.hasChunk(x, z + 1) && this.hasChunk(x + 1, z)) {
+        this.postProcess(this, x, z);
+      }
+    }
+    this.xLast = x;
+    this.zLast = z;
+    this.last = this.chunks[slot];
+    return this.chunks[slot];
+  }
+  getMobsAt(mobCategory, x, y, z) {
+    return this.source ? this.source.getMobsAt(mobCategory, x, y, z) : null;
+  }
+  postProcess(parent, x, z) {
+    if (!this.fits(x, z))
+      return;
+    const chunk = this.getChunk(x, z);
+    if (!chunk.terrainPopulated) {
+      chunk.terrainPopulated = true;
+      if (this.source !== null) {
+        this.source.postProcess(parent, x, z);
+        chunk.clearUpdateMap();
+      }
+    }
+  }
+  tick() {
+    if (this.storage !== null)
+      this.storage.tick();
+    return this.source ? this.source.tick() : false;
+  }
+  shouldSave() {
+    return true;
+  }
+  gatherStats() {
+    return "ChunkCache: 1024";
+  }
+  load(x, z) {
+    if (this.storage === null)
+      return this.emptyChunk;
+    if (x < 0 || x >= 32 || z < 0 || z >= 32)
+      return this.emptyChunk;
+    const levelChunk = this.storage.load(this.level, x, z);
+    if (levelChunk !== null) {
+      levelChunk.lastSaveTime = this.level.getTime();
+    }
+    return levelChunk;
+  }
+  saveEntities(levelChunk) {
+    if (this.storage === null)
+      return;
+    this.storage.saveEntities(this.level, levelChunk);
+  }
+  save(levelChunk) {
+    if (this.storage === null)
+      return;
+    levelChunk.lastSaveTime = this.level.getTime();
+    this.storage.save(this.level, levelChunk);
+  }
+}
+
+// src/game/world/level/translated/world-systems.ts
+var LEVEL_HEIGHT = 128;
+var CHUNK_CACHE_WIDTH = 16;
+var CHUNK_WIDTH = 16;
+var CHUNK_DEPTH = 16;
+var LEVEL_WIDTH = CHUNK_CACHE_WIDTH * CHUNK_WIDTH;
+var LEVEL_DEPTH = CHUNK_CACHE_WIDTH * CHUNK_DEPTH;
+var CHUNK_COLUMNS = CHUNK_WIDTH * CHUNK_DEPTH;
+var CHUNK_BLOCK_COUNT = CHUNK_COLUMNS * LEVEL_HEIGHT;
+var GameType;
+((GameType) => {
+  GameType.Undefined = -1;
+  GameType.Survival = 0;
+  GameType.Creative = 1;
+  GameType.Default = GameType.Creative;
+})(GameType ||= {});
+class Dimension {
+  level = null;
+  biomeSource = null;
+  foggy = false;
+  ultraWarm = false;
+  hasCeiling = false;
+  brightnessRamp = new Array(16);
+  id = 0;
+  sunriseCol = [0, 0, 0, 0];
+  static fogColor = 8444671;
+  constructor() {
+    this.updateLightRamp();
+  }
+  init(level) {
+    this.level = level;
+  }
+  createRandomLevelSource() {
+    return null;
+  }
+  isValidSpawn(x, z) {
+    return true;
+  }
+  isNaturalDimension() {
+    return false;
+  }
+  getTimeOfDay(time, a) {
+    let t = time * (1 / 19200) % 1;
+    const tdo = t;
+    t = (1 - Math.cos(t * Math.PI) + 1) * 0.5;
+    return tdo + (t - tdo) / 3;
+  }
+  getSunriseColor(td, a) {
+    return null;
+  }
+  getFogColor(td, a) {
+    return { x: 0.5, y: 0.85, z: 1 };
+  }
+  mayRespawn() {
+    return true;
+  }
+  updateLightRamp() {
+    for (let i = 0;i < 16; i++) {
+      const v = 1 - i / 16;
+      this.brightnessRamp[i] = (1 - v) / (v * 3 + 1) * (1 - 0.05) + 0.05 * 3;
+    }
+  }
+  static getNew(id2) {
+    return new Dimension;
+  }
+}
+class TileEntity2 {
+  level = null;
+  x = 0;
+  y = 0;
+  z = 0;
+  data = 0;
+  type = 0;
+  runningId = 0;
+  clientSideOnly = false;
+  rendererId = 0;
+  tile = null;
+  remove = false;
+  static _runningId = 0;
+  constructor(tileEntityType) {
+    this.type = tileEntityType;
+    this.runningId = ++TileEntity2._runningId;
+  }
+  shouldSave() {
+    return true;
+  }
+  load(tag) {}
+  save(tag) {
+    return true;
+  }
+  tick() {}
+  isFinished() {
+    return false;
+  }
+  static loadStatic(tag) {
+    return null;
+  }
+  setLevelAndPos(level, x, y, z) {
+    this.level = level;
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+  getData() {
+    return this.data;
+  }
+  setData(data) {
+    this.data = data;
+  }
+  setChanged() {}
+  distanceToSqr(xPlayer, yPlayer, zPlayer) {
+    const xd = this.x - xPlayer;
+    const yd = this.y - yPlayer;
+    const zd = this.z - zPlayer;
+    return xd * xd + yd * yd + zd * zd;
+  }
+  getTile() {
+    return this.tile;
+  }
+  isRemoved() {
+    return this.remove;
+  }
+  setRemoved() {
+    this.remove = true;
+  }
+  clearRemoved() {
+    this.remove = false;
+  }
+  triggerEvent(b0, b1) {}
+  clearCache() {}
+  isType(Type) {
+    return this.type === Type;
+  }
+  static isType(te, Type) {
+    return te !== null && te.type === Type;
+  }
+}
+
+class GameMode {
+  minecraft;
+  oDestroyProgress = 0;
+  destroyProgress = 0;
+  destroyTicks = 0;
+  destroyDelay = 0;
+  constructor(minecraft) {
+    this.minecraft = minecraft;
+  }
+  initLevel(level) {}
+  startDestroyBlock(x, y, z, face) {}
+  destroyBlock(x, y, z, face) {
+    return false;
+  }
+  continueDestroyBlock(x, y, z, face) {}
+  stopDestroyBlock() {}
+  tick() {}
+  render(a) {}
+  getPickRange() {
+    return 5;
+  }
+  useItem(player, level, item) {
+    return false;
+  }
+  useItemOn(player, level, item, x, y, z, face, hit) {
+    return false;
+  }
+  createPlayer(level) {
+    return null;
+  }
+  initPlayer(player) {}
+  adjustPlayer(player) {}
+  canHurtPlayer() {
+    return false;
+  }
+  interact(player, entity) {}
+  attack(player, entity) {}
+  handleInventoryMouseClick(containerId, slotNum, buttonNum, player) {
+    return null;
+  }
+  handleCloseInventory(containerId, player) {}
+  isCreativeType() {
+    return false;
+  }
+  isSurvivalType() {
+    return false;
+  }
+  initAbilities(abilities) {}
+  releaseUsingItem(player) {}
+}
+
+class CreativeMode extends GameMode {
+  constructor(minecraft) {
+    super(minecraft);
+  }
+  startDestroyBlock(x, y, z, face) {}
+  continueDestroyBlock(x, y, z, face) {}
+  stopDestroyBlock() {}
+  isCreativeType() {
+    return true;
+  }
+  initAbilities(abilities) {
+    abilities.instabuild = true;
+    abilities.mayfly = true;
+  }
+  releaseUsingItem(player) {}
+  creativeDestroyBlock(x, y, z, face) {}
+}
+
+class SurvivalMode extends GameMode {
+  xDestroyBlock = 0;
+  yDestroyBlock = 0;
+  zDestroyBlock = 0;
+  constructor(minecraft) {
+    super(minecraft);
+  }
+  destroyBlock(x, y, z, face) {
+    return false;
+  }
+  startDestroyBlock(x, y, z, face) {}
+  continueDestroyBlock(x, y, z, face) {}
+  stopDestroyBlock() {}
+  canHurtPlayer() {
+    return true;
+  }
+  isSurvivalType() {
+    return true;
+  }
+  initAbilities(abilities) {
+    abilities.instabuild = false;
+    abilities.mayfly = false;
+  }
+}
+var biomes = {};
+
+class Biome {
+  name = "";
+  color = 0;
+  topMaterial = 0;
+  material = 0;
+  leafColor = 0;
+  _enemies = [];
+  _friendlies = [];
+  _waterFriendlies = [];
+  static map = new Array(64 * 64).fill(null);
+  setName(name) {
+    this.name = name;
+    return this;
+  }
+  setLeafColor(leafColor) {
+    this.leafColor = leafColor;
+    return this;
+  }
+  setColor(color) {
+    this.color = color;
+    return this;
+  }
+  setSnowCovered() {
+    return this;
+  }
+  clearMobs(friendlies = true, waterFriendlies = true, enemies = true) {
+    return this;
+  }
+  getTreeFeature(random) {
+    return null;
+  }
+  getGrassFeature(random) {
+    return null;
+  }
+  static getBiome(temperature, downfall) {
+    return Biome._getBiome(temperature, downfall);
+  }
+  static _getBiome(temperature, downfall) {
+    return biomes.plains ?? null;
+  }
+  adjustScale(scale) {
+    return scale;
+  }
+  adjustDepth(depth) {
+    return depth;
+  }
+  getSkyColor(temp) {
+    return 3174655;
+  }
+  getMobs(category) {
+    return this._enemies;
+  }
+  getCreatureProbability() {
+    return 0.1;
+  }
+}
+
+class BiomeSource {
+  temperatures = [];
+  downfalls = [];
+  noises = [];
+  lenTemperatures = 0;
+  lenDownfalls = 0;
+  lenNoises = 0;
+  lenBiomes = 0;
+  biomes = [];
+  temperatureMap = null;
+  downfallMap = null;
+  noiseMap = null;
+  static zoom = 0.0125;
+  static tempScale = 0.05;
+  static downfallScale = 0.05;
+  static noiseScale = 0.0125;
+  constructor(level) {}
+  getBiome(x, z) {
+    return Biome.getBiome(0.5, 0.5);
+  }
+  getTemperatureBlock(x, z, w, h) {
+    return new Array(w * h).fill(0.5);
+  }
+  getBiomeBlock(x, z, w, h) {
+    const result = new Array(w * h);
+    for (let i = 0;i < w * h; i++)
+      result[i] = Biome.getBiome(0.5, 0.5);
+    return result;
+  }
+}
+
+class RandomLevelSource {
+  static SNOW_CUTOFF = 0.5;
+  static SNOW_SCALE = 1;
+  static CHUNK_HEIGHT = 8;
+  static CHUNK_WIDTH = 4;
+  caveFeature = null;
+  waterDepths = [];
+  level = null;
+  spawnMobs = true;
+  chunkMap = new Map;
+  random;
+  buffer = [];
+  constructor(level, seed, version, spawnMobs) {
+    this.level = level;
+    this.spawnMobs = spawnMobs;
+    this.waterDepths = new Array(32).fill(0).map(() => new Array(32).fill(0));
+  }
+  hasChunk(x, y) {
+    return true;
+  }
+  create(x, z) {
+    return this.getChunk(x, z);
+  }
+  getChunk(xOffs, zOffs) {
+    return null;
+  }
+  prepareHeights(xOffs, zOffs, blocks, biomes2, temperatures) {}
+  buildSurfaces(xOffs, zOffs, blocks, biomes2) {}
+  postProcess(parent, xt, zt) {}
+  tick() {
+    return false;
+  }
+  getMobsAt(mobCategory, x, y, z) {
+    return null;
+  }
+  shouldSave() {
+    return false;
+  }
+  gatherStats() {
+    return "RandomLevelSource";
+  }
+}
+
+// src/game/util/translated/Mth.ts
+var _rand = new Random;
+var PI = 3.141592653589793;
+var TWO_PI = 2 * PI;
+var DEGRAD2 = PI / 180;
+var RADDEG2 = 180 / PI;
+var _sin = new Array(65536);
+var _sinScale = 65536 / (2 * PI);
+function initMth() {
+  for (let i = 0;i < 65536; i++) {
+    _sin[i] = Math.sin(i / _sinScale);
+  }
+}
+function sqrt(x) {
+  return Math.sqrt(x);
+}
+function floor(v) {
+  const i = Math.trunc(v);
+  return v < i ? i - 1 : i;
+}
+function cos(x) {
+  return _sin[Math.trunc(x * _sinScale + 65536 / 4) & 65535];
+}
+function sin(x) {
+  return _sin[Math.trunc(x * _sinScale) & 65535];
+}
+function atan(x) {
+  return Math.atan(x);
+}
+function atan2(dy, dx) {
+  return Math.atan2(dy, dx);
+}
+initMth();
+
+// src/game/util/translated/SharedConstants.ts
+var TicksPerSecond = 20;
+
 // src/game/browser-entry.ts
 window.VoxelCraftEngine = VoxelCraftEngine;
 window.VoxelCraftBlockRegistry = BlockRegistry;
@@ -5484,3 +11356,31 @@ window.VoxelCraftSignTileEntity = SignTileEntity;
 window.VoxelCraftCreateTileEntity = createTileEntity;
 window.VoxelCraftRecipes = Recipes;
 window.VoxelCraftFurnaceRecipes = FurnaceRecipes;
+window.VoxelCraftTile = Tile;
+window.VoxelCraftInitTiles = initTiles;
+window.VoxelCraftTiles = tiles;
+window.VoxelCraftItem = Item;
+window.VoxelCraftInitItems = initItems;
+window.VoxelCraftItemInstance = ItemInstance;
+window.VoxelCraftMaterial = Material;
+window.VoxelCraftInitMaterials = initMaterials;
+window.VoxelCraftFillingContainer = FillingContainer;
+window.VoxelCraftEntity = Entity2;
+window.VoxelCraftMob = Mob2;
+window.VoxelCraftPlayer = Player;
+window.VoxelCraftLevel = Level;
+window.VoxelCraftLevelChunk = LevelChunk;
+window.VoxelCraftChunkCache = ChunkCache;
+window.VoxelCraftAABB = AABB;
+window.VoxelCraftVec3 = Vec3;
+window.VoxelCraftHitResult = HitResult;
+window.VoxelCraftMth = { sqrt, floor, sin, cos, atan, atan2, PI, TWO_PI, DEGRAD: DEGRAD2, RADDEG: RADDEG2 };
+window.VoxelCraftRandom = Random;
+window.VoxelCraftTicksPerSecond = TicksPerSecond;
+window.VoxelCraftDimension = Dimension;
+window.VoxelCraftTileEntity = TileEntity2;
+window.VoxelCraftGameMode = GameMode;
+window.VoxelCraftCreativeMode = CreativeMode;
+window.VoxelCraftSurvivalMode = SurvivalMode;
+window.VoxelCraftBiome = Biome;
+window.VoxelCraftBiomeSource = BiomeSource;
