@@ -92,7 +92,3 @@ window.VoxelCraftFurnaceRecipes = FurnaceRecipes;
 
 
 
-window.VoxelCraftEntity = Entity;
-window.VoxelCraftMob = Mob;
-window.VoxelCraftAABB_Cpp = AABB_Cpp;
-window.VoxelCraftMth = { sqrt: mthSqrt, floor: mthFloor, sin: mthSin, cos: mthCos, atan: mthAtan, atan2: mthAtan2, PI, TWO_PI, DEGRAD, RADDEG };

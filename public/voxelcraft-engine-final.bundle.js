@@ -2002,10 +2002,10 @@ var SKELETON_RANGED_COOLDOWN_TICKS = TICKS_PER_SECOND * 3;
 
 // src/game/world/entity/entity.ts
 var TOTAL_AIR_SUPPLY2 = 15 * TICKS_PER_SECOND;
-var RADDEG2 = 180 / Math.PI;
-var DEGRAD2 = Math.PI / 180;
+var RADDEG = 180 / Math.PI;
+var DEGRAD = Math.PI / 180;
 
-class Entity2 {
+class Entity {
   static entityCounter = 0;
   static sharedRandom = {
     nextFloat: () => Math.random(),
@@ -2072,7 +2072,7 @@ class Entity2 {
   constructor(level) {
     this.level = level;
     this._init();
-    this.entityId = ++Entity2.entityCounter;
+    this.entityId = ++Entity.entityCounter;
     this.setPos(0, 0, 0);
   }
   reset() {
@@ -2322,8 +2322,8 @@ class Entity2 {
     dist = speed / dist;
     const xa2 = xa * dist;
     const za2 = za * dist;
-    const sin_ = Math.sin(this.yRot * DEGRAD2);
-    const cos_ = Math.cos(this.yRot * DEGRAD2);
+    const sin_ = Math.sin(this.yRot * DEGRAD);
+    const cos_ = Math.cos(this.yRot * DEGRAD);
     this.xd += xa2 * cos_ - za2 * sin_;
     this.zd += za2 * cos_ + xa2 * sin_;
   }
@@ -2703,7 +2703,7 @@ var DEFAULT_RUN_SPEED = 0.7;
 var DEFAULT_WALKING_SPEED = 0.1;
 var DEFAULT_FLYING_SPEED = 0.02;
 
-class Mob2 extends Entity2 {
+class Mob extends Entity {
   invulnerableDuration = 20;
   timeOffs = 0;
   rotA = 0;
@@ -2790,7 +2790,7 @@ class Mob2 extends Entity2 {
     this.timeOffs = Math.random() * 12398;
     this.yRot = Math.random() * Math.PI * 2;
     this.footSize = 0.5;
-    this.random = level?.random ?? Entity2.sharedRandom;
+    this.random = level?.random ?? Entity.sharedRandom;
   }
   _init() {
     super._init();
@@ -3415,7 +3415,7 @@ var MAX_TURN = 30;
 var DATA_FLAGS_ID_AGEABLE = 14;
 var DATAFLAG_ISBABY = 0;
 
-class PathfinderMob extends Mob2 {
+class PathfinderMob extends Mob {
   attackTargetId = 0;
   holdGround = false;
   fleeTime = 0;
@@ -5484,7 +5484,3 @@ window.VoxelCraftSignTileEntity = SignTileEntity;
 window.VoxelCraftCreateTileEntity = createTileEntity;
 window.VoxelCraftRecipes = Recipes;
 window.VoxelCraftFurnaceRecipes = FurnaceRecipes;
-window.VoxelCraftEntity = Entity;
-window.VoxelCraftMob = Mob;
-window.VoxelCraftAABB_Cpp = AABB_Cpp;
-window.VoxelCraftMth = { sqrt: mthSqrt, floor: mthFloor, sin: mthSin, cos: mthCos, atan: mthAtan, atan2: mthAtan2, PI, TWO_PI, DEGRAD, RADDEG };
