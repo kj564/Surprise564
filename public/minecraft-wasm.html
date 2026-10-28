@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VoxelCraft — MCPE 2013 (WASM)</title>
+<style>
+  body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+  #canvas { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; }
+  #status { position: fixed; top: 10px; left: 10px; color: #fff; font-family: monospace;
+             font-size: 14px; text-shadow: 1px 1px #000; z-index: 100; }
+  #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+             color: #fff; font-family: sans-serif; font-size: 20px; }
+</style>
+</head>
+<body>
+  <canvas id="canvas" width="854" height="480"></canvas>
+  <div id="loading">Loading MCPE 2013 WASM...</div>
+  <div id="status" style="display:none"></div>
+  
+  <!-- §Load the Emscripten-generated JS glue code -->
+  <script src="./voxelcraft-wasm.js"></script>
+  
+  <script>
+    // §Configure Emscripten module before it loads
+    var Module = {
+      canvas: document.getElementById('canvas'),
+      onRuntimeInitialized: function() {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('status').textContent = 'MCPE 2013 WASM Ready';
+        document.getElementById('status').style.display = 'block';
+      },
+      print: function(text) {
+        console.log('[MCPE] ' + text);
+      },
+      printErr: function(text) {
+        console.error('[MCPE] ' + text);
+      }
+    };
+  </script>
+</body>
+</html>
