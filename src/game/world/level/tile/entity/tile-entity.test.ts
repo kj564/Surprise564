@@ -56,35 +56,35 @@ describe('FurnaceTileEntity (§FurnaceTileEntity.cpp)', () => {
 
   it('shouldSave true when has items', () => {
     const f = new FurnaceTileEntity();
-    f.setItem(SLOT_INGREDIENT, { itemKey: 'ironOre', count: 1, maxStackSize: 64 });
+    f.setItem(SLOT_INGREDIENT, { id: 'ironOre', count: 1, maxStackSize: 64 });
     expect(f.shouldSave()).toBe(true);
   });
 
   it('getBurnDuration: wood = 300 ticks (§FurnaceTileEntity.cpp:209)', () => {
     const f = new FurnaceTileEntity();
-    expect(f.getBurnDuration({ itemKey: 'oak_planks', count: 1, maxStackSize: 64 })).toBe(300);
-    expect(f.getBurnDuration({ itemKey: 'oak_log', count: 1, maxStackSize: 64 })).toBe(300);
+    expect(f.getBurnDuration({ id: 'oak_planks', count: 1, maxStackSize: 64 })).toBe(300);
+    expect(f.getBurnDuration({ id: 'oak_log', count: 1, maxStackSize: 64 })).toBe(300);
   });
 
   it('getBurnDuration: stick = 100 ticks (§FurnaceTileEntity.cpp:210)', () => {
     const f = new FurnaceTileEntity();
-    expect(f.getBurnDuration({ itemKey: 'stick', count: 1, maxStackSize: 64 })).toBe(100);
+    expect(f.getBurnDuration({ id: 'stick', count: 1, maxStackSize: 64 })).toBe(100);
   });
 
   it('getBurnDuration: coal = 1600 ticks (§FurnaceTileEntity.cpp:211)', () => {
     const f = new FurnaceTileEntity();
-    expect(f.getBurnDuration({ itemKey: 'coal', count: 1, maxStackSize: 64 })).toBe(1600);
+    expect(f.getBurnDuration({ id: 'coal', count: 1, maxStackSize: 64 })).toBe(1600);
   });
 
   it('getBurnDuration: non-fuel = 0', () => {
     const f = new FurnaceTileEntity();
-    expect(f.getBurnDuration({ itemKey: 'stone', count: 1, maxStackSize: 64 })).toBe(0);
+    expect(f.getBurnDuration({ id: 'stone', count: 1, maxStackSize: 64 })).toBe(0);
     expect(f.getBurnDuration(null)).toBe(0);
   });
 
   it('isFuel static method (§FurnaceTileEntity.cpp:218)', () => {
-    expect(FurnaceTileEntity.isFuel({ itemKey: 'coal', count: 1, maxStackSize: 64 })).toBe(true);
-    expect(FurnaceTileEntity.isFuel({ itemKey: 'stone', count: 1, maxStackSize: 64 })).toBe(false);
+    expect(FurnaceTileEntity.isFuel({ id: 'coal', count: 1, maxStackSize: 64 })).toBe(true);
+    expect(FurnaceTileEntity.isFuel({ id: 'stone', count: 1, maxStackSize: 64 })).toBe(false);
     expect(FurnaceTileEntity.isFuel(null)).toBe(false);
   });
 
@@ -97,7 +97,7 @@ describe('FurnaceTileEntity (§FurnaceTileEntity.cpp)', () => {
 
   it('save/load roundtrip preserves items (§FurnaceTileEntity.cpp:89-106)', () => {
     const f = new FurnaceTileEntity();
-    f.setItem(SLOT_INGREDIENT, { itemKey: 'ironOre', count: 2, maxStackSize: 64 });
+    f.setItem(SLOT_INGREDIENT, { id: 'ironOre', count: 2, maxStackSize: 64 });
     f.litTime = 50;
     f.tickCount = 30;
     const tag: Record<string, unknown> = {};
@@ -108,7 +108,7 @@ describe('FurnaceTileEntity (§FurnaceTileEntity.cpp)', () => {
     f2.load(tag);
     expect(f2.litTime).toBe(50);
     expect(f2.tickCount).toBe(30);
-    expect(f2.getItem(SLOT_INGREDIENT)?.itemKey).toBe('ironOre');
+    expect(f2.getItem(SLOT_INGREDIENT)?.id).toBe('ironOre');
   });
 });
 
@@ -126,7 +126,7 @@ describe('ChestTileEntity (§ChestTileEntity.cpp)', () => {
 
   it('shouldSave true when has items', () => {
     const c = new ChestTileEntity();
-    c.setItem(0, { itemKey: 'stone', count: 64, maxStackSize: 64 });
+    c.setItem(0, { id: 'stone', count: 64, maxStackSize: 64 });
     expect(c.shouldSave()).toBe(true);
   });
 
@@ -146,12 +146,12 @@ describe('ChestTileEntity (§ChestTileEntity.cpp)', () => {
 
   it('save/load roundtrip preserves items', () => {
     const c = new ChestTileEntity();
-    c.setItem(5, { itemKey: 'dirt', count: 32, maxStackSize: 64 });
+    c.setItem(5, { id: 'dirt', count: 32, maxStackSize: 64 });
     const tag: Record<string, unknown> = {};
     c.save(tag);
     const c2 = new ChestTileEntity();
     c2.load(tag);
-    expect(c2.getItem(5)?.itemKey).toBe('dirt');
+    expect(c2.getItem(5)?.id).toBe('dirt');
     expect(c2.getItem(5)?.count).toBe(32);
   });
 });

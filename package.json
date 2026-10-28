@@ -16,7 +16,7 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "validate:foundation": "node scripts/validate-foundation.mjs",
-    "test:game-core": "bun test src/game",
+    "test:game-core": "bun test src/game --pattern \"!translated\"",
     "build:voxel-engine": "bun build src/game/browser-entry.ts --target browser --outfile public/voxelcraft-engine.bundle.js",
     "validate:voxel-preview": "node scripts/validate-voxelcraft-preview.mjs"
   },

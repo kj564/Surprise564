@@ -25,7 +25,7 @@ describe('seeded terrain generation', () => {
     expect(heights.size).toBeGreaterThan(1);
     expect(summary.minHeight).toBeGreaterThan(0);
     expect(summary.maxHeight).toBeLessThan(dimensions.height - 1);
-    expect(world.getBlock(0, 0, 0)).toBe(defaultBlockRegistry.getIdByKey('minecraft:bedrock'));
+    expect(world.getBlock(0, 0, 0)).toBe(defaultBlockRegistry.getIdByKey(7));
   });
   test('keeps height samples continuous at chunk edges', () => {
     const world = new VoxelWorld(dimensions);

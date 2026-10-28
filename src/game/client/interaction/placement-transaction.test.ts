@@ -23,7 +23,7 @@ describe('placeBlockFromInventory', () => {
   test('places a block and consumes exactly one item after validation', () => {
     const world = makeWorld();
     const inventory = new Inventory(2);
-    inventory.insert('minecraft:stone', 3);
+    inventory.insert(1, 3);
     const result = placeBlockFromInventory(world, hitAt(1, 2, 1, { x: -1, y: 0, z: 0 }), inventory, 0, defaultBlockRegistry, awayFromTarget);
     expect(result.status).toBe('placed');
     expect(world.getBlock(0, 2, 1)).toBe(1);
@@ -34,7 +34,7 @@ describe('placeBlockFromInventory', () => {
   test('does not consume an item if the new block intersects the player', () => {
     const world = makeWorld();
     const inventory = new Inventory(1);
-    inventory.insert('minecraft:stone', 2);
+    inventory.insert(1, 2);
     const result = placeBlockFromInventory(world, hitAt(1, 2, 1, { x: -1, y: 0, z: 0 }), inventory, 0, defaultBlockRegistry, playerOverTarget);
     expect(result.status).toBe('blocked-by-player');
     expect(world.getBlock(0, 2, 1)).toBe(0);
@@ -44,7 +44,7 @@ describe('placeBlockFromInventory', () => {
   test('does not consume an item for occupied or unloaded targets', () => {
     const world = makeWorld();
     const inventory = new Inventory(1);
-    inventory.insert('minecraft:stone', 2);
+    inventory.insert(1, 2);
     world.setBlock({ x: 0, y: 2, z: 1 }, 1);
     expect(placeBlockFromInventory(world, hitAt(1, 2, 1, { x: -1, y: 0, z: 0 }), inventory, 0, defaultBlockRegistry, awayFromTarget).status).toBe('occupied');
     expect(placeBlockFromInventory(world, hitAt(3, 2, 1, { x: 1, y: 0, z: 0 }), inventory, 0, defaultBlockRegistry, awayFromTarget).status).toBe('unloaded');
@@ -54,7 +54,7 @@ describe('placeBlockFromInventory', () => {
   test('does not consume items when target write would be a no-op', () => {
     const world = makeWorld();
     const inventory = new Inventory(1);
-    inventory.insert('minecraft:water', 2);
+    inventory.insert(8, 2);
     world.setBlock({ x: 0, y: 2, z: 1 }, 8);
     const result = placeBlockFromInventory(world, hitAt(1, 2, 1, { x: -1, y: 0, z: 0 }), inventory, 0, defaultBlockRegistry, awayFromTarget);
     expect(result.status).toBe('no-change');
@@ -66,7 +66,7 @@ describe('placeBlockFromInventory', () => {
     const empty = new Inventory(1);
     expect(placeBlockFromInventory(world, hitAt(1, 2, 1, { x: -1, y: 0, z: 0 }), empty, 0, defaultBlockRegistry, awayFromTarget).status).toBe('inventory-empty');
     const inventory = new Inventory(1);
-    inventory.insert('minecraft:diamond', 2);
+    inventory.insert(264, 2);
     expect(placeBlockFromInventory(world, hitAt(1, 2, 1, { x: -1, y: 0, z: 0 }), inventory, 0, defaultBlockRegistry, awayFromTarget).status).toBe('not-a-block-item');
     expect(world.getBlock(0, 2, 1)).toBe(0);
     expect(inventory.getSlot(0)?.count).toBe(2);

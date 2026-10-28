@@ -15,7 +15,7 @@ function makeGrid(items: (string | null)[][]): CraftingGrid {
       const row = items[y];
       if (!row || x >= row.length) return null;
       const k = row[x];
-      return k ? { itemKey: k, count: 1, maxStackSize: 64 } : null;
+      return k ? { id: k, count: 1, maxStackSize: 64 } : null;
     },
   };
 }
@@ -35,7 +35,7 @@ describe('Recipes singleton (§Recipes.h)', () => {
   it('getRecipeFor finds TNT recipe (§Recipes.cpp:94-98)', () => {
     const r = Recipes.getInstance().getRecipeFor(itemStack('tnt'));
     expect(r).not.toBeNull();
-    expect(r!.getResultItem().itemKey).toBe('tnt');
+    expect(r!.getResultItem().id).toBe('tnt');
   });
 });
 
@@ -119,15 +119,15 @@ describe('FurnaceRecipes (§FurnaceRecipes.cpp)', () => {
   it('ironOre → ironIngot (§FurnaceRecipes.cpp:53)', () => {
     const f = FurnaceRecipes.getInstance();
     expect(f.isFurnaceItem('ironOre')).toBe(true);
-    expect(f.getResult('ironOre')?.itemKey).toBe('ironIngot');
+    expect(f.getResult('ironOre')?.id).toBe('ironIngot');
   });
 
   it('sand → glass (§FurnaceRecipes.cpp:56)', () => {
-    expect(FurnaceRecipes.getInstance().getResult('sand')?.itemKey).toBe('glass');
+    expect(FurnaceRecipes.getInstance().getResult('sand')?.id).toBe('glass');
   });
 
   it('chicken_raw → chicken_cooked (§FurnaceRecipes.cpp:59)', () => {
-    expect(FurnaceRecipes.getInstance().getResult('chicken_raw')?.itemKey).toBe('chicken_cooked');
+    expect(FurnaceRecipes.getInstance().getResult('chicken_raw')?.id).toBe('chicken_cooked');
   });
 
   it('non-furnace item returns null', () => {

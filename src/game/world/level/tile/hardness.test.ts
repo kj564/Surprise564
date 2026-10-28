@@ -15,111 +15,111 @@ describe('Block hardness values 1:1 with rujukan (Tile.cpp:161-243)', () => {
   }
 
   test('§Tile.cpp:161 — Stone (rock): setDestroyTime(1.5f)', () => {
-    checkHardness('minecraft:stone', 1.5, '§Tile.cpp:161');
+    checkHardness(1, 1.5, '§Tile.cpp:161');
   });
 
   test('§Tile.cpp:162 — Grass: setDestroyTime(0.6f)', () => {
-    checkHardness('minecraft:grass_block', 0.6, '§Tile.cpp:162');
+    checkHardness(2, 0.6, '§Tile.cpp:162');
   });
 
   test('§Tile.cpp:163 — Dirt: setDestroyTime(0.5f)', () => {
-    checkHardness('minecraft:dirt', 0.5, '§Tile.cpp:163');
+    checkHardness(3, 0.5, '§Tile.cpp:163');
   });
 
   test('§Tile.cpp:164 — Stone brick (cobblestone): setDestroyTime(2.0f)', () => {
-    checkHardness('minecraft:cobblestone', 2.0, '§Tile.cpp:164');
+    checkHardness(4, 2.0, '§Tile.cpp:164');
   });
 
   test('§Tile.cpp:165 — Wood (oak planks): setDestroyTime(2.0f)', () => {
-    checkHardness('minecraft:oak_planks', 2.0, '§Tile.cpp:165');
+    checkHardness(5, 2.0, '§Tile.cpp:165');
   });
 
   test('§Tile.cpp:167 — Bedrock: setDestroyTime(-1) (unbreakable)', () => {
-    checkHardness('minecraft:bedrock', -1, '§Tile.cpp:167');
+    checkHardness(7, -1, '§Tile.cpp:167');
   });
 
   test('§Tile.cpp:168 — Water: setDestroyTime(100.0f)', () => {
     // water is in the registry as legacyId 8
-    checkHardness('minecraft:water', 100, '§Tile.cpp:168');
+    checkHardness(8, 100, '§Tile.cpp:168');
   });
 
   test('§Tile.cpp:172 — Sand: setDestroyTime(0.5f)', () => {
-    checkHardness('minecraft:sand', 0.5, '§Tile.cpp:172');
+    checkHardness(12, 0.5, '§Tile.cpp:172');
   });
 
   test('§Tile.cpp:173 — Gravel: setDestroyTime(0.6f)', () => {
-    checkHardness('minecraft:gravel', 0.6, '§Tile.cpp:173');
+    checkHardness(13, 0.6, '§Tile.cpp:173');
   });
 
   test('§Tile.cpp:174-176 — Gold/Iron/Coal ore: setDestroyTime(3.0f)', () => {
-    checkHardness('minecraft:gold_ore', 3.0, '§Tile.cpp:174');
-    checkHardness('minecraft:iron_ore', 3.0, '§Tile.cpp:175');
-    checkHardness('minecraft:coal_ore', 3.0, '§Tile.cpp:176');
+    checkHardness(14, 3.0, '§Tile.cpp:174');
+    checkHardness(15, 3.0, '§Tile.cpp:175');
+    checkHardness(16, 3.0, '§Tile.cpp:176');
   });
 
   test('§Tile.cpp:177 — Tree trunk (oak log): setDestroyTime(2.0f)', () => {
-    checkHardness('minecraft:oak_log', 2.0, '§Tile.cpp:177');
+    checkHardness(17, 2.0, '§Tile.cpp:177');
   });
 
   test('§Tile.cpp:178 — Leaves: setDestroyTime(0.2f)', () => {
-    checkHardness('minecraft:oak_leaves', 0.2, '§Tile.cpp:178');
+    checkHardness(18, 0.2, '§Tile.cpp:178');
   });
 
   test('§Tile.cpp:180 — Glass: setDestroyTime(0.3f)', () => {
-    checkHardness('minecraft:glass', 0.3, '§Tile.cpp:180');
+    checkHardness(20, 0.3, '§Tile.cpp:180');
   });
 
   test('§Tile.cpp:181 — Lapis ore: setDestroyTime(3.0f)', () => {
-    checkHardness('minecraft:lapis_ore', 3.0, '§Tile.cpp:181');
+    checkHardness(21, 3.0, '§Tile.cpp:181');
     // §Note: lapis_block (Tile.cpp:182, setDestroyTime(3.0f)) is NOT registered
     // in defaultBlockRegistry — minecraft.html doesn't use it in its BLOCKS table.
     // Acceptable: registry only includes blocks the game actually uses.
   });
 
   test('§Tile.cpp:183 — Sandstone: setDestroyTime(0.8f)', () => {
-    checkHardness('minecraft:sandstone', 0.8, '§Tile.cpp:183');
+    checkHardness(24, 0.8, '§Tile.cpp:183');
   });
 
   test('§Tile.cpp:185 — Web: setDestroyTime(4.0f)', () => {
-    checkHardness('minecraft:web', 4.0, '§Tile.cpp:185');
+    checkHardness(30, 4.0, '§Tile.cpp:185');
   });
 
   test('§Tile.cpp:193-194 — Gold/Iron block: setDestroyTime(3.0f / 5.0f)', () => {
-    checkHardness('minecraft:gold_block', 3.0, '§Tile.cpp:193');
-    checkHardness('minecraft:iron_block', 5.0, '§Tile.cpp:194');
+    checkHardness(41, 3.0, '§Tile.cpp:193');
+    checkHardness(42, 5.0, '§Tile.cpp:194');
   });
 
   test('§Tile.cpp:195 — Stone slab: setDestroyTime(2.0f)', () => {
-    checkHardness('minecraft:stone_slab', 2.0, '§Tile.cpp:195');
+    checkHardness(44, 2.0, '§Tile.cpp:195');
   });
 
   test('§Tile.cpp:197 — Bricks: setDestroyTime(2.0f)', () => {
-    checkHardness('minecraft:bricks', 2.0, '§Tile.cpp:197');
+    checkHardness(45, 2.0, '§Tile.cpp:197');
   });
 
   test('§Tile.cpp:201 — Obsidian: setDestroyTime(10.0f)', () => {
-    checkHardness('minecraft:obsidian', 10.0, '§Tile.cpp:201');
+    checkHardness(49, 10.0, '§Tile.cpp:201');
   });
 
   test('§Tile.cpp:202 — Torch: setDestroyTime(0.0f)', () => {
-    checkHardness('minecraft:torch', 0.0, '§Tile.cpp:202');
+    checkHardness(50, 0.0, '§Tile.cpp:202');
   });
 
   test('§Tile.cpp:207-208 — Diamond ore/block: setDestroyTime(3.0f / 5.0f)', () => {
-    checkHardness('minecraft:diamond_ore', 3.0, '§Tile.cpp:207');
-    checkHardness('minecraft:diamond_block', 5.0, '§Tile.cpp:208');
+    checkHardness(56, 3.0, '§Tile.cpp:207');
+    checkHardness(57, 5.0, '§Tile.cpp:208');
   });
 
   test('§Tile.cpp:209 — Workbench (crafting table): setDestroyTime(2.5f)', () => {
-    checkHardness('minecraft:crafting_table', 2.5, '§Tile.cpp:209');
+    checkHardness(58, 2.5, '§Tile.cpp:209');
   });
 
   test('§Tile.cpp:211 — Farmland: setDestroyTime(0.6f)', () => {
-    checkHardness('minecraft:farmland', 0.6, '§Tile.cpp:211');
+    checkHardness(60, 0.6, '§Tile.cpp:211');
   });
 
   test('§Tile.cpp:212-213 — Furnace (lit/unlit): setDestroyTime(3.5f)', () => {
-    checkHardness('minecraft:furnace', 3.5, '§Tile.cpp:212');
+    checkHardness(61, 3.5, '§Tile.cpp:212');
   });
 
   test('§Tile.cpp:214 — Sign: NOT registered (minecraft.html does not use sign block)', () => {
@@ -131,46 +131,46 @@ describe('Block hardness values 1:1 with rujukan (Tile.cpp:161-243)', () => {
   });
 
   test('§Tile.cpp:216 — Ladder: setDestroyTime(0.4f)', () => {
-    checkHardness('minecraft:ladder', 0.4, '§Tile.cpp:216');
+    checkHardness(65, 0.4, '§Tile.cpp:216');
   });
 
   test('§Tile.cpp:226 — Top snow (snow layer): setDestroyTime(0.1f)', () => {
-    checkHardness('minecraft:snow_layer', 0.1, '§Tile.cpp:226');
+    checkHardness(78, 0.1, '§Tile.cpp:226');
   });
 
   test('§Tile.cpp:227 — Ice: setDestroyTime(0.5f)', () => {
-    checkHardness('minecraft:ice', 0.5, '§Tile.cpp:227');
+    checkHardness(79, 0.5, '§Tile.cpp:227');
   });
 
   test('§Tile.cpp:228 — Snow (full block): NOT registered (only snow_layer exists)', () => {
     // §SnowTile (Tile.cpp:228, setDestroyTime(0.2f)) is NOT in defaultBlockRegistry.
     // Only TopSnowTile (snow_layer, Tile.cpp:226, hardness 0.1) is registered.
     // If snow (full block) is added later, this test should verify hardness=0.2.
-    const snow = defaultBlockRegistry.getByKey('minecraft:snow');
+    const snow = defaultBlockRegistry.getByKey(80);
     expect(snow).toBeUndefined();
     // Verify snow_layer IS registered with correct hardness
-    checkHardness('minecraft:snow_layer', 0.1, '§Tile.cpp:226');
+    checkHardness(78, 0.1, '§Tile.cpp:226');
   });
 
   test('§Tile.cpp:229 — Cactus: setDestroyTime(0.4f)', () => {
-    checkHardness('minecraft:cactus', 0.4, '§Tile.cpp:229');
+    checkHardness(81, 0.4, '§Tile.cpp:229');
   });
 
   test('§Tile.cpp:231 — Reeds (sugar cane): setDestroyTime(0.0f)', () => {
-    checkHardness('minecraft:reeds', 0.0, '§Tile.cpp:231');
+    checkHardness(83, 0.0, '§Tile.cpp:231');
   });
 
   test('§Tile.cpp:232 — Fence: setDestroyTime(2.0f)', () => {
-    checkHardness('minecraft:oak_fence', 2.0, '§Tile.cpp:232');
+    checkHardness(85, 2.0, '§Tile.cpp:232');
   });
 
   test('§Hardness ordering matches rujukan mining difficulty', () => {
     // Easiest → hardest (excluding unbreakable bedrock)
-    const dirt = defaultBlockRegistry.getByKey('minecraft:dirt')?.hardness ?? 0;
-    const sand = defaultBlockRegistry.getByKey('minecraft:sand')?.hardness ?? 0;
-    const stone = defaultBlockRegistry.getByKey('minecraft:stone')?.hardness ?? 0;
-    const iron = defaultBlockRegistry.getByKey('minecraft:iron_block')?.hardness ?? 0;
-    const obsidian = defaultBlockRegistry.getByKey('minecraft:obsidian')?.hardness ?? 0;
+    const dirt = defaultBlockRegistry.getByKey(3)?.hardness ?? 0;
+    const sand = defaultBlockRegistry.getByKey(12)?.hardness ?? 0;
+    const stone = defaultBlockRegistry.getByKey(1)?.hardness ?? 0;
+    const iron = defaultBlockRegistry.getByKey(42)?.hardness ?? 0;
+    const obsidian = defaultBlockRegistry.getByKey(49)?.hardness ?? 0;
     expect(dirt).toBeLessThan(stone);
     expect(sand).toBeLessThan(stone);
     expect(stone).toBeLessThan(iron);

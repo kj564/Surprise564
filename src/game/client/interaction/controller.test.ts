@@ -13,7 +13,7 @@ function setup(mode: 'survival' | 'creative' = 'survival') {
   world.loadChunk(0, 0);
   world.setBlock({ x: 1, y: 1, z: 1 }, 1);
   const inventory = new Inventory(4);
-  const controller = new BlockInteractionController(world, defaultBlockRegistry, inventory, mode, getTool('minecraft:wood_pickaxe'));
+  const controller = new BlockInteractionController(world, defaultBlockRegistry, inventory, mode, getTool(270));
   const hit: VoxelRayHit = {
     status: 'hit',
     blockId: 1,
@@ -58,7 +58,7 @@ describe('BlockInteractionController', () => {
     result = controller.tickMining(1, hit);
     expect(result.status).toBe('completed');
     expect(world.getBlock(1, 1, 1)).toBe(0);
-    expect(inventory.getSlot(0)?.itemKey).toBe('minecraft:cobblestone');
+    expect(inventory.getSlot(0)?.id).toBe(4);
     expect(controller.isMining).toBe(false);
   });
 
@@ -96,7 +96,7 @@ describe('BlockInteractionController', () => {
 
   test('places from the selected inventory slot through the same world transaction', () => {
     const { world, inventory, controller, hit } = setup('survival');
-    inventory.setSlot(0, { itemKey: 'minecraft:cobblestone', count: 2, maxStackSize: 64 });
+    inventory.setSlot(0, { id: 4, count: 2, maxStackSize: 64 });
     const result = controller.place(hit, 0, new Aabb(2.5, 1, 2.5, 3.1, 2.8, 3.1));
     expect(result.status).toBe('placed');
     expect(world.getBlock(0, 1, 1)).toBe(4);
@@ -105,7 +105,7 @@ describe('BlockInteractionController', () => {
 
   test('does not place a solid block into the player bounds', () => {
     const { inventory, controller, hit } = setup('survival');
-    inventory.setSlot(0, { itemKey: 'minecraft:cobblestone', count: 1, maxStackSize: 64 });
+    inventory.setSlot(0, { id: 4, count: 1, maxStackSize: 64 });
     const result = controller.place(hit, 0, new Aabb(0, 1, 1, 1, 2, 2));
     expect(result.status).toBe('blocked-by-player');
     expect(inventory.getSlot(0)?.count).toBe(1);

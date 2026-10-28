@@ -18,7 +18,7 @@ function validSave() {
       position: { x: -1.5, y: 1, z: 0.5 },
       yaw: 0.25,
       pitch: 0.1,
-      inventory: [{ itemKey: 'minecraft:stone', count: 2, maxStackSize: 64 }, null],
+      inventory: [{ id: 1, count: 2, maxStackSize: 64 }, null],
     },
   };
 }
@@ -30,7 +30,7 @@ describe('world save schema', () => {
     if (!result.ok) return;
     expect(result.value.schemaVersion).toBe(1);
     expect(result.value.chunks[0].blocks).toHaveLength(8);
-    expect(result.value.player.inventory[0]?.itemKey).toBe('minecraft:stone');
+    expect(result.value.player.inventory[0]?.id).toBe(1);
   });
 
   test('round-trips valid JSON through serializer and parser', () => {
@@ -81,7 +81,7 @@ describe('world save schema', () => {
 
   test('rejects invalid inventory stacks and out-of-range pitch', () => {
     const invalidStack = validSave();
-    invalidStack.player.inventory[0] = { itemKey: 'stone', count: 1, maxStackSize: 64 };
+    invalidStack.player.inventory[0] = { id: 'stone', count: 1, maxStackSize: 64 };
     expect(validateWorldSave(invalidStack).ok).toBe(false);
     const invalidPitch = validSave();
     invalidPitch.player.pitch = Math.PI;

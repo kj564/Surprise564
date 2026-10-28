@@ -18,7 +18,7 @@ function makeGroundedEngine(mode: 'survival' | 'creative' = 'survival'): VoxelCr
     inventorySlots: 9,
     gameMode: mode,
     // §Tests use wood_pickaxe so stone mining works (matches browser hotbar slot)
-    tool: getTool('minecraft:wood_pickaxe'),
+    tool: getTool(270),
   });
   engine.loadChunk(0, 0);
   for (let x = 0; x < 4; x += 1) {
@@ -67,7 +67,7 @@ describe('VoxelCraftEngine composition root', () => {
     result = engine.tickMining(1, { x: 2, y: 1, z: 1 });
     expect(result.status).toBe('broken');
     expect(engine.world.getBlock(2, 1, 1)).toBe(0);
-    expect(engine.inventory.snapshot().some(stack => stack?.itemKey === 'minecraft:cobblestone')).toBe(true);
+    expect(engine.inventory.snapshot().some(stack => stack?.id === 4)).toBe(true);
   });
 
   test('creative: instant break first tick (rujukan CreativeMode)', () => {
@@ -102,7 +102,7 @@ describe('VoxelCraftEngine composition root', () => {
 
   test('captures world, inventory and player pose in a validated versioned save', () => {
     const engine = makeGroundedEngine();
-    engine.inventory.insert('minecraft:oak_planks', 12);
+    engine.inventory.insert(5, 12);
     const save = engine.createSave({
       name: 'Test World',
       seed: 564,
@@ -117,7 +117,7 @@ describe('VoxelCraftEngine composition root', () => {
     expect(save.player.position).toEqual(engine.player.state.position);
     expect(save.player.yaw).toBe(1.25);
     expect(save.player.pitch).toBe(-0.2);
-    expect(save.player.inventory.some(stack => stack?.itemKey === 'minecraft:oak_planks' && stack.count === 12)).toBe(true);
+    expect(save.player.inventory.some(stack => stack?.id === 5 && stack.count === 12)).toBe(true);
 
     engine.world.setBlock({ x: 1, y: 1, z: 1 }, 1);
     expect(save.chunks[0].blocks[1 + 4 * (1 + 4 * 1)]).toBe(0);
@@ -125,7 +125,7 @@ describe('VoxelCraftEngine composition root', () => {
 
   test('restores saved chunks, inventory and camera pose into a fresh engine', () => {
     const source = makeGroundedEngine();
-    source.inventory.insert('minecraft:oak_planks', 12);
+    source.inventory.insert(5, 12);
     const save = source.createSave({
       name: 'Round Trip',
       seed: 42,
@@ -137,7 +137,7 @@ describe('VoxelCraftEngine composition root', () => {
     const restored = VoxelCraftEngine.fromSave(save);
     expect(restored.ok).toBe(true);
     if (!restored.ok) return;
-    expect(restored.engine.inventory.snapshot().some(stack => stack?.itemKey === 'minecraft:oak_planks' && stack.count === 12)).toBe(true);
+    expect(restored.engine.inventory.snapshot().some(stack => stack?.id === 5 && stack.count === 12)).toBe(true);
     expect(restored.view.yaw).toBe(0.75);
     expect(restored.view.pitch).toBe(0.1);
   });

@@ -7,29 +7,29 @@ import { defaultBlockRegistry, type BlockRegistry } from '../../world/level/tile
  * Missing/ambiguous matches intentionally return undefined instead of guessing.
  */
 const BROWSER_BLOCK_KEY: Readonly<Record<number, string>> = Object.freeze({
-  0: 'minecraft:air',
-  1: 'minecraft:grass_block',
-  2: 'minecraft:dirt',
-  3: 'minecraft:stone',
-  4: 'minecraft:cobblestone',
-  5: 'minecraft:oak_log',
-  6: 'minecraft:oak_planks',
-  7: 'minecraft:oak_leaves',
-  8: 'minecraft:sand',
-  9: 'minecraft:gravel',
-  10: 'minecraft:glass',
-  11: 'minecraft:bedrock',
-  12: 'minecraft:bricks',
-  13: 'minecraft:gold_block',
-  14: 'minecraft:diamond_block',
-  15: 'minecraft:iron_block',
-  19: 'minecraft:water',
-  20: 'minecraft:coal_ore',
-  21: 'minecraft:iron_ore',
-  22: 'minecraft:gold_ore',
-  23: 'minecraft:diamond_ore',
-  24: 'minecraft:lapis_ore',
-  32: 'minecraft:obsidian',
+  0: 0,
+  1: 2,
+  2: 3,
+  3: 1,
+  4: 4,
+  5: 17,
+  6: 5,
+  7: 18,
+  8: 12,
+  9: 13,
+  10: 20,
+  11: 7,
+  12: 45,
+  13: 41,
+  14: 57,
+  15: 42,
+  19: 8,
+  20: 16,
+  21: 15,
+  22: 14,
+  23: 56,
+  24: 21,
+  32: 49,
 });
 
 export interface BlockIdTranslation {
@@ -46,7 +46,7 @@ export function browserBlockIdToEngineId(
   if (!Number.isSafeInteger(browserId) || browserId < 0) return undefined;
   const key = BROWSER_BLOCK_KEY[browserId];
   if (!key) return undefined;
-  return registry.getByKey(key)?.legacyId ?? (key === 'minecraft:air' ? 0 : undefined);
+  return registry.getByKey(key)?.legacyId ?? (key === 0 ? 0 : undefined);
 }
 
 /** Reverse translation is conservative: duplicate browser aliases are not silently selected. */
@@ -69,7 +69,7 @@ export function listSupportedBrowserBlockTranslations(
   const entries: BlockIdTranslation[] = [];
   for (const [rawId, key] of Object.entries(BROWSER_BLOCK_KEY)) {
     const browserId = Number(rawId);
-    const engineId = key === 'minecraft:air' ? 0 : registry.getByKey(key)?.legacyId;
+    const engineId = key === 0 ? 0 : registry.getByKey(key)?.legacyId;
     if (engineId === undefined) continue;
     entries.push(Object.freeze({ browserId, engineId, key }));
   }

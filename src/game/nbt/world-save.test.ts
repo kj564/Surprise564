@@ -22,7 +22,7 @@ describe('world save capture and restore', () => {
     world.loadChunk(-1, 0);
     world.setBlock({ x: -2, y: 1, z: 1 }, 3);
     const inventory = new Inventory(3);
-    inventory.insert('minecraft:stone', 5);
+    inventory.insert(1, 5);
     const save = createWorldSave(world, inventory, metadata, player);
     expect(save.chunks).toHaveLength(1);
     expect(save.chunks[0].x).toBe(-1);
@@ -36,7 +36,7 @@ describe('world save capture and restore', () => {
     world.loadChunk(-1, 0);
     world.setBlock({ x: -2, y: 1, z: 1 }, 3);
     const inventory = new Inventory(2);
-    inventory.insert('minecraft:dirt', 8);
+    inventory.insert(3, 8);
     const save = createWorldSave(world, inventory, metadata, player);
     const restored = restoreWorldSave(JSON.parse(JSON.stringify(save)));
     expect(restored.ok).toBe(true);
