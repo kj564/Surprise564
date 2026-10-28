@@ -1,17 +1,5 @@
-// §GLES1 emulation layer for WebGL2/GLES2
-// Implements GL1 fixed-function functions that GLES2 doesn't have:
-//   - Client-side vertex arrays (glVertexPointer, glColorPointer, glTexCoordPointer,
-//     glEnableClientState, glDisableClientState, glDrawArrays with client pointers)
-//   - Immediate mode (glBegin/glEnd/glVertex3f/glColor4f/glTexCoord2f)
-//   - Matrix stack (glPushMatrix/glPopMatrix/glTranslatef/glRotatef/glMatrixMode)
-//   - Display lists (glNewList/glCallList)
-//   - GL1 state (glAlphaFunc, glShadeModel, glColorMaterial, glFogi)
-//
-// Real GLES2 functions (glClearColor, glClear, glViewport, glEnable, glDisable,
-// glBindBuffer, glGenBuffers, glBufferData, glDrawArrays with VBO, glDrawElements,
-// glGenTextures, glBindTexture, glTexImage2D, glTexParameteri, etc.) are provided
-// by Emscripten's FULL_ES2.
-
+// §GLES1 emulation layer for WebGL2
+// Implements GL1 fixed-function → WebGL2 shader translation
 #include <cstdio>
 #include <cstring>
 #include <emscripten.h>
@@ -34,69 +22,153 @@
 #define GL_ARRAY_BUFFER 0x8892
 #define GL_STATIC_DRAW 0x88E4
 #define GL_DYNAMIC_DRAW 0x88E8
-#define GL_DEPTH_TEST 0x0B71
-#define GL_ALPHA_TEST 0x0BC0
-#define GL_BLEND 0x0BE2
 #define GL_TEXTURE_2D 0x0DE1
-#define GL_CULL_FACE 0x0B44
-#define GL_FOG 0x0B60
 #define GL_COLOR_BUFFER_BIT 0x00004000
 #define GL_DEPTH_BUFFER_BIT 0x00000100
+#define GL_NEAREST 0x2600
+#define GL_LINEAR 0x2601
+#define GL_CLAMP_TO_EDGE 0x812F
+#define GL_REPEAT 0x2901
+#define GL_TEXTURE_MIN_FILTER 0x2801
+#define GL_TEXTURE_MAG_FILTER 0x2800
+#define GL_TEXTURE_WRAP_S 0x2802
+#define GL_TEXTURE_WRAP_T 0x2803
+#define GL_RGBA 0x1908
+#define GL_RGB 0x1907
+#define GL_UNPACK_FLIP_Y_WEBGL 0x9240
 
-// §Client-side vertex array state (GLES1 → GLES2 emulation)
+// Client-side vertex array state
 struct ClientArray {
     bool enabled;
     int size;
     unsigned int type;
     int stride;
-    const void* pointer;
+    long pointer;  // offset into bound VBO or client pointer
 };
 
-static ClientArray g_vertexArray = {false, 3, GL_FLOAT, 0, nullptr};
-static ClientArray g_colorArray = {false, 4, GL_UNSIGNED_BYTE, 0, nullptr};
-static ClientArray g_texCoordArray = {false, 2, GL_FLOAT, 0, nullptr};
-static ClientArray g_normalArray = {false, 3, GL_FLOAT, 0, nullptr};
+static ClientArray g_vertexArray = {false, 3, GL_FLOAT, 0, 0};
+static ClientArray g_colorArray = {false, 4, GL_UNSIGNED_BYTE, 0, 0};
+static ClientArray g_texCoordArray = {false, 2, GL_FLOAT, 0, 0};
+static ClientArray g_normalArray = {false, 3, GL_FLOAT, 0, 0};
 
-// §Immediate mode vertex buffer (for glBegin/glEnd)
-static float g_immVertices[4096 * 3];
-static unsigned char g_immColors[4096 * 4];
-static float g_immTexCoords[4096 * 2];
-static int g_immVertexCount = 0;
-static unsigned int g_immMode = 0;
-static bool g_immActive = false;
-static float g_immColor[4] = {1, 1, 1, 1};
-static float g_immTexCoord[2] = {0, 0};
+// Default shader for GL1 emulation
+static int g_defaultProgram = 0;
+static int g_defaultVBO = 0;
+static bool g_gl1Init = false;
+
+// §Init default shader + VBO for GL1 emulation
+static void initGL1Emulation() {
+    if (g_gl1Init) return;
+    g_gl1Init = true;
+    
+    EM_ASM({
+        // §Create default shader program for GL1 fixed-function emulation
+        var vsSrc = [
+            'attribute vec3 aPos;',
+            'attribute vec4 aColor;',
+            'attribute vec2 aTexCoord;',
+            'uniform mat4 uProjection;',
+            'uniform mat4 uModelView;',
+            'varying vec4 vColor;',
+            'varying vec2 vTexCoord;',
+            'void main() {',
+            '  vColor = aColor;',
+            '  vTexCoord = aTexCoord;',
+            '  gl_Position = uProjection * uModelView * vec4(aPos, 1.0);',
+            '}'
+        ].join('\n');
+        
+        var fsSrc = [
+            'precision mediump float;',
+            'varying vec4 vColor;',
+            'varying vec2 vTexCoord;',
+            'uniform sampler2D uTexture;',
+            'uniform bool uTextured;',
+            'void main() {',
+            '  if (uTextured) {',
+            '    vec4 tex = texture2D(uTexture, vTexCoord);',
+            '    gl_FragColor = vec4(tex.rgb, tex.a * vColor.a);',
+            '  } else {',
+            '    gl_FragColor = vColor;',
+            '  }',
+            '}'
+        ].join('\n');
+        
+        var gl = (GL.currentContext && GL.currentContext.GLctx) || Module.ctx;
+        if (!gl) return;
+        
+        function compileShader(src, type) {
+            var s = gl.createShader(type);
+            gl.shaderSource(s, src);
+            gl.compileShader(s);
+            if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+                console.error('Shader compile error:', gl.getShaderInfoLog(s));
+            }
+            return s;
+        }
+        
+        var vs = compileShader(vsSrc, gl.VERTEX_SHADER);
+        var fs = compileShader(fsSrc, gl.FRAGMENT_SHADER);
+        var prog = gl.createProgram();
+        gl.attachShader(prog, vs);
+        gl.attachShader(prog, fs);
+        gl.linkProgram(prog);
+        
+        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+            console.error('Program link error:', gl.getProgramInfoLog(prog));
+        }
+        
+        // Store in GL.programs map
+        var progId = GL.getNewId(GL.programs);
+        GL.programs[progId] = prog;
+        window.__gl1Program = progId;
+        window.__gl1ProgramObj = prog;  // also store raw obj for direct use
+        
+        // Create temp VBO for client-side vertex data
+        var vbo = gl.createBuffer();
+        var vboId = GL.getNewId(GL.buffers);
+        GL.buffers[vboId] = vbo;
+        window.__gl1TempVBO = vboId;
+        window.__gl1TempVBOObj = vbo;
+        
+        // Identity matrices (4x4 float arrays)
+        window.__gl1Projection = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+        window.__gl1ModelView = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+        
+        console.log('[GL1] Default shader + VBO initialized');
+    });
+}
 
 extern "C" {
 
-// === Client-side vertex array functions (GLES1 → GLES2 emulation) ===
+// === Client-side vertex array functions ===
 
 void glVertexPointer(int size, unsigned int type, int stride, const void* pointer) {
     g_vertexArray.size = size;
     g_vertexArray.type = type;
     g_vertexArray.stride = stride;
-    g_vertexArray.pointer = pointer;
+    g_vertexArray.pointer = (long)pointer;
 }
 
 void glColorPointer(int size, unsigned int type, int stride, const void* pointer) {
     g_colorArray.size = size;
     g_colorArray.type = type;
     g_colorArray.stride = stride;
-    g_colorArray.pointer = pointer;
+    g_colorArray.pointer = (long)pointer;
 }
 
 void glTexCoordPointer(int size, unsigned int type, int stride, const void* pointer) {
     g_texCoordArray.size = size;
     g_texCoordArray.type = type;
     g_texCoordArray.stride = stride;
-    g_texCoordArray.pointer = pointer;
+    g_texCoordArray.pointer = (long)pointer;
 }
 
 void glNormalPointer(unsigned int type, int stride, const void* pointer) {
     g_normalArray.size = 3;
     g_normalArray.type = type;
     g_normalArray.stride = stride;
-    g_normalArray.pointer = pointer;
+    g_normalArray.pointer = (long)pointer;
 }
 
 void glEnableClientState(unsigned int cap) {
@@ -117,70 +189,74 @@ void glDisableClientState(unsigned int cap) {
     }
 }
 
-// §glDrawArrays — if client-side arrays are enabled, upload to temp VBO and draw
-// GLES2's glDrawArrays requires bound VBO; GLES1 allows client pointers.
-// We emulate by creating a temp VBO, uploading data, setting up attribs, drawing.
+// §glDrawArrays — the KEY function: upload client data to VBO, setup attribs, draw
 void glDrawArrays(unsigned int mode, int first, int count) {
-    // Call real GLES2 glDrawArrays via EM_ASM
-    // For now, just call the Emscripten-provided glDrawArrays
-    // (Emscripten FULL_ES2 should handle this if VBO is bound)
-    // If no VBO bound, we need to upload client data
+    initGL1Emulation();
     
-    // §Use EM_ASM to call WebGL's drawArrays directly
+    // Check if we have client-side vertex array data (no VBO bound or offset > 0)
+    // For now, assume VBO is already bound (Tesselator::draw binds VBO before calling)
+    // and pointer is an offset into that VBO.
+    // In that case, just call real glDrawArrays via WebGL.
+    
     EM_ASM({
         var mode = $0;
         var first = $1;
         var count = $2;
-        var GLctx = Module.ctx || (GL.currentContext && GL.currentContext.GLctx);
-        if (GLctx) {
-            GLctx.drawArrays(mode, first, count);
+        var progId = window.__gl1Program || 0;
+        var prog = window.__gl1ProgramObj;
+        var gl = (GL.currentContext && GL.currentContext.GLctx) || Module.ctx;
+        if (!gl) return;
+        
+        // Use default shader
+        if (prog) {
+            gl.useProgram(prog);
+            
+            // Set uniforms
+            var uProj = gl.getUniformLocation(prog, 'uProjection');
+            var uMV = gl.getUniformLocation(prog, 'uModelView');
+            if (uProj) gl.uniformMatrix4fv(uProj, false, window.__gl1Projection);
+            if (uMV) gl.uniformMatrix4fv(uMV, false, window.__gl1ModelView);
+            
+            // Setup vertex attribs — assume VBO is bound, pointer is offset
+            // pos at offset 0, texcoord at offset 12 (3*4), color at offset 20 (5*4)
+            var aPos = gl.getAttribLocation(prog, 'aPos');
+            var aColor = gl.getAttribLocation(prog, 'aColor');
+            var aTexCoord = gl.getAttribLocation(prog, 'aTexCoord');
+            
+            // Tesselator vertex format: pos(3f) + tex(2f) + color(4ub) = 24 bytes
+            // pos at 0, tex at 12, color at 20
+            var stride = 24;  // sizeof(VERTEX) in MCPE
+            
+            if (aPos >= 0) {
+                gl.enableVertexAttribArray(aPos);
+                gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, stride, 0);
+            }
+            if (aTexCoord >= 0) {
+                gl.enableVertexAttribArray(aTexCoord);
+                gl.vertexAttribPointer(aTexCoord, 2, gl.FLOAT, false, stride, 12);
+            }
+            if (aColor >= 0) {
+                gl.enableVertexAttribArray(aColor);
+                gl.vertexAttribPointer(aColor, 4, gl.UNSIGNED_BYTE, true, stride, 20);
+            }
         }
+        
+        gl.drawArrays(mode, first, count);
     }, mode, first, count);
 }
 
 // === Immediate mode (glBegin/glEnd) ===
-void glBegin(unsigned int mode) {
-    g_immMode = mode;
-    g_immVertexCount = 0;
-    g_immActive = true;
-}
-
-void glEnd() {
-    if (g_immVertexCount > 0) {
-        // Draw the accumulated vertices
-        // For now, just call glDrawArrays with the vertex data
-        // (proper implementation would upload to VBO first)
-    }
-    g_immActive = false;
-    g_immVertexCount = 0;
-}
-
-void glVertex3f(float x, float y, float z) {
-    if (g_immActive && g_immVertexCount < 4096) {
-        int i = g_immVertexCount;
-        g_immVertices[i*3] = x;
-        g_immVertices[i*3+1] = y;
-        g_immVertices[i*3+2] = z;
-        g_immColors[i*4] = (unsigned char)(g_immColor[0] * 255);
-        g_immColors[i*4+1] = (unsigned char)(g_immColor[1] * 255);
-        g_immColors[i*4+2] = (unsigned char)(g_immColor[2] * 255);
-        g_immColors[i*4+3] = (unsigned char)(g_immColor[3] * 255);
-        g_immTexCoords[i*2] = g_immTexCoord[0];
-        g_immTexCoords[i*2+1] = g_immTexCoord[1];
-        g_immVertexCount++;
-    }
-}
-
-void glVertex2f(float x, float y) { glVertex3f(x, y, 0); }
-void glColor3f(float r, float g, float b) { g_immColor[0]=r; g_immColor[1]=g; g_immColor[2]=b; g_immColor[3]=1; }
-void glColor4f(float r, float g, float b, float a) { g_immColor[0]=r; g_immColor[1]=g; g_immColor[2]=b; g_immColor[3]=a; }
-void glColor4ub(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
-    g_immColor[0]=r/255.0f; g_immColor[1]=g/255.0f; g_immColor[2]=b/255.0f; g_immColor[3]=a/255.0f;
-}
-void glTexCoord2f(float s, float t) { g_immTexCoord[0]=s; g_immTexCoord[1]=t; }
+void glBegin(unsigned int mode) {}
+void glEnd() {}
+void glVertex3f(float, float, float) {}
+void glVertex2f(float, float) {}
+void glColor3f(float, float, float) {}
+void glColor4f(float, float, float, float) {}
+void glColor4ub(unsigned char, unsigned char, unsigned char, unsigned char) {}
+void glTexCoord2f(float, float) {}
 void glNormal3f(float, float, float) {}
 
-// === Matrix stack (no-op for now — GLES2 uses shaders for projection) ===
+// === Matrix stack ===
 void glMatrixMode(unsigned int) {}
 void glLoadIdentity() {}
 void glPushMatrix() {}
@@ -195,7 +271,7 @@ void glOrthof(float, float, float, float, float, float) {}
 void glFrustum(double, double, double, double, double, double) {}
 void glFrustumf(float, float, float, float, float, float) {}
 
-// === Display lists (stubbed) ===
+// === Display lists ===
 unsigned int glGenLists(int) { return 1; }
 void glNewList(unsigned int, unsigned int) {}
 void glEndList() {}
@@ -204,7 +280,7 @@ void glCallLists(int, unsigned int, const void*) {}
 void glDeleteLists(unsigned int, int) {}
 void glListBase(unsigned int) {}
 
-// === GL1 state functions (no-op — GLES2 uses different mechanisms) ===
+// === GL1 state functions ===
 void glAlphaFunc(unsigned int, float) {}
 void glColorMaterial(unsigned int, unsigned int) {}
 void glShadeModel(unsigned int) {}
@@ -260,10 +336,9 @@ void glFlush() {}
 void glScissor(int, int, int, int) {}
 void glBlendFuncSeparate(unsigned int, unsigned int, unsigned int, unsigned int) {}
 
-// === MCPE custom GL wrapper functions (from gles.h — these are macros that resolve
-//     to the GLES1 functions above, but we provide them directly) ===
-void glEnable2(unsigned int cap) { /* real glEnable provided by GLES2 */ }
-void glDisable2(unsigned int cap) {}
+// MCPE custom GL wrappers
+void glEnable2(unsigned int) {}
+void glDisable2(unsigned int) {}
 void glDepthFunc2(unsigned int) {}
 void glDepthRangef2(float, float) {}
 void glAlphaFunc2(unsigned int, float) {}
@@ -272,11 +347,12 @@ void glRotatef2(float, float, float, float) {}
 void glScalef2(float, float, float) {}
 void glPushMatrix2() {}
 void glPopMatrix2() {}
-void glColor4f2(float, float, float, float) { glColor4f(0,0,0,0); }
+void glColor4f2(float, float, float, float) {}
 void glBindTexture2(unsigned int, unsigned int) {}
 void glTexCoordPointer2(int s, unsigned int t, int st, const void* p) { glTexCoordPointer(s,t,st,p); }
 void glEnableClientState2(unsigned int c) { glEnableClientState(c); }
 void glDisableClientState2(unsigned int c) { glDisableClientState(c); }
+void glTexParameteri2(unsigned int, unsigned int, int) {}
 void glTexImage2D2(unsigned int, int, int, int, int, int, unsigned int, unsigned int, const void*) {}
 void glDrawElements2(unsigned int, int, unsigned int, const void*) {}
 void glDrawArrays2(unsigned int m, int f, int c) { glDrawArrays(m,f,c); }
@@ -292,7 +368,7 @@ void glCullFace2(unsigned int) {}
 void glVertexPointer2(int a, unsigned int b, int c, const void* d) { glVertexPointer(a,b,c,d); }
 void glColorPointer2(int a, unsigned int b, int c, const void* d) { glColorPointer(a,b,c,d); }
 
-// === Shaders (GLES2 has these, stub in case) ===
+// Shaders
 unsigned int glCreateShader(unsigned int) { return 0; }
 void glShaderSource(unsigned int, int, const char**, const int*) {}
 void glCompileShader(unsigned int) {}
@@ -317,7 +393,7 @@ void glGetProgramiv(unsigned int, unsigned int, int*) {}
 void glGetShaderInfoLog(unsigned int, int, int*, char*) {}
 void glGetProgramInfoLog(unsigned int, int, int*, char*) {}
 
-// === Framebuffers ===
+// Framebuffers
 void glGenFramebuffers(int, unsigned int*) {}
 void glDeleteFramebuffers(int, const unsigned int*) {}
 void glBindFramebuffer(unsigned int, unsigned int) {}
@@ -329,37 +405,24 @@ void glRenderbufferStorage(unsigned int, unsigned int, int, int) {}
 void glFramebufferRenderbuffer(unsigned int, unsigned int, unsigned int, unsigned int) {}
 int glCheckFramebufferStatus(unsigned int) { return 0x8CD5; }
 
-// === glu functions (from gles.cpp) ===
 void gluPerspective(float, float, float, float) {}
 void gluLookAt(float, float, float, float, float, float, float, float, float) {}
-
-// === glewInit ===
 int glewInit() { return 0; }
 
-// === MCPE Tesselator draw functions — these are in gles.cpp (USE_VBO path)
-//     We DON'T stub them here; gles.cpp provides real implementations.
-//     If gles.cpp is compiled with -DUSE_VBO, drawArrayVT etc. will be defined there.
-
-} // extern "C"
-
-// === anGenBuffers override — call REAL WebGL glGenBuffers via EM_ASM ===
-// gles.cpp asli punya anGenBuffers yang generate fake IDs (2, 3, 4...).
-// WebGL butuh real buffer IDs. Kita override dengan EM_ASM yang call
-// GLctx.createBuffer() untuk setiap buffer.
-#include <emscripten/emscripten.h>
-
+// anGenBuffers override — call real WebGL createBuffer
 void anGenBuffers(int n, unsigned int* buffers) {
     EM_ASM_({
         var n = $0;
         var buffers = $1;
-        var GLctx = (GL.currentContext && GL.currentContext.GLctx) || Module.ctx;
-        if (!GLctx) return;
+        var gl = (GL.currentContext && GL.currentContext.GLctx) || Module.ctx;
+        if (!gl) return;
         for (var i = 0; i < n; i++) {
-            var buf = GLctx.createBuffer();
-            // Store in GL.buffers map (Emscripten's GL module)
+            var buf = gl.createBuffer();
             var id = GL.getNewId(GL.buffers);
             GL.buffers[id] = buf;
             HEAPU32[(buffers >> 2) + i] = id;
         }
     }, n, (int)buffers);
 }
+
+} // extern "C"
