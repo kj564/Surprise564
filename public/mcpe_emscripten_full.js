@@ -5930,6 +5930,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
           }
           break;
         default: // invalid value provided
+          err(`glAlphaFunc: Invalid alpha comparison function ${ptrToString(func)}!`);
           break;
       }
     };
@@ -6078,6 +6079,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         return ret;
       },
   genObject:(n, buffers, createFunction, objectTable
+        , functionName
         ) => {
         for (var i = 0; i < n; i++) {
           var buffer = GLctx[createFunction]();
@@ -6087,6 +6089,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
             objectTable[id] = buffer;
           } else {
             GL.recordError(0x502 /* GL_INVALID_OPERATION */);
+            err(`GL_INVALID_OPERATION in ${functionName}: GLctx.${createFunction} returned null - most likely GL context is lost!`);
           }
           HEAP32[(((buffers)+(i*4))>>2)] = id;
         }
@@ -6147,6 +6150,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   getTempVertexBuffer:(sizeBytes) => {
         var idx = GL.log2ceilLookup(sizeBytes);
         var ringbuffer = GL.currentContext.tempVertexBuffers1[idx];
+        assert(ringbuffer, `MAX_TEMP_BUFFER_SIZE is not large enough to store a buffer of size ${sizeBytes}`);
         var nextFreeBufferIndex = GL.currentContext.tempVertexBufferCounters1[idx];
         GL.currentContext.tempVertexBufferCounters1[idx] = (GL.currentContext.tempVertexBufferCounters1[idx]+1) & (GL.numTempVertexBuffersPerSize-1);
         var vbo = ringbuffer[nextFreeBufferIndex];
@@ -6205,6 +6209,54 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
           }
         }
         return source;
+      },
+  validateGLObjectID:(objectHandleArray, objectID, callerFunctionName, objectReadableType) => {
+        // `objectHandleArray` may be uninitialized when GL uniforms are lazily initialized, and `glUniform*` is called
+        // for the first time before uniforms have been populated. So ignore this validation if the handle array is not present.
+        if (objectID != 0 && objectHandleArray) {
+          if (objectHandleArray[objectID] === null) {
+            err(`${callerFunctionName} called with an already deleted ${objectReadableType} ID ${objectID}!`);
+          } else if (!(objectID in objectHandleArray)) {
+            err(`${callerFunctionName} called with a nonexisting ${objectReadableType} ID ${objectID}!`);
+          }
+        }
+      },
+  validateVertexAttribPointer:(dimension, dataType, stride, offset) => {
+        var sizeBytes = 1;
+        switch (dataType) {
+          case 0x1400 /* GL_BYTE */:
+          case 0x1401 /* GL_UNSIGNED_BYTE */:
+            sizeBytes = 1;
+            break;
+          case 0x1402 /* GL_SHORT */:
+          case 0x1403 /* GL_UNSIGNED_SHORT */:
+            sizeBytes = 2;
+            break;
+          case 0x1404 /* GL_INT */:
+          case 0x1405 /* GL_UNSIGNED_INT */:
+          case 0x1406 /* GL_FLOAT */:
+            sizeBytes = 4;
+            break;
+          case 0x140A /* GL_DOUBLE */:
+            sizeBytes = 8;
+            break;
+          default:
+            err(`Invalid vertex attribute data type GLenum ${dataType} passed to GL function!`);
+        }
+        if (dimension == 0x80E1 /* GL_BGRA */) {
+          err('WebGL does not support size=GL_BGRA in a call to glVertexAttribPointer! Please use size=4 and type=GL_UNSIGNED_BYTE instead');
+        } else if (dimension < 1 || dimension > 4) {
+          err(`Invalid dimension=${dimension} in call to glVertexAttribPointer, must be 1,2,3 or 4.`);
+        }
+        if (stride < 0 || stride > 255) {
+          err(`Invalid stride=${stride} in call to glVertexAttribPointer. Note that maximum supported stride in WebGL is 255!`);
+        }
+        if (offset % sizeBytes != 0) {
+          err(`GL spec section 6.4 error: vertex attribute data offset of ${offset} bytes should have been a multiple of the data type size that was used: GLenum ${dataType} has size of ${sizeBytes} bytes!`);
+        }
+        if (stride % sizeBytes != 0) {
+          err(`GL spec section 6.4 error: vertex attribute data stride of ${stride} bytes should have been a multiple of the data type size that was used: GLenum ${dataType} has size of ${sizeBytes} bytes!`);
+        }
       },
   createContext:(/** @type {HTMLCanvasElement} */ canvas, webGLContextAttributes) => {
   
@@ -6324,6 +6376,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
       },
   };
   var _emscripten_glBindBuffer = (target, buffer) => {
+      GL.validateGLObjectID(GL.buffers, buffer, 'glBindBuffer', 'buffer');
       if (target == 0x8892 /*GL_ARRAY_BUFFER*/) {
         GLctx.currentArrayBufferBinding = buffer;
         GLImmediate.lastArrayBuffer = buffer;
@@ -6336,6 +6389,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   var _glBindBuffer = _emscripten_glBindBuffer;
 
   var _emscripten_glBindTexture = (target, texture) => {
+      GL.validateGLObjectID(GL.textures, texture, 'glBindTexture', 'texture');
       GLctx.bindTexture(target, GL.textures[texture]);
     };
   var _glBindTexture = _emscripten_glBindTexture;
@@ -6567,12 +6621,14 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
 
   var _emscripten_glGenBuffers = (n, buffers) => {
       GL.genObject(n, buffers, 'createBuffer', GL.buffers
+      , 'glGenBuffers'
         );
     };
   var _glGenBuffers = _emscripten_glGenBuffers;
 
   var _emscripten_glGenTextures = (n, textures) => {
       GL.genObject(n, textures, 'createTexture', GL.textures
+      , 'glGenTextures'
         );
     };
   var _glGenTextures = _emscripten_glGenTextures;
@@ -6605,6 +6661,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
       // crashes on glGetIntegerv to a null pointer, but better to report an error
       // instead of doing anything random.
       if (!p) {
+        err(`GL_INVALID_VALUE in glGet${type}v(name=${name_}: Function called with null out pointer!`);
         GL.recordError(0x501 /* GL_INVALID_VALUE */);
         return;
       }
@@ -6616,6 +6673,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         case 0x8DF8: // GL_SHADER_BINARY_FORMATS
           if (type != 0 && type != 1) {
             GL.recordError(0x500); // GL_INVALID_ENUM
+            err(`GL_INVALID_ENUM in glGet${type}v(GL_SHADER_BINARY_FORMATS): Invalid parameter type!`);
           }
           // Do not write anything to the out pointer, since no binary formats are
           // supported.
@@ -6645,6 +6703,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
             break;
           case 'string':
             GL.recordError(0x500); // GL_INVALID_ENUM
+            err(`GL_INVALID_ENUM in glGet${type}v(${name}) on a name which returns a string!`);
             return;
           case 'object':
             if (result === null) {
@@ -6665,6 +6724,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
                 }
                 default: {
                   GL.recordError(0x500); // GL_INVALID_ENUM
+                  err(`GL_INVALID_ENUM in glGet${type}v(${name}) and it returns null!`);
                   return;
                 }
               }
@@ -6677,6 +6737,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
                   case 0: HEAP32[(((p)+(i*4))>>2)] = result[i]; break;
                   case 2: HEAPF32[(((p)+(i*4))>>2)] = result[i]; break;
                   case 4: HEAP8[(p)+(i)] = result[i] ? 1 : 0; break;
+                  default: abort(`internal glGet error, bad type: ${type}`);
                 }
               }
               return;
@@ -6702,6 +6763,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         case 0: HEAP32[((p)>>2)] = ret; break;
         case 2:   HEAPF32[((p)>>2)] = ret; break;
         case 4: HEAP8[p] = ret ? 1 : 0; break;
+        default: abort(`internal glGet error, bad type: ${type}`);
       }
     };
   
@@ -7206,6 +7268,8 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
             var s = GLctx.getParameter(name_);
             if (!s) {
               GL.recordError(0x500/*GL_INVALID_ENUM*/);
+              // This occurs e.g. if one attempts GL_UNMASKED_VENDOR_WEBGL when it is not supported.
+              err(`GL_INVALID_ENUM in glGetString: Received empty parameter for query name ${name_}!`);
             }
             ret = s ? stringToNewUTF8(s) : 0;
             break;
@@ -7229,6 +7293,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
             break;
           default:
             GL.recordError(0x500/*GL_INVALID_ENUM*/);
+            err(`GL_INVALID_ENUM in glGetString: Unknown parameter ${name_}!`);
             // fall through
         }
         GL.stringCache[name_] = ret;
@@ -7246,6 +7311,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   var _glCreateShader = _emscripten_glCreateShader;
   
   var _emscripten_glShaderSource = (shader, count, string, length) => {
+      GL.validateGLObjectID(GL.shaders, shader, 'glShaderSource', 'shader');
       var source = GL.getSource(shader, count, string, length);
   
       GLctx.shaderSource(GL.shaders[shader], source);
@@ -7253,21 +7319,27 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   var _glShaderSource = _emscripten_glShaderSource;
   
   var _emscripten_glCompileShader = (shader) => {
+      GL.validateGLObjectID(GL.shaders, shader, 'glCompileShader', 'shader');
       GLctx.compileShader(GL.shaders[shader]);
     };
   var _glCompileShader = _emscripten_glCompileShader;
   
   var _emscripten_glAttachShader = (program, shader) => {
+      GL.validateGLObjectID(GL.programs, program, 'glAttachShader', 'program');
+      GL.validateGLObjectID(GL.shaders, shader, 'glAttachShader', 'shader');
       GLctx.attachShader(GL.programs[program], GL.shaders[shader]);
     };
   var _glAttachShader = _emscripten_glAttachShader;
   
   var _emscripten_glDetachShader = (program, shader) => {
+      GL.validateGLObjectID(GL.programs, program, 'glDetachShader', 'program');
+      GL.validateGLObjectID(GL.shaders, shader, 'glDetachShader', 'shader');
       GLctx.detachShader(GL.programs[program], GL.shaders[shader]);
     };
   var _glDetachShader = _emscripten_glDetachShader;
   
   var _emscripten_glUseProgram = (program) => {
+      GL.validateGLObjectID(GL.programs, program, 'glUseProgram', 'program');
       program = GL.programs[program];
       GLctx.useProgram(program);
       // Record the currently active program so that we can access the uniform
@@ -7293,11 +7365,13 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   
   
   var _emscripten_glBindAttribLocation = (program, index, name) => {
+      GL.validateGLObjectID(GL.programs, program, 'glBindAttribLocation', 'program');
       GLctx.bindAttribLocation(GL.programs[program], index, UTF8ToString(name));
     };
   var _glBindAttribLocation = _emscripten_glBindAttribLocation;
   
   var _emscripten_glLinkProgram = (program) => {
+      GL.validateGLObjectID(GL.programs, program, 'glLinkProgram', 'program');
       program = GL.programs[program];
       GLctx.linkProgram(program);
       // Invalidate earlier computed uniform->ID mappings, those have now become stale
@@ -7321,6 +7395,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   var _glDisableVertexAttribArray = _emscripten_glDisableVertexAttribArray;
   
   var _emscripten_glVertexAttribPointer = (index, size, type, normalized, stride, ptr) => {
+      GL.validateVertexAttribPointer(size, type, stride, ptr);
       GLctx.vertexAttribPointer(index, size, type, !!normalized, stride, ptr);
     };
   var _glVertexAttribPointer = _emscripten_glVertexAttribPointer;
@@ -9649,10 +9724,13 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
             var clientAttributes = GLImmediate.clientAttributes;
             var posAttr = clientAttributes[GLImmediate.VERTEX];
   
+            GL.validateVertexAttribPointer(posAttr.size, posAttr.type, GLImmediate.stride, clientAttributes[GLImmediate.VERTEX].offset);
+  
             GLctx.vertexAttribPointer(this.positionLocation, posAttr.size, posAttr.type, false, GLImmediate.stride, posAttr.offset);
             GLctx.enableVertexAttribArray(this.positionLocation);
             if (this.hasNormal) {
               var normalAttr = clientAttributes[GLImmediate.NORMAL];
+              GL.validateVertexAttribPointer(normalAttr.size, normalAttr.type, GLImmediate.stride, normalAttr.offset);
               GLctx.vertexAttribPointer(this.normalLocation, normalAttr.size, normalAttr.type, true, GLImmediate.stride, normalAttr.offset);
               GLctx.enableVertexAttribArray(this.normalLocation);
             }
@@ -9663,6 +9741,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
                 var texAttr = clientAttributes[GLImmediate.TEXTURE0+i];
   
                 if (texAttr.size) {
+                  GL.validateVertexAttribPointer(texAttr.size, texAttr.type, GLImmediate.stride, texAttr.offset);
                   GLctx.vertexAttribPointer(attribLoc, texAttr.size, texAttr.type, false, GLImmediate.stride, texAttr.offset);
                   GLctx.enableVertexAttribArray(attribLoc);
                 } else {
@@ -9679,6 +9758,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
             }
             if (GLImmediate.enabledClientAttributes[GLImmediate.COLOR]) {
               var colorAttr = clientAttributes[GLImmediate.COLOR];
+              GL.validateVertexAttribPointer(colorAttr.size, colorAttr.type, GLImmediate.stride, colorAttr.offset);
               GLctx.vertexAttribPointer(this.colorLocation, colorAttr.size, colorAttr.type, true, GLImmediate.stride, colorAttr.offset);
               GLctx.enableVertexAttribArray(this.colorLocation);
             }
@@ -9896,6 +9976,9 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         // generate renderer components dynamically and then disable them
         // ourselves, but it does help with glDrawElements/Arrays.
         if (!GLImmediate.modifiedClientAttributes) {
+          if ((GLImmediate.stride & 3) != 0) {
+            warnOnce(`Warning: Rendering from client side vertex arrays where stride (${GLImmediate.stride}) is not a multiple of four! This is not currently supported!`);
+          }
           GLImmediate.vertexCounter = (GLImmediate.stride * count) / 4; // XXX assuming float
           return;
         }
@@ -9951,6 +10034,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
           // The immediate-mode glBegin()/glEnd() vertex submission gets
           // automatically generated in appropriate layout, so never need to come
           // down this path if that was used.
+          warnOnce('Rendering from planar client-side vertex arrays. This is a very slow emulation path! Use interleaved vertex arrays for best performance.');
           GLImmediate.restrideBuffer ||= _malloc(GL.MAX_TEMP_BUFFER_SIZE);
           var start = GLImmediate.restrideBuffer;
           bytes = 0;
@@ -9995,6 +10079,9 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
           GLImmediate.stride = Math.max(maxStride, bytes);
         }
         if (!beginEnd) {
+          if ((GLImmediate.stride & 3) != 0) {
+            warnOnce(`Warning: Rendering from client side vertex arrays where stride (${GLImmediate.stride}) is not a multiple of four! This is not currently supported!`);
+          }
           GLImmediate.vertexCounter = (GLImmediate.stride * count) / 4; // XXX assuming float
         }
       },
@@ -12110,6 +12197,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
 
   var computeUnpackAlignedImageSize = (width, height, sizePerPixel) => {
       function roundedToNextMultipleOf(x, y) {
+        assert((y & (y-1)) === 0, 'Unpack alignment must be a power of 2! (Allowed values per WebGL spec are 1, 2, 4 or 8)');
         return (x + y - 1) & -y;
       }
       var plainRowSize = (GL.unpackRowLength || width) * sizePerPixel;
@@ -12132,6 +12220,14 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         29502: 3,
         29504: 4,
       };
+      if (!colorChannels[format - 0x1902]
+        && format != 0x1902 /* GL_DEPTH_COMPONENT */
+        && format != 0x1906 /* GL_ALPHA */
+        && format != 0x1909 /* GL_LUMINANCE */
+        && format != 0x1903 /* GL_RED */
+        && format != 0x8D94 /* GL_RED_INTEGER */) {
+        err(`Invalid format=${ptrToString(format)} passed to function colorChannelsInGlTextureFormat()!`);
+      }
       return colorChannels[format - 0x1902]||1;
     };
   
@@ -12158,6 +12254,13 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         )
         return HEAPU32;
   
+        if (type != 3
+          && type != 27699
+          && type != 27700
+          && type != 28515
+          && type != 31073) {
+          err(`Invalid WebGL type 0x${(type+0x1400).toString()} passed to $heapObjectForWebGLType!`);
+        }
       return HEAPU16;
     };
   
@@ -12168,6 +12271,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
       var heap = heapObjectForWebGLType(type);
       var sizePerPixel = colorChannelsInGlTextureFormat(format) * heap.BYTES_PER_ELEMENT;
       var bytes = computeUnpackAlignedImageSize(width, height, sizePerPixel);
+      assert(pixels % heap.BYTES_PER_ELEMENT == 0, 'Pointer to texture data passed to texture get function must be aligned to the byte size of the pixel type');
       return heap.subarray(toTypedArrayIndex(pixels, heap), toTypedArrayIndex(pixels + bytes, heap));
     };
   
