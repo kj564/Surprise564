@@ -56,18 +56,18 @@
         printErr: function(t) { logMsg('[stderr] '+t); },
         locateFile: function(p) { return './'+p; },
         onAbort: function(e) { logMsg('!!! ABORT: '+e); },
-        preRun: function() {
-          logMsg('preRun — initializing GLImmediate…');
-          // §CRITICAL: manually init GLImmediate before main() runs
-          // emscripten_webgl_create_context doesn't trigger moduleContextCreatedCallbacks
-          // so GLImmediate.init() is never called → s_texUnits null → crash on glEnable
+        onRuntimeInitialized: function() {
+          logMsg('WASM runtime ready — init GLImmediate…');
+          // §Init GLImmediate after runtime ready — Emscripten will auto-create
+          // GL context from Module.canvas when first GL function is called.
+          // GLImmediate.init() populates s_texUnits so glEnable doesn't crash.
           if (typeof GLImmediate !== 'undefined' && GLImmediate.init) {
             try {
+              // §Set Browser.useWebGL=true so GLImmediate.init() doesn't skip
+              if (typeof Browser !== 'undefined') Browser.useWebGL = true;
               GLImmediate.init();
-              logMsg('GLImmediate.init() OK — s_texUnits populated');
-            } catch(e) {
-              logMsg('GLImmediate.init() error: ' + e.message);
-            }
+              logMsg('GLImmediate.init() OK');
+            } catch(e) { logMsg('GLImmediate error: ' + e.message); }
           }
         },
         noInitialRun: false,
