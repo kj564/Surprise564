@@ -12922,7 +12922,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('wasmBinary');
 }
 var ASM_CONSTS = {
-  6475912: () => { if (typeof Browser !== 'undefined') Browser.useWebGL = true; if (typeof GLImmediate !== 'undefined' && GLImmediate.init) { try { GLImmediate.init(); console.log('[MCPE_WASM] GLImmediate OK'); } catch(e) { console.error('[MCPE_WASM] GLImmediate error: ' + e.message); } } }
+  6475960: () => { if (typeof Browser !== 'undefined') Browser.useWebGL = true; if (typeof GLImmediate !== 'undefined' && GLImmediate.init) { try { GLImmediate.init(); console.log('[MCPE_WASM] GLImmediate OK'); } catch(e) { console.error('[MCPE_WASM] GLImmediate error: ' + e.message); } } }
 };
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
 function js_getAsset(pathC,outSize) { var path = UTF8ToString(pathC); var asset = window.__getAsset ? window.__getAsset(path) : null; if (!asset) return 0; HEAP32[outSize >> 2] = asset.size; return asset.ptr; }
