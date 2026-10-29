@@ -34,7 +34,7 @@ window.__mcpeTextures = {}; window.__mcpeAssets = {};
 
 async function loadTex(p) {
   try {
-    var b = location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/';
+    var b = './assets/';
     var r = await fetch(b + p);
     if (!r.ok) return;
     var bl = await r.blob();
@@ -58,7 +58,7 @@ async function loadTex(p) {
 
 async function loadAsset(p) {
   try {
-    var b = location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/';
+    var b = './assets/';
     var r = await fetch(b + p);
     if (!r.ok) return;
     var buf = await r.arrayBuffer();
