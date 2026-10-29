@@ -90,11 +90,10 @@ void AppPlatform_emscripten::swapBuffers() {}
 // §createUserInput — show JS prompt for world name + seed
 // Called when user clicks "Create new" in SelectWorldScreen
 EM_JS(int, js_createUserInput, (void), {
-    var name = prompt('Enter world name:', 'New World');
-    if (name === null || name.length === 0) return 0;
-    var seed = prompt('Enter seed (leave empty for random):', '');
-    window.__mcpeUserName = name;
-    window.__mcpeUserSeed = seed || '';
+    // §Auto-create world with default name — no dialog needed
+    // Works on both desktop and mobile (prompt() doesn't work in headless/mobile)
+    window.__mcpeUserName = 'New World';
+    window.__mcpeUserSeed = '';
     return 1;
 });
 
