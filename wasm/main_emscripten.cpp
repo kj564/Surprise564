@@ -10,25 +10,19 @@ extern "C" {
     void glClearColor(float, float, float, float);
     void glClear(unsigned int);
     void glViewport(int, int, int, int);
-    void glEnable(unsigned int);
-    void glDisable(unsigned int);
 }
 
 static NinecraftApp* g_app = nullptr;
 static AppPlatform_emscripten* g_platform = nullptr;
 static AppContext g_context;
-static int g_frame = 0;
 
 static void emscripten_main_loop() {
     if (!g_app || !g_app->isInited()) return;
     
-    // §Force sky blue clear every frame
-    glClearColor(0.53f, 0.77f, 1.0f, 1.0f);
-    glClear(0x00004000 | 0x00000100); // GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
-    glViewport(0, 0, 854, 480);
-    
+    // §Engine renders first
     g_app->update();
-    g_frame++;
+    
+    // §Don't clear after — let engine's rendering show through
 }
 
 int main() {
@@ -38,7 +32,7 @@ int main() {
             var canvas = document.getElementById('canvas');
             var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false});
             GL.makeContextCurrent(ctx);
-            console.log('[MCPE_WASM] GL context OK, canvas=' + (GL.currentContext.GLctx.canvas ? GL.currentContext.GLctx.canvas.id : 'none'));
+            console.log('[MCPE_WASM] GL context OK');
         }
     });
     
