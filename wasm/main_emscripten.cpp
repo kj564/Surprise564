@@ -24,7 +24,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void keyboard_feed(unsigned char key, int state)
 
 // §Debug: check block at (x, y, z)
 extern "C" EMSCRIPTEN_KEEPALIVE int get_block(int x, int y, int z) {
-    if (!g_app || !g_app->level) return -1;
+    if (!g_app || !((Minecraft*)g_app)->level) return -1;
     return ((Minecraft*)g_app)->level->getTile(x, y, z);
 }
 
