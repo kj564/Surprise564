@@ -3,6 +3,7 @@
 #include "platform/input/Keyboard.h"
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
+#include <emscripten/html5_webgl.h>
 #include <cstdio>
 #include <exception>
 
@@ -14,16 +15,22 @@ static void emscripten_main_loop() {
     if (g_app && g_app->isInited()) g_app->update();
 }
 
-static EM_BOOL on_key_down(int eventType, const EmscriptenKeyboardEvent* event, void* userData) {
-    Keyboard::feed((unsigned char)event->keyCode, KeyboardAction::KEYDOWN);
-    return EM_TRUE;
-}
-static EM_BOOL on_key_up(int eventType, const EmscriptenKeyboardEvent* event, void* userData) {
-    Keyboard::feed((unsigned char)event->keyCode, KeyboardAction::KEYUP);
-    return EM_TRUE;
-}
-
 int main() {
+    // §Create WebGL context — Emscripten's LEGACY_GL_EMULATION will hook into this
+    // and initialize GLImmediate (s_texUnits etc.) automatically
+    EmscriptenWebGLContextAttributes attrs;
+    emscripten_webgl_init_context_attributes(&attrs);
+    attrs.alpha = 0; attrs.depth = 1; attrs.stencil = 0; attrs.antialias = 0;
+    attrs.premultipliedAlpha = 0; attrs.preserveDrawingBuffer = 0;
+
+    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_create_context("#canvas", &attrs);
+    printf("[MCPE_WASM] GL ctx: %d\n", (int)ctx); fflush(stdout);
+
+    if (ctx > 0) {
+        emscripten_webgl_make_context_current(ctx);
+        printf("[MCPE_WASM] GL context current ✓\n"); fflush(stdout);
+    }
+
     printf("[MCPE_WASM] Step 1: platform\n"); fflush(stdout);
     g_platform = new AppPlatform_emscripten();
     g_platform->setupCanvas(854, 480);
@@ -33,7 +40,7 @@ int main() {
     printf("[MCPE_WASM] Step 2: NinecraftApp\n"); fflush(stdout);
     g_app = new NinecraftApp();
 
-    printf("[MCPE_WASM] Step 3: App::init (sets SCREEN_STARTMENU)\n"); fflush(stdout);
+    printf("[MCPE_WASM] Step 3: App::init\n"); fflush(stdout);
     try {
         ((App*)g_app)->init(g_context);
     } catch (std::exception& e) {
@@ -43,8 +50,6 @@ int main() {
     }
 
     printf("[MCPE_WASM] Step 4: main loop\n"); fflush(stdout);
-    emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_FALSE, on_key_down);
-    emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_FALSE, on_key_up);
     emscripten_set_main_loop(emscripten_main_loop, 0, 1);
     return 0;
 }
