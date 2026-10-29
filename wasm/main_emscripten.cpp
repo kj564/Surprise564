@@ -6,36 +6,39 @@
 #include <cstdio>
 #include <exception>
 
+extern "C" {
+    void glClearColor(float, float, float, float);
+    void glClear(unsigned int);
+    void glViewport(int, int, int, int);
+    void glEnable(unsigned int);
+    void glDisable(unsigned int);
+}
+
 static NinecraftApp* g_app = nullptr;
 static AppPlatform_emscripten* g_platform = nullptr;
 static AppContext g_context;
+static int g_frame = 0;
 
 static void emscripten_main_loop() {
-    if (g_app && g_app->isInited()) g_app->update();
+    if (!g_app || !g_app->isInited()) return;
+    
+    // §Force sky blue clear every frame
+    glClearColor(0.53f, 0.77f, 1.0f, 1.0f);
+    glClear(0x00004000 | 0x00000100); // GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
+    glViewport(0, 0, 854, 480);
+    
+    g_app->update();
+    g_frame++;
 }
 
 int main() {
-    printf("[MCPE_WASM] Creating GL context from canvas…\n"); fflush(stdout);
-    
-    // §Create GL context bound to canvas via Emscripten's GL module
-    // This ensures GL.currentContext.canvas is set properly
+    printf("[MCPE_WASM] Creating GL context…\n"); fflush(stdout);
     EM_ASM({
         if (typeof GL !== 'undefined' && GL.createContext) {
             var canvas = document.getElementById('canvas');
             var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false});
             GL.makeContextCurrent(ctx);
-            console.log('[MCPE_WASM] GL context created from canvas, ctx=' + ctx);
-            
-            // §Init GLImmediate AFTER context is current
-            if (typeof Browser !== 'undefined') Browser.useWebGL = true;
-            if (typeof GLImmediate !== 'undefined' && GLImmediate.init) {
-                GLImmediate.init();
-                console.log('[MCPE_WASM] GLImmediate.init() OK');
-            }
-            
-            // §Verify canvas binding
-            var cc = GL.currentContext;
-            console.log('[MCPE_WASM] GLctx.canvas = ' + (cc && cc.GLctx && cc.GLctx.canvas ? cc.GLctx.canvas.id : 'none'));
+            console.log('[MCPE_WASM] GL context OK, canvas=' + (GL.currentContext.GLctx.canvas ? GL.currentContext.GLctx.canvas.id : 'none'));
         }
     });
     
