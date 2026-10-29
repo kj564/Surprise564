@@ -83,6 +83,7 @@ void glDisableClientState(unsigned int cap) {
 
 // glDrawArrays — THE KEY function: set up shader + attribs + draw
 void glDrawArrays(unsigned int mode, int first, int count) {
+    EM_ASM({ if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); }, mode, first, count);
     gl1_init_shader();
     
     EM_ASM({
