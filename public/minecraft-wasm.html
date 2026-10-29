@@ -6,15 +6,15 @@
 <title>VoxelCraft WASM — MCPE 2013 Native Port</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: system-ui, sans-serif; user-select: none; color: #e6edf3; }
-#status { position: fixed; inset: 0; z-index: 10; background: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; }
-#status.hidden { display: none; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: system-ui, sans-serif; user-select: none; -webkit-user-select: none; color: #e6edf3; }
+#status { position: fixed; inset: 0; z-index: 100; background: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; }
+#status.hidden { display: none !important; pointer-events: none; }
 #status h1 { font-size: 24px; color: #34d399; }
 #status p { font-size: 13px; color: #8b949e; text-align: center; max-width: 560px; }
 #status .log { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 11px; color: #c9d1d9; width: 100%; max-width: 700px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
 #status .spinner { width: 28px; height: 28px; border: 2px solid #34d399; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #88c5ff; image-rendering: pixelated; }
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #88c5ff; image-rendering: pixelated; touch-action: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; z-index: 1; }
 #hud { position: fixed; left: 8px; top: 8px; z-index: 5; background: rgba(0,0,0,0.55); padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 10px; color: #fff; pointer-events: none; }
 #hud .title { color: #34d399; font-weight: 700; }
 </style>
@@ -43,7 +43,7 @@ async function preloadAll() {
   logMsg('Assets: '+Object.keys(window.__mcpeTextures).length+' textures');
   startWasm();
 }
-// GL1 state
+// GLES1→WebGL2 translation layer
 var GL1 = {
   vaEn:0, caEn:0, taEn:0, vaPtr:0, caPtr:0, taPtr:0,
   mm:0x1700, proj:new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]), mv:new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
@@ -72,29 +72,25 @@ var GL1 = {
     gl.useProgram(this.prog);
     gl.uniformMatrix4fv(this.uni.proj,false,this.proj);
     gl.uniformMatrix4fv(this.uni.mv,false,this.mv);
-    var s=24; // Tesselator: pos(3f)+tex(2f)+color(4ub)=24
+    var s=24;
     if(this.vaEn){gl.enableVertexAttribArray(this.att.pos);gl.vertexAttribPointer(this.att.pos,3,gl.FLOAT,false,s,this.vaPtr);}
     if(this.taEn){gl.enableVertexAttribArray(this.att.texCoord);gl.vertexAttribPointer(this.att.texCoord,2,gl.FLOAT,false,s,this.taPtr);gl.uniform1i(this.uni.tex,0);gl.uniform1i(this.uni.hasTex,1);}
     else{gl.uniform1i(this.uni.hasTex,0);}
     if(this.caEn){gl.enableVertexAttribArray(this.att.color);gl.vertexAttribPointer(this.att.color,4,gl.UNSIGNED_BYTE,true,s,this.caPtr);}
     else{gl.disableVertexAttribArray(this.att.color);gl.vertexAttrib4f(this.att.color,1,1,1,1);}
     gl.drawArrays(mode,first,count);
-    this.dc++;
-    if(this.dc<=3) logMsg('GL1 draw #'+this.dc+': mode='+mode+' count='+count+' vaPtr='+this.vaPtr+' vaEn='+this.vaEn+' caEn='+this.caEn+' taEn='+this.taEn);
   }
 };
+// GL1 stubs — must be set BEFORE WASM instantiation
+var __noop = function() {};
+var __gl1Stubs = {};
+['glAlphaFunc','glBegin','glEnd','glColor3f','glColor4f','glColor4ub','glTexCoord2f','glNormal3f','glPushMatrix','glPopMatrix','glRotatef','glScalef','glMultMatrixf','glLoadMatrixf','glFrustum','glFrustumf','glColorMaterial','glPolygonMode','glPointSize','glFogf','glFogfv','glFogi','glFogx','glFogxv','glLightfv','glMaterialfv','glClipPlanex','glDepthRangef','glDepthRangex','glClearDepthf','glClearDepthx','glAlphaFuncx','glColor4x','glLightxv','glMaterialxv','glPointSizex','glPointParameterx','glPointParameterxv','glLineWidthx','glPolygonOffset','glDepthMask','glColorMask','glMultMatrixx','glLoadMatrixx','glOrthox','glFrustumx','glTexParameterx','glTexParameteriv','glSampleCoverage','glStencilFunc','glStencilOp','glStencilMask','glFrontFace','glPixelStorei','glReadPixels','glCopyTexImage2D','glCopyTexSubImage2D','glCompressedTexImage2D','glGetTexParameteriv','glGetTexLevelParameteriv','glTexSubImage2D','glGetIntegerv','glGetFloatv','glFinish','glFlush','glScissor','glBlendFuncSeparate','glNewList','glEndList','glCallList','glCallLists','glDeleteLists','glListBase','glNormalPointer','gluPerspective','gluLookAt','glewInit','glGetAttribLocation','glGetUniformLocation','glCreateShader','glShaderSource','glCompileShader','glCreateProgram','glAttachShader','glLinkProgram','glUseProgram','glDeleteShader','glDeleteProgram','glDetachShader','glBindAttribLocation','glUniform1i','glUniform1f','glUniformMatrix4fv','glVertexAttribPointer','glEnableVertexAttribArray','glDisableVertexAttribArray','glGetShaderiv','glGetProgramiv','glGetShaderInfoLog','glGetProgramInfoLog','glGenFramebuffers','glDeleteFramebuffers','glBindFramebuffer','glFramebufferTexture2D','glGenRenderbuffers','glDeleteRenderbuffers','glBindRenderbuffer','glRenderbufferStorage','glFramebufferRenderbuffer','glCheckFramebufferStatus','glActiveTexture','glClientActiveTexture','glBlendFunc','glEnable2','glDisable2','glDepthFunc2','glDepthRangef2','glAlphaFunc2','glTranslatef2','glRotatef2','glScalef2','glPushMatrix2','glPopMatrix2','glColor4f2','glBindTexture2','glTexParameteri2','glTexImage2D2','glDrawElements2','glGenTextures2','glActiveTexture2','glClientActiveTexture2','glBlendFunc2','glFogfv2','glFogf2','glShadeModel2','glFogi2','glCullFace2','drawArrayVT','drawArrayVT_NoState','drawArrayVTC','drawArrayVTC_NoState','glGenLists','glOrtho','glOrthof','glGetString'].forEach(function(name) { __gl1Stubs[name] = __noop; });
+__gl1Stubs.glGenLists = function(n) { return 1; };
+__gl1Stubs.glGetString = function(name) { return 0; };
+__gl1Stubs.glCheckFramebufferStatus = function(target) { return 0x8CD5; };
+
 function startWasm() {
-  
-    // §GL1 no-op stubs — must be set BEFORE WASM instantiation
-    var __noop = function() {};
-    var __gl1Funcs = ['glAlphaFunc','glBegin','glEnd','glColor3f','glColor4f','glColor4ub','glTexCoord2f','glNormal3f','glPushMatrix','glPopMatrix','glRotatef','glScalef','glMultMatrixf','glLoadMatrixf','glFrustum','glFrustumf','glColorMaterial','glPolygonMode','glPointSize','glFogf','glFogfv','glFogi','glFogx','glFogxv','glLightfv','glMaterialfv','glClipPlanex','glDepthRangef','glDepthRangex','glClearDepthf','glClearDepthx','glAlphaFuncx','glColor4x','glLightxv','glMaterialxv','glPointSizex','glPointParameterx','glPointParameterxv','glLineWidthx','glPolygonOffset','glDepthMask','glColorMask','glMultMatrixx','glLoadMatrixx','glOrthox','glFrustumx','glTexParameterx','glTexParameteriv','glSampleCoverage','glStencilFunc','glStencilOp','glStencilMask','glFrontFace','glPixelStorei','glReadPixels','glCopyTexImage2D','glCopyTexSubImage2D','glCompressedTexImage2D','glGetTexParameteriv','glGetTexLevelParameteriv','glTexSubImage2D','glGetIntegerv','glGetFloatv','glFinish','glFlush','glScissor','glBlendFuncSeparate','glNewList','glEndList','glCallList','glCallLists','glDeleteLists','glListBase','glNormalPointer','gluPerspective','gluLookAt','glewInit','glGetAttribLocation','glGetUniformLocation','glCreateShader','glShaderSource','glCompileShader','glCreateProgram','glAttachShader','glLinkProgram','glUseProgram','glDeleteShader','glDeleteProgram','glDetachShader','glBindAttribLocation','glUniform1i','glUniform1f','glUniformMatrix4fv','glVertexAttribPointer','glEnableVertexAttribArray','glDisableVertexAttribArray','glGetShaderiv','glGetProgramiv','glGetShaderInfoLog','glGetProgramInfoLog','glGenFramebuffers','glDeleteFramebuffers','glBindFramebuffer','glFramebufferTexture2D','glGenRenderbuffers','glDeleteRenderbuffers','glBindRenderbuffer','glRenderbufferStorage','glFramebufferRenderbuffer','glCheckFramebufferStatus','glActiveTexture','glClientActiveTexture','glBlendFunc','glEnable2','glDisable2','glDepthFunc2','glDepthRangef2','glAlphaFunc2','glTranslatef2','glRotatef2','glScalef2','glPushMatrix2','glPopMatrix2','glColor4f2','glBindTexture2','glTexParameteri2','glTexImage2D2','glDrawElements2','glGenTextures2','glActiveTexture2','glClientActiveTexture2','glBlendFunc2','glFogfv2','glFogf2','glShadeModel2','glFogi2','glCullFace2','drawArrayVT','drawArrayVT_NoState','drawArrayVTC','drawArrayVTC_NoState','glGenLists','glOrtho','glOrthof','glGetString'];
-    var __gl1Stubs = {};
-    __gl1Funcs.forEach(function(name) { __gl1Stubs[name] = __noop; });
-    __gl1Stubs.glGenLists = function(n) { return 1; };
-    __gl1Stubs.glGetString = function(name) { return 0; };
-    __gl1Stubs.glCheckFramebufferStatus = function(target) { return 0x8CD5; };
-    
-    window.Module = Object.assign({}, __gl1Stubs, {
+  window.Module = Object.assign({}, __gl1Stubs, {
     canvas: canvas,
     print: function(t) { logMsg('[stdout] '+t); },
     printErr: function(t) { logMsg('[stderr] '+t); },
@@ -102,17 +98,13 @@ function startWasm() {
     onAbort: function(e) { logMsg('ABORT: '+e); },
     onRuntimeInitialized: function() {
       logMsg('WASM ready — installing GL1 hooks…');
-      // Create GL context
       if (typeof GL !== 'undefined' && GL.createContext) {
         var ctx = GL.createContext(canvas, {alpha:false,depth:true,stencil:false,antialias:false});
         GL.makeContextCurrent(ctx);
         logMsg('GL context ✓');
       }
-      // Hook GL1 functions — these override C++ stubs
-      _glDrawArrays = function(mode,first,count) {
-        var gl = GL.currentContext && GL.currentContext.GLctx;
-        if(gl) GL1.draw(gl,mode,first,count);
-      };
+      // Hook GL1 rendering functions
+      _glDrawArrays = function(mode,first,count) { var gl = GL.currentContext && GL.currentContext.GLctx; if(gl) GL1.draw(gl,mode,first,count); };
       _glVertexPointer = function(s,t,st,p) { GL1.vaPtr=p; };
       _glColorPointer = function(s,t,st,p) { GL1.caPtr=p; };
       _glTexCoordPointer = function(s,t,st,p) { GL1.taPtr=p; };
@@ -122,7 +114,7 @@ function startWasm() {
       _glLoadIdentity = function() { var id=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]); if(GL1.mm==0x1701)GL1.proj=id; else GL1.mv=id; };
       _glOrthof = function(l,r,b,t,n,f) { var m=new Float32Array(16);m[0]=2/(r-l);m[5]=2/(t-b);m[10]=-2/(f-n);m[15]=1;m[12]=-(r+l)/(r-l);m[13]=-(t+b)/(t-b);m[14]=-(f+n)/(f-n); if(GL1.mm==0x1701)GL1.proj=m; else GL1.mv=m; };
       _glTranslatef = function(x,y,z) { var m=GL1.mv;m[12]+=m[0]*x+m[4]*y+m[8]*z;m[13]+=m[1]*x+m[5]*y+m[9]*z;m[14]+=m[2]*x+m[6]*y+m[10]*z; };
-      // Set window callbacks for C++ EM_ASM bridge
+      // C++ EM_ASM bridge callbacks
       window.__gl1Draw = function(mode, first, count) { var gl = GL.currentContext && GL.currentContext.GLctx; if (gl) GL1.draw(gl, mode, first, count); };
       window.__gl1VertexPointer = function(s,t,st,p) { GL1.vaPtr=p; };
       window.__gl1ColorPointer = function(s,t,st,p) { GL1.caPtr=p; };
@@ -133,14 +125,71 @@ function startWasm() {
       window.__gl1LoadIdentity = function() { var id=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]); if(GL1.mm==0x1701)GL1.proj=id; else GL1.mv=id; };
       window.__gl1Orthof = function(l,r,b,t,n,f) { var m=new Float32Array(16);m[0]=2/(r-l);m[5]=2/(t-b);m[10]=-2/(f-n);m[15]=1;m[12]=-(r+l)/(r-l);m[13]=-(t+b)/(t-b);m[14]=-(f+n)/(f-n); if(GL1.mm==0x1701)GL1.proj=m; else GL1.mv=m; };
       window.__gl1Translatef = function(x,y,z) { var m=GL1.mv;m[12]+=m[0]*x+m[4]*y+m[8]*z;m[13]+=m[1]*x+m[5]*y+m[9]*z;m[14]+=m[2]*x+m[6]*y+m[10]*z; };
-      logMsg("GL1 hooks + __gl1Draw installed ✓");
       
+      // §Wire mouse + touch input — convert browser events to MCPE Mouse::feed
+      // MCPE Mouse API: feed(actionButtonId, buttonData, x, y)
+      // ACTION_MOVE=0, ACTION_LEFT=1, ACTION_RIGHT=2
+      // DATA_UP=0, DATA_DOWN=1
+      function canvasCoords(clientX, clientY) {
+        var rect = canvas.getBoundingClientRect();
+        var x = Math.round((clientX - rect.left) * canvas.width / rect.width);
+        var y = Math.round((clientY - rect.top) * canvas.height / rect.height);
+        return {x: x, y: y};
+      }
       
+      // Mouse events (desktop)
+      canvas.addEventListener('mousemove', function(e) {
+        var c = canvasCoords(e.clientX, e.clientY);
+        _mouse_feed(0, 0, c.x, c.y); // ACTION_MOVE
+      });
+      canvas.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        var c = canvasCoords(e.clientX, e.clientY);
+        _mouse_feed(1, 1, c.x, c.y); // ACTION_LEFT, DATA_DOWN
+      });
+      canvas.addEventListener('mouseup', function(e) {
+        e.preventDefault();
+        var c = canvasCoords(e.clientX, e.clientY);
+        _mouse_feed(1, 0, c.x, c.y); // ACTION_LEFT, DATA_UP
+      });
+      
+      // Touch events (mobile) — convert to Mouse::feed
+      canvas.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        if (e.touches.length > 0) {
+          var t = e.touches[0];
+          var c = canvasCoords(t.clientX, t.clientY);
+          _mouse_feed(1, 1, c.x, c.y); // ACTION_LEFT, DATA_DOWN
+        }
+      }, {passive: false});
+      canvas.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        if (e.touches.length > 0) {
+          var t = e.touches[0];
+          var c = canvasCoords(t.clientX, t.clientY);
+          _mouse_feed(0, 0, c.x, c.y); // ACTION_MOVE
+        }
+      }, {passive: false});
+      canvas.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        // Use last known position (changedTouches)
+        if (e.changedTouches.length > 0) {
+          var t = e.changedTouches[0];
+          var c = canvasCoords(t.clientX, t.clientY);
+          _mouse_feed(1, 0, c.x, c.y); // ACTION_LEFT, DATA_UP
+        }
+      }, {passive: false});
+      
+      logMsg('Input callbacks installed ✓ (mouse + touch)');
     },
     noInitialRun: false,
   });
   var s=document.createElement('script'); s.src='./mcpe_emscripten_full.js'; document.body.appendChild(s);
-  setTimeout(function(){statusEl.classList.add('hidden');hudEl.style.display='block';},10000);
+  // §Hide status overlay faster (3s) and ensure it doesn't block clicks
+  setTimeout(function(){
+    statusEl.classList.add('hidden');
+    hudEl.style.display='block';
+  }, 3000);
 }
 preloadAll();
 </script>

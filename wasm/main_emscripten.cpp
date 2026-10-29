@@ -2,7 +2,6 @@
 #include "AppPlatform_emscripten.h"
 #include "platform/input/Keyboard.h"
 #include "platform/input/Mouse.h"
-#include "platform/input/Multitouch.h"
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 #include <cstdio>
@@ -16,53 +15,17 @@ static void emscripten_main_loop() {
     if (g_app && g_app->isInited()) g_app->update();
 }
 
-// §Convert CSS pixel coords to canvas pixel coords
-static void getCanvasCoords(int cssX, int cssY, short* outX, short* outY) {
-    EM_ASM({
-        var c = document.getElementById('canvas');
-        var rect = c.getBoundingClientRect();
-        var scaleX = c.width / rect.width;
-        var scaleY = c.height / rect.height;
-        HEAP16[$0 >> 1] = (short)(($1 - rect.left) * scaleX);
-        HEAP16[$1_value >> 1] = (short)(($2 - rect.top) * scaleY);
-    }, outX, cssX, cssY);
+// §Export Mouse::feed for JS — called from HTML addEventListener
+// JS calls: _mouse_feed(action, data, x, y)
+// ACTION_MOVE=0, ACTION_LEFT=1, ACTION_RIGHT=2
+// DATA_UP=0, DATA_DOWN=1
+extern "C" EMSCRIPTEN_KEEPALIVE void mouse_feed(char action, char data, short x, short y) {
+    Mouse::feed(action, data, x, y);
 }
 
-static EM_BOOL on_mouse_move(int eventType, const EmscriptenMouseEvent* event, void* userData) {
-    // §targetX/targetY are in CSS pixels relative to canvas
-    // MCPE expects raw canvas pixel coords (0-854, 0-480)
-    // Emscripten already gives targetX in canvas pixels
-    short x = (short)event->targetX;
-    short y = (short)event->targetY;
-    Mouse::feed(0, 0, x, y);  // ACTION_MOVE=0
-    return EM_TRUE;
-}
-
-static EM_BOOL on_mouse_down(int eventType, const EmscriptenMouseEvent* event, void* userData) {
-    short x = (short)event->targetX;
-    short y = (short)event->targetY;
-    // §ACTION_LEFT=1, DATA_DOWN=1
-    Mouse::feed(1, 1, x, y);
-    printf("[MOUSE] down at %d,%d\n", x, y); fflush(stdout);
-    return EM_TRUE;
-}
-
-static EM_BOOL on_mouse_up(int eventType, const EmscriptenMouseEvent* event, void* userData) {
-    short x = (short)event->targetX;
-    short y = (short)event->targetY;
-    // §ACTION_LEFT=1, DATA_UP=0
-    Mouse::feed(1, 0, x, y);
-    printf("[MOUSE] up at %d,%d\n", x, y); fflush(stdout);
-    return EM_TRUE;
-}
-
-static EM_BOOL on_key_down(int eventType, const EmscriptenKeyboardEvent* event, void* userData) {
-    Keyboard::feed((unsigned char)event->keyCode, KeyboardAction::KEYDOWN);
-    return EM_TRUE;
-}
-static EM_BOOL on_key_up(int eventType, const EmscriptenKeyboardEvent* event, void* userData) {
-    Keyboard::feed((unsigned char)event->keyCode, KeyboardAction::KEYUP);
-    return EM_TRUE;
+// §Export Keyboard::feed for JS
+extern "C" EMSCRIPTEN_KEEPALIVE void keyboard_feed(unsigned char key, int state) {
+    Keyboard::feed(key, state);
 }
 
 int main() {
@@ -95,13 +58,6 @@ int main() {
     } catch (...) {
         printf("[MCPE_WASM] UNKNOWN EXC\n"); fflush(stdout);
     }
-
-    printf("[MCPE_WASM] Registering input callbacks…\n"); fflush(stdout);
-    emscripten_set_mousemove_callback("#canvas", nullptr, EM_FALSE, on_mouse_move);
-    emscripten_set_mousedown_callback("#canvas", nullptr, EM_FALSE, on_mouse_down);
-    emscripten_set_mouseup_callback("#canvas", nullptr, EM_FALSE, on_mouse_up);
-    emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_FALSE, on_key_down);
-    emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_FALSE, on_key_up);
 
     printf("[MCPE_WASM] Step 4: main loop\n"); fflush(stdout);
     emscripten_set_main_loop(emscripten_main_loop, 0, 1);
