@@ -2,6 +2,7 @@
 #include "AppPlatform_emscripten.h"
 #include "platform/input/Keyboard.h"
 #include "platform/input/Mouse.h"
+#include "world/level/tile/Tile.h"
 #include <emscripten/emscripten.h>
 #include <cstdio>
 #include <exception>
@@ -17,14 +18,26 @@ static void emscripten_main_loop() {
 extern "C" EMSCRIPTEN_KEEPALIVE void mouse_feed(char action, char data, short x, short y) {
     Mouse::feed(action, data, x, y);
 }
-
 extern "C" EMSCRIPTEN_KEEPALIVE void keyboard_feed(unsigned char key, int state) {
     Keyboard::feed(key, state);
 }
 
+// §Debug: check block at (x, y, z)
+extern "C" EMSCRIPTEN_KEEPALIVE int get_block(int x, int y, int z) {
+    if (!g_app || !g_app->level) return -1;
+    return g_app->level->getTile(x, y, z);
+}
+
 int main() {
-    // §GL context already created by HTML onRuntimeInitialized
-    // No need to create again here
+    printf("[MCPE_WASM] Creating GL context…\n"); fflush(stdout);
+    EM_ASM({
+        if (typeof GL !== 'undefined' && GL.createContext) {
+            var canvas = document.getElementById('canvas');
+            var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false});
+            GL.makeContextCurrent(ctx);
+            console.log('[MCPE_WASM] GL context OK');
+        }
+    });
     
     printf("[MCPE_WASM] Step 1: platform\n"); fflush(stdout);
     g_platform = new AppPlatform_emscripten();
