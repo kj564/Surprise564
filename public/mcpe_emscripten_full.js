@@ -5913,12 +5913,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
       return 0;
     };
 
-  function _glAlphaFunc(...args
-  ) {
-  abort('missing function: glAlphaFunc');
-  }
-  _glAlphaFunc.stub = true;
-
   var GLctx;
   
   var webgl_enable_ANGLE_instanced_arrays = (ctx) => {
@@ -6430,9 +6424,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
     };
   var _glBindTexture = _emscripten_glBindTexture;
 
-  var _emscripten_glBlendFunc = (x0, x1) => GLctx.blendFunc(x0, x1);
-  var _glBlendFunc = _emscripten_glBlendFunc;
-
   
   var _emscripten_glBufferData = (target, size, data, usage) => {
   
@@ -6461,23 +6452,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
 
   var _emscripten_glClearColor = (x0, x1, x2, x3) => GLctx.clearColor(x0, x1, x2, x3);
   var _glClearColor = _emscripten_glClearColor;
-
-  function _glColor4f(...args
-  ) {
-  abort('missing function: glColor4f');
-  }
-  _glColor4f.stub = true;
-
-  var _emscripten_glColorMask = (red, green, blue, alpha) => {
-      GLctx.colorMask(!!red, !!green, !!blue, !!alpha);
-    };
-  var _glColorMask = _emscripten_glColorMask;
-
-  function _glColorPointer(...args
-  ) {
-  abort('missing function: glColorPointer');
-  }
-  _glColorPointer.stub = true;
 
   var _emscripten_glCullFace = (x0) => GLctx.cullFace(x0);
   var _glCullFace = _emscripten_glCullFace;
@@ -6522,59 +6496,11 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   var _emscripten_glDepthFunc = (x0) => GLctx.depthFunc(x0);
   var _glDepthFunc = _emscripten_glDepthFunc;
 
-  var _emscripten_glDepthMask = (flag) => {
-      GLctx.depthMask(!!flag);
-    };
-  var _glDepthMask = _emscripten_glDepthMask;
-
-  var _emscripten_glDepthRangef = (x0, x1) => GLctx.depthRange(x0, x1);
-  var _glDepthRangef = _emscripten_glDepthRangef;
-
   var _emscripten_glDisable = (x0) => GLctx.disable(x0);
   var _glDisable = _emscripten_glDisable;
 
-  function _glDisableClientState(...args
-  ) {
-  abort('missing function: glDisableClientState');
-  }
-  _glDisableClientState.stub = true;
-
-  var _emscripten_glDrawArrays = (mode, first, count) => {
-      // bind any client-side buffers
-      GL.preDrawHandleClientVertexAttribBindings(first + count);
-  
-      GLctx.drawArrays(mode, first, count);
-  
-      GL.postDrawHandleClientVertexAttribBindings();
-    };
-  var _glDrawArrays = _emscripten_glDrawArrays;
-
   var _emscripten_glEnable = (x0) => GLctx.enable(x0);
   var _glEnable = _emscripten_glEnable;
-
-  function _glEnableClientState(...args
-  ) {
-  abort('missing function: glEnableClientState');
-  }
-  _glEnableClientState.stub = true;
-
-  function _glFogf(...args
-  ) {
-  abort('missing function: glFogf');
-  }
-  _glFogf.stub = true;
-
-  function _glFogfv(...args
-  ) {
-  abort('missing function: glFogfv');
-  }
-  _glFogfv.stub = true;
-
-  function _glFogx(...args
-  ) {
-  abort('missing function: glFogx');
-  }
-  _glFogx.stub = true;
 
   var _emscripten_glGenBuffers = (n, buffers) => {
       GL.genObject(n, buffers, 'createBuffer', GL.buffers
@@ -6588,247 +6514,11 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
     };
   var _glGenTextures = _emscripten_glGenTextures;
 
-  
-  var readI53FromI64 = (ptr) => {
-      return HEAPU32[((ptr)>>2)] + HEAP32[(((ptr)+(4))>>2)] * 4294967296;
-    };
-  
-  var readI53FromU64 = (ptr) => {
-      return HEAPU32[((ptr)>>2)] + HEAPU32[(((ptr)+(4))>>2)] * 4294967296;
-    };
-  
-  var writeI53ToI64 = (ptr, num) => {
-      HEAPU32[((ptr)>>2)] = num;
-      var lower = HEAPU32[((ptr)>>2)];
-      HEAPU32[(((ptr)+(4))>>2)] = (num - lower)/4294967296;
-      var deserialized = (num >= 0) ? readI53FromU64(ptr) : readI53FromI64(ptr);
-      var offset = ((ptr)>>2);
-      if (deserialized != num) warnOnce(`writeI53ToI64() out of range: serialized JS Number ${num} to Wasm heap as bytes lo=${ptrToString(HEAPU32[offset])}, hi=${ptrToString(HEAPU32[offset+1])}, which deserializes back to ${deserialized} instead!`);
-    };
-  
-  
-  var webglGetExtensions = () => {
-      var exts = getEmscriptenSupportedExtensions(GLctx);
-      exts = exts.concat(exts.map((e) => 'GL_' + e));
-      return exts;
-    };
-  
-  
-  
-  
-  /** @type {!Float32Array} */
-  var HEAPF32;
-  var emscriptenWebGLGet = (name_, p, type) => {
-      // Guard against user passing a null pointer.
-      // Note that GLES2 spec does not say anything about how passing a null
-      // pointer should be treated.  Testing on desktop core GL 3, the application
-      // crashes on glGetIntegerv to a null pointer, but better to report an error
-      // instead of doing anything random.
-      if (!p) {
-        GL.recordError(0x501 /* GL_INVALID_VALUE */);
-        return;
-      }
-      var ret = undefined;
-      switch (name_) { // Handle a few trivial GLES values
-        case 0x8DFA: // GL_SHADER_COMPILER
-          ret = 1;
-          break;
-        case 0x8DF8: // GL_SHADER_BINARY_FORMATS
-          if (type != 0 && type != 1) {
-            GL.recordError(0x500); // GL_INVALID_ENUM
-          }
-          // Do not write anything to the out pointer, since no binary formats are
-          // supported.
-          return;
-        case 0x87FE: // GL_NUM_PROGRAM_BINARY_FORMATS
-        case 0x8DF9: // GL_NUM_SHADER_BINARY_FORMATS
-          ret = 0;
-          break;
-        case 0x86A2: // GL_NUM_COMPRESSED_TEXTURE_FORMATS
-          // WebGL doesn't have GL_NUM_COMPRESSED_TEXTURE_FORMATS (it's obsolete
-          // since GL_COMPRESSED_TEXTURE_FORMATS returns a JS array that can be
-          // queried for length), so implement it ourselves to allow C++ GLES2
-          // code to get the length.
-          var formats = GLctx.getParameter(0x86A3 /*GL_COMPRESSED_TEXTURE_FORMATS*/);
-          ret = formats ? formats.length : 0;
-          break;
-  
-        case 0x821D: // GL_NUM_EXTENSIONS
-          if (GL.currentContext.version < 2) {
-            // Calling GLES3/WebGL2 function with a GLES2/WebGL1 context
-            GL.recordError(0x502 /* GL_INVALID_OPERATION */);
-            return;
-          }
-          ret = webglGetExtensions().length;
-          break;
-        case 0x821B: // GL_MAJOR_VERSION
-        case 0x821C: // GL_MINOR_VERSION
-          if (GL.currentContext.version < 2) {
-            GL.recordError(0x500); // GL_INVALID_ENUM
-            return;
-          }
-          ret = name_ == 0x821B ? 3 : 0; // return version 3.0
-          break;
-      }
-  
-      if (ret === undefined) {
-        var result = GLctx.getParameter(name_);
-        switch (typeof result) {
-          case 'number':
-            ret = result;
-            break;
-          case 'boolean':
-            ret = result ? 1 : 0;
-            break;
-          case 'string':
-            GL.recordError(0x500); // GL_INVALID_ENUM
-            return;
-          case 'object':
-            if (result === null) {
-              // null is a valid result for some (e.g., which buffer is bound -
-              // perhaps nothing is bound), but otherwise can mean an invalid
-              // name_, which we need to report as an error
-              switch (name_) {
-                case 0x8894: // ARRAY_BUFFER_BINDING
-                case 0x8B8D: // CURRENT_PROGRAM
-                case 0x8895: // ELEMENT_ARRAY_BUFFER_BINDING
-                case 0x8CA6: // FRAMEBUFFER_BINDING or DRAW_FRAMEBUFFER_BINDING
-                case 0x8CA7: // RENDERBUFFER_BINDING
-                case 0x8069: // TEXTURE_BINDING_2D
-                case 0x85B5: // WebGL 2 GL_VERTEX_ARRAY_BINDING, or WebGL 1 extension OES_vertex_array_object GL_VERTEX_ARRAY_BINDING_OES
-                case 0x8F36: // COPY_READ_BUFFER_BINDING or COPY_READ_BUFFER
-                case 0x8F37: // COPY_WRITE_BUFFER_BINDING or COPY_WRITE_BUFFER
-                case 0x88ED: // PIXEL_PACK_BUFFER_BINDING
-                case 0x88EF: // PIXEL_UNPACK_BUFFER_BINDING
-                case 0x8CAA: // READ_FRAMEBUFFER_BINDING
-                case 0x8919: // SAMPLER_BINDING
-                case 0x8C1D: // TEXTURE_BINDING_2D_ARRAY
-                case 0x806A: // TEXTURE_BINDING_3D
-                case 0x8E25: // TRANSFORM_FEEDBACK_BINDING
-                case 0x8C8F: // TRANSFORM_FEEDBACK_BUFFER_BINDING
-                case 0x8A28: // UNIFORM_BUFFER_BINDING
-                case 0x8514: { // TEXTURE_BINDING_CUBE_MAP
-                  ret = 0;
-                  break;
-                }
-                default: {
-                  GL.recordError(0x500); // GL_INVALID_ENUM
-                  return;
-                }
-              }
-            } else if (result instanceof Float32Array ||
-                       result instanceof Uint32Array ||
-                       result instanceof Int32Array ||
-                       result instanceof Array) {
-              for (var i = 0; i < result.length; ++i) {
-                switch (type) {
-                  case 0: HEAP32[(((p)+(i*4))>>2)] = result[i]; break;
-                  case 2: HEAPF32[(((p)+(i*4))>>2)] = result[i]; break;
-                  case 4: HEAP8[(p)+(i)] = result[i] ? 1 : 0; break;
-                }
-              }
-              return;
-            } else {
-              try {
-                ret = result.name | 0;
-              } catch(e) {
-                GL.recordError(0x500); // GL_INVALID_ENUM
-                err(`GL_INVALID_ENUM in glGet${type}v: Unknown object returned from WebGL getParameter(${name_})! (error: ${e})`);
-                return;
-              }
-            }
-            break;
-          default:
-            GL.recordError(0x500); // GL_INVALID_ENUM
-            err(`GL_INVALID_ENUM in glGet${type}v: Native code calling glGet${type}v(${name_}) and it returns ${result} of type ${typeof(result)}!`);
-            return;
-        }
-      }
-  
-      switch (type) {
-        case 1: writeI53ToI64(p, ret); break;
-        case 0: HEAP32[((p)>>2)] = ret; break;
-        case 2:   HEAPF32[((p)>>2)] = ret; break;
-        case 4: HEAP8[p] = ret ? 1 : 0; break;
-      }
-    };
-  
-  var _emscripten_glGetFloatv = (name_, p) => emscriptenWebGLGet(name_, p, 2);
-  var _glGetFloatv = _emscripten_glGetFloatv;
-
   var _emscripten_glHint = (x0, x1) => GLctx.hint(x0, x1);
   var _glHint = _emscripten_glHint;
 
   var _emscripten_glLineWidth = (x0) => GLctx.lineWidth(x0);
   var _glLineWidth = _emscripten_glLineWidth;
-
-  var _emscripten_glLoadIdentity = () =>
-      abort('Legacy GL function (glLoadIdentity) called. If you want legacy GL emulation, you need to compile with -sLEGACY_GL_EMULATION to enable legacy GL emulation.');
-  var _glLoadIdentity = _emscripten_glLoadIdentity;
-
-  var _emscripten_glMatrixMode = () =>
-      abort('Legacy GL function (glMatrixMode) called. If you want legacy GL emulation, you need to compile with -sLEGACY_GL_EMULATION to enable legacy GL emulation.');
-  var _glMatrixMode = _emscripten_glMatrixMode;
-
-  function _glMultMatrixf(...args
-  ) {
-  abort('missing function: glMultMatrixf');
-  }
-  _glMultMatrixf.stub = true;
-
-  function _glNormal3f(...args
-  ) {
-  abort('missing function: glNormal3f');
-  }
-  _glNormal3f.stub = true;
-
-  function _glOrthof(...args
-  ) {
-  abort('missing function: glOrthof');
-  }
-  _glOrthof.stub = true;
-
-  var _emscripten_glPolygonOffset = (x0, x1) => GLctx.polygonOffset(x0, x1);
-  var _glPolygonOffset = _emscripten_glPolygonOffset;
-
-  function _glPopMatrix(...args
-  ) {
-  abort('missing function: glPopMatrix');
-  }
-  _glPopMatrix.stub = true;
-
-  function _glPushMatrix(...args
-  ) {
-  abort('missing function: glPushMatrix');
-  }
-  _glPushMatrix.stub = true;
-
-  function _glRotatef(...args
-  ) {
-  abort('missing function: glRotatef');
-  }
-  _glRotatef.stub = true;
-
-  function _glScalef(...args
-  ) {
-  abort('missing function: glScalef');
-  }
-  _glScalef.stub = true;
-
-  var _emscripten_glScissor = (x0, x1, x2, x3) => GLctx.scissor(x0, x1, x2, x3);
-  var _glScissor = _emscripten_glScissor;
-
-  function _glShadeModel(...args
-  ) {
-  abort('missing function: glShadeModel');
-  }
-  _glShadeModel.stub = true;
-
-  function _glTexCoordPointer(...args
-  ) {
-  abort('missing function: glTexCoordPointer');
-  }
-  _glTexCoordPointer.stub = true;
 
   var computeUnpackAlignedImageSize = (width, height, sizePerPixel) => {
       function roundedToNextMultipleOf(x, y) {
@@ -6870,6 +6560,8 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   
   
   
+  /** @type {!Float32Array} */
+  var HEAPF32;
   var heapObjectForWebGLType = (type) => {
       // Micro-optimization for size: Subtract lowest GL enum number (0x1400/* GL_BYTE */) from type to compare
       // smaller values for the heap, for shorter generated code size.
@@ -6929,36 +6621,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
 
   var _emscripten_glTexParameteri = (x0, x1, x2) => GLctx.texParameteri(x0, x1, x2);
   var _glTexParameteri = _emscripten_glTexParameteri;
-
-  
-  
-  
-  var _emscripten_glTexSubImage2D = (target, level, xoffset, yoffset, width, height, format, type, pixels) => {
-      if (GL.currentContext.version >= 2) {
-        if (GLctx.currentPixelUnpackBufferBinding) {
-          GLctx.texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
-          return;
-        }
-        if (pixels) {
-          var heap = heapObjectForWebGLType(type);
-          GLctx.texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, heap, toTypedArrayIndex(pixels, heap));
-          return;
-        }
-      }
-      var pixelData = pixels ? emscriptenWebGLGetTexPixelData(type, format, width, height, pixels) : null;
-      GLctx.texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixelData);
-    };
-  var _glTexSubImage2D = _emscripten_glTexSubImage2D;
-
-  function _glTranslatef(...args
-  ) {
-  abort('missing function: glTranslatef');
-  }
-  _glTranslatef.stub = true;
-
-  var _emscripten_glVertexPointer = (size, type, stride, ptr) =>
-      abort('Legacy GL function (glVertexPointer) called. If you want legacy GL emulation, you need to compile with -sLEGACY_GL_EMULATION to enable legacy GL emulation.');
-  var _glVertexPointer = _emscripten_glVertexPointer;
 
   var _emscripten_glViewport = (x0, x1, x2, x3) => GLctx.viewport(x0, x1, x2, x3);
   var _glViewport = _emscripten_glViewport;
@@ -7133,10 +6795,13 @@ if (Module['printErr']) err = Module['printErr'];
   Module['cwrap'] = cwrap;
   Module['UTF8ToString'] = UTF8ToString;
   var missingLibrarySymbols = [
+  'writeI53ToI64',
   'writeI53ToI64Clamped',
   'writeI53ToI64Signaling',
   'writeI53ToU64Clamped',
   'writeI53ToU64Signaling',
+  'readI53FromI64',
+  'readI53FromU64',
   'convertI32PairToI53',
   'convertI32PairToI53Checked',
   'convertU32PairToI53',
@@ -7245,6 +6910,7 @@ if (Module['printErr']) err = Module['printErr'];
   'addDays',
   'FS_mkdirTree',
   '_setNetworkCallback',
+  'emscriptenWebGLGet',
   'emscriptenWebGLGetUniform',
   'webglGetProgramUniformLocation',
   'webglGetUniformLocation',
@@ -7274,9 +6940,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'wasmExports',
   'writeStackCookie',
   'checkStackCookie',
-  'writeI53ToI64',
-  'readI53FromI64',
-  'readI53FromU64',
   'INT53_MAX',
   'INT53_MIN',
   'bigintToI53Checked',
@@ -7512,7 +7175,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'webgl_enable_EXT_clip_control',
   'webgl_enable_WEBGL_polygon_mode',
   'GL',
-  'emscriptenWebGLGet',
   'computeUnpackAlignedImageSize',
   'colorChannelsInGlTextureFormat',
   'emscriptenWebGLGetTexPixelData',
@@ -7567,8 +7229,10 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('wasmBinary');
 }
 var ASM_CONSTS = {
-  6475896: () => { if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context created from canvas, ctx=' + ctx); if (typeof Browser !== 'undefined') Browser.useWebGL = true; if (typeof GLImmediate !== 'undefined' && GLImmediate.init) { GLImmediate.init(); console.log('[MCPE_WASM] GLImmediate.init() OK'); } var cc = GL.currentContext; console.log('[MCPE_WASM] GLctx.canvas = ' + (cc && cc.GLctx && cc.GLctx.canvas ? cc.GLctx.canvas.id : 'none')); } }
+  6475928: () => { if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context created from canvas, ctx=' + ctx); if (typeof Browser !== 'undefined') Browser.useWebGL = true; if (typeof GLImmediate !== 'undefined' && GLImmediate.init) { GLImmediate.init(); console.log('[MCPE_WASM] GLImmediate.init() OK'); } var cc = GL.currentContext; console.log('[MCPE_WASM] GLctx.canvas = ' + (cc && cc.GLctx && cc.GLctx.canvas ? cc.GLctx.canvas.id : 'none')); } },  
+ 6476568: ($0, $1, $2, $3, $4, $5, $6, $7) => { var gl = (GL.currentContext && GL.currentContext.GLctx); if (!gl) return; var prog = window.__gl1Shader; if (!prog) return; gl.useProgram(prog); var id = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]); gl.uniformMatrix4fv(window.__gl1Uniforms.proj, false, id); gl.uniformMatrix4fv(window.__gl1Uniforms.mv, false, id); var stride = 24; if ($0) { gl.enableVertexAttribArray(window.__gl1Attribs.pos); gl.vertexAttribPointer(window.__gl1Attribs.pos, 3, gl.FLOAT, false, stride, $1); } if ($2) { gl.enableVertexAttribArray(window.__gl1Attribs.texCoord); gl.vertexAttribPointer(window.__gl1Attribs.texCoord, 2, gl.FLOAT, false, stride, $3); gl.uniform1i(window.__gl1Uniforms.tex, 0); gl.uniform1i(window.__gl1Uniforms.hasTex, 1); } else { gl.uniform1i(window.__gl1Uniforms.hasTex, 0); } if ($4) { gl.enableVertexAttribArray(window.__gl1Attribs.color); gl.vertexAttribPointer(window.__gl1Attribs.color, 4, gl.UNSIGNED_BYTE, true, stride, $5); } else { gl.disableVertexAttribArray(window.__gl1Attribs.color); gl.vertexAttrib4f(window.__gl1Attribs.color, 1, 1, 1, 1); } gl.drawArrays($6, 0, $7); }
 };
+function gl1_init_shader() { if (window.__gl1Shader) return; var gl = (GL.currentContext && GL.currentContext.GLctx); if (!gl) return; var vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, 'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProj; uniform mat4 uMV; varying vec4 vColor; varying vec2 vTexCoord; void main() { vColor = aColor; vTexCoord = aTexCoord; gl_Position = uProj * uMV * vec4(aPos, 1.0); }'); gl.compileShader(vs); var fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, 'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTex; uniform bool uHasTex; void main() { if (uHasTex) { vec4 t = texture2D(uTex, vTexCoord); gl_FragColor = vec4(t.rgb * vColor.rgb, t.a * vColor.a); } else { gl_FragColor = vColor; } }'); gl.compileShader(fs); var prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); window.__gl1Shader = prog; window.__gl1Attribs = { pos: gl.getAttribLocation(prog, 'aPos'), color: gl.getAttribLocation(prog, 'aColor'), texCoord: gl.getAttribLocation(prog, 'aTexCoord') }; window.__gl1Uniforms = { proj: gl.getUniformLocation(prog, 'uProj'), mv: gl.getUniformLocation(prog, 'uMV'), tex: gl.getUniformLocation(prog, 'uTex'), hasTex: gl.getUniformLocation(prog, 'uHasTex') }; console.log('[GL1] Shader OK: pos=' + window.__gl1Attribs.pos + ' color=' + window.__gl1Attribs.color + ' tex=' + window.__gl1Attribs.texCoord); }
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
 function js_getAsset(pathC,outSize) { var path = UTF8ToString(pathC); var asset = window.__getAsset ? window.__getAsset(path) : null; if (!asset) return 0; HEAP32[outSize >> 2] = asset.size; return asset.ptr; }
 
@@ -7727,25 +7391,17 @@ var wasmImports = {
   /** @export */
   getaddrinfo: _getaddrinfo,
   /** @export */
-  glAlphaFunc: _glAlphaFunc,
+  gl1_init_shader,
   /** @export */
   glBindBuffer: _glBindBuffer,
   /** @export */
   glBindTexture: _glBindTexture,
-  /** @export */
-  glBlendFunc: _glBlendFunc,
   /** @export */
   glBufferData: _glBufferData,
   /** @export */
   glClear: _glClear,
   /** @export */
   glClearColor: _glClearColor,
-  /** @export */
-  glColor4f: _glColor4f,
-  /** @export */
-  glColorMask: _glColorMask,
-  /** @export */
-  glColorPointer: _glColorPointer,
   /** @export */
   glCullFace: _glCullFace,
   /** @export */
@@ -7755,71 +7411,21 @@ var wasmImports = {
   /** @export */
   glDepthFunc: _glDepthFunc,
   /** @export */
-  glDepthMask: _glDepthMask,
-  /** @export */
-  glDepthRangef: _glDepthRangef,
-  /** @export */
   glDisable: _glDisable,
   /** @export */
-  glDisableClientState: _glDisableClientState,
-  /** @export */
-  glDrawArrays: _glDrawArrays,
-  /** @export */
   glEnable: _glEnable,
-  /** @export */
-  glEnableClientState: _glEnableClientState,
-  /** @export */
-  glFogf: _glFogf,
-  /** @export */
-  glFogfv: _glFogfv,
-  /** @export */
-  glFogx: _glFogx,
   /** @export */
   glGenBuffers: _glGenBuffers,
   /** @export */
   glGenTextures: _glGenTextures,
   /** @export */
-  glGetFloatv: _glGetFloatv,
-  /** @export */
   glHint: _glHint,
   /** @export */
   glLineWidth: _glLineWidth,
   /** @export */
-  glLoadIdentity: _glLoadIdentity,
-  /** @export */
-  glMatrixMode: _glMatrixMode,
-  /** @export */
-  glMultMatrixf: _glMultMatrixf,
-  /** @export */
-  glNormal3f: _glNormal3f,
-  /** @export */
-  glOrthof: _glOrthof,
-  /** @export */
-  glPolygonOffset: _glPolygonOffset,
-  /** @export */
-  glPopMatrix: _glPopMatrix,
-  /** @export */
-  glPushMatrix: _glPushMatrix,
-  /** @export */
-  glRotatef: _glRotatef,
-  /** @export */
-  glScalef: _glScalef,
-  /** @export */
-  glScissor: _glScissor,
-  /** @export */
-  glShadeModel: _glShadeModel,
-  /** @export */
-  glTexCoordPointer: _glTexCoordPointer,
-  /** @export */
   glTexImage2D: _glTexImage2D,
   /** @export */
   glTexParameteri: _glTexParameteri,
-  /** @export */
-  glTexSubImage2D: _glTexSubImage2D,
-  /** @export */
-  glTranslatef: _glTranslatef,
-  /** @export */
-  glVertexPointer: _glVertexPointer,
   /** @export */
   glViewport: _glViewport,
   /** @export */
