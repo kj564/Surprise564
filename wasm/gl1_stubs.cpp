@@ -247,7 +247,6 @@ void glFogi2(unsigned int, int) {}
 void glCullFace2(unsigned int) {}
 void glVertexPointer2(int a, unsigned int b, int c, const void* d) { glVertexPointer(a,b,c,d); }
 void glColorPointer2(int a, unsigned int b, int c, const void* d) { glColorPointer(a,b,c,d); }
-void glTexParameteri2(unsigned int, unsigned int, int) {}
 
 void glActiveTexture(unsigned int) {}
 void glClientActiveTexture(unsigned int) {}
