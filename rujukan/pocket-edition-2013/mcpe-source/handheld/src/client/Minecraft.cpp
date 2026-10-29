@@ -288,7 +288,7 @@ void Minecraft::setLevel(Level* level, const std::string& message /* ="" */, Loc
 		}
 		this->level = level;
 		_hasSignaledGeneratingLevelFinished = false;
-#ifdef STANDALONE_SERVER
+#if defined(STANDALONE_SERVER) || defined(__EMSCRIPTEN__)
 		const bool threadedLevelCreation = false;
 #else
 		const bool threadedLevelCreation = true;
@@ -357,6 +357,10 @@ void Minecraft::leaveGame(bool renameLevel /*=false*/)
 }
 
 void Minecraft::prepareLevel(const std::string& title) {
+#ifdef __EMSCRIPTEN__
+	LOGI("WASM: prepareLevel skipped (terrain already generated)\n");
+	progressStageStatusId = 0;
+#else
 	LOGI("status: 1\n");
 	progressStageStatusId = 1;
 
@@ -429,6 +433,7 @@ void Minecraft::prepareLevel(const std::string& title) {
 	C.print(" - clear: ");
 	D.print(" - prepr: ");
 	progressStageStatusId = 0;
+#endif
 }
 
 void Minecraft::update() {
@@ -1353,7 +1358,9 @@ void Minecraft::_levelGenerated()
 	gui.onLevelGenerated();
 #endif
 
+#ifndef __EMSCRIPTEN__
 	level->validateSpawn();
+#endif
 	level->loadPlayer(player, true);
 	// if we are client side, we trust the server to have given us a correct position
 	if (player && !level->isClientSide) {
