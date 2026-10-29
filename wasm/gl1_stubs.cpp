@@ -151,7 +151,7 @@ void glRotatef(float, float, float, float) {}
 void glScalef(float, float, float) {}
 void glMultMatrixf(const float*) {}
 void glLoadMatrixf(const float*) {}
-void glOrtho(double, double, double, double, double, double) {}
+void glOrtho(double l, double r, double b, double t, double n, double f) { EM_ASM({ if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }, (float)l, (float)r, (float)b, (float)t, (float)n, (float)f); }
 void glOrthof(float l, float r, float b, float t, float n, float f) { EM_ASM({ if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }, l, r, b, t, n, f); }
 void glFrustum(double, double, double, double, double, double) {}
 void glFrustumf(float, float, float, float, float, float) {}
