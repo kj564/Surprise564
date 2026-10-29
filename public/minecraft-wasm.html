@@ -149,7 +149,7 @@ function startWasm() {
 
   window.Module = Object.assign({}, gl1Stubs, {
     canvas: canvas,
-    print: function() {},
+    print: function(t) { console.log('[stdout] '+t); },
     printErr: function() {},
     locateFile: function(p) { return './' + p; },
     onAbort: function(e) { console.error('ABORT:', e); },
