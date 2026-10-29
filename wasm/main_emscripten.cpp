@@ -3,6 +3,7 @@
 #include "platform/input/Keyboard.h"
 #include "platform/input/Mouse.h"
 #include "world/level/tile/Tile.h"
+#include "world/level/Level.h"
 #include <emscripten/emscripten.h>
 #include <cstdio>
 #include <exception>
