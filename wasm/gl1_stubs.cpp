@@ -1,186 +1,133 @@
-// §GLES1 emulation layer for WebGL2
-// Implements GL1 fixed-function → WebGL2 shader translation
+// §GLES1→WebGL2 translation — C++ implementation (no JS hooks needed)
+// Provides GL1 functions that call WebGL2 via EM_ASM
 #include <cstdio>
 #include <cstring>
 #include <emscripten.h>
 
 // GL constants
-#define GL_MODELVIEW 0x1700
-#define GL_PROJECTION 0x1701
-#define GL_TEXTURE 0x1702
+#define GL_FLOAT 0x1406
+#define GL_UNSIGNED_BYTE 0x1401
 #define GL_VERTEX_ARRAY 0x8074
-#define GL_NORMAL_ARRAY 0x8075
 #define GL_COLOR_ARRAY 0x8076
 #define GL_TEXTURE_COORD_ARRAY 0x8078
 #define GL_TRIANGLES 0x0004
-#define GL_TRIANGLE_STRIP 0x0005
-#define GL_TRIANGLE_FAN 0x0006
-#define GL_QUADS 0x0007
-#define GL_FLOAT 0x1406
-#define GL_UNSIGNED_BYTE 0x1401
-#define GL_SHORT 0x1402
-#define GL_ARRAY_BUFFER 0x8892
-#define GL_STATIC_DRAW 0x88E4
-#define GL_DYNAMIC_DRAW 0x88E8
-#define GL_TEXTURE_2D 0x0DE1
-#define GL_COLOR_BUFFER_BIT 0x00004000
-#define GL_DEPTH_BUFFER_BIT 0x00000100
-#define GL_NEAREST 0x2600
-#define GL_LINEAR 0x2601
-#define GL_CLAMP_TO_EDGE 0x812F
-#define GL_REPEAT 0x2901
-#define GL_TEXTURE_MIN_FILTER 0x2801
-#define GL_TEXTURE_MAG_FILTER 0x2800
-#define GL_TEXTURE_WRAP_S 0x2802
-#define GL_TEXTURE_WRAP_T 0x2803
-#define GL_RGBA 0x1908
-#define GL_RGB 0x1907
-#define GL_UNPACK_FLIP_Y_WEBGL 0x9240
+#define GL_MODELVIEW 0x1700
+#define GL_PROJECTION 0x1701
 
 // Client-side vertex array state
-struct ClientArray {
-    bool enabled;
-    int size;
-    unsigned int type;
-    int stride;
-    long pointer;  // offset into bound VBO or client pointer
-};
+static int g_vaEnabled = 0, g_caEnabled = 0, g_taEnabled = 0;
+static int g_vaPointer = 0, g_caPointer = 0, g_taPointer = 0;
+static int g_matrixMode = GL_MODELVIEW;
 
-static ClientArray g_vertexArray = {false, 3, GL_FLOAT, 0, 0};
-static ClientArray g_colorArray = {false, 4, GL_UNSIGNED_BYTE, 0, 0};
-static ClientArray g_texCoordArray = {false, 2, GL_FLOAT, 0, 0};
-static ClientArray g_normalArray = {false, 3, GL_FLOAT, 0, 0};
+// Default shader (initialized lazily)
+static bool g_shaderInit = false;
 
-// Default shader for GL1 emulation
-static int g_defaultProgram = 0;
-static int g_defaultVBO = 0;
-static bool g_gl1Init = false;
-
-// §Init default shader + VBO for GL1 emulation
-EM_JS(void, js_initGL1, (void), {
-    if (window.__gl1Init) return;
-    window.__gl1Init = true;
-    
-    var vsSrc = 'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProjection; uniform mat4 uModelView; varying vec4 vColor; varying vec2 vTexCoord; void main() { vColor = aColor; vTexCoord = aTexCoord; gl_Position = uProjection * uModelView * vec4(aPos, 1.0); }';
-    var fsSrc = 'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTexture; uniform bool uTextured; void main() { if (uTextured) { vec4 tex = texture2D(uTexture, vTexCoord); gl_FragColor = vec4(tex.rgb, tex.a * vColor.a); } else { gl_FragColor = vColor; } }';
-    
-    var gl = (GL.currentContext && GL.currentContext.GLctx) || Module.ctx;
+EM_JS(void, gl1_init_shader, (void), {
+    if (window.__gl1Shader) return;
+    var gl = (GL.currentContext && GL.currentContext.GLctx);
     if (!gl) return;
     
-    function compileShader(src, type) {
-        var s = gl.createShader(type);
-        gl.shaderSource(s, src);
-        gl.compileShader(s);
-        return s;
-    }
+    var vs = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vs, 'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProj; uniform mat4 uMV; varying vec4 vColor; varying vec2 vTexCoord; void main() { vColor = aColor; vTexCoord = aTexCoord; gl_Position = uProj * uMV * vec4(aPos, 1.0); }');
+    gl.compileShader(vs);
     
-    var vs = compileShader(vsSrc, gl.VERTEX_SHADER);
-    var fs = compileShader(fsSrc, gl.FRAGMENT_SHADER);
+    var fs = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fs, 'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTex; uniform bool uHasTex; void main() { if (uHasTex) { vec4 t = texture2D(uTex, vTexCoord); gl_FragColor = vec4(t.rgb * vColor.rgb, t.a * vColor.a); } else { gl_FragColor = vColor; } }');
+    gl.compileShader(fs);
+    
     var prog = gl.createProgram();
-    gl.attachShader(prog, vs);
-    gl.attachShader(prog, fs);
+    gl.attachShader(prog, vs); gl.attachShader(prog, fs);
     gl.linkProgram(prog);
     
-    window.__gl1ProgramObj = prog;
-    window.__gl1Projection = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
-    window.__gl1ModelView = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
-    console.log('[GL1] Default shader initialized');
+    window.__gl1Shader = prog;
+    window.__gl1Attribs = {
+        pos: gl.getAttribLocation(prog, 'aPos'),
+        color: gl.getAttribLocation(prog, 'aColor'),
+        texCoord: gl.getAttribLocation(prog, 'aTexCoord')
+    };
+    window.__gl1Uniforms = {
+        proj: gl.getUniformLocation(prog, 'uProj'),
+        mv: gl.getUniformLocation(prog, 'uMV'),
+        tex: gl.getUniformLocation(prog, 'uTex'),
+        hasTex: gl.getUniformLocation(prog, 'uHasTex')
+    };
+    console.log('[GL1] Shader OK: pos=' + window.__gl1Attribs.pos + ' color=' + window.__gl1Attribs.color + ' tex=' + window.__gl1Attribs.texCoord);
 });
-
-static void initGL1Emulation() { js_initGL1(); }
 
 extern "C" {
 
-// === Client-side vertex array functions ===
-
+// glVertexPointer — track pointer offset (into bound VBO)
 void glVertexPointer(int size, unsigned int type, int stride, const void* pointer) {
-    g_vertexArray.size = size;
-    g_vertexArray.type = type;
-    g_vertexArray.stride = stride;
-    g_vertexArray.pointer = (long)pointer;
+    g_vaPointer = (int)pointer;
 }
 
 void glColorPointer(int size, unsigned int type, int stride, const void* pointer) {
-    g_colorArray.size = size;
-    g_colorArray.type = type;
-    g_colorArray.stride = stride;
-    g_colorArray.pointer = (long)pointer;
+    g_caPointer = (int)pointer;
 }
 
 void glTexCoordPointer(int size, unsigned int type, int stride, const void* pointer) {
-    g_texCoordArray.size = size;
-    g_texCoordArray.type = type;
-    g_texCoordArray.stride = stride;
-    g_texCoordArray.pointer = (long)pointer;
-}
-
-void glNormalPointer(unsigned int type, int stride, const void* pointer) {
-    g_normalArray.size = 3;
-    g_normalArray.type = type;
-    g_normalArray.stride = stride;
-    g_normalArray.pointer = (long)pointer;
+    g_taPointer = (int)pointer;
 }
 
 void glEnableClientState(unsigned int cap) {
-    switch(cap) {
-        case GL_VERTEX_ARRAY: g_vertexArray.enabled = true; break;
-        case GL_COLOR_ARRAY: g_colorArray.enabled = true; break;
-        case GL_TEXTURE_COORD_ARRAY: g_texCoordArray.enabled = true; break;
-        case GL_NORMAL_ARRAY: g_normalArray.enabled = true; break;
-    }
+    if (cap == GL_VERTEX_ARRAY) g_vaEnabled = 1;
+    else if (cap == GL_COLOR_ARRAY) g_caEnabled = 1;
+    else if (cap == GL_TEXTURE_COORD_ARRAY) g_taEnabled = 1;
 }
 
 void glDisableClientState(unsigned int cap) {
-    switch(cap) {
-        case GL_VERTEX_ARRAY: g_vertexArray.enabled = false; break;
-        case GL_COLOR_ARRAY: g_colorArray.enabled = false; break;
-        case GL_TEXTURE_COORD_ARRAY: g_texCoordArray.enabled = false; break;
-        case GL_NORMAL_ARRAY: g_normalArray.enabled = false; break;
-    }
+    if (cap == GL_VERTEX_ARRAY) g_vaEnabled = 0;
+    else if (cap == GL_COLOR_ARRAY) g_caEnabled = 0;
+    else if (cap == GL_TEXTURE_COORD_ARRAY) g_taEnabled = 0;
 }
 
-// §glDrawArrays — the KEY function: upload client data to VBO, setup attribs, draw
-EM_JS(void, js_drawArrays, (int mode, int first, int count), {
-    var prog = window.__gl1ProgramObj;
-    var gl = (GL.currentContext && GL.currentContext.GLctx) || Module.ctx;
-    if (!gl) return;
-    
-    if (prog) {
-        gl.useProgram(prog);
-        var uProj = gl.getUniformLocation(prog, 'uProjection');
-        var uMV = gl.getUniformLocation(prog, 'uModelView');
-        if (uProj) gl.uniformMatrix4fv(uProj, false, window.__gl1Projection);
-        if (uMV) gl.uniformMatrix4fv(uMV, false, window.__gl1ModelView);
-        
-        var aPos = gl.getAttribLocation(prog, 'aPos');
-        var aColor = gl.getAttribLocation(prog, 'aColor');
-        var aTexCoord = gl.getAttribLocation(prog, 'aTexCoord');
-        
-        var stride = 24;
-        if (aPos >= 0) {
-            gl.enableVertexAttribArray(aPos);
-            gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, stride, 0);
-        }
-        if (aTexCoord >= 0) {
-            gl.enableVertexAttribArray(aTexCoord);
-            gl.vertexAttribPointer(aTexCoord, 2, gl.FLOAT, false, stride, 12);
-        }
-        if (aColor >= 0) {
-            gl.enableVertexAttribArray(aColor);
-            gl.vertexAttribPointer(aColor, 4, gl.UNSIGNED_BYTE, true, stride, 20);
-        }
-    }
-    
-    gl.drawArrays(mode, first, count);
-});
-
+// glDrawArrays — THE KEY function: set up shader + attribs + draw
 void glDrawArrays(unsigned int mode, int first, int count) {
-    initGL1Emulation();
-    js_drawArrays((int)mode, first, count);
+    gl1_init_shader();
+    
+    EM_ASM({
+        var gl = (GL.currentContext && GL.currentContext.GLctx);
+        if (!gl) return;
+        var prog = window.__gl1Shader;
+        if (!prog) return;
+        
+        gl.useProgram(prog);
+        
+        // Set identity matrices (will be replaced when matrix hooks work)
+        var id = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+        gl.uniformMatrix4fv(window.__gl1Uniforms.proj, false, id);
+        gl.uniformMatrix4fv(window.__gl1Uniforms.mv, false, id);
+        
+        // Tesselator vertex format: pos(3f) + tex(2f) + color(4ub) = 24 bytes
+        // pos@0, texCoord@12, color@20
+        var stride = 24;
+        
+        if ($0) { // vertex array enabled
+            gl.enableVertexAttribArray(window.__gl1Attribs.pos);
+            gl.vertexAttribPointer(window.__gl1Attribs.pos, 3, gl.FLOAT, false, stride, $1);
+        }
+        if ($2) { // texCoord array enabled
+            gl.enableVertexAttribArray(window.__gl1Attribs.texCoord);
+            gl.vertexAttribPointer(window.__gl1Attribs.texCoord, 2, gl.FLOAT, false, stride, $3);
+            gl.uniform1i(window.__gl1Uniforms.tex, 0);
+            gl.uniform1i(window.__gl1Uniforms.hasTex, 1);
+        } else {
+            gl.uniform1i(window.__gl1Uniforms.hasTex, 0);
+        }
+        if ($4) { // color array enabled
+            gl.enableVertexAttribArray(window.__gl1Attribs.color);
+            gl.vertexAttribPointer(window.__gl1Attribs.color, 4, gl.UNSIGNED_BYTE, true, stride, $5);
+        } else {
+            gl.disableVertexAttribArray(window.__gl1Attribs.color);
+            gl.vertexAttrib4f(window.__gl1Attribs.color, 1, 1, 1, 1);
+        }
+        
+        gl.drawArrays($6, 0, $7);
+    }, g_vaEnabled, g_vaPointer, g_taEnabled, g_taPointer, g_caEnabled, g_caPointer, mode, count);
 }
 
-// === Immediate mode (glBegin/glEnd) ===
-void glBegin(unsigned int mode) {}
+// GL1 state functions (no-op for now, proper impl later)
+void glBegin(unsigned int) {}
 void glEnd() {}
 void glVertex3f(float, float, float) {}
 void glVertex2f(float, float) {}
@@ -189,9 +136,7 @@ void glColor4f(float, float, float, float) {}
 void glColor4ub(unsigned char, unsigned char, unsigned char, unsigned char) {}
 void glTexCoord2f(float, float) {}
 void glNormal3f(float, float, float) {}
-
-// === Matrix stack ===
-void glMatrixMode(unsigned int) {}
+void glMatrixMode(unsigned int mode) { g_matrixMode = mode; }
 void glLoadIdentity() {}
 void glPushMatrix() {}
 void glPopMatrix() {}
@@ -200,21 +145,10 @@ void glRotatef(float, float, float, float) {}
 void glScalef(float, float, float) {}
 void glMultMatrixf(const float*) {}
 void glLoadMatrixf(const float*) {}
-void glOrtho(double, double, double, double, double, double) {}
+void glOrtho(double l, double r, double b, double t, double n, double f) { glOrthof((float)l,(float)r,(float)b,(float)t,(float)n,(float)f); }
 void glOrthof(float, float, float, float, float, float) {}
 void glFrustum(double, double, double, double, double, double) {}
 void glFrustumf(float, float, float, float, float, float) {}
-
-// === Display lists ===
-unsigned int glGenLists(int) { return 1; }
-void glNewList(unsigned int, unsigned int) {}
-void glEndList() {}
-void glCallList(unsigned int) {}
-void glCallLists(int, unsigned int, const void*) {}
-void glDeleteLists(unsigned int, int) {}
-void glListBase(unsigned int) {}
-
-// === GL1 state functions ===
 void glAlphaFunc(unsigned int, float) {}
 void glColorMaterial(unsigned int, unsigned int) {}
 void glShadeModel(unsigned int) {}
@@ -269,8 +203,21 @@ void glFinish() {}
 void glFlush() {}
 void glScissor(int, int, int, int) {}
 void glBlendFuncSeparate(unsigned int, unsigned int, unsigned int, unsigned int) {}
+void glNewList(unsigned int, unsigned int) {}
+void glEndList() {}
+void glCallList(unsigned int) {}
+void glCallLists(int, unsigned int, const void*) {}
+void glDeleteLists(unsigned int, int) {}
+void glListBase(unsigned int) {}
+unsigned int glGenLists(int) { return 1; }
+void glNormalPointer(unsigned int, int, const void*) {}
+void gluPerspective(float, float, float, float) {}
+void gluLookAt(float, float, float, float, float, float, float, float, float) {}
+int glewInit() { return 0; }
+int glGetAttribLocation(unsigned int, const char*) { return 0; }
+int glGetUniformLocation(unsigned int, const char*) { return 0; }
 
-// MCPE custom GL wrappers
+// MCPE custom wrappers — resolve to GL1 functions above
 void glEnable2(unsigned int) {}
 void glDisable2(unsigned int) {}
 void glDepthFunc2(unsigned int) {}
@@ -301,8 +248,14 @@ void glFogi2(unsigned int, int) {}
 void glCullFace2(unsigned int) {}
 void glVertexPointer2(int a, unsigned int b, int c, const void* d) { glVertexPointer(a,b,c,d); }
 void glColorPointer2(int a, unsigned int b, int c, const void* d) { glColorPointer(a,b,c,d); }
+void glTexParameteri2(unsigned int, unsigned int, int) {}
 
-// Shaders
+void glActiveTexture(unsigned int) {}
+void glClientActiveTexture(unsigned int) {}
+void glBlendFunc(unsigned int, unsigned int) {}
+void glShadeModel2(unsigned int) {}
+
+// Shaders (stub)
 unsigned int glCreateShader(unsigned int) { return 0; }
 void glShaderSource(unsigned int, int, const char**, const int*) {}
 void glCompileShader(unsigned int) {}
@@ -320,14 +273,10 @@ void glUniformMatrix4fv(int, int, unsigned char, const float*) {}
 void glVertexAttribPointer(unsigned int, int, unsigned int, unsigned char, int, const void*) {}
 void glEnableVertexAttribArray(unsigned int) {}
 void glDisableVertexAttribArray(unsigned int) {}
-int glGetAttribLocation(unsigned int, const char*) { return 0; }
-int glGetUniformLocation(unsigned int, const char*) { return 0; }
 void glGetShaderiv(unsigned int, unsigned int, int*) {}
 void glGetProgramiv(unsigned int, unsigned int, int*) {}
 void glGetShaderInfoLog(unsigned int, int, int*, char*) {}
 void glGetProgramInfoLog(unsigned int, int, int*, char*) {}
-
-// Framebuffers
 void glGenFramebuffers(int, unsigned int*) {}
 void glDeleteFramebuffers(int, const unsigned int*) {}
 void glBindFramebuffer(unsigned int, unsigned int) {}
@@ -338,25 +287,5 @@ void glBindRenderbuffer(unsigned int, unsigned int) {}
 void glRenderbufferStorage(unsigned int, unsigned int, int, int) {}
 void glFramebufferRenderbuffer(unsigned int, unsigned int, unsigned int, unsigned int) {}
 int glCheckFramebufferStatus(unsigned int) { return 0x8CD5; }
-
-void gluPerspective(float, float, float, float) {}
-void gluLookAt(float, float, float, float, float, float, float, float, float) {}
-int glewInit() { return 0; }
-
-// anGenBuffers override — call real WebGL createBuffer
-void anGenBuffers(int n, unsigned int* buffers) {
-    EM_ASM_({
-        var n = $0;
-        var buffers = $1;
-        var gl = (GL.currentContext && GL.currentContext.GLctx) || Module.ctx;
-        if (!gl) return;
-        for (var i = 0; i < n; i++) {
-            var buf = gl.createBuffer();
-            var id = GL.getNewId(GL.buffers);
-            GL.buffers[id] = buf;
-            HEAPU32[(buffers >> 2) + i] = id;
-        }
-    }, n, (int)buffers);
-}
 
 } // extern "C"
