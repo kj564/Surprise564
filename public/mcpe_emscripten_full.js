@@ -5821,97 +5821,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   var _emscripten_set_mouseup_callback_on_thread = (target, userData, useCapture, callbackfunc, targetThread) =>
       registerMouseEventCallback(target, userData, useCapture, callbackfunc, 6, 'mouseup', targetThread);
 
-  
-  
-  
-  
-  
-  
-  
-  var registerTouchEventCallback = (target, userData, useCapture, callbackfunc, eventTypeId, eventTypeString, targetThread) => {
-      const eventSize = 1552;
-      JSEvents.touchEvent ||= _malloc(eventSize);
-  
-      target = findEventTarget(target);
-  
-      var touchEventHandlerFunc = (e) => {
-        assert(e);
-        var t, touches = {}, et = e.touches;
-        // To ease marshalling different kinds of touches that browser reports (all touches are listed in e.touches,
-        // only changed touches in e.changedTouches, and touches on target at a.targetTouches), mark a boolean in
-        // each Touch object so that we can later loop only once over all touches we see to marshall over to Wasm.
-  
-        for (let t of et) {
-          // Browser might recycle the generated Touch objects between each frame (Firefox on Android), so reset any
-          // changed/target states we may have set from previous frame.
-          t.isChanged = t.onTarget = 0;
-          touches[t.identifier] = t;
-        }
-        // Mark which touches are part of the changedTouches list.
-        for (let t of e.changedTouches) {
-          t.isChanged = 1;
-          touches[t.identifier] = t;
-        }
-        // Mark which touches are part of the targetTouches list.
-        for (let t of e.targetTouches) {
-          touches[t.identifier].onTarget = 1;
-        }
-  
-        var touchEvent = JSEvents.touchEvent;
-        HEAPF64[((touchEvent)>>3)] = e.timeStamp;
-        HEAP8[touchEvent + 12] = e.ctrlKey;
-        HEAP8[touchEvent + 13] = e.shiftKey;
-        HEAP8[touchEvent + 14] = e.altKey;
-        HEAP8[touchEvent + 15] = e.metaKey;
-        var idx = touchEvent + 16;
-        var targetRect = getBoundingClientRect(target);
-        var numTouches = 0;
-        for (let t of Object.values(touches)) {
-          var idx32 = ((idx)>>2); // Pre-shift the ptr to index to HEAP32 to save code size
-          HEAP32[idx32 + 0] = t.identifier;
-          HEAP32[idx32 + 1] = t.screenX;
-          HEAP32[idx32 + 2] = t.screenY;
-          HEAP32[idx32 + 3] = t.clientX;
-          HEAP32[idx32 + 4] = t.clientY;
-          HEAP32[idx32 + 5] = t.pageX;
-          HEAP32[idx32 + 6] = t.pageY;
-          HEAP8[idx + 28] = t.isChanged;
-          HEAP8[idx + 29] = t.onTarget;
-          HEAP32[idx32 + 8] = t.clientX - (targetRect.left | 0);
-          HEAP32[idx32 + 9] = t.clientY - (targetRect.top  | 0);
-  
-          idx += 48;
-  
-          if (++numTouches > 31) {
-            break;
-          }
-        }
-        HEAP32[(((touchEvent)+(8))>>2)] = numTouches;
-  
-        if (getWasmTableEntry(callbackfunc)(eventTypeId, touchEvent, userData)) e.preventDefault();
-      };
-  
-      var eventHandler = {
-        target,
-        allowsDeferredCalls: eventTypeString == 'touchstart' || eventTypeString == 'touchend',
-        eventTypeString,
-        eventTypeId,
-        userData,
-        callbackfunc,
-        handlerFunc: touchEventHandlerFunc,
-        useCapture
-      };
-      return JSEvents.registerOrRemoveHandler(eventHandler);
-    };
-  var _emscripten_set_touchend_callback_on_thread = (target, userData, useCapture, callbackfunc, targetThread) =>
-      registerTouchEventCallback(target, userData, useCapture, callbackfunc, 23, 'touchend', targetThread);
-
-  var _emscripten_set_touchmove_callback_on_thread = (target, userData, useCapture, callbackfunc, targetThread) =>
-      registerTouchEventCallback(target, userData, useCapture, callbackfunc, 24, 'touchmove', targetThread);
-
-  var _emscripten_set_touchstart_callback_on_thread = (target, userData, useCapture, callbackfunc, targetThread) =>
-      registerTouchEventCallback(target, userData, useCapture, callbackfunc, 22, 'touchstart', targetThread);
-
   var ENV = {
   };
   
@@ -7232,6 +7141,7 @@ if (Module['printErr']) err = Module['printErr'];
   'requestPointerLock',
   'fillVisibilityChangeEventData',
   'registerVisibilityChangeEventCallback',
+  'registerTouchEventCallback',
   'fillGamepadEventData',
   'registerGamepadEventCallback',
   'registerBeforeUnloadEventCallback',
@@ -7369,7 +7279,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'fillMouseEventData',
   'registerMouseEventCallback',
   'restoreOldWindowedStyle',
-  'registerTouchEventCallback',
   'UNWIND_CACHE',
   'ExitStatus',
   'getEnvStrings',
@@ -7591,18 +7500,18 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('wasmBinary');
 }
 var ASM_CONSTS = {
-  6476008: () => { if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context OK'); } },  
- 6476284: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
- 6476384: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
- 6476482: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
- 6476586: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
- 6476682: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
- 6476780: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
- 6476858: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
- 6476940: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
- 6477024: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
- 6477114: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6477208: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }
+  6476056: () => { if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context OK'); } },  
+ 6476332: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
+ 6476432: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
+ 6476530: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
+ 6476634: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
+ 6476730: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
+ 6476828: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
+ 6476906: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
+ 6476988: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
+ 6477072: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
+ 6477162: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6477256: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }
 };
 function gl1_init_shader() { if (window.__gl1Shader) return; var gl = (GL.currentContext && GL.currentContext.GLctx); if (!gl) return; var vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, 'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProj; uniform mat4 uMV; varying vec4 vColor; varying vec2 vTexCoord; void main() { vColor = aColor; vTexCoord = aTexCoord; gl_Position = uProj * uMV * vec4(aPos, 1.0); }'); gl.compileShader(vs); var fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, 'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTex; uniform bool uHasTex; void main() { if (uHasTex) { vec4 t = texture2D(uTex, vTexCoord); gl_FragColor = vec4(t.rgb * vColor.rgb, t.a * vColor.a); } else { gl_FragColor = vColor; } }'); gl.compileShader(fs); var prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); window.__gl1Shader = prog; window.__gl1Attribs = { pos: gl.getAttribLocation(prog, 'aPos'), color: gl.getAttribLocation(prog, 'aColor'), texCoord: gl.getAttribLocation(prog, 'aTexCoord') }; window.__gl1Uniforms = { proj: gl.getUniformLocation(prog, 'uProj'), mv: gl.getUniformLocation(prog, 'uMV'), tex: gl.getUniformLocation(prog, 'uTex'), hasTex: gl.getUniformLocation(prog, 'uHasTex') }; console.log('[GL1] Shader OK: pos=' + window.__gl1Attribs.pos + ' color=' + window.__gl1Attribs.color + ' tex=' + window.__gl1Attribs.texCoord); }
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
@@ -7758,12 +7667,6 @@ var wasmImports = {
   emscripten_set_mousemove_callback_on_thread: _emscripten_set_mousemove_callback_on_thread,
   /** @export */
   emscripten_set_mouseup_callback_on_thread: _emscripten_set_mouseup_callback_on_thread,
-  /** @export */
-  emscripten_set_touchend_callback_on_thread: _emscripten_set_touchend_callback_on_thread,
-  /** @export */
-  emscripten_set_touchmove_callback_on_thread: _emscripten_set_touchmove_callback_on_thread,
-  /** @export */
-  emscripten_set_touchstart_callback_on_thread: _emscripten_set_touchstart_callback_on_thread,
   /** @export */
   environ_get: _environ_get,
   /** @export */
