@@ -124,6 +124,43 @@ function startWasm() {
       window.__gl1MatrixMode = function(m) { GL1.mm=m; };
       window.__gl1LoadIdentity = function() { var id=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]); if(GL1.mm==0x1701)GL1.proj=id; else GL1.mv=id; };
       window.__gl1Orthof = function(l,r,b,t,n,f) { var m=new Float32Array(16);m[0]=2/(r-l);m[5]=2/(t-b);m[10]=-2/(f-n);m[15]=1;m[12]=-(r+l)/(r-l);m[13]=-(t+b)/(t-b);m[14]=-(f+n)/(f-n); if(GL1.mm==0x1701)GL1.proj=m; else GL1.mv=m; };
+      // 3D camera matrix functions
+      window.__gl1Translatef = function(x,y,z) { var m=GL1.mv;m[12]+=m[0]*x+m[4]*y+m[8]*z;m[13]+=m[1]*x+m[5]*y+m[9]*z;m[14]+=m[2]*x+m[6]*y+m[10]*z; };
+      window.__gl1Rotatef = function(angle,x,y,z) {
+        var r = angle * Math.PI / 180;
+        var c = Math.cos(r), s = Math.sin(r);
+        var len = Math.sqrt(x*x+y*y+z*z);
+        x/=len; y/=len; z/=len;
+        var m = GL1.mv;
+        var m0=m[0],m1=m[1],m2=m[2],m4=m[4],m5=m[5],m6=m[6],m8=m[8],m9=m[9],m10=m[10];
+        var omc = 1-c;
+        var r0=x*x*omc+c, r1=x*y*omc-z*s, r2=x*z*omc+y*s;
+        var r4=y*x*omc+z*s, r5=y*y*omc+c, r6=y*z*omc-x*s;
+        var r8=z*x*omc-y*s, r9=z*y*omc+x*s, r10=z*z*omc+c;
+        m[0]=m0*r0+m4*r1+m8*r2; m[1]=m1*r0+m5*r1+m9*r2; m[2]=m2*r0+m6*r1+m10*r2;
+        m[4]=m0*r4+m4*r5+m8*r6; m[5]=m1*r4+m5*r5+m9*r6; m[6]=m2*r4+m6*r5+m10*r6;
+        m[8]=m0*r8+m4*r9+m8*r10; m[9]=m1*r8+m5*r9+m9*r10; m[10]=m2*r8+m6*r9+m10*r10;
+      };
+      window.__gl1Scalef = function(x,y,z) { var m=GL1.mv;m[0]*=x;m[1]*=x;m[2]*=x;m[4]*=y;m[5]*=y;m[6]*=y;m[8]*=z;m[9]*=z;m[10]*=z; };
+      // Matrix stack
+      GL1.matrixStack = [];
+      window.__gl1PushMatrix = function() { GL1.matrixStack.push(new Float32Array(GL1.mv)); };
+      window.__gl1PopMatrix = function() { if(GL1.matrixStack.length>0) GL1.mv = GL1.matrixStack.pop(); };
+      // gluPerspective — set perspective projection
+      window.__gl1Perspective = function(fovy, aspect, near, far) {
+        var f = 1.0 / Math.tan(fovy * Math.PI / 360);
+        var nf = 1 / (near - far);
+        var m = new Float32Array(16);
+        m[0]=f/aspect; m[5]=f; m[10]=(far+near)*nf; m[11]=-1; m[14]=2*far*near*nf;
+        GL1.proj = m;
+      };
+      // glFrustum
+      window.__gl1Frustum = function(l,r,b,t,n,f) {
+        var m = new Float32Array(16);
+        m[0]=2*n/(r-l); m[5]=2*n/(t-b); m[8]=(r+l)/(r-l); m[9]=(t+b)/(t-b);
+        m[10]=(f+n)/(n-f); m[11]=-1; m[14]=2*f*n/(n-f);
+        GL1.proj = m;
+      };
       window.__gl1Translatef = function(x,y,z) { var m=GL1.mv;m[12]+=m[0]*x+m[4]*y+m[8]*z;m[13]+=m[1]*x+m[5]*y+m[9]*z;m[14]+=m[2]*x+m[6]*y+m[10]*z; };
       
       // §Wire mouse + touch input — convert browser events to MCPE Mouse::feed

@@ -7242,9 +7242,15 @@ var ASM_CONSTS = {
  6478975: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
  6479053: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
  6479135: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
- 6479219: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
- 6479309: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6479403: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }
+ 6479219: () => { if (typeof window.__gl1PushMatrix === "function") window.__gl1PushMatrix(); },  
+ 6479299: () => { if (typeof window.__gl1PopMatrix === "function") window.__gl1PopMatrix(); },  
+ 6479377: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
+ 6479467: ($0, $1, $2, $3) => { if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3); },  
+ 6479555: ($0, $1, $2) => { if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2); },  
+ 6479637: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6479731: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6479825: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5); },  
+ 6479921: ($0, $1, $2, $3) => { if (typeof window.__gl1Perspective === "function") window.__gl1Perspective($0, $1, $2, $3); }
 };
 function gl1_init_shader() { if (window.__gl1Shader) return; var gl = (GL.currentContext && GL.currentContext.GLctx); if (!gl) return; var vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, 'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProj; uniform mat4 uMV; varying vec4 vColor; varying vec2 vTexCoord; void main() { vColor = aColor; vTexCoord = aTexCoord; gl_Position = uProj * uMV * vec4(aPos, 1.0); }'); gl.compileShader(vs); var fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, 'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTex; uniform bool uHasTex; void main() { if (uHasTex) { vec4 t = texture2D(uTex, vTexCoord); gl_FragColor = vec4(t.rgb * vColor.rgb, t.a * vColor.a); } else { gl_FragColor = vColor; } }'); gl.compileShader(fs); var prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); window.__gl1Shader = prog; window.__gl1Attribs = { pos: gl.getAttribLocation(prog, 'aPos'), color: gl.getAttribLocation(prog, 'aColor'), texCoord: gl.getAttribLocation(prog, 'aTexCoord') }; window.__gl1Uniforms = { proj: gl.getUniformLocation(prog, 'uProj'), mv: gl.getUniformLocation(prog, 'uMV'), tex: gl.getUniformLocation(prog, 'uTex'), hasTex: gl.getUniformLocation(prog, 'uHasTex') }; console.log('[GL1] Shader OK: pos=' + window.__gl1Attribs.pos + ' color=' + window.__gl1Attribs.color + ' tex=' + window.__gl1Attribs.texCoord); }
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }

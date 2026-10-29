@@ -104,17 +104,17 @@ void glTexCoord2f(float, float) {}
 void glNormal3f(float, float, float) {}
 void glMatrixMode(unsigned int mode) { g_matrixMode = mode; EM_ASM({ if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); }, mode); }
 void glLoadIdentity() { EM_ASM({ if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); }); }
-void glPushMatrix() {}
-void glPopMatrix() {}
+void glPushMatrix() { EM_ASM({ if (typeof window.__gl1PushMatrix === "function") window.__gl1PushMatrix(); }); }
+void glPopMatrix() { EM_ASM({ if (typeof window.__gl1PopMatrix === "function") window.__gl1PopMatrix(); }); }
 void glTranslatef(float x, float y, float z) { EM_ASM({ if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); }, x, y, z); }
-void glRotatef(float, float, float, float) {}
-void glScalef(float, float, float) {}
+void glRotatef(float a, float x, float y, float z) { EM_ASM({ if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3); }, a, x, y, z); }
+void glScalef(float x, float y, float z) { EM_ASM({ if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2); }, x, y, z); }
 void glMultMatrixf(const float*) {}
 void glLoadMatrixf(const float*) {}
 void glOrtho(double l, double r, double b, double t, double n, double f) { EM_ASM({ if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }, (float)l, (float)r, (float)b, (float)t, (float)n, (float)f); }
 void glOrthof(float l, float r, float b, float t, float n, float f) { EM_ASM({ if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }, l, r, b, t, n, f); }
 void glFrustum(double, double, double, double, double, double) {}
-void glFrustumf(float, float, float, float, float, float) {}
+void glFrustumf(float l, float r, float b, float t, float n, float f) { EM_ASM({ if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5); }, l, r, b, t, n, f); }
 void glAlphaFunc(unsigned int, float) {}
 void glColorMaterial(unsigned int, unsigned int) {}
 void glShadeModel(unsigned int) {}
@@ -177,7 +177,7 @@ void glDeleteLists(unsigned int, int) {}
 void glListBase(unsigned int) {}
 unsigned int glGenLists(int) { return 1; }
 void glNormalPointer(unsigned int, int, const void*) {}
-void gluPerspective(float, float, float, float) {}
+void gluPerspective(float fovy, float aspect, float near, float far) { EM_ASM({ if (typeof window.__gl1Perspective === "function") window.__gl1Perspective($0, $1, $2, $3); }, fovy, aspect, near, far); }
 void gluLookAt(float, float, float, float, float, float, float, float, float) {}
 int glewInit() { return 0; }
 int glGetAttribLocation(unsigned int, const char*) { return 0; }
