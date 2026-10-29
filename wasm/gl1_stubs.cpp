@@ -189,21 +189,8 @@ int glGetUniformLocation(unsigned int, const char*) { return 0; }
 // §MCPE *2 wrappers that DON'T expand via macro — bridge to real GLES2
 // §glEnable/glDisable overrides — intercept GLES1-only caps (GL_TEXTURE_2D, GL_ALPHA_TEST)
 // that WebGL2 doesn't support, and forward the rest to real WebGL2
-#undef glEnable
-#undef glDisable
-void glEnable(unsigned int cap) {
-    // GL_TEXTURE_2D (0x0DE0) and GL_ALPHA_TEST (0x0BC0) are GLES1 fixed-function
-    // states that don't exist in WebGL2. Track them locally, don't forward.
-    if (cap == 0x0DE0) { return; } // tracked by JS GL1 layer
-    if (cap == 0x0BC0) { return; } // tracked by JS GL1 layer
-    // Forward to real WebGL2
-    EM_ASM({ var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.enable($0); }, cap);
-}
-void glDisable(unsigned int cap) {
-    if (cap == 0x0DE0) { return; }
-    if (cap == 0x0BC0) { return; }
-    EM_ASM({ var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.disable($0); }, cap);
-}
+extern void glEnable(unsigned int);
+extern void glDisable(unsigned int);
 extern void glDepthFunc(unsigned int);
 extern void glCullFace(unsigned int);
 extern void glBlendFunc(unsigned int, unsigned int);
