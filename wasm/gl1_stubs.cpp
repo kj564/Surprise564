@@ -117,7 +117,7 @@ void glOrtho(double l, double r, double b, double t, double n, double f) { EM_AS
 void glOrthof(float l, float r, float b, float t, float n, float f) { EM_ASM({ if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }, l, r, b, t, n, f); }
 void glFrustum(double, double, double, double, double, double) {}
 void glFrustumf(float l, float r, float b, float t, float n, float f) { EM_ASM({ if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5); }, l, r, b, t, n, f); }
-void glAlphaFunc(unsigned int, float) {}
+void glAlphaFunc(unsigned int func, float ref) { EM_ASM({ if (typeof _glAlphaFunc === "function") _glAlphaFunc($0, $1); }, func, ref); }
 void glColorMaterial(unsigned int, unsigned int) {}
 void glShadeModel(unsigned int) {}
 void glPolygonMode(unsigned int, unsigned int) {}
@@ -187,13 +187,27 @@ int glGetUniformLocation(unsigned int, const char*) { return 0; }
 
 
 // §MCPE *2 wrappers that DON'T expand via macro — bridge to real GLES2
-extern void glEnable(unsigned int);
-extern void glDisable(unsigned int);
+// §glEnable/glDisable overrides — intercept GLES1-only caps (GL_TEXTURE_2D, GL_ALPHA_TEST)
+// that WebGL2 doesn't support, and forward the rest to real WebGL2
+#undef glEnable
+#undef glDisable
+void glEnable(unsigned int cap) {
+    // GL_TEXTURE_2D (0x0DE0) and GL_ALPHA_TEST (0x0BC0) are GLES1 fixed-function
+    // states that don't exist in WebGL2. Track them locally, don't forward.
+    if (cap == 0x0DE0) { return; } // tracked by JS GL1 layer
+    if (cap == 0x0BC0) { return; } // tracked by JS GL1 layer
+    // Forward to real WebGL2
+    EM_ASM({ var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.enable($0); }, cap);
+}
+void glDisable(unsigned int cap) {
+    if (cap == 0x0DE0) { return; }
+    if (cap == 0x0BC0) { return; }
+    EM_ASM({ var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.disable($0); }, cap);
+}
 extern void glDepthFunc(unsigned int);
 extern void glCullFace(unsigned int);
 extern void glBlendFunc(unsigned int, unsigned int);
 extern void glShadeModel(unsigned int);
-extern void glAlphaFunc(unsigned int, float);
 extern void glDepthRangef(float, float);
 extern void glActiveTexture(unsigned int);
 
