@@ -358,7 +358,16 @@ void Minecraft::leaveGame(bool renameLevel /*=false*/)
 
 void Minecraft::prepareLevel(const std::string& title) {
 #ifdef __EMSCRIPTEN__
-	LOGI("WASM: prepareLevel skipped (terrain already generated)\n");
+	LOGI("WASM: prepareLevel - computing lights (no threading)\n");
+	progressStageStatusId = 1;
+	if (level->isNew()) {
+		int pass = 0;
+		while (level->updateLights()) {
+			if (++pass > 1000) break;
+		}
+		LOGI("WASM: lights computed in %d passes\n", pass);
+	}
+	level->setUpdateLights(true);
 	progressStageStatusId = 0;
 #else
 	LOGI("status: 1\n");

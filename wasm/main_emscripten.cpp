@@ -2,6 +2,7 @@
 #include "AppPlatform_emscripten.h"
 #include "platform/input/Keyboard.h"
 #include "platform/input/Mouse.h"
+#include "platform/input/Multitouch.h"
 #include "world/level/tile/Tile.h"
 #include "world/level/Level.h"
 #include <emscripten/emscripten.h>
@@ -16,8 +17,10 @@ static void emscripten_main_loop() {
     if (g_app && g_app->isInited()) g_app->update();
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void mouse_feed(char action, char data, short x, short y) {
-    Mouse::feed(action, data, x, y);
+extern "C" EMSCRIPTEN_KEEPALIVE void mouse_feed(char action, char data, short x, short y, short dx, short dy) {
+    // §Feed both Mouse (for GUI clicks/hotbar) and Multitouch (for touch D-pad + look in touch mode)
+    Mouse::feed(action, data, x, y, dx, dy);
+    Multitouch::feed(action, data, x, y, 0);
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void keyboard_feed(unsigned char key, int state) {
     Keyboard::feed(key, state);
@@ -34,6 +37,30 @@ extern "C" EMSCRIPTEN_KEEPALIVE int get_tile_ptr(int id) {
     if (id < 0 || id >= 256) return -2;
     Tile* tile = Tile::tiles[id];
     return tile ? (int)tile : 0;
+}
+
+// §Auto-create a world for testing (bypasses GUI click flow)
+#include "world/level/LevelSettings.h"
+#include "client/gui/screens/ProgressScreen.h"
+#include "client/gui/screens/StartMenuScreen.h"
+extern "C" EMSCRIPTEN_KEEPALIVE int auto_create_world() {
+    if (!g_app) return -1;
+    Minecraft* mc = (Minecraft*)g_app;
+    if (mc->level) return 1; // already in game
+    try {
+        printf("[MCPE_WASM] auto_create_world: selectLevel\n"); fflush(stdout);
+        mc->selectLevel("testworld", "Test World", LevelSettings(12345, GameType::Creative));
+        mc->hostMultiplayer();
+        mc->setScreen(new ProgressScreen());
+        printf("[MCPE_WASM] auto_create_world: done\n"); fflush(stdout);
+        return 0;
+    } catch (std::exception& e) {
+        printf("[MCPE_WASM] auto_create_world EXC: %s\n", e.what()); fflush(stdout);
+        return -2;
+    } catch (...) {
+        printf("[MCPE_WASM] auto_create_world UNKNOWN EXC\n"); fflush(stdout);
+        return -3;
+    }
 }
 
 int main() {

@@ -73,7 +73,7 @@ std::string AppPlatform_emscripten::getDateString(int y, int m, int d, int hh, i
     return std::string(buf);
 }
 
-int AppPlatform_emscripten::getPixelsPerMillimeter() const { return 1; }
+int AppPlatform_emscripten::getPixelsPerMillimeter() const { return 8; } // §WASM: 8 px/mm so D-pad/buttons render at normal size (not clamped to 14px)
 void AppPlatform_emscripten::playSound(const std::string& name, float volume, float pitch) {}
 void AppPlatform_emscripten::stopSound(const std::string& name) {}
 void AppPlatform_emscripten::vibrate(int milliseconds) {}
@@ -118,6 +118,7 @@ EM_JS(void, js_copyUserSeed, (int ptr), {
 });
 
 void AppPlatform_emscripten::createUserInput() {
+    printf("[MCPE_WASM] createUserInput called\n"); fflush(stdout);
     _userInputStatus = 0;
     _userInputData.clear();
     

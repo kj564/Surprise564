@@ -6031,24 +6031,24 @@ if (Module['printErr']) err = Module['printErr'];
 // end include: postlibrary.js
 
 var ASM_CONSTS = {
-  6392140: () => { if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context OK'); } },  
- 6392416: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
- 6392516: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
- 6392614: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
- 6392718: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
- 6392814: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
- 6392912: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
- 6392990: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
- 6393072: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
- 6393156: () => { if (typeof window.__gl1PushMatrix === "function") window.__gl1PushMatrix(); },  
- 6393236: () => { if (typeof window.__gl1PopMatrix === "function") window.__gl1PopMatrix(); },  
- 6393314: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
- 6393404: ($0, $1, $2, $3) => { if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3); },  
- 6393492: ($0, $1, $2) => { if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2); },  
- 6393574: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6393668: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6393762: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5); },  
- 6393858: ($0, $1, $2, $3) => { if (typeof window.__gl1Perspective === "function") window.__gl1Perspective($0, $1, $2, $3); }
+  6392444: () => { if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context OK'); } },  
+ 6392720: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
+ 6392820: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
+ 6392918: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
+ 6393022: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
+ 6393118: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
+ 6393216: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
+ 6393294: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
+ 6393376: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
+ 6393460: () => { if (typeof window.__gl1PushMatrix === "function") window.__gl1PushMatrix(); },  
+ 6393540: () => { if (typeof window.__gl1PopMatrix === "function") window.__gl1PopMatrix(); },  
+ 6393618: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
+ 6393708: ($0, $1, $2, $3) => { if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3); },  
+ 6393796: ($0, $1, $2) => { if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2); },  
+ 6393878: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6393972: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6394066: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5); },  
+ 6394162: ($0, $1, $2, $3) => { if (typeof window.__gl1Perspective === "function") window.__gl1Perspective($0, $1, $2, $3); }
 };
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
 function js_getAsset(pathC,outSize) { var path = UTF8ToString(pathC); var asset = window.__getAsset ? window.__getAsset(path) : null; if (!asset) return 0; HEAP32[outSize >> 2] = asset.size; return asset.ptr; }
@@ -6064,6 +6064,7 @@ var _mouse_feed,
   _keyboard_feed,
   _get_block,
   _get_tile_ptr,
+  _auto_create_world,
   _main,
   _malloc,
   _free,
@@ -6090,6 +6091,7 @@ function assignWasmExports(wasmExports) {
   _keyboard_feed = Module['_keyboard_feed'] = wasmExports['keyboard_feed'];
   _get_block = Module['_get_block'] = wasmExports['get_block'];
   _get_tile_ptr = Module['_get_tile_ptr'] = wasmExports['get_tile_ptr'];
+  _auto_create_world = Module['_auto_create_world'] = wasmExports['auto_create_world'];
   _main = Module['_main'] = wasmExports['main'];
   _malloc = Module['_malloc'] = wasmExports['malloc'];
   _free = Module['_free'] = wasmExports['free'];
@@ -6268,6 +6270,28 @@ var wasmImports = {
   llvm_eh_typeid_for: _llvm_eh_typeid_for
 };
 
+function invoke_viiii(index,a1,a2,a3,a4) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)(a1,a2,a3,a4);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_vii(index,a1,a2) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)(a1,a2);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
 function invoke_ii(index,a1) {
   var sp = stackSave();
   try {
@@ -6312,17 +6336,6 @@ function invoke_iii(index,a1,a2) {
   }
 }
 
-function invoke_vii(index,a1,a2) {
-  var sp = stackSave();
-  try {
-    getWasmTableEntry(index)(a1,a2);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
 function invoke_v(index) {
   var sp = stackSave();
   try {
@@ -6349,17 +6362,6 @@ function invoke_iiii(index,a1,a2,a3) {
   var sp = stackSave();
   try {
     return getWasmTableEntry(index)(a1,a2,a3);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_viiii(index,a1,a2,a3,a4) {
-  var sp = stackSave();
-  try {
-    getWasmTableEntry(index)(a1,a2,a3,a4);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
