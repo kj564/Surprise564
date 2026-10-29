@@ -116,11 +116,15 @@ var GL1 = {
     gl.uniformMatrix4fv(this.uni.proj, false, this.proj);
     gl.uniformMatrix4fv(this.uni.mv, false, this.mv);
     var s = 24;
-    if (this.vaEn) { gl.enableVertexAttribArray(this.att.pos); gl.vertexAttribPointer(this.att.pos, 3, gl.FLOAT, false, s, this.vaPtr); }
-    if (this.taEn) { gl.enableVertexAttribArray(this.att.texCoord); gl.vertexAttribPointer(this.att.texCoord, 2, gl.FLOAT, false, s, this.taPtr); gl.uniform1i(this.uni.tex, 0); gl.uniform1i(this.uni.hasTex, 1); }
-    else { gl.uniform1i(this.uni.hasTex, 0); }
-    if (this.caEn) { gl.enableVertexAttribArray(this.att.color); gl.vertexAttribPointer(this.att.color, 4, gl.UNSIGNED_BYTE, true, s, this.caPtr); }
-    else { gl.disableVertexAttribArray(this.att.color); gl.vertexAttrib4f(this.att.color, 1, 1, 1, 1); }
+    // §Always set vertex attribs — stride=24 (pos3f+tex2f+color4ub)
+    gl.enableVertexAttribArray(this.att.pos);
+    gl.vertexAttribPointer(this.att.pos, 3, gl.FLOAT, false, 24, this.vaPtr);
+    gl.enableVertexAttribArray(this.att.texCoord);
+    gl.vertexAttribPointer(this.att.texCoord, 2, gl.FLOAT, false, 24, this.taPtr);
+    gl.uniform1i(this.uni.tex, 0);
+    gl.uniform1i(this.uni.hasTex, 1);
+    gl.enableVertexAttribArray(this.att.color);
+    gl.vertexAttribPointer(this.att.color, 4, gl.UNSIGNED_BYTE, true, 24, this.caPtr);
     gl.drawArrays(mode, first, count);
   }
 };
