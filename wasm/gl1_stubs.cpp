@@ -240,7 +240,7 @@ void glTexCoordPointer2(int s, unsigned int t, int st, const void* p) { glTexCoo
 void glEnableClientState2(unsigned int c) { glEnableClientState(c); }
 void glDisableClientState2(unsigned int c) { glDisableClientState(c); }
 void glTexParameteri2(unsigned int, unsigned int, int) {}
-void glTexImage2D2(unsigned int, int, int, int, int, int, unsigned int, unsigned int, const void*) {}
+void glTexImage2D2(unsigned int target, int level, int internalformat, int w, int h, int border, unsigned int format, unsigned int type, const void* data) { glTexImage2D(target, level, internalformat, w, h, border, format, type, data); }
 void glDrawElements2(unsigned int, int, unsigned int, const void*) {}
 void glDrawArrays2(unsigned int m, int f, int c) { glDrawArrays(m,f,c); }
 void glGenTextures2(int, unsigned int*) {}
