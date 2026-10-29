@@ -145,7 +145,7 @@ void glRotatef(float, float, float, float) {}
 void glScalef(float, float, float) {}
 void glMultMatrixf(const float*) {}
 void glLoadMatrixf(const float*) {}
-void glOrtho(double l, double r, double b, double t, double n, double f) { glOrthof((float)l,(float)r,(float)b,(float)t,(float)n,(float)f); }
+void glOrtho(double, double, double, double, double, double) {}
 void glOrthof(float, float, float, float, float, float) {}
 void glFrustum(double, double, double, double, double, double) {}
 void glFrustumf(float, float, float, float, float, float) {}
