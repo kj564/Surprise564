@@ -224,72 +224,28 @@ int glewInit() { return 0; }
 int glGetAttribLocation(unsigned int, const char*) { return 0; }
 int glGetUniformLocation(unsigned int, const char*) { return 0; }
 
-// MCPE custom wrappers — resolve to GL1 functions above
-void glEnable2(unsigned int) {}
-void glDisable2(unsigned int) {}
-void glDepthFunc2(unsigned int) {}
-void glDepthRangef2(float, float) {}
-void glAlphaFunc2(unsigned int, float) {}
-void glTranslatef2(float, float, float) {}
-void glRotatef2(float, float, float, float) {}
-void glScalef2(float, float, float) {}
-void glPushMatrix2() {}
-void glPopMatrix2() {}
-void glColor4f2(float, float, float, float) {}
-extern void glBindTexture(unsigned int, unsigned int); void glBindTexture2(unsigned int target, unsigned int id) { glBindTexture(target, id); }
-void glTexCoordPointer2(int s, unsigned int t, int st, const void* p) { glTexCoordPointer(s,t,st,p); }
-void glEnableClientState2(unsigned int c) { glEnableClientState(c); }
-void glDisableClientState2(unsigned int c) { glDisableClientState(c); }
-extern void glTexParameteri(unsigned int, unsigned int, int); void glTexParameteri2(unsigned int target, unsigned int pname, int param) { glTexParameteri(target, pname, param); }
-void glTexImage2D2(unsigned int target, int level, int internalformat, int w, int h, int border, unsigned int format, unsigned int type, const void* data) { glTexImage2D(target, level, internalformat, w, h, border, format, type, data); }
-extern void glDrawElements(unsigned int, int, unsigned int, const void*); void glDrawElements2(unsigned int mode, int count, unsigned int type, const void* indices) { glDrawElements(mode, count, type, indices); }
-void glDrawArrays2(unsigned int m, int f, int c) { glDrawArrays(m,f,c); }
-extern void glGenTextures(int, unsigned int*); void glGenTextures2(int n, unsigned int* ids) { glGenTextures(n, ids); }
-void glActiveTexture2(unsigned int) {}
-void glClientActiveTexture2(unsigned int) {}
-void glBlendFunc2(unsigned int, unsigned int) {}
-void glFogfv2(unsigned int, const float*) {}
-void glFogf2(unsigned int, float) {}
-void glFogi2(unsigned int, int) {}
-void glCullFace2(unsigned int) {}
-void glVertexPointer2(int a, unsigned int b, int c, const void* d) { glVertexPointer(a,b,c,d); }
-void glColorPointer2(int a, unsigned int b, int c, const void* d) { glColorPointer(a,b,c,d); }
 
-void glActiveTexture(unsigned int) {}
-void glClientActiveTexture(unsigned int) {}
-void glBlendFunc(unsigned int, unsigned int) {}
+// §MCPE *2 wrappers that DON'T expand via macro — bridge to real GLES2
+extern void glEnable(unsigned int);
+extern void glDisable(unsigned int);
+extern void glDepthFunc(unsigned int);
+extern void glCullFace(unsigned int);
+extern void glBlendFunc(unsigned int, unsigned int);
+extern void glShadeModel(unsigned int);
+extern void glAlphaFunc(unsigned int, float);
+extern void glDepthRangef(float, float);
+extern void glActiveTexture(unsigned int);
 
-// Shaders (stub)
-unsigned int glCreateShader(unsigned int) { return 0; }
-void glShaderSource(unsigned int, int, const char**, const int*) {}
-void glCompileShader(unsigned int) {}
-unsigned int glCreateProgram() { return 0; }
-void glAttachShader(unsigned int, unsigned int) {}
-void glLinkProgram(unsigned int) {}
-void glUseProgram(unsigned int) {}
-void glDeleteShader(unsigned int) {}
-void glDeleteProgram(unsigned int) {}
-void glDetachShader(unsigned int, unsigned int) {}
-void glBindAttribLocation(unsigned int, int, const char*) {}
-void glUniform1i(int, int) {}
-void glUniform1f(int, float) {}
-void glUniformMatrix4fv(int, int, unsigned char, const float*) {}
-void glVertexAttribPointer(unsigned int, int, unsigned int, unsigned char, int, const void*) {}
-void glEnableVertexAttribArray(unsigned int) {}
-void glDisableVertexAttribArray(unsigned int) {}
-void glGetShaderiv(unsigned int, unsigned int, int*) {}
-void glGetProgramiv(unsigned int, unsigned int, int*) {}
-void glGetShaderInfoLog(unsigned int, int, int*, char*) {}
-void glGetProgramInfoLog(unsigned int, int, int*, char*) {}
-void glGenFramebuffers(int, unsigned int*) {}
-void glDeleteFramebuffers(int, const unsigned int*) {}
-void glBindFramebuffer(unsigned int, unsigned int) {}
-void glFramebufferTexture2D(unsigned int, unsigned int, unsigned int, unsigned int, int) {}
-void glGenRenderbuffers(int, unsigned int*) {}
-void glDeleteRenderbuffers(int, const unsigned int*) {}
-void glBindRenderbuffer(unsigned int, unsigned int) {}
-void glRenderbufferStorage(unsigned int, unsigned int, int, int) {}
-void glFramebufferRenderbuffer(unsigned int, unsigned int, unsigned int, unsigned int) {}
-int glCheckFramebufferStatus(unsigned int) { return 0x8CD5; }
+void glDepthFunc2(unsigned int f) { glDepthFunc(f); }
+void glCullFace2(unsigned int f) { glCullFace(f); }
+void glBlendFunc2(unsigned int s, unsigned int d) { glBlendFunc(s, d); }
+void glAlphaFunc2(unsigned int f, float r) { glAlphaFunc(f, r); }
+void glDepthRangef2(float n, float f) { glDepthRangef(n, f); }
+void glActiveTexture2(unsigned int t) { glActiveTexture(t); }
+void glClientActiveTexture2(unsigned int t) { glActiveTexture(t); }
+void glShadeModel2(unsigned int m) { glShadeModel(m); }
+void glFogf2(unsigned int n, float p) { /* no-op — fog not needed for menu */ }
+void glFogfv2(unsigned int n, const float* p) { /* no-op */ }
+void glFogi2(unsigned int n, int p) { /* no-op */ }
 
 } // extern "C"
