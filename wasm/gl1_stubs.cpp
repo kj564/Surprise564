@@ -236,15 +236,15 @@ void glScalef2(float, float, float) {}
 void glPushMatrix2() {}
 void glPopMatrix2() {}
 void glColor4f2(float, float, float, float) {}
-void glBindTexture2(unsigned int, unsigned int) {}
+extern void glBindTexture(unsigned int, unsigned int); void glBindTexture2(unsigned int target, unsigned int id) { glBindTexture(target, id); }
 void glTexCoordPointer2(int s, unsigned int t, int st, const void* p) { glTexCoordPointer(s,t,st,p); }
 void glEnableClientState2(unsigned int c) { glEnableClientState(c); }
 void glDisableClientState2(unsigned int c) { glDisableClientState(c); }
-void glTexParameteri2(unsigned int, unsigned int, int) {}
+extern void glTexParameteri(unsigned int, unsigned int, int); void glTexParameteri2(unsigned int target, unsigned int pname, int param) { glTexParameteri(target, pname, param); }
 void glTexImage2D2(unsigned int target, int level, int internalformat, int w, int h, int border, unsigned int format, unsigned int type, const void* data) { glTexImage2D(target, level, internalformat, w, h, border, format, type, data); }
-void glDrawElements2(unsigned int, int, unsigned int, const void*) {}
+extern void glDrawElements(unsigned int, int, unsigned int, const void*); void glDrawElements2(unsigned int mode, int count, unsigned int type, const void* indices) { glDrawElements(mode, count, type, indices); }
 void glDrawArrays2(unsigned int m, int f, int c) { glDrawArrays(m,f,c); }
-void glGenTextures2(int, unsigned int*) {}
+extern void glGenTextures(int, unsigned int*); void glGenTextures2(int n, unsigned int* ids) { glGenTextures(n, ids); }
 void glActiveTexture2(unsigned int) {}
 void glClientActiveTexture2(unsigned int) {}
 void glBlendFunc2(unsigned int, unsigned int) {}
