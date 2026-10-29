@@ -6031,24 +6031,24 @@ if (Module['printErr']) err = Module['printErr'];
 // end include: postlibrary.js
 
 var ASM_CONSTS = {
-  6392108: () => { if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context OK'); } },  
- 6392384: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
- 6392484: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
- 6392582: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
- 6392686: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
- 6392782: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
- 6392880: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
- 6392958: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
- 6393040: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
- 6393124: () => { if (typeof window.__gl1PushMatrix === "function") window.__gl1PushMatrix(); },  
- 6393204: () => { if (typeof window.__gl1PopMatrix === "function") window.__gl1PopMatrix(); },  
- 6393282: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
- 6393372: ($0, $1, $2, $3) => { if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3); },  
- 6393460: ($0, $1, $2) => { if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2); },  
- 6393542: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6393636: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6393730: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5); },  
- 6393826: ($0, $1, $2, $3) => { if (typeof window.__gl1Perspective === "function") window.__gl1Perspective($0, $1, $2, $3); }
+  6392140: () => { if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context OK'); } },  
+ 6392416: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
+ 6392516: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
+ 6392614: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
+ 6392718: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
+ 6392814: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
+ 6392912: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
+ 6392990: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
+ 6393072: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
+ 6393156: () => { if (typeof window.__gl1PushMatrix === "function") window.__gl1PushMatrix(); },  
+ 6393236: () => { if (typeof window.__gl1PopMatrix === "function") window.__gl1PopMatrix(); },  
+ 6393314: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
+ 6393404: ($0, $1, $2, $3) => { if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3); },  
+ 6393492: ($0, $1, $2) => { if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2); },  
+ 6393574: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6393668: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6393762: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5); },  
+ 6393858: ($0, $1, $2, $3) => { if (typeof window.__gl1Perspective === "function") window.__gl1Perspective($0, $1, $2, $3); }
 };
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
 function js_getAsset(pathC,outSize) { var path = UTF8ToString(pathC); var asset = window.__getAsset ? window.__getAsset(path) : null; if (!asset) return 0; HEAP32[outSize >> 2] = asset.size; return asset.ptr; }
