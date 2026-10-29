@@ -6031,23 +6031,23 @@ if (Module['printErr']) err = Module['printErr'];
 // end include: postlibrary.js
 
 var ASM_CONSTS = {
-  6394579: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
- 6394679: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
- 6394777: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
- 6394881: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
- 6394977: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
- 6395075: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
- 6395153: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
- 6395235: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
- 6395319: () => { if (typeof window.__gl1PushMatrix === "function") window.__gl1PushMatrix(); },  
- 6395399: () => { if (typeof window.__gl1PopMatrix === "function") window.__gl1PopMatrix(); },  
- 6395477: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
- 6395567: ($0, $1, $2, $3) => { if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3); },  
- 6395655: ($0, $1, $2) => { if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2); },  
- 6395737: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6395831: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6395925: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5); },  
- 6396021: ($0, $1, $2, $3) => { if (typeof window.__gl1Perspective === "function") window.__gl1Perspective($0, $1, $2, $3); }
+  6394499: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
+ 6394599: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
+ 6394697: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
+ 6394801: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
+ 6394897: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
+ 6394995: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
+ 6395073: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
+ 6395155: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
+ 6395239: () => { if (typeof window.__gl1PushMatrix === "function") window.__gl1PushMatrix(); },  
+ 6395319: () => { if (typeof window.__gl1PopMatrix === "function") window.__gl1PopMatrix(); },  
+ 6395397: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
+ 6395487: ($0, $1, $2, $3) => { if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3); },  
+ 6395575: ($0, $1, $2) => { if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2); },  
+ 6395657: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6395751: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6395845: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5); },  
+ 6395941: ($0, $1, $2, $3) => { if (typeof window.__gl1Perspective === "function") window.__gl1Perspective($0, $1, $2, $3); }
 };
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
 function js_getAsset(pathC,outSize) { var path = UTF8ToString(pathC); var asset = window.__getAsset ? window.__getAsset(path) : null; if (!asset) return 0; HEAP32[outSize >> 2] = asset.size; return asset.ptr; }
