@@ -46,7 +46,7 @@
     async function preloadAll() {
       for (var i=0;i<TEXTURE_LIST.length;i++) { await loadTex(TEXTURE_LIST[i]); statusText.textContent='Loading… ('+(i+1)+'/'+TEXTURE_LIST.length+')'; }
       await loadAsset('lang/en_US.lang');
-      logMsg('Assets loaded: '+Object.keys(window.__mcpeTextures).length+' textures');
+      logMsg('Assets: '+Object.keys(window.__mcpeTextures).length+' textures');
       startWasm();
     }
     function startWasm() {
@@ -56,6 +56,20 @@
         printErr: function(t) { logMsg('[stderr] '+t); },
         locateFile: function(p) { return './'+p; },
         onAbort: function(e) { logMsg('!!! ABORT: '+e); },
+        preRun: function() {
+          logMsg('preRun — initializing GLImmediate…');
+          // §CRITICAL: manually init GLImmediate before main() runs
+          // emscripten_webgl_create_context doesn't trigger moduleContextCreatedCallbacks
+          // so GLImmediate.init() is never called → s_texUnits null → crash on glEnable
+          if (typeof GLImmediate !== 'undefined' && GLImmediate.init) {
+            try {
+              GLImmediate.init();
+              logMsg('GLImmediate.init() OK — s_texUnits populated');
+            } catch(e) {
+              logMsg('GLImmediate.init() error: ' + e.message);
+            }
+          }
+        },
         noInitialRun: false,
       };
       var s=document.createElement('script'); s.src='./mcpe_emscripten_full.js'; document.body.appendChild(s);
