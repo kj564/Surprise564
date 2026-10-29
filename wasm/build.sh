@@ -16,7 +16,7 @@ mkdir -p $BUILD
 
 INCLUDES="-I$WASM -I$SRC -I$SRC/util -I$SRC/world/phys -I$SRC/world/level/material -I$SRC/world/level/tile -I$SRC/world/item -I$SRC/world/entity -I$SRC/world/inventory -I$SRC/world/level -I$SRC/client -I$SRC/client/renderer -I$SRC/client/gui -I$SRC/client/model -I$SRC/client/particle -I$SRC/client/player -I$SRC/client/gamemode -I$SRC/client/sound -I$SRC/network -I$SRC/raknet -I$SRC/nbt -I$SRC/platform/input -I$SRC/platform/audio -I$SRC/server -I$WASM/EGL -I$WASM/gl -I$WASM/stubs"
 
-CFLAGS="-std=c++14 -O1 -w -include $EMSDK/upstream/emscripten/cache/sysroot/include/time.h -DNO_EGL -DOPENGL_ES -DNO_STORAGE -DUSE_VBO -Wno-narrowing -Wno-reserved-user-defined-literal"
+CFLAGS="-std=c++14 -O1 -w -include $EMSDK/upstream/emscripten/cache/sysroot/include/time.h -DNO_EGL -DOPENGL_ES -DNO_STORAGE -DUSE_VBO -DNO_NETWORK -Wno-narrowing -Wno-reserved-user-defined-literal"
 
 # Files to skip (platform-specific, not needed for browser)
 SKIP="main_dedicated.cpp|main.cpp|main_android.cpp|main_android_java.cpp|main_rpi.cpp|main_win32.cpp|AppPlatform_win32.cpp|platform/audio/SoundSystemAL.cpp|platform/audio/SoundSystemSL.cpp|raknet/FileList.cpp|world/level/tile/SandTile.cpp"
