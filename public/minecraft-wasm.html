@@ -84,7 +84,17 @@ var GL1 = {
   }
 };
 function startWasm() {
-  window.Module = {
+  
+    // §GL1 no-op stubs — must be set BEFORE WASM instantiation
+    var __noop = function() {};
+    var __gl1Funcs = ['glAlphaFunc','glBegin','glEnd','glColor3f','glColor4f','glColor4ub','glTexCoord2f','glNormal3f','glPushMatrix','glPopMatrix','glRotatef','glScalef','glMultMatrixf','glLoadMatrixf','glFrustum','glFrustumf','glColorMaterial','glPolygonMode','glPointSize','glFogf','glFogfv','glFogi','glFogx','glFogxv','glLightfv','glMaterialfv','glClipPlanex','glDepthRangef','glDepthRangex','glClearDepthf','glClearDepthx','glAlphaFuncx','glColor4x','glLightxv','glMaterialxv','glPointSizex','glPointParameterx','glPointParameterxv','glLineWidthx','glPolygonOffset','glDepthMask','glColorMask','glMultMatrixx','glLoadMatrixx','glOrthox','glFrustumx','glTexParameterx','glTexParameteriv','glSampleCoverage','glStencilFunc','glStencilOp','glStencilMask','glFrontFace','glPixelStorei','glReadPixels','glCopyTexImage2D','glCopyTexSubImage2D','glCompressedTexImage2D','glGetTexParameteriv','glGetTexLevelParameteriv','glTexSubImage2D','glGetIntegerv','glGetFloatv','glFinish','glFlush','glScissor','glBlendFuncSeparate','glNewList','glEndList','glCallList','glCallLists','glDeleteLists','glListBase','glNormalPointer','gluPerspective','gluLookAt','glewInit','glGetAttribLocation','glGetUniformLocation','glCreateShader','glShaderSource','glCompileShader','glCreateProgram','glAttachShader','glLinkProgram','glUseProgram','glDeleteShader','glDeleteProgram','glDetachShader','glBindAttribLocation','glUniform1i','glUniform1f','glUniformMatrix4fv','glVertexAttribPointer','glEnableVertexAttribArray','glDisableVertexAttribArray','glGetShaderiv','glGetProgramiv','glGetShaderInfoLog','glGetProgramInfoLog','glGenFramebuffers','glDeleteFramebuffers','glBindFramebuffer','glFramebufferTexture2D','glGenRenderbuffers','glDeleteRenderbuffers','glBindRenderbuffer','glRenderbufferStorage','glFramebufferRenderbuffer','glCheckFramebufferStatus','glActiveTexture','glClientActiveTexture','glBlendFunc','glEnable2','glDisable2','glDepthFunc2','glDepthRangef2','glAlphaFunc2','glTranslatef2','glRotatef2','glScalef2','glPushMatrix2','glPopMatrix2','glColor4f2','glBindTexture2','glTexParameteri2','glTexImage2D2','glDrawElements2','glGenTextures2','glActiveTexture2','glClientActiveTexture2','glBlendFunc2','glFogfv2','glFogf2','glShadeModel2','glFogi2','glCullFace2','drawArrayVT','drawArrayVT_NoState','drawArrayVTC','drawArrayVTC_NoState','glGenLists','glOrtho','glOrthof','glGetString'];
+    var __gl1Stubs = {};
+    __gl1Funcs.forEach(function(name) { __gl1Stubs[name] = __noop; });
+    __gl1Stubs.glGenLists = function(n) { return 1; };
+    __gl1Stubs.glGetString = function(name) { return 0; };
+    __gl1Stubs.glCheckFramebufferStatus = function(target) { return 0x8CD5; };
+    
+    window.Module = Object.assign({}, __gl1Stubs, {
     canvas: canvas,
     print: function(t) { logMsg('[stdout] '+t); },
     printErr: function(t) { logMsg('[stderr] '+t); },
@@ -113,60 +123,10 @@ function startWasm() {
       _glOrthof = function(l,r,b,t,n,f) { var m=new Float32Array(16);m[0]=2/(r-l);m[5]=2/(t-b);m[10]=-2/(f-n);m[15]=1;m[12]=-(r+l)/(r-l);m[13]=-(t+b)/(t-b);m[14]=-(f+n)/(f-n); if(GL1.mm==0x1701)GL1.proj=m; else GL1.mv=m; };
       _glTranslatef = function(x,y,z) { var m=GL1.mv;m[12]+=m[0]*x+m[4]*y+m[8]*z;m[13]+=m[1]*x+m[5]*y+m[9]*z;m[14]+=m[2]*x+m[6]*y+m[10]*z; };
       
-      // GL1 no-op stubs (functions not yet properly implemented)
-      var noop = function() {};
-      var noopRet = function(v) { return v; };
-      var gl1Names = ['glAlphaFunc','glBegin','glEnd','glColor3f','glColor4ub','glTexCoord2f',
-       'glNormal3f','glPushMatrix','glPopMatrix','glRotatef','glScalef','glMultMatrixf',
-       'glLoadMatrixf','glFrustum','glFrustumf','glColorMaterial','glPolygonMode',
-       'glPointSize','glFogf','glFogfv','glFogi','glFogx','glFogxv','glLightfv',
-       'glMaterialfv','glClipPlanex','glDepthRangef','glDepthRangex','glClearDepthf',
-       'glClearDepthx','glAlphaFuncx','glColor4x','glLightxv','glMaterialxv',
-       'glPointSizex','glPointParameterx','glPointParameterxv','glLineWidthx',
-       'glPolygonOffset','glDepthMask','glColorMask','glMultMatrixx','glLoadMatrixx',
-       'glOrthox','glFrustumx','glTexParameterx','glTexParameteriv','glSampleCoverage',
-       'glStencilFunc','glStencilOp','glStencilMask','glFrontFace','glPixelStorei',
-       'glReadPixels','glCopyTexImage2D','glCopyTexSubImage2D','glCompressedTexImage2D',
-       'glGetTexParameteriv','glGetTexLevelParameteriv','glTexSubImage2D',
-       'glGetIntegerv','glGetFloatv','glFinish','glFlush','glScissor',
-       'glBlendFuncSeparate','glNewList','glEndList','glCallList','glCallLists',
-       'glDeleteLists','glListBase','glNormalPointer','gluPerspective','gluLookAt',
-       'glewInit','glGetAttribLocation','glGetUniformLocation',
-       'glCreateShader','glShaderSource','glCompileShader','glCreateProgram',
-       'glAttachShader','glLinkProgram','glUseProgram','glDeleteShader','glDeleteProgram',
-       'glDetachShader','glBindAttribLocation','glUniform1i','glUniform1f',
-       'glUniformMatrix4fv','glVertexAttribPointer','glEnableVertexAttribArray',
-       'glDisableVertexAttribArray','glGetShaderiv','glGetProgramiv',
-       'glGetShaderInfoLog','glGetProgramInfoLog','glGenFramebuffers','glDeleteFramebuffers',
-       'glBindFramebuffer','glFramebufferTexture2D','glGenRenderbuffers',
-       'glDeleteRenderbuffers','glBindRenderbuffer','glRenderbufferStorage',
-       'glFramebufferRenderbuffer','glCheckFramebufferStatus',
-       'glActiveTexture','glClientActiveTexture','glBlendFunc',
-       'glEnable2','glDisable2','glDepthFunc2','glDepthRangef2','glAlphaFunc2',
-       'glTranslatef2','glRotatef2','glScalef2','glPushMatrix2','glPopMatrix2',
-       'glColor4f2','glBindTexture2','glTexParameteri2','glTexImage2D2',
-       'glDrawElements2','glGenTextures2','glActiveTexture2','glClientActiveTexture2',
-       'glBlendFunc2','glFogfv2','glFogf2','glShadeModel2','glFogi2','glCullFace2',
-       'drawArrayVT','drawArrayVT_NoState','drawArrayVTC','drawArrayVTC_NoState',
-       'glGenLists','glOrtho','glOrthof','glColor3f','glColor4f','glGetString'];
-      gl1Names.forEach(function(name) {
-        // Set on Module so WASM import resolver finds it
-        Module[name] = noop;
-        // Also set on global scope with underscore prefix
-        window['_'+name] = noop;
-      });
-      // Special returns
-      Module.glGenLists = function(n) { return 1; };
-      Module.glGetString = function(name) { return 0; };
-      Module.glCheckFramebufferStatus = function(target) { return 0x8CD5; };
-      // Special returns
-      _glGenLists = function(n) { return 1; };
-      _glGetString = function(name) { return 0; };
-      _glCheckFramebufferStatus = function(target) { return 0x8CD5; };
-      logMsg('GL1 stubs installed ✓');
+      
     },
     noInitialRun: false,
-  };
+  });
   var s=document.createElement('script'); s.src='./mcpe_emscripten_full.js'; document.body.appendChild(s);
   setTimeout(function(){statusEl.classList.add('hidden');hudEl.style.display='block';},10000);
 }
