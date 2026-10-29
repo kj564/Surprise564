@@ -357,19 +357,6 @@ void Minecraft::leaveGame(bool renameLevel /*=false*/)
 }
 
 void Minecraft::prepareLevel(const std::string& title) {
-#ifdef __EMSCRIPTEN__
-	LOGI("WASM: prepareLevel - computing lights (no threading)\n");
-	progressStageStatusId = 1;
-	if (level->isNew()) {
-		int pass = 0;
-		while (level->updateLights()) {
-			if (++pass > 1000) break;
-		}
-		LOGI("WASM: lights computed in %d passes\n", pass);
-	}
-	level->setUpdateLights(true);
-	progressStageStatusId = 0;
-#else
 	LOGI("status: 1\n");
 	progressStageStatusId = 1;
 
@@ -442,7 +429,6 @@ void Minecraft::prepareLevel(const std::string& title) {
 	C.print(" - clear: ");
 	D.print(" - prepr: ");
 	progressStageStatusId = 0;
-#endif
 }
 
 void Minecraft::update() {
@@ -1377,6 +1363,12 @@ void Minecraft::_levelGenerated()
 	}
 
 	this->cameraTargetPlayer = player;
+
+#ifdef __EMSCRIPTEN__
+	// §WASM: initialize fogBr to player brightness — synchronous level gen skips the
+	// ProgressScreen display period where fogBr would normally converge on real devices
+	if (gameRenderer) gameRenderer->initFogBr();
+#endif
 
 	if (raknetInstance->isServer())
 		raknetInstance->announceServer(user->name);

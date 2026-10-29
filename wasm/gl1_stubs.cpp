@@ -98,8 +98,8 @@ void glEnd() {}
 void glVertex3f(float, float, float) {}
 void glVertex2f(float, float) {}
 void glColor3f(float, float, float) {}
-void glColor4f(float, float, float, float) {}
-void glColor4ub(unsigned char, unsigned char, unsigned char, unsigned char) {}
+void glColor4f(float r, float g, float b, float a) { EM_ASM({ if (typeof _glColor4f === "function") _glColor4f($0, $1, $2, $3); }, r, g, b, a); }
+void glColor4ub(unsigned char r, unsigned char g, unsigned char b, unsigned char a) { EM_ASM({ if (typeof _glColor4ub === "function") _glColor4ub($0, $1, $2, $3); }, r, g, b, a); }
 void glTexCoord2f(float, float) {}
 void glNormal3f(float, float, float) {}
 void glMatrixMode(unsigned int mode) { g_matrixMode = mode; EM_ASM({ if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); }, mode); }

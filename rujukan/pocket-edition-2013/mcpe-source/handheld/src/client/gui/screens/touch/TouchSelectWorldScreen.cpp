@@ -330,8 +330,10 @@ void SelectWorldScreen::init()
 	tabButtons.push_back(&bBack);
 
 #ifdef __EMSCRIPTEN__
-	// §WASM: auto-trigger Create World (GUI click flow unreliable in headless browser)
-	if (_state == _STATE_DEFAULT && !_hasStartedLevel) {
+	// §WASM: auto-trigger Create World — guard against double-trigger (init called on resize)
+	static bool s_wasmTriggered = false;
+	if (!s_wasmTriggered && _state == _STATE_DEFAULT && !_hasStartedLevel) {
+		s_wasmTriggered = true;
 		minecraft->platform()->createUserInput(DialogDefinitions::DIALOG_CREATE_NEW_WORLD);
 		_state = _STATE_CREATEWORLD;
 	}

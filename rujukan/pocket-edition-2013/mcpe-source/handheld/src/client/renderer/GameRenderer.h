@@ -53,6 +53,7 @@ private:
 
 public:
 	ItemInHandRenderer* itemInHandRenderer;
+	void initFogBr(); // §Called when level starts — sets fogBr to player brightness (prevents black sky flash on synchronous level gen)
 
 private:
 	Minecraft* mc;

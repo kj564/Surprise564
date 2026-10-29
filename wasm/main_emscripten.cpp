@@ -32,6 +32,13 @@ extern "C" EMSCRIPTEN_KEEPALIVE int get_block(int x, int y, int z) {
     return ((Minecraft*)g_app)->level->getTile(x, y, z);
 }
 
+// §Debug: get brightness at (x,y,z)
+extern "C" EMSCRIPTEN_KEEPALIVE int get_brightness(int x, int y, int z) {
+    if (!g_app || !((Minecraft*)g_app)->level) return -1;
+    float b = ((Minecraft*)g_app)->level->getBrightness(x, y, z);
+    return (int)(b * 1000);
+}
+
 // §Debug: check if Tile::tiles[id] is NULL
 extern "C" EMSCRIPTEN_KEEPALIVE int get_tile_ptr(int id) {
     if (id < 0 || id >= 256) return -2;

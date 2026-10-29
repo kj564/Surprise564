@@ -243,9 +243,7 @@ SelectWorldScreen::~SelectWorldScreen()
 
 void SelectWorldScreen::buttonClicked(Button* button)
 {
-#ifdef __EMSCRIPTEN__
-	printf("[WASM] SelectWorldScreen::buttonClicked id=%d\n", button->id); fflush(stdout);
-#endif
+
 	if (button->id == bCreate.id) {
 		//minecraft->setScreen( new CreateWorldScreen() );
 		//minecraft->locateMultiplayer();
