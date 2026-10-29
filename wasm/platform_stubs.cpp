@@ -73,7 +73,7 @@ struct Pos {
 class FallingTile {
 public:
     FallingTile(void* level) {}
-    FallingTile(void* level, float x, float y, float z, int id, int data) {}
+    FallingTile(void* level, float x, float y, float z, int id, int data = 0) {}
     int throwTime;
 };
 
