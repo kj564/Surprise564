@@ -3,231 +3,211 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>VoxelCraft WASM — MCPE 2013 Native Port</title>
+<title>VoxelCraft — MCPE 2013 WASM</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: system-ui, sans-serif; user-select: none; -webkit-user-select: none; color: #e6edf3; }
-#status { position: fixed; inset: 0; z-index: 100; background: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; }
-#status.hidden { display: none !important; pointer-events: none; }
-#status h1 { font-size: 24px; color: #34d399; }
-#status p { font-size: 13px; color: #8b949e; text-align: center; max-width: 560px; }
-#status .log { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 11px; color: #c9d1d9; width: 100%; max-width: 700px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
-#status .spinner { width: 28px; height: 28px; border: 2px solid #34d399; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; user-select: none; -webkit-user-select: none; }
+#loading { position: fixed; inset: 0; z-index: 100; background: #0d1117; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+#loading.hidden { display: none; }
+#loading h1 { font-size: 24px; color: #34d399; font-family: system-ui, sans-serif; }
+#loading p { font-size: 13px; color: #8b949e; font-family: system-ui, sans-serif; }
+.spinner { width: 28px; height: 28px; border: 2px solid #34d399; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #88c5ff; image-rendering: pixelated; touch-action: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; z-index: 1; }
-#hud { position: fixed; left: 8px; top: 8px; z-index: 5; background: rgba(0,0,0,0.55); padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 10px; color: #fff; pointer-events: none; }
-#hud .title { color: #34d399; font-weight: 700; }
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; touch-action: none; -webkit-tap-highlight-color: transparent; }
 </style>
 </head>
 <body>
-<div id="status">
+<div id="loading">
 <h1>VoxelCraft · WASM</h1>
 <div class="spinner"></div>
-<p id="status-text">Pre-loading assets…</p>
-<div class="log" id="log"></div>
+<p id="loading-text">Loading assets…</p>
 </div>
 <canvas id="canvas" width="854" height="480"></canvas>
-<div id="hud" style="display:none"><div class="title">MCPE·WASM NATIVE</div><div id="hud-info">running</div></div>
 <script>
-var logEl = document.getElementById('log'), statusEl = document.getElementById('status'), statusText = document.getElementById('status-text'), hudEl = document.getElementById('hud'), canvas = document.getElementById('canvas');
-function logMsg(m) { console.log(m); logEl.textContent += m + '\n'; logEl.scrollTop = logEl.scrollHeight; }
+var loadingEl = document.getElementById('loading');
+var loadingText = document.getElementById('loading-text');
+var canvas = document.getElementById('canvas');
+
+// Pre-load MCPE 2013 textures
 var TEX = ['terrain.png','gui/gui.png','gui/icons.png','gui/title.png','gui/background.png','gui/items.png','gui/itemframe.png','gui/touchgui.png','font/default8.png','particles.png','environment/clouds.png','mob/char.png','mob/chicken.png','mob/cow.png','mob/pig.png','mob/sheep.png','mob/sheep_fur.png','mob/zombie.png','mob/skeleton.png','mob/spider.png','mob/creeper.png'];
 window.__mcpeTextures = {}; window.__mcpeAssets = {};
-async function loadTex(p) { try { var b=location.pathname.includes('mcpe-wasm')?'../assets/':'./assets/'; var r=await fetch(b+p); if(!r.ok) return; var bl=await r.blob(); var u=URL.createObjectURL(bl); return new Promise(function(r){var i=new Image();i.onload=function(){var c=document.createElement('canvas');c.width=i.width;c.height=i.height;var x=c.getContext('2d');x.drawImage(i,0,0);window.__mcpeTextures[p]={width:i.width,height:i.height,pixels:x.getImageData(0,0,i.width,i.height).data};URL.revokeObjectURL(u);r();};i.onerror=function(){r();};i.src=u;});}catch(e){} }
-async function loadAsset(p) { try { var b=location.pathname.includes('mcpe-wasm')?'../assets/':'./assets/'; var r=await fetch(b+p); if(!r.ok) return; var buf=await r.arrayBuffer(); window.__mcpeAssets[p]=new Uint8Array(buf);}catch(e){} }
-window.__getTexture = function(p) { var t=window.__mcpeTextures[p]; if(!t) return null; if(!t.ptr&&typeof _malloc==='function'){t.ptr=_malloc(t.width*t.height*4);if(t.ptr)HEAPU8.set(t.pixels,t.ptr);} return t.ptr?{width:t.width,height:t.height,ptr:t.ptr}:null; };
-window.__getAsset = function(p) { var a=window.__mcpeAssets[p]; if(!a) return null; if(!a.ptr&&typeof _malloc==='function'){a.ptr=_malloc(a.length);if(a.ptr)HEAPU8.set(a,a.ptr);} return a.ptr?{ptr:a.ptr,size:a.length}:null; };
-async function preloadAll() {
-  for (var i=0;i<TEX.length;i++) { await loadTex(TEX[i]); statusText.textContent='Loading… ('+(i+1)+'/'+TEX.length+')'; }
-  await loadAsset('lang/en_US.lang');
-  logMsg('Assets: '+Object.keys(window.__mcpeTextures).length+' textures');
-  startWasm();
+
+async function loadTex(p) {
+  try {
+    var b = location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/';
+    var r = await fetch(b + p);
+    if (!r.ok) return;
+    var bl = await r.blob();
+    var u = URL.createObjectURL(bl);
+    return new Promise(function(resolve) {
+      var img = new Image();
+      img.onload = function() {
+        var c = document.createElement('canvas');
+        c.width = img.width; c.height = img.height;
+        var x = c.getContext('2d');
+        x.drawImage(img, 0, 0);
+        window.__mcpeTextures[p] = { width: img.width, height: img.height, pixels: x.getImageData(0, 0, img.width, img.height).data };
+        URL.revokeObjectURL(u);
+        resolve();
+      };
+      img.onerror = function() { resolve(); };
+      img.src = u;
+    });
+  } catch(e) {}
 }
-// GLES1→WebGL2 translation layer
+
+async function loadAsset(p) {
+  try {
+    var b = location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/';
+    var r = await fetch(b + p);
+    if (!r.ok) return;
+    var buf = await r.arrayBuffer();
+    window.__mcpeAssets[p] = new Uint8Array(buf);
+  } catch(e) {}
+}
+
+window.__getTexture = function(p) {
+  var t = window.__mcpeTextures[p];
+  if (!t) return null;
+  if (!t.ptr && typeof _malloc === 'function') {
+    t.ptr = _malloc(t.width * t.height * 4);
+    if (t.ptr) HEAPU8.set(t.pixels, t.ptr);
+  }
+  return t.ptr ? { width: t.width, height: t.height, ptr: t.ptr } : null;
+};
+
+window.__getAsset = function(p) {
+  var a = window.__mcpeAssets[p];
+  if (!a) return null;
+  if (!a.ptr && typeof _malloc === 'function') {
+    a.ptr = _malloc(a.length);
+    if (a.ptr) HEAPU8.set(a, a.ptr);
+  }
+  return a.ptr ? { ptr: a.ptr, size: a.length } : null;
+};
+
+// GLES1 → WebGL2 translation layer
 var GL1 = {
-  vaEn:0, caEn:0, taEn:0, vaPtr:0, caPtr:0, taPtr:0,
-  mm:0x1700, proj:new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]), mv:new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
-  prog:null, att:{}, uni:{}, init:false, dc:0,
+  vaEn: 0, caEn: 0, taEn: 0, vaPtr: 0, caPtr: 0, taPtr: 0,
+  mm: 0x1700, proj: new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
+  mv: new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
+  stack: [], prog: null, att: {}, uni: {}, init: false,
   ensureShader: function(gl) {
     if (this.init) return; this.init = true;
-    var vs=gl.createShader(gl.VERTEX_SHADER);
-    gl.shaderSource(vs,'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProj; uniform mat4 uMV; varying vec4 vColor; varying vec2 vTexCoord; void main(){vColor=aColor;vTexCoord=aTexCoord;gl_Position=uProj*uMV*vec4(aPos,1.0);}');
+    var vs = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vs, 'attribute vec3 aPos;attribute vec4 aColor;attribute vec2 aTexCoord;uniform mat4 uProj;uniform mat4 uMV;varying vec4 vColor;varying vec2 vTexCoord;void main(){vColor=aColor;vTexCoord=aTexCoord;gl_Position=uProj*uMV*vec4(aPos,1.0);}');
     gl.compileShader(vs);
-    var fs=gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(fs,'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTex; uniform bool uHasTex; void main(){if(uHasTex){vec4 t=texture2D(uTex,vTexCoord);gl_FragColor=vec4(t.rgb*vColor.rgb,t.a*vColor.a);}else{gl_FragColor=vColor;}}');
+    var fs = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fs, 'precision mediump float;varying vec4 vColor;varying vec2 vTexCoord;uniform sampler2D uTex;uniform bool uHasTex;void main(){if(uHasTex){vec4 t=texture2D(uTex,vTexCoord);gl_FragColor=vec4(t.rgb*vColor.rgb,t.a*vColor.a);}else{gl_FragColor=vColor;}}');
     gl.compileShader(fs);
-    this.prog=gl.createProgram();
-    gl.attachShader(this.prog,vs);gl.attachShader(this.prog,fs);gl.linkProgram(this.prog);
-    this.att.pos=gl.getAttribLocation(this.prog,'aPos');
-    this.att.color=gl.getAttribLocation(this.prog,'aColor');
-    this.att.texCoord=gl.getAttribLocation(this.prog,'aTexCoord');
-    this.uni.proj=gl.getUniformLocation(this.prog,'uProj');
-    this.uni.mv=gl.getUniformLocation(this.prog,'uMV');
-    this.uni.tex=gl.getUniformLocation(this.prog,'uTex');
-    this.uni.hasTex=gl.getUniformLocation(this.prog,'uHasTex');
-    logMsg('GL1 shader OK: pos='+this.att.pos+' color='+this.att.color+' tex='+this.att.texCoord);
+    this.prog = gl.createProgram();
+    gl.attachShader(this.prog, vs); gl.attachShader(this.prog, fs); gl.linkProgram(this.prog);
+    this.att.pos = gl.getAttribLocation(this.prog, 'aPos');
+    this.att.color = gl.getAttribLocation(this.prog, 'aColor');
+    this.att.texCoord = gl.getAttribLocation(this.prog, 'aTexCoord');
+    this.uni.proj = gl.getUniformLocation(this.prog, 'uProj');
+    this.uni.mv = gl.getUniformLocation(this.prog, 'uMV');
+    this.uni.tex = gl.getUniformLocation(this.prog, 'uTex');
+    this.uni.hasTex = gl.getUniformLocation(this.prog, 'uHasTex');
   },
-  draw: function(gl,mode,first,count) {
+  draw: function(gl, mode, first, count) {
     this.ensureShader(gl);
     gl.useProgram(this.prog);
-    gl.uniformMatrix4fv(this.uni.proj,false,this.proj);
-    gl.uniformMatrix4fv(this.uni.mv,false,this.mv);
-    var s=24;
-    if(this.vaEn){gl.enableVertexAttribArray(this.att.pos);gl.vertexAttribPointer(this.att.pos,3,gl.FLOAT,false,s,this.vaPtr);}
-    if(this.taEn){gl.enableVertexAttribArray(this.att.texCoord);gl.vertexAttribPointer(this.att.texCoord,2,gl.FLOAT,false,s,this.taPtr);gl.uniform1i(this.uni.tex,0);gl.uniform1i(this.uni.hasTex,1);}
-    else{gl.uniform1i(this.uni.hasTex,0);}
-    if(this.caEn){gl.enableVertexAttribArray(this.att.color);gl.vertexAttribPointer(this.att.color,4,gl.UNSIGNED_BYTE,true,s,this.caPtr);}
-    else{gl.disableVertexAttribArray(this.att.color);gl.vertexAttrib4f(this.att.color,1,1,1,1);}
-    gl.drawArrays(mode,first,count);
+    gl.uniformMatrix4fv(this.uni.proj, false, this.proj);
+    gl.uniformMatrix4fv(this.uni.mv, false, this.mv);
+    var s = 24;
+    if (this.vaEn) { gl.enableVertexAttribArray(this.att.pos); gl.vertexAttribPointer(this.att.pos, 3, gl.FLOAT, false, s, this.vaPtr); }
+    if (this.taEn) { gl.enableVertexAttribArray(this.att.texCoord); gl.vertexAttribPointer(this.att.texCoord, 2, gl.FLOAT, false, s, this.taPtr); gl.uniform1i(this.uni.tex, 0); gl.uniform1i(this.uni.hasTex, 1); }
+    else { gl.uniform1i(this.uni.hasTex, 0); }
+    if (this.caEn) { gl.enableVertexAttribArray(this.att.color); gl.vertexAttribPointer(this.att.color, 4, gl.UNSIGNED_BYTE, true, s, this.caPtr); }
+    else { gl.disableVertexAttribArray(this.att.color); gl.vertexAttrib4f(this.att.color, 1, 1, 1, 1); }
+    gl.drawArrays(mode, first, count);
   }
 };
-// GL1 stubs — must be set BEFORE WASM instantiation
-var __noop = function() {};
-var __gl1Stubs = {};
-['glAlphaFunc','glBegin','glEnd','glColor3f','glColor4f','glColor4ub','glTexCoord2f','glNormal3f','glPushMatrix','glPopMatrix','glRotatef','glScalef','glMultMatrixf','glLoadMatrixf','glFrustum','glFrustumf','glColorMaterial','glPolygonMode','glPointSize','glFogf','glFogfv','glFogi','glFogx','glFogxv','glLightfv','glMaterialfv','glClipPlanex','glDepthRangef','glDepthRangex','glClearDepthf','glClearDepthx','glAlphaFuncx','glColor4x','glLightxv','glMaterialxv','glPointSizex','glPointParameterx','glPointParameterxv','glLineWidthx','glPolygonOffset','glDepthMask','glColorMask','glMultMatrixx','glLoadMatrixx','glOrthox','glFrustumx','glTexParameterx','glTexParameteriv','glSampleCoverage','glStencilFunc','glStencilOp','glStencilMask','glFrontFace','glPixelStorei','glReadPixels','glCopyTexImage2D','glCopyTexSubImage2D','glCompressedTexImage2D','glGetTexParameteriv','glGetTexLevelParameteriv','glTexSubImage2D','glGetIntegerv','glGetFloatv','glFinish','glFlush','glScissor','glBlendFuncSeparate','glNewList','glEndList','glCallList','glCallLists','glDeleteLists','glListBase','glNormalPointer','gluPerspective','gluLookAt','glewInit','glGetAttribLocation','glGetUniformLocation','glCreateShader','glShaderSource','glCompileShader','glCreateProgram','glAttachShader','glLinkProgram','glUseProgram','glDeleteShader','glDeleteProgram','glDetachShader','glBindAttribLocation','glUniform1i','glUniform1f','glUniformMatrix4fv','glVertexAttribPointer','glEnableVertexAttribArray','glDisableVertexAttribArray','glGetShaderiv','glGetProgramiv','glGetShaderInfoLog','glGetProgramInfoLog','glGenFramebuffers','glDeleteFramebuffers','glBindFramebuffer','glFramebufferTexture2D','glGenRenderbuffers','glDeleteRenderbuffers','glBindRenderbuffer','glRenderbufferStorage','glFramebufferRenderbuffer','glCheckFramebufferStatus','glActiveTexture','glClientActiveTexture','glBlendFunc','glEnable2','glDisable2','glDepthFunc2','glDepthRangef2','glAlphaFunc2','glTranslatef2','glRotatef2','glScalef2','glPushMatrix2','glPopMatrix2','glColor4f2','glBindTexture2','glTexParameteri2','glTexImage2D2','glDrawElements2','glGenTextures2','glActiveTexture2','glClientActiveTexture2','glBlendFunc2','glFogfv2','glFogf2','glShadeModel2','glFogi2','glCullFace2','drawArrayVT','drawArrayVT_NoState','drawArrayVTC','drawArrayVTC_NoState','glGenLists','glOrtho','glOrthof','glGetString'].forEach(function(name) { __gl1Stubs[name] = __noop; });
-__gl1Stubs.glGenLists = function(n) { return 1; };
-__gl1Stubs.glGetString = function(name) { return 0; };
-__gl1Stubs.glCheckFramebufferStatus = function(target) { return 0x8CD5; };
+
+async function preloadAll() {
+  for (var i = 0; i < TEX.length; i++) {
+    await loadTex(TEX[i]);
+    loadingText.textContent = 'Loading assets… (' + (i+1) + '/' + TEX.length + ')';
+  }
+  await loadAsset('lang/en_US.lang');
+  startWasm();
+}
 
 function startWasm() {
-  window.Module = Object.assign({}, __gl1Stubs, {
+  var noop = function() {};
+  var gl1Names = ['glAlphaFunc','glBegin','glEnd','glColor3f','glColor4f','glColor4ub','glTexCoord2f','glNormal3f','glPushMatrix','glPopMatrix','glRotatef','glScalef','glMultMatrixf','glLoadMatrixf','glFrustum','glFrustumf','glColorMaterial','glPolygonMode','glPointSize','glFogf','glFogfv','glFogi','glFogx','glFogxv','glLightfv','glMaterialfv','glClipPlanex','glDepthRangef','glDepthRangex','glClearDepthf','glClearDepthx','glAlphaFuncx','glColor4x','glLightxv','glMaterialxv','glPointSizex','glPointParameterx','glPointParameterxv','glLineWidthx','glPolygonOffset','glDepthMask','glColorMask','glMultMatrixx','glLoadMatrixx','glOrthox','glFrustumx','glTexParameterx','glTexParameteriv','glSampleCoverage','glStencilFunc','glStencilOp','glStencilMask','glFrontFace','glPixelStorei','glReadPixels','glCopyTexImage2D','glCopyTexSubImage2D','glCompressedTexImage2D','glGetTexParameteriv','glGetTexLevelParameteriv','glTexSubImage2D','glGetIntegerv','glGetFloatv','glFinish','glFlush','glScissor','glBlendFuncSeparate','glNewList','glEndList','glCallList','glCallLists','glDeleteLists','glListBase','glNormalPointer','gluPerspective','gluLookAt','glewInit','glGetAttribLocation','glGetUniformLocation','glCreateShader','glShaderSource','glCompileShader','glCreateProgram','glAttachShader','glLinkProgram','glUseProgram','glDeleteShader','glDeleteProgram','glDetachShader','glBindAttribLocation','glUniform1i','glUniform1f','glUniformMatrix4fv','glVertexAttribPointer','glEnableVertexAttribArray','glDisableVertexAttribArray','glGetShaderiv','glGetProgramiv','glGetShaderInfoLog','glGetProgramInfoLog','glGenFramebuffers','glDeleteFramebuffers','glBindFramebuffer','glFramebufferTexture2D','glGenRenderbuffers','glDeleteRenderbuffers','glBindRenderbuffer','glRenderbufferStorage','glFramebufferRenderbuffer','glCheckFramebufferStatus','glActiveTexture','glClientActiveTexture','glBlendFunc','glEnable2','glDisable2','glDepthFunc2','glDepthRangef2','glAlphaFunc2','glTranslatef2','glRotatef2','glScalef2','glPushMatrix2','glPopMatrix2','glColor4f2','glBindTexture2','glTexParameteri2','glTexImage2D2','glDrawElements2','glGenTextures2','glActiveTexture2','glClientActiveTexture2','glBlendFunc2','glFogfv2','glFogf2','glShadeModel2','glFogi2','glCullFace2','drawArrayVT','drawArrayVT_NoState','drawArrayVTC','drawArrayVTC_NoState','glGenLists','glOrtho','glOrthof','glGetString'];
+  var gl1Stubs = {};
+  gl1Names.forEach(function(n) { gl1Stubs[n] = noop; });
+  gl1Stubs.glGenLists = function(n) { return 1; };
+  gl1Stubs.glGetString = function(n) { return 0; };
+  gl1Stubs.glCheckFramebufferStatus = function(t) { return 0x8CD5; };
+
+  window.Module = Object.assign({}, gl1Stubs, {
     canvas: canvas,
-    print: function(t) { logMsg('[stdout] '+t); },
-    printErr: function(t) { logMsg('[stderr] '+t); },
-    locateFile: function(p) { return './'+p; },
-    onAbort: function(e) { logMsg('ABORT: '+e); },
+    print: function() {},
+    printErr: function() {},
+    locateFile: function(p) { return './' + p; },
+    onAbort: function(e) { console.error('ABORT:', e); },
     onRuntimeInitialized: function() {
-      logMsg('WASM ready — installing GL1 hooks…');
+      // Create GL context
       if (typeof GL !== 'undefined' && GL.createContext) {
-        var ctx = GL.createContext(canvas, {alpha:false,depth:true,stencil:false,antialias:false});
+        var ctx = GL.createContext(canvas, { alpha: false, depth: true, stencil: false, antialias: false });
         GL.makeContextCurrent(ctx);
-        logMsg('GL context ✓');
       }
       // Hook GL1 rendering functions
-      _glDrawArrays = function(mode,first,count) { var gl = GL.currentContext && GL.currentContext.GLctx; if(gl) GL1.draw(gl,mode,first,count); };
-      _glVertexPointer = function(s,t,st,p) { GL1.vaPtr=p; };
-      _glColorPointer = function(s,t,st,p) { GL1.caPtr=p; };
-      _glTexCoordPointer = function(s,t,st,p) { GL1.taPtr=p; };
-      _glEnableClientState = function(cap) { if(cap==0x8074)GL1.vaEn=1; else if(cap==0x8076)GL1.caEn=1; else if(cap==0x8078)GL1.taEn=1; };
-      _glDisableClientState = function(cap) { if(cap==0x8074)GL1.vaEn=0; else if(cap==0x8076)GL1.caEn=0; else if(cap==0x8078)GL1.taEn=0; };
-      _glMatrixMode = function(m) { GL1.mm=m; };
-      _glLoadIdentity = function() { var id=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]); if(GL1.mm==0x1701)GL1.proj=id; else GL1.mv=id; };
-      _glOrthof = function(l,r,b,t,n,f) { var m=new Float32Array(16);m[0]=2/(r-l);m[5]=2/(t-b);m[10]=-2/(f-n);m[15]=1;m[12]=-(r+l)/(r-l);m[13]=-(t+b)/(t-b);m[14]=-(f+n)/(f-n); if(GL1.mm==0x1701)GL1.proj=m; else GL1.mv=m; };
-      _glTranslatef = function(x,y,z) { var m=GL1.mv;m[12]+=m[0]*x+m[4]*y+m[8]*z;m[13]+=m[1]*x+m[5]*y+m[9]*z;m[14]+=m[2]*x+m[6]*y+m[10]*z; };
-      // C++ EM_ASM bridge callbacks
-      window.__gl1Draw = function(mode, first, count) { var gl = GL.currentContext && GL.currentContext.GLctx; if (gl) GL1.draw(gl, mode, first, count); };
-      window.__gl1VertexPointer = function(s,t,st,p) { GL1.vaPtr=p; };
-      window.__gl1ColorPointer = function(s,t,st,p) { GL1.caPtr=p; };
-      window.__gl1TexCoordPointer = function(s,t,st,p) { GL1.taPtr=p; };
-      window.__gl1EnableClientState = function(cap) { if(cap==0x8074)GL1.vaEn=1; else if(cap==0x8076)GL1.caEn=1; else if(cap==0x8078)GL1.taEn=1; };
-      window.__gl1DisableClientState = function(cap) { if(cap==0x8074)GL1.vaEn=0; else if(cap==0x8076)GL1.caEn=0; else if(cap==0x8078)GL1.taEn=0; };
-      window.__gl1MatrixMode = function(m) { GL1.mm=m; };
-      window.__gl1LoadIdentity = function() { var id=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]); if(GL1.mm==0x1701)GL1.proj=id; else GL1.mv=id; };
-      window.__gl1Orthof = function(l,r,b,t,n,f) { var m=new Float32Array(16);m[0]=2/(r-l);m[5]=2/(t-b);m[10]=-2/(f-n);m[15]=1;m[12]=-(r+l)/(r-l);m[13]=-(t+b)/(t-b);m[14]=-(f+n)/(f-n); if(GL1.mm==0x1701)GL1.proj=m; else GL1.mv=m; };
-      // 3D camera matrix functions
-      window.__gl1Translatef = function(x,y,z) { var m=GL1.mv;m[12]+=m[0]*x+m[4]*y+m[8]*z;m[13]+=m[1]*x+m[5]*y+m[9]*z;m[14]+=m[2]*x+m[6]*y+m[10]*z; };
-      window.__gl1Rotatef = function(angle,x,y,z) {
-        var r = angle * Math.PI / 180;
-        var c = Math.cos(r), s = Math.sin(r);
-        var len = Math.sqrt(x*x+y*y+z*z);
-        x/=len; y/=len; z/=len;
-        var m = GL1.mv;
-        var m0=m[0],m1=m[1],m2=m[2],m4=m[4],m5=m[5],m6=m[6],m8=m[8],m9=m[9],m10=m[10];
-        var omc = 1-c;
-        var r0=x*x*omc+c, r1=x*y*omc-z*s, r2=x*z*omc+y*s;
-        var r4=y*x*omc+z*s, r5=y*y*omc+c, r6=y*z*omc-x*s;
-        var r8=z*x*omc-y*s, r9=z*y*omc+x*s, r10=z*z*omc+c;
-        m[0]=m0*r0+m4*r1+m8*r2; m[1]=m1*r0+m5*r1+m9*r2; m[2]=m2*r0+m6*r1+m10*r2;
-        m[4]=m0*r4+m4*r5+m8*r6; m[5]=m1*r4+m5*r5+m9*r6; m[6]=m2*r4+m6*r5+m10*r6;
-        m[8]=m0*r8+m4*r9+m8*r10; m[9]=m1*r8+m5*r9+m9*r10; m[10]=m2*r8+m6*r9+m10*r10;
-      };
-      window.__gl1Scalef = function(x,y,z) { var m=GL1.mv;m[0]*=x;m[1]*=x;m[2]*=x;m[4]*=y;m[5]*=y;m[6]*=y;m[8]*=z;m[9]*=z;m[10]*=z; };
-      // Matrix stack
-      GL1.matrixStack = [];
-      window.__gl1PushMatrix = function() { GL1.matrixStack.push(new Float32Array(GL1.mv)); };
-      window.__gl1PopMatrix = function() { if(GL1.matrixStack.length>0) GL1.mv = GL1.matrixStack.pop(); };
-      // gluPerspective — set perspective projection
-      window.__gl1Perspective = function(fovy, aspect, near, far) {
-        var f = 1.0 / Math.tan(fovy * Math.PI / 360);
-        var nf = 1 / (near - far);
-        var m = new Float32Array(16);
-        m[0]=f/aspect; m[5]=f; m[10]=(far+near)*nf; m[11]=-1; m[14]=2*far*near*nf;
-        GL1.proj = m;
-      };
-      // glFrustum
-      window.__gl1Frustum = function(l,r,b,t,n,f) {
-        var m = new Float32Array(16);
-        m[0]=2*n/(r-l); m[5]=2*n/(t-b); m[8]=(r+l)/(r-l); m[9]=(t+b)/(t-b);
-        m[10]=(f+n)/(n-f); m[11]=-1; m[14]=2*f*n/(n-f);
-        GL1.proj = m;
-      };
-      window.__gl1Translatef = function(x,y,z) { var m=GL1.mv;m[12]+=m[0]*x+m[4]*y+m[8]*z;m[13]+=m[1]*x+m[5]*y+m[9]*z;m[14]+=m[2]*x+m[6]*y+m[10]*z; };
-      
-      // §Wire mouse + touch input — convert browser events to MCPE Mouse::feed
-      // MCPE Mouse API: feed(actionButtonId, buttonData, x, y)
-      // ACTION_MOVE=0, ACTION_LEFT=1, ACTION_RIGHT=2
-      // DATA_UP=0, DATA_DOWN=1
-      function canvasCoords(clientX, clientY) {
-        var rect = canvas.getBoundingClientRect();
-        var x = Math.round((clientX - rect.left) * canvas.width / rect.width);
-        var y = Math.round((clientY - rect.top) * canvas.height / rect.height);
-        return {x: x, y: y};
+      _glDrawArrays = function(m, f, c) { var gl = GL.currentContext && GL.currentContext.GLctx; if (gl) GL1.draw(gl, m, f, c); };
+      _glVertexPointer = function(s, t, st, p) { GL1.vaPtr = p; };
+      _glColorPointer = function(s, t, st, p) { GL1.caPtr = p; };
+      _glTexCoordPointer = function(s, t, st, p) { GL1.taPtr = p; };
+      _glEnableClientState = function(c) { if (c==0x8074) GL1.vaEn=1; else if (c==0x8076) GL1.caEn=1; else if (c==0x8078) GL1.taEn=1; };
+      _glDisableClientState = function(c) { if (c==0x8074) GL1.vaEn=0; else if (c==0x8076) GL1.caEn=0; else if (c==0x8078) GL1.taEn=0; };
+      _glMatrixMode = function(m) { GL1.mm = m; };
+      _glLoadIdentity = function() { var id = new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]); if (GL1.mm==0x1701) GL1.proj=id; else GL1.mv=id; };
+      _glOrthof = function(l,r,b,t,n,f) { var m=new Float32Array(16); m[0]=2/(r-l); m[5]=2/(t-b); m[10]=-2/(f-n); m[15]=1; m[12]=-(r+l)/(r-l); m[13]=-(t+b)/(t-b); m[14]=-(f+n)/(f-n); if (GL1.mm==0x1701) GL1.proj=m; else GL1.mv=m; };
+      _glTranslatef = function(x,y,z) { var m=GL1.mv; m[12]+=m[0]*x+m[4]*y+m[8]*z; m[13]+=m[1]*x+m[5]*y+m[9]*z; m[14]+=m[2]*x+m[6]*y+m[10]*z; };
+      _glRotatef = function(a,x,y,z) { var r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r),len=Math.sqrt(x*x+y*y+z*z); x/=len;y/=len;z/=len; var m=GL1.mv,m0=m[0],m1=m[1],m2=m[2],m4=m[4],m5=m[5],m6=m[6],m8=m[8],m9=m[9],m10=m[10],omc=1-c; var r0=x*x*omc+c,r1=x*y*omc-z*s,r2=x*z*omc+y*s,r4=y*x*omc+z*s,r5=y*y*omc+c,r6=y*z*omc-x*s,r8=z*x*omc-y*s,r9=z*y*omc+x*s,r10=z*z*omc+c; m[0]=m0*r0+m4*r1+m8*r2; m[1]=m1*r0+m5*r1+m9*r2; m[2]=m2*r0+m6*r1+m10*r2; m[4]=m0*r4+m4*r5+m8*r6; m[5]=m1*r4+m5*r5+m9*r6; m[6]=m2*r4+m6*r5+m10*r6; m[8]=m0*r8+m4*r9+m8*r10; m[9]=m1*r8+m5*r9+m9*r10; m[10]=m2*r8+m6*r9+m10*r10; };
+      _glScalef = function(x,y,z) { var m=GL1.mv; m[0]*=x;m[1]*=x;m[2]*=x;m[4]*=y;m[5]*=y;m[6]*=y;m[8]*=z;m[9]*=z;m[10]*=z; };
+      _glPushMatrix = function() { GL1.stack.push(new Float32Array(GL1.mv)); };
+      _glPopMatrix = function() { if (GL1.stack.length>0) GL1.mv = GL1.stack.pop(); };
+      // EM_ASM bridge callbacks
+      window.__gl1Draw = _glDrawArrays;
+      window.__gl1VertexPointer = _glVertexPointer;
+      window.__gl1ColorPointer = _glColorPointer;
+      window.__gl1TexCoordPointer = _glTexCoordPointer;
+      window.__gl1EnableClientState = _glEnableClientState;
+      window.__gl1DisableClientState = _glDisableClientState;
+      window.__gl1MatrixMode = _glMatrixMode;
+      window.__gl1LoadIdentity = _glLoadIdentity;
+      window.__gl1Orthof = _glOrthof;
+      window.__gl1Translatef = _glTranslatef;
+      window.__gl1Rotatef = _glRotatef;
+      window.__gl1Scalef = _glScalef;
+      window.__gl1PushMatrix = _glPushMatrix;
+      window.__gl1PopMatrix = _glPopMatrix;
+      window.__gl1Perspective = function(fovy,aspect,near,far) { var f=1/Math.tan(fovy*Math.PI/360),nf=1/(near-far),m=new Float32Array(16); m[0]=f/aspect;m[5]=f;m[10]=(far+near)*nf;m[11]=-1;m[14]=2*far*near*nf; GL1.proj=m; };
+
+      // Mouse + touch input
+      function canvasCoords(cx, cy) {
+        var r = canvas.getBoundingClientRect();
+        return { x: Math.round((cx - r.left) * canvas.width / r.width), y: Math.round((cy - r.top) * canvas.height / r.height) };
       }
-      
-      // Mouse events (desktop)
-      canvas.addEventListener('mousemove', function(e) {
-        var c = canvasCoords(e.clientX, e.clientY);
-        _mouse_feed(0, 0, c.x, c.y); // ACTION_MOVE
-      });
-      canvas.addEventListener('mousedown', function(e) {
-        e.preventDefault();
-        var c = canvasCoords(e.clientX, e.clientY);
-        _mouse_feed(1, 1, c.x, c.y); // ACTION_LEFT, DATA_DOWN
-      });
-      canvas.addEventListener('mouseup', function(e) {
-        e.preventDefault();
-        var c = canvasCoords(e.clientX, e.clientY);
-        _mouse_feed(1, 0, c.x, c.y); // ACTION_LEFT, DATA_UP
-      });
-      
-      // Touch events (mobile) — convert to Mouse::feed
-      canvas.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        if (e.touches.length > 0) {
-          var t = e.touches[0];
-          var c = canvasCoords(t.clientX, t.clientY);
-          _mouse_feed(1, 1, c.x, c.y); // ACTION_LEFT, DATA_DOWN
-        }
-      }, {passive: false});
-      canvas.addEventListener('touchmove', function(e) {
-        e.preventDefault();
-        if (e.touches.length > 0) {
-          var t = e.touches[0];
-          var c = canvasCoords(t.clientX, t.clientY);
-          _mouse_feed(0, 0, c.x, c.y); // ACTION_MOVE
-        }
-      }, {passive: false});
-      canvas.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        // Use last known position (changedTouches)
-        if (e.changedTouches.length > 0) {
-          var t = e.changedTouches[0];
-          var c = canvasCoords(t.clientX, t.clientY);
-          _mouse_feed(1, 0, c.x, c.y); // ACTION_LEFT, DATA_UP
-        }
-      }, {passive: false});
-      
-      logMsg('Input callbacks installed ✓ (mouse + touch)');
+      canvas.addEventListener('mousemove', function(e) { var c = canvasCoords(e.clientX, e.clientY); _mouse_feed(0, 0, c.x, c.y); });
+      canvas.addEventListener('mousedown', function(e) { e.preventDefault(); var c = canvasCoords(e.clientX, e.clientY); _mouse_feed(1, 1, c.x, c.y); });
+      canvas.addEventListener('mouseup', function(e) { e.preventDefault(); var c = canvasCoords(e.clientX, e.clientY); _mouse_feed(1, 0, c.x, c.y); });
+      canvas.addEventListener('touchstart', function(e) { e.preventDefault(); if(e.touches.length>0){var c=canvasCoords(e.touches[0].clientX,e.touches[0].clientY);_mouse_feed(1,1,c.x,c.y);} }, {passive:false});
+      canvas.addEventListener('touchmove', function(e) { e.preventDefault(); if(e.touches.length>0){var c=canvasCoords(e.touches[0].clientX,e.touches[0].clientY);_mouse_feed(0,0,c.x,c.y);} }, {passive:false});
+      canvas.addEventListener('touchend', function(e) { e.preventDefault(); if(e.changedTouches.length>0){var c=canvasCoords(e.changedTouches[0].clientX,e.changedTouches[0].clientY);_mouse_feed(1,0,c.x,c.y);} }, {passive:false});
+
+      setTimeout(function() { loadingEl.classList.add('hidden'); }, 2000);
     },
     noInitialRun: false,
   });
-  var s=document.createElement('script'); s.src='./mcpe_emscripten_full.js?v=' + Date.now(); document.body.appendChild(s);
-  // §Hide status overlay faster (3s) and ensure it doesn't block clicks
-  setTimeout(function(){
-    statusEl.classList.add('hidden');
-    hudEl.style.display='block';
-  }, 3000);
+  var s = document.createElement('script');
+  s.src = './mcpe_emscripten_full.js?v=' + Date.now();
+  document.body.appendChild(s);
 }
+
 preloadAll();
 </script>
 </body>

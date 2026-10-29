@@ -1,8 +1,0 @@
-AppPlatform_win32.cpp|/tmp/Surprise564/rujukan/pocket-edition-2013/mcpe-source/handheld/src/AppPlatform_win32.h:8:10: fatal error: 'png.h' file not found
-main_android.cpp|/tmp/Surprise564/rujukan/pocket-edition-2013/mcpe-source/handheld/src/AppPlatform_android.h:8:10: fatal error: 'jni.h' file not found
-main_android_java.cpp|/tmp/Surprise564/rujukan/pocket-edition-2013/mcpe-source/handheld/src/AppPlatform_android.h:8:10: fatal error: 'jni.h' file not found
-main_rpi.cpp|/tmp/Surprise564/rujukan/pocket-edition-2013/mcpe-source/handheld/src/main_rpi.cpp:8:2: error: use of undeclared identifier 'SDL_GetWMInfo'; did you mean 'SDL_SysWMinfo'?
-platform/audio/SoundSystemAL.cpp|/tmp/Surprise564/rujukan/pocket-edition-2013/mcpe-source/handheld/src/platform/audio/SoundSystemAL.h:6:9: fatal error: 'OpenAL/al.h' file not found
-platform/audio/SoundSystemSL.cpp|/tmp/Surprise564/rujukan/pocket-edition-2013/mcpe-source/handheld/src/platform/audio/SoundSystemSL.h:5:10: fatal error: 'SLES/OpenSLES.h' file not found
-raknet/FileList.cpp|/tmp/Surprise564/rujukan/pocket-edition-2013/mcpe-source/handheld/src/raknet/FileList.cpp:14:10: fatal error: 'sys/io.h' file not found
-world/level/tile/SandTile.cpp|/tmp/Surprise564/rujukan/pocket-edition-2013/mcpe-source/handheld/src/world/level/tile/SandTile.cpp:22:34: error: no matching constructor for initialization of 'FallingTile'
