@@ -7232,18 +7232,18 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('wasmBinary');
 }
 var ASM_CONSTS = {
-  6475928: () => { if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context OK'); } },  
- 6476204: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
- 6476304: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
- 6476402: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
- 6476506: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
- 6476602: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
- 6476700: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
- 6476778: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
- 6476860: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
- 6476944: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
- 6477034: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6477128: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }
+  6475960: () => { if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context OK'); } },  
+ 6476236: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
+ 6476336: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
+ 6476434: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
+ 6476538: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
+ 6476634: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
+ 6476732: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
+ 6476810: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
+ 6476892: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
+ 6476976: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
+ 6477066: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6477160: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }
 };
 function gl1_init_shader() { if (window.__gl1Shader) return; var gl = (GL.currentContext && GL.currentContext.GLctx); if (!gl) return; var vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, 'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProj; uniform mat4 uMV; varying vec4 vColor; varying vec2 vTexCoord; void main() { vColor = aColor; vTexCoord = aTexCoord; gl_Position = uProj * uMV * vec4(aPos, 1.0); }'); gl.compileShader(vs); var fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, 'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTex; uniform bool uHasTex; void main() { if (uHasTex) { vec4 t = texture2D(uTex, vTexCoord); gl_FragColor = vec4(t.rgb * vColor.rgb, t.a * vColor.a); } else { gl_FragColor = vColor; } }'); gl.compileShader(fs); var prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); window.__gl1Shader = prog; window.__gl1Attribs = { pos: gl.getAttribLocation(prog, 'aPos'), color: gl.getAttribLocation(prog, 'aColor'), texCoord: gl.getAttribLocation(prog, 'aTexCoord') }; window.__gl1Uniforms = { proj: gl.getUniformLocation(prog, 'uProj'), mv: gl.getUniformLocation(prog, 'uMV'), tex: gl.getUniformLocation(prog, 'uTex'), hasTex: gl.getUniformLocation(prog, 'uHasTex') }; console.log('[GL1] Shader OK: pos=' + window.__gl1Attribs.pos + ' color=' + window.__gl1Attribs.color + ' tex=' + window.__gl1Attribs.texCoord); }
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
@@ -7515,6 +7515,17 @@ function invoke_vii(index,a1,a2) {
   }
 }
 
+function invoke_viii(index,a1,a2,a3) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)(a1,a2,a3);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
 function invoke_iii(index,a1,a2) {
   var sp = stackSave();
   try {
@@ -7607,17 +7618,6 @@ function invoke_iiiiid(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
     return getWasmTableEntry(index)(a1,a2,a3,a4,a5);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_viii(index,a1,a2,a3) {
-  var sp = stackSave();
-  try {
-    getWasmTableEntry(index)(a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;

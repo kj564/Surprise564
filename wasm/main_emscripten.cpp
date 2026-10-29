@@ -6,23 +6,12 @@
 #include <cstdio>
 #include <exception>
 
-extern "C" {
-    void glClearColor(float, float, float, float);
-    void glClear(unsigned int);
-    void glViewport(int, int, int, int);
-}
-
 static NinecraftApp* g_app = nullptr;
 static AppPlatform_emscripten* g_platform = nullptr;
 static AppContext g_context;
 
 static void emscripten_main_loop() {
-    if (!g_app || !g_app->isInited()) return;
-    
-    // §Engine renders first
-    g_app->update();
-    
-    // §Don't clear after — let engine's rendering show through
+    if (g_app && g_app->isInited()) g_app->update();
 }
 
 int main() {
@@ -48,6 +37,9 @@ int main() {
     printf("[MCPE_WASM] Step 3: App::init\n"); fflush(stdout);
     try {
         ((App*)g_app)->init(g_context);
+        // §CRITICAL: set screen dimensions — engine needs width/height for glViewport
+        ((Minecraft*)g_app)->setSize(854, 480);
+        printf("[MCPE_WASM] setSize(854, 480) ✓\n"); fflush(stdout);
     } catch (std::exception& e) {
         printf("[MCPE_WASM] EXC: %s\n", e.what()); fflush(stdout);
     } catch (...) {
