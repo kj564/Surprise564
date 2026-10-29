@@ -184,7 +184,7 @@ function startWasm() {
     },
     noInitialRun: false,
   });
-  var s=document.createElement('script'); s.src='./mcpe_emscripten_full.js'; document.body.appendChild(s);
+  var s=document.createElement('script'); s.src='./mcpe_emscripten_full.js?v=' + Date.now(); document.body.appendChild(s);
   // §Hide status overlay faster (3s) and ensure it doesn't block clicks
   setTimeout(function(){
     statusEl.classList.add('hidden');

@@ -3,7 +3,6 @@
 #include "platform/input/Keyboard.h"
 #include "platform/input/Mouse.h"
 #include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
 #include <cstdio>
 #include <exception>
 
@@ -15,29 +14,17 @@ static void emscripten_main_loop() {
     if (g_app && g_app->isInited()) g_app->update();
 }
 
-// §Export Mouse::feed for JS — called from HTML addEventListener
-// JS calls: _mouse_feed(action, data, x, y)
-// ACTION_MOVE=0, ACTION_LEFT=1, ACTION_RIGHT=2
-// DATA_UP=0, DATA_DOWN=1
 extern "C" EMSCRIPTEN_KEEPALIVE void mouse_feed(char action, char data, short x, short y) {
     Mouse::feed(action, data, x, y);
 }
 
-// §Export Keyboard::feed for JS
 extern "C" EMSCRIPTEN_KEEPALIVE void keyboard_feed(unsigned char key, int state) {
     Keyboard::feed(key, state);
 }
 
 int main() {
-    printf("[MCPE_WASM] Creating GL context…\n"); fflush(stdout);
-    EM_ASM({
-        if (typeof GL !== 'undefined' && GL.createContext) {
-            var canvas = document.getElementById('canvas');
-            var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false});
-            GL.makeContextCurrent(ctx);
-            console.log('[MCPE_WASM] GL context OK');
-        }
-    });
+    // §GL context already created by HTML onRuntimeInitialized
+    // No need to create again here
     
     printf("[MCPE_WASM] Step 1: platform\n"); fflush(stdout);
     g_platform = new AppPlatform_emscripten();
