@@ -441,7 +441,7 @@ function updateMemoryViews() {
   HEAP32 = new Int32Array(b);
   Module['HEAPU32'] = HEAPU32 = new Uint32Array(b);
   HEAPF32 = new Float32Array(b);
-  
+  HEAPF64 = new Float64Array(b);
   HEAP64 = new BigInt64Array(b);
   
 }
@@ -5104,6 +5104,55 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
     ;
   }
 
+  var readEmAsmArgsArray = [];
+  
+  
+  
+  
+  /** @type {!Float64Array} */
+  var HEAPF64;
+  
+  var readEmAsmArgs = (sigPtr, buf) => {
+      // Nobody should have mutated _readEmAsmArgsArray underneath us to be something else than an array.
+      assert(Array.isArray(readEmAsmArgsArray));
+      // The input buffer is allocated on the stack, so it must be stack-aligned.
+      assert(buf % 16 == 0);
+      readEmAsmArgsArray.length = 0;
+      var ch;
+      // Most arguments are i32s, so shift the buffer pointer so it is a plain
+      // index into HEAP32.
+      while (ch = HEAPU8[sigPtr++]) {
+        var chr = String.fromCharCode(ch);
+        var validChars = ['d', 'f', 'i', 'p'];
+        // In WASM_BIGINT mode we support passing i64 values as bigint.
+        validChars.push('j');
+        assert(validChars.includes(chr), `Invalid character ${ch}("${chr}") in readEmAsmArgs! Use only [${validChars}], and do not specify "v" for void return argument.`);
+        // Floats are always passed as doubles, so all types except for 'i'
+        // are 8 bytes and require alignment.
+        var wide = (ch != 105);
+        wide &= (ch != 112);
+        buf += wide && (buf % 8) ? 4 : 0;
+        readEmAsmArgsArray.push(
+          // Special case for pointers under wasm64 or CAN_ADDRESS_2GB mode.
+          ch == 112 ? HEAPU32[((buf)>>2)] :
+          ch == 106 ? HEAP64[((buf)>>3)] :
+          ch == 105 ?
+            HEAP32[((buf)>>2)] :
+            HEAPF64[((buf)>>3)]
+        );
+        buf += wide ? 8 : 4;
+      }
+      return readEmAsmArgsArray;
+    };
+  var runEmAsmFunction = (code, sigPtr, argbuf) => {
+      var args = readEmAsmArgs(sigPtr, argbuf);
+      assert(ASM_CONSTS.hasOwnProperty(code), `No EM_ASM constant found at address ${code}.  The loaded WebAssembly file is likely out of sync with the generated JavaScript.`);
+      return ASM_CONSTS[code](...args);
+    };
+  var _emscripten_asm_const_int = (code, sigPtr, argbuf) => {
+      return runEmAsmFunction(code, sigPtr, argbuf);
+    };
+
 
 
   var getHeapMax = () =>
@@ -6159,16 +6208,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
       },
   createContext:(/** @type {HTMLCanvasElement} */ canvas, webGLContextAttributes) => {
   
-        // If WebGL context has already been preinitialized for the page on the JS
-        // side, reuse that context instead. This is useful for example when the
-        // main page precompiles shaders for the application, in which case the
-        // WebGL context is created already before any Emscripten compiled code
-        // has been downloaded.
-        if (Module['preinitializedWebGLContext']) {
-          var ctx = Module['preinitializedWebGLContext'];
-          webGLContextAttributes.majorVersion = 1;
-        } else {
-  
         // BUG: Workaround Safari WebGL issue: After successfully acquiring WebGL
         // context on a canvas, calling .getContext() will always return that
         // context independent of which 'webgl' or 'webgl2'
@@ -6190,8 +6229,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   
         var ctx =
           canvas.getContext('webgl', webGLContextAttributes);
-  
-        }
   
         if (!ctx) return 0;
   
@@ -12384,7 +12421,7 @@ if (Module['printErr']) err = Module['printErr'];
   'getTempRet0',
   'createNamedFunction',
   'withStackSave',
-  'readEmAsmArgs',
+  'runMainThreadEmAsm',
   'jstoi_q',
   'autoResumeAudioContext',
   'getDynCaller',
@@ -12552,6 +12589,8 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'timers',
   'warnOnce',
   'readEmAsmArgsArray',
+  'readEmAsmArgs',
+  'runEmAsmFunction',
   'getExecutableName',
   'handleException',
   'keepRuntimeAlive',
@@ -12795,6 +12834,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('SDL_canPlayWithWebAudio');
   ignoredModuleProp('SDL_numSimultaneouslyQueuedBuffers');
   ignoredModuleProp('freePreloadedMediaOnUse');
+  ignoredModuleProp('preinitializedWebGLContext');
   ignoredModuleProp('keyboardListeningElement');
   ignoredModuleProp('doNotCaptureKeyboard');
   ignoredModuleProp('extraStackTrace');
@@ -12808,6 +12848,9 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('wasmMemory');
   ignoredModuleProp('wasmBinary');
 }
+var ASM_CONSTS = {
+  6475896: () => { if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context created from canvas, ctx=' + ctx); if (typeof Browser !== 'undefined') Browser.useWebGL = true; if (typeof GLImmediate !== 'undefined' && GLImmediate.init) { GLImmediate.init(); console.log('[MCPE_WASM] GLImmediate.init() OK'); } var cc = GL.currentContext; console.log('[MCPE_WASM] GLctx.canvas = ' + (cc && cc.GLctx && cc.GLctx.canvas ? cc.GLctx.canvas.id : 'none')); } }
+};
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
 function js_getAsset(pathC,outSize) { var path = UTF8ToString(pathC); var asset = window.__getAsset ? window.__getAsset(path) : null; if (!asset) return 0; HEAP32[outSize >> 2] = asset.size; return asset.ptr; }
 
@@ -12941,6 +12984,8 @@ var wasmImports = {
   _tzset_js: __tzset_js,
   /** @export */
   clock_time_get: _clock_time_get,
+  /** @export */
+  emscripten_asm_const_int: _emscripten_asm_const_int,
   /** @export */
   emscripten_date_now: _emscripten_date_now,
   /** @export */

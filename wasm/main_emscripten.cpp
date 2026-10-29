@@ -15,6 +15,30 @@ static void emscripten_main_loop() {
 }
 
 int main() {
+    printf("[MCPE_WASM] Creating GL context from canvas…\n"); fflush(stdout);
+    
+    // §Create GL context bound to canvas via Emscripten's GL module
+    // This ensures GL.currentContext.canvas is set properly
+    EM_ASM({
+        if (typeof GL !== 'undefined' && GL.createContext) {
+            var canvas = document.getElementById('canvas');
+            var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false});
+            GL.makeContextCurrent(ctx);
+            console.log('[MCPE_WASM] GL context created from canvas, ctx=' + ctx);
+            
+            // §Init GLImmediate AFTER context is current
+            if (typeof Browser !== 'undefined') Browser.useWebGL = true;
+            if (typeof GLImmediate !== 'undefined' && GLImmediate.init) {
+                GLImmediate.init();
+                console.log('[MCPE_WASM] GLImmediate.init() OK');
+            }
+            
+            // §Verify canvas binding
+            var cc = GL.currentContext;
+            console.log('[MCPE_WASM] GLctx.canvas = ' + (cc && cc.GLctx && cc.GLctx.canvas ? cc.GLctx.canvas.id : 'none'));
+        }
+    });
+    
     printf("[MCPE_WASM] Step 1: platform\n"); fflush(stdout);
     g_platform = new AppPlatform_emscripten();
     g_platform->setupCanvas(854, 480);

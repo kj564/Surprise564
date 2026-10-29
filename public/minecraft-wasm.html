@@ -56,38 +56,6 @@
         printErr: function(t) { logMsg('[stderr] '+t); },
         locateFile: function(p) { return './'+p; },
         onAbort: function(e) { logMsg('!!! ABORT: '+e); },
-        preRun: function() {
-          logMsg('preRun — creating GL context…');
-          // §Create GL context bound to canvas
-          if (typeof GL !== 'undefined' && GL.createContext) {
-            var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false});
-            GL.makeContextCurrent(ctx);
-            logMsg('GL context created ✓');
-          }
-          // §Init GLImmediate
-          if (typeof Browser !== 'undefined') Browser.useWebGL = true;
-          if (typeof GLImmediate !== 'undefined' && GLImmediate.init) {
-            try { GLImmediate.init(); logMsg('GLImmediate.init() OK'); }
-            catch(e) { logMsg('GLImmediate error: ' + e.message); }
-          }
-          
-          // §HOOK glDrawArrays — override LEGACY_GL_EMULATION's version
-          // to call real WebGL gl.drawArrays
-          if (typeof _glDrawArrays !== 'undefined') {
-            var origDrawArrays = _glDrawArrays;
-            _glDrawArrays = _emscripten_glDrawArrays = function(mode, first, count) {
-              var gl = (GL.currentContext && GL.currentContext.GLctx);
-              if (gl) {
-                // §Setup vertex attribs from GL1 client state
-                // Tesselator vertex format: pos(3f) + tex(2f) + color(4ub) = 24 bytes
-                // VBO is already bound by Tesselator::draw
-                // pos@0, tex@12, color@20
-                gl.drawArrays(mode, first, count);
-              }
-            };
-            logMsg('glDrawArrays hooked ✓');
-          }
-        },
         noInitialRun: false,
       };
       var s=document.createElement('script'); s.src='./mcpe_emscripten_full.js'; document.body.appendChild(s);
