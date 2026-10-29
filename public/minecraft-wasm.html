@@ -5,178 +5,121 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>VoxelCraft WASM — MCPE 2013 Native Port</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: system-ui, sans-serif; user-select: none; color: #e6edf3; }
-  #status { position: fixed; inset: 0; z-index: 10; background: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; }
-  #status.hidden { display: none; }
-  #status h1 { font-size: 24px; color: #34d399; }
-  #status p { font-size: 13px; color: #8b949e; text-align: center; max-width: 560px; }
-  #status .log { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 11px; color: #c9d1d9; width: 100%; max-width: 700px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
-  #status .spinner { width: 28px; height: 28px; border: 2px solid #34d399; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #88c5ff; image-rendering: pixelated; }
-  #hud { position: fixed; left: 8px; top: 8px; z-index: 5; background: rgba(0,0,0,0.55); padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 10px; color: #fff; pointer-events: none; }
-  #hud .title { color: #34d399; font-weight: 700; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: system-ui, sans-serif; user-select: none; color: #e6edf3; }
+#status { position: fixed; inset: 0; z-index: 10; background: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; }
+#status.hidden { display: none; }
+#status h1 { font-size: 24px; color: #34d399; }
+#status p { font-size: 13px; color: #8b949e; text-align: center; max-width: 560px; }
+#status .log { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 11px; color: #c9d1d9; width: 100%; max-width: 700px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+#status .spinner { width: 28px; height: 28px; border: 2px solid #34d399; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #88c5ff; image-rendering: pixelated; }
+#hud { position: fixed; left: 8px; top: 8px; z-index: 5; background: rgba(0,0,0,0.55); padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 10px; color: #fff; pointer-events: none; }
+#hud .title { color: #34d399; font-weight: 700; }
 </style>
 </head>
 <body>
-  <div id="status">
-    <h1>VoxelCraft · WASM</h1>
-    <div class="spinner"></div>
-    <p id="status-text">Pre-loading assets…</p>
-    <div class="log" id="log"></div>
-  </div>
-  <canvas id="canvas" width="854" height="480"></canvas>
-  <div id="hud" style="display:none"><div class="title">MCPE·WASM NATIVE</div><div id="hud-info">running</div></div>
-  <script>
-    var logEl = document.getElementById('log');
-    var statusEl = document.getElementById('status');
-    var statusText = document.getElementById('status-text');
-    var hudEl = document.getElementById('hud');
-    var canvas = document.getElementById('canvas');
-    function logMsg(msg) { console.log(msg); logEl.textContent += msg + '\n'; logEl.scrollTop = logEl.scrollHeight; }
-
-    var TEXTURE_LIST = ['terrain.png','gui/gui.png','gui/icons.png','gui/title.png','gui/background.png','gui/items.png','gui/itemframe.png','gui/touchgui.png','font/default8.png','particles.png','environment/clouds.png','mob/char.png','mob/chicken.png','mob/cow.png','mob/pig.png','mob/sheep.png','mob/sheep_fur.png','mob/zombie.png','mob/skeleton.png','mob/spider.png','mob/creeper.png'];
-    window.__mcpeTextures = {}; window.__mcpeAssets = {};
-    async function loadTex(p) { try { var b=location.pathname.includes('mcpe-wasm')?'../assets/':'./assets/'; var r=await fetch(b+p); if(!r.ok) return; var bl=await r.blob(); var u=URL.createObjectURL(bl); return new Promise(function(r){var i=new Image();i.onload=function(){var c=document.createElement('canvas');c.width=i.width;c.height=i.height;var x=c.getContext('2d');x.drawImage(i,0,0);window.__mcpeTextures[p]={width:i.width,height:i.height,pixels:x.getImageData(0,0,i.width,i.height).data};URL.revokeObjectURL(u);r();};i.onerror=function(){r();};i.src=u;});}catch(e){} }
-    async function loadAsset(p) { try { var b=location.pathname.includes('mcpe-wasm')?'../assets/':'./assets/'; var r=await fetch(b+p); if(!r.ok) return; var buf=await r.arrayBuffer(); window.__mcpeAssets[p]=new Uint8Array(buf);}catch(e){} }
-    window.__getTexture = function(p) { var t=window.__mcpeTextures[p]; if(!t) return null; if(!t.ptr&&typeof _malloc==='function'){t.ptr=_malloc(t.width*t.height*4);if(t.ptr)HEAPU8.set(t.pixels,t.ptr);} return t.ptr?{width:t.width,height:t.height,ptr:t.ptr}:null; };
-    window.__getAsset = function(p) { var a=window.__mcpeAssets[p]; if(!a) return null; if(!a.ptr&&typeof _malloc==='function'){a.ptr=_malloc(a.length);if(a.ptr)HEAPU8.set(a,a.ptr);} return a.ptr?{ptr:a.ptr,size:a.length}:null; };
-
-    async function preloadAll() {
-      for (var i=0;i<TEXTURE_LIST.length;i++) { await loadTex(TEXTURE_LIST[i]); statusText.textContent='Loading… ('+(i+1)+'/'+TEXTURE_LIST.length+')'; }
-      await loadAsset('lang/en_US.lang');
-      logMsg('Assets: '+Object.keys(window.__mcpeTextures).length+' textures');
-      startWasm();
-    }
-
-    // GLES1→WebGL2 translation layer
-    var GL1 = {
-      vertexArray: { enabled: false, size: 3, type: 0x1406, stride: 0, pointer: 0 },
-      colorArray:  { enabled: false, size: 4, type: 0x1401, stride: 0, pointer: 0 },
-      texCoordArray: { enabled: false, size: 2, type: 0x1406, stride: 0, pointer: 0 },
-      matrixMode: 0x1700,
-      projection: new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
-      modelview: new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
-      program: null, attribs: {}, uniforms: {}, initialized: false, drawCount: 0,
-      init: function(gl) {
-        if (this.initialized) return; this.initialized = true;
-        var vsSrc = 'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProj; uniform mat4 uMV; varying vec4 vColor; varying vec2 vTexCoord; void main() { vColor = aColor; vTexCoord = aTexCoord; gl_Position = uProj * uMV * vec4(aPos, 1.0); }';
-        var fsSrc = 'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTex; uniform bool uHasTex; void main() { if (uHasTex) { vec4 t = texture2D(uTex, vTexCoord); gl_FragColor = vec4(t.rgb * vColor.rgb, t.a * vColor.a); } else { gl_FragColor = vColor; } }';
-        function compile(src, type) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
-        var vs = compile(vsSrc, gl.VERTEX_SHADER), fs = compile(fsSrc, gl.FRAGMENT_SHADER);
-        this.program = gl.createProgram();
-        gl.attachShader(this.program, vs); gl.attachShader(this.program, fs);
-        gl.linkProgram(this.program);
-        this.attribs.pos = gl.getAttribLocation(this.program, 'aPos');
-        this.attribs.color = gl.getAttribLocation(this.program, 'aColor');
-        this.attribs.texCoord = gl.getAttribLocation(this.program, 'aTexCoord');
-        this.uniforms.proj = gl.getUniformLocation(this.program, 'uProj');
-        this.uniforms.mv = gl.getUniformLocation(this.program, 'uMV');
-        this.uniforms.tex = gl.getUniformLocation(this.program, 'uTex');
-        this.uniforms.hasTex = gl.getUniformLocation(this.program, 'uHasTex');
-        logMsg('GL1 shader OK: pos=' + this.attribs.pos + ' color=' + this.attribs.color + ' tex=' + this.attribs.texCoord);
-      },
-      drawArrays: function(gl, mode, first, count) {
-        this.init(gl);
-        gl.useProgram(this.program);
-        gl.uniformMatrix4fv(this.uniforms.proj, false, this.projection);
-        gl.uniformMatrix4fv(this.uniforms.mv, false, this.modelview);
-        var stride = 24; // Tesselator: pos(3f)+tex(2f)+color(4ub) = 24 bytes
-        if (this.vertexArray.enabled) {
-          gl.enableVertexAttribArray(this.attribs.pos);
-          gl.vertexAttribPointer(this.attribs.pos, 3, gl.FLOAT, false, stride, this.vertexArray.pointer);
-        }
-        if (this.texCoordArray.enabled) {
-          gl.enableVertexAttribArray(this.attribs.texCoord);
-          gl.vertexAttribPointer(this.attribs.texCoord, 2, gl.FLOAT, false, stride, this.texCoordArray.pointer);
-          gl.uniform1i(this.uniforms.tex, 0);
-          gl.uniform1i(this.uniforms.hasTex, 1);
-        } else { gl.uniform1i(this.uniforms.hasTex, 0); }
-        if (this.colorArray.enabled) {
-          gl.enableVertexAttribArray(this.attribs.color);
-          gl.vertexAttribPointer(this.attribs.color, 4, gl.UNSIGNED_BYTE, true, stride, this.colorArray.pointer);
-        } else { gl.disableVertexAttribArray(this.attribs.color); gl.vertexAttrib4f(this.attribs.color, 1, 1, 1, 1); }
-        gl.drawArrays(mode, first, count);
-        this.drawCount++;
-        if (this.drawCount <= 3) logMsg('GL1 drawArrays #' + this.drawCount + ': mode=' + mode + ' count=' + count + ' pos=' + this.vertexArray.pointer);
+<div id="status">
+<h1>VoxelCraft · WASM</h1>
+<div class="spinner"></div>
+<p id="status-text">Pre-loading assets…</p>
+<div class="log" id="log"></div>
+</div>
+<canvas id="canvas" width="854" height="480"></canvas>
+<div id="hud" style="display:none"><div class="title">MCPE·WASM NATIVE</div><div id="hud-info">running</div></div>
+<script>
+var logEl = document.getElementById('log'), statusEl = document.getElementById('status'), statusText = document.getElementById('status-text'), hudEl = document.getElementById('hud'), canvas = document.getElementById('canvas');
+function logMsg(m) { console.log(m); logEl.textContent += m + '\n'; logEl.scrollTop = logEl.scrollHeight; }
+var TEX = ['terrain.png','gui/gui.png','gui/icons.png','gui/title.png','gui/background.png','gui/items.png','gui/itemframe.png','gui/touchgui.png','font/default8.png','particles.png','environment/clouds.png','mob/char.png','mob/chicken.png','mob/cow.png','mob/pig.png','mob/sheep.png','mob/sheep_fur.png','mob/zombie.png','mob/skeleton.png','mob/spider.png','mob/creeper.png'];
+window.__mcpeTextures = {}; window.__mcpeAssets = {};
+async function loadTex(p) { try { var b=location.pathname.includes('mcpe-wasm')?'../assets/':'./assets/'; var r=await fetch(b+p); if(!r.ok) return; var bl=await r.blob(); var u=URL.createObjectURL(bl); return new Promise(function(r){var i=new Image();i.onload=function(){var c=document.createElement('canvas');c.width=i.width;c.height=i.height;var x=c.getContext('2d');x.drawImage(i,0,0);window.__mcpeTextures[p]={width:i.width,height:i.height,pixels:x.getImageData(0,0,i.width,i.height).data};URL.revokeObjectURL(u);r();};i.onerror=function(){r();};i.src=u;});}catch(e){} }
+async function loadAsset(p) { try { var b=location.pathname.includes('mcpe-wasm')?'../assets/':'./assets/'; var r=await fetch(b+p); if(!r.ok) return; var buf=await r.arrayBuffer(); window.__mcpeAssets[p]=new Uint8Array(buf);}catch(e){} }
+window.__getTexture = function(p) { var t=window.__mcpeTextures[p]; if(!t) return null; if(!t.ptr&&typeof _malloc==='function'){t.ptr=_malloc(t.width*t.height*4);if(t.ptr)HEAPU8.set(t.pixels,t.ptr);} return t.ptr?{width:t.width,height:t.height,ptr:t.ptr}:null; };
+window.__getAsset = function(p) { var a=window.__mcpeAssets[p]; if(!a) return null; if(!a.ptr&&typeof _malloc==='function'){a.ptr=_malloc(a.length);if(a.ptr)HEAPU8.set(a,a.ptr);} return a.ptr?{ptr:a.ptr,size:a.length}:null; };
+async function preloadAll() {
+  for (var i=0;i<TEX.length;i++) { await loadTex(TEX[i]); statusText.textContent='Loading… ('+(i+1)+'/'+TEX.length+')'; }
+  await loadAsset('lang/en_US.lang');
+  logMsg('Assets: '+Object.keys(window.__mcpeTextures).length+' textures');
+  startWasm();
+}
+// GL1 state
+var GL1 = {
+  vaEn:0, caEn:0, taEn:0, vaPtr:0, caPtr:0, taPtr:0,
+  mm:0x1700, proj:new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]), mv:new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
+  prog:null, att:{}, uni:{}, init:false, dc:0,
+  ensureShader: function(gl) {
+    if (this.init) return; this.init = true;
+    var vs=gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vs,'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProj; uniform mat4 uMV; varying vec4 vColor; varying vec2 vTexCoord; void main(){vColor=aColor;vTexCoord=aTexCoord;gl_Position=uProj*uMV*vec4(aPos,1.0);}');
+    gl.compileShader(vs);
+    var fs=gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fs,'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTex; uniform bool uHasTex; void main(){if(uHasTex){vec4 t=texture2D(uTex,vTexCoord);gl_FragColor=vec4(t.rgb*vColor.rgb,t.a*vColor.a);}else{gl_FragColor=vColor;}}');
+    gl.compileShader(fs);
+    this.prog=gl.createProgram();
+    gl.attachShader(this.prog,vs);gl.attachShader(this.prog,fs);gl.linkProgram(this.prog);
+    this.att.pos=gl.getAttribLocation(this.prog,'aPos');
+    this.att.color=gl.getAttribLocation(this.prog,'aColor');
+    this.att.texCoord=gl.getAttribLocation(this.prog,'aTexCoord');
+    this.uni.proj=gl.getUniformLocation(this.prog,'uProj');
+    this.uni.mv=gl.getUniformLocation(this.prog,'uMV');
+    this.uni.tex=gl.getUniformLocation(this.prog,'uTex');
+    this.uni.hasTex=gl.getUniformLocation(this.prog,'uHasTex');
+    logMsg('GL1 shader OK: pos='+this.att.pos+' color='+this.att.color+' tex='+this.att.texCoord);
+  },
+  draw: function(gl,mode,first,count) {
+    this.ensureShader(gl);
+    gl.useProgram(this.prog);
+    gl.uniformMatrix4fv(this.uni.proj,false,this.proj);
+    gl.uniformMatrix4fv(this.uni.mv,false,this.mv);
+    var s=24; // Tesselator: pos(3f)+tex(2f)+color(4ub)=24
+    if(this.vaEn){gl.enableVertexAttribArray(this.att.pos);gl.vertexAttribPointer(this.att.pos,3,gl.FLOAT,false,s,this.vaPtr);}
+    if(this.taEn){gl.enableVertexAttribArray(this.att.texCoord);gl.vertexAttribPointer(this.att.texCoord,2,gl.FLOAT,false,s,this.taPtr);gl.uniform1i(this.uni.tex,0);gl.uniform1i(this.uni.hasTex,1);}
+    else{gl.uniform1i(this.uni.hasTex,0);}
+    if(this.caEn){gl.enableVertexAttribArray(this.att.color);gl.vertexAttribPointer(this.att.color,4,gl.UNSIGNED_BYTE,true,s,this.caPtr);}
+    else{gl.disableVertexAttribArray(this.att.color);gl.vertexAttrib4f(this.att.color,1,1,1,1);}
+    gl.drawArrays(mode,first,count);
+    this.dc++;
+    if(this.dc<=3) logMsg('GL1 draw #'+this.dc+': mode='+mode+' count='+count+' vaPtr='+this.vaPtr+' vaEn='+this.vaEn+' caEn='+this.caEn+' taEn='+this.taEn);
+  }
+};
+function startWasm() {
+  window.Module = {
+    canvas: canvas,
+    print: function(t) { logMsg('[stdout] '+t); },
+    printErr: function(t) { logMsg('[stderr] '+t); },
+    locateFile: function(p) { return './'+p; },
+    onAbort: function(e) { logMsg('ABORT: '+e); },
+    onRuntimeInitialized: function() {
+      logMsg('WASM ready — installing GL1 hooks…');
+      // Create GL context
+      if (typeof GL !== 'undefined' && GL.createContext) {
+        var ctx = GL.createContext(canvas, {alpha:false,depth:true,stencil:false,antialias:false});
+        GL.makeContextCurrent(ctx);
+        logMsg('GL context ✓');
       }
-    };
-
-    function startWasm() {
-      window.Module = {
-        canvas: canvas,
-        print: function(t) { logMsg('[stdout] '+t); },
-        printErr: function(t) { logMsg('[stderr] '+t); },
-        locateFile: function(p) { return './'+p; },
-        onAbort: function(e) { logMsg('!!! ABORT: '+e); },
-        preRun: function() {
-          logMsg('preRun — creating GL context…');
-          if (typeof GL !== 'undefined' && GL.createContext) {
-            var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false});
-            GL.makeContextCurrent(ctx);
-            logMsg('GL context created ✓');
-          }
-          if (typeof Browser !== 'undefined') Browser.useWebGL = true;
-          if (typeof GLImmediate !== 'undefined' && GLImmediate.init) {
-            try { GLImmediate.init(); logMsg('GLImmediate.init() OK'); }
-            catch(e) { logMsg('GLImmediate error: ' + e.message); }
-          }
-          // HOOK glDrawArrays
-          _glDrawArrays = _emscripten_glDrawArrays = function(mode, first, count) {
-            var gl = (GL.currentContext && GL.currentContext.GLctx);
-            if (!gl) return;
-            GL1.drawArrays(gl, mode, first, count);
-          };
-          // HOOK vertex array functions
-          _glVertexPointer = function(size, type, stride, pointer) {
-            GL1.vertexArray.size = size; GL1.vertexArray.type = type;
-            GL1.vertexArray.stride = stride; GL1.vertexArray.pointer = pointer;
-          };
-          _glColorPointer = function(size, type, stride, pointer) {
-            GL1.colorArray.size = size; GL1.colorArray.type = type;
-            GL1.colorArray.stride = stride; GL1.colorArray.pointer = pointer;
-          };
-          _glTexCoordPointer = function(size, type, stride, pointer) {
-            GL1.texCoordArray.size = size; GL1.texCoordArray.type = type;
-            GL1.texCoordArray.stride = stride; GL1.texCoordArray.pointer = pointer;
-          };
-          _glEnableClientState = function(cap) {
-            if (cap == 0x8074) GL1.vertexArray.enabled = true;
-            else if (cap == 0x8076) GL1.colorArray.enabled = true;
-            else if (cap == 0x8078) GL1.texCoordArray.enabled = true;
-          };
-          _glDisableClientState = function(cap) {
-            if (cap == 0x8074) GL1.vertexArray.enabled = false;
-            else if (cap == 0x8076) GL1.colorArray.enabled = false;
-            else if (cap == 0x8078) GL1.texCoordArray.enabled = false;
-          };
-          // HOOK matrix functions
-          _glMatrixMode = function(mode) { GL1.matrixMode = mode; };
-          _glLoadIdentity = function() {
-            var id = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
-            if (GL1.matrixMode == 0x1701) GL1.projection = id; else GL1.modelview = id;
-          };
-          _glOrthof = function(l, r, b, t, n, f) {
-            var m = new Float32Array(16);
-            m[0]=2/(r-l); m[5]=2/(t-b); m[10]=-2/(f-n); m[15]=1;
-            m[12]=-(r+l)/(r-l); m[13]=-(t+b)/(t-b); m[14]=-(f+n)/(f-n);
-            if (GL1.matrixMode == 0x1701) GL1.projection = m; else GL1.modelview = m;
-          };
-          _glTranslatef = function(x, y, z) {
-            var m = GL1.modelview;
-            m[12] += m[0]*x + m[4]*y + m[8]*z;
-            m[13] += m[1]*x + m[5]*y + m[9]*z;
-            m[14] += m[2]*x + m[6]*y + m[10]*z;
-          };
-          logMsg('GL1 hooks installed ✓');
-        },
-        noInitialRun: false,
+      // Hook GL1 functions — these override C++ stubs
+      _glDrawArrays = function(mode,first,count) {
+        var gl = GL.currentContext && GL.currentContext.GLctx;
+        if(gl) GL1.draw(gl,mode,first,count);
       };
-      var s=document.createElement('script'); s.src='./mcpe_emscripten_full.js'; document.body.appendChild(s);
-      setTimeout(function(){statusEl.classList.add('hidden');hudEl.style.display='block';},10000);
-    }
-    preloadAll();
-  </script>
+      _glVertexPointer = function(s,t,st,p) { GL1.vaPtr=p; };
+      _glColorPointer = function(s,t,st,p) { GL1.caPtr=p; };
+      _glTexCoordPointer = function(s,t,st,p) { GL1.taPtr=p; };
+      _glEnableClientState = function(cap) { if(cap==0x8074)GL1.vaEn=1; else if(cap==0x8076)GL1.caEn=1; else if(cap==0x8078)GL1.taEn=1; };
+      _glDisableClientState = function(cap) { if(cap==0x8074)GL1.vaEn=0; else if(cap==0x8076)GL1.caEn=0; else if(cap==0x8078)GL1.taEn=0; };
+      _glMatrixMode = function(m) { GL1.mm=m; };
+      _glLoadIdentity = function() { var id=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]); if(GL1.mm==0x1701)GL1.proj=id; else GL1.mv=id; };
+      _glOrthof = function(l,r,b,t,n,f) { var m=new Float32Array(16);m[0]=2/(r-l);m[5]=2/(t-b);m[10]=-2/(f-n);m[15]=1;m[12]=-(r+l)/(r-l);m[13]=-(t+b)/(t-b);m[14]=-(f+n)/(f-n); if(GL1.mm==0x1701)GL1.proj=m; else GL1.mv=m; };
+      _glTranslatef = function(x,y,z) { var m=GL1.mv;m[12]+=m[0]*x+m[4]*y+m[8]*z;m[13]+=m[1]*x+m[5]*y+m[9]*z;m[14]+=m[2]*x+m[6]*y+m[10]*z; };
+      logMsg('GL1 hooks installed ✓');
+    },
+    noInitialRun: false,
+  };
+  var s=document.createElement('script'); s.src='./mcpe_emscripten_full.js'; document.body.appendChild(s);
+  setTimeout(function(){statusEl.classList.add('hidden');hudEl.style.display='block';},10000);
+}
+preloadAll();
+</script>
 </body>
 </html>
