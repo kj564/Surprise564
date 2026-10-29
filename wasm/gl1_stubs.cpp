@@ -55,6 +55,7 @@ EM_JS(void, gl1_init_shader, (void), {
 });
 
 extern "C" {
+extern void glTexImage2D(unsigned int, int, int, int, int, int, unsigned int, unsigned int, const void*);
 
 // glVertexPointer — track pointer offset (into bound VBO)
 void glVertexPointer(int size, unsigned int type, int stride, const void* pointer) {
