@@ -6,18 +6,16 @@
 <title>VoxelCraft WASM — MCPE 2013 Native Port</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; color: #e6edf3; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: system-ui, sans-serif; user-select: none; color: #e6edf3; }
   #status { position: fixed; inset: 0; z-index: 10; background: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; }
   #status.hidden { display: none; }
   #status h1 { font-size: 24px; color: #34d399; }
-  #status p { font-size: 13px; color: #8b949e; text-align: center; max-width: 560px; line-height: 1.5; }
+  #status p { font-size: 13px; color: #8b949e; text-align: center; max-width: 560px; }
   #status .log { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 11px; color: #c9d1d9; width: 100%; max-width: 700px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
   #status .spinner { width: 28px; height: 28px; border: 2px solid #34d399; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  #status .progress { width: 100%; max-width: 400px; height: 6px; background: #30363d; border-radius: 3px; overflow: hidden; }
-  #status .progress-bar { height: 100%; background: #34d399; transition: width 0.3s; width: 0%; }
   canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #88c5ff; image-rendering: pixelated; }
-  #hud { position: fixed; left: 8px; top: 8px; z-index: 5; background: rgba(0,0,0,0.55); padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 10px; color: #fff; pointer-events: none; line-height: 1.4; }
+  #hud { position: fixed; left: 8px; top: 8px; z-index: 5; background: rgba(0,0,0,0.55); padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 10px; color: #fff; pointer-events: none; }
   #hud .title { color: #34d399; font-weight: 700; }
 </style>
 </head>
@@ -25,134 +23,44 @@
   <div id="status">
     <h1>VoxelCraft · WASM</h1>
     <div class="spinner"></div>
-    <p id="status-text">Pre-loading MCPE 2013 assets…</p>
-    <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+    <p id="status-text">Pre-loading assets…</p>
     <div class="log" id="log"></div>
   </div>
   <canvas id="canvas" width="854" height="480"></canvas>
-  <div id="hud" style="display:none">
-    <div class="title">MCPE·WASM NATIVE</div>
-    <div id="hud-info">booting…</div>
-  </div>
+  <div id="hud" style="display:none"><div class="title">MCPE·WASM NATIVE</div><div id="hud-info">running</div></div>
   <script>
     var logEl = document.getElementById('log');
     var statusEl = document.getElementById('status');
     var statusText = document.getElementById('status-text');
-    var progressBar = document.getElementById('progress-bar');
     var hudEl = document.getElementById('hud');
-    var hudInfo = document.getElementById('hud-info');
     var canvas = document.getElementById('canvas');
-
-    function logMsg(msg) {
-      console.log('[voxelcraft-wasm]', msg);
-      logEl.textContent += msg + '\n';
-      logEl.scrollTop = logEl.scrollHeight;
-    }
-
-    // Pre-load textures
-    var TEXTURE_LIST = [
-      'terrain.png', 'gui/gui.png', 'gui/icons.png', 'gui/title.png',
-      'gui/background.png', 'gui/items.png', 'gui/itemframe.png',
-      'gui/touchgui.png', 'font/default8.png', 'particles.png',
-      'environment/clouds.png', 'mob/char.png', 'mob/chicken.png',
-      'mob/cow.png', 'mob/pig.png', 'mob/sheep.png', 'mob/sheep_fur.png',
-      'mob/zombie.png', 'mob/skeleton.png', 'mob/spider.png', 'mob/creeper.png',
-    ];
-
-    window.__mcpeTextures = {};
-    window.__mcpeAssets = {};
-
-    async function loadTextureAsync(path) {
-      try {
-        var base = location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/';
-        var response = await fetch(base + path);
-        if (!response.ok) return;
-        var blob = await response.blob();
-        var url = URL.createObjectURL(blob);
-        return new Promise(function(resolve) {
-          var img = new Image();
-          img.onload = function() {
-            var c = document.createElement('canvas');
-            c.width = img.width; c.height = img.height;
-            var ctx = c.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            var imageData = ctx.getImageData(0, 0, img.width, img.height);
-            window.__mcpeTextures[path] = { width: img.width, height: img.height, pixels: imageData.data };
-            URL.revokeObjectURL(url);
-            resolve();
-          };
-          img.onerror = function() { resolve(); };
-          img.src = url;
-        });
-      } catch(e) {}
-    }
-
-    async function loadAssetAsync(path) {
-      try {
-        var base = location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/';
-        var response = await fetch(base + path);
-        if (!response.ok) return;
-        var buf = await response.arrayBuffer();
-        window.__mcpeAssets[path] = new Uint8Array(buf);
-      } catch(e) {}
-    }
-
-    window.__getTexture = function(path) {
-      var tex = window.__mcpeTextures[path];
-      if (!tex) return null;
-      if (!tex.ptr && typeof _malloc === 'function') {
-        var numBytes = tex.width * tex.height * 4;
-        tex.ptr = _malloc(numBytes);
-        if (tex.ptr) HEAPU8.set(tex.pixels, tex.ptr);
-      }
-      return tex.ptr ? { width: tex.width, height: tex.height, ptr: tex.ptr } : null;
-    };
-
-    window.__getAsset = function(path) {
-      var asset = window.__mcpeAssets[path];
-      if (!asset) return null;
-      if (!asset.ptr && typeof _malloc === 'function') {
-        asset.ptr = _malloc(asset.length);
-        if (asset.ptr) HEAPU8.set(asset, asset.ptr);
-      }
-      return asset.ptr ? { ptr: asset.ptr, size: asset.length } : null;
-    };
-
+    function logMsg(msg) { console.log(msg); logEl.textContent += msg + '\n'; logEl.scrollTop = logEl.scrollHeight; }
+    
+    var TEXTURE_LIST = ['terrain.png','gui/gui.png','gui/icons.png','gui/title.png','gui/background.png','gui/items.png','gui/itemframe.png','gui/touchgui.png','font/default8.png','particles.png','environment/clouds.png','mob/char.png','mob/chicken.png','mob/cow.png','mob/pig.png','mob/sheep.png','mob/sheep_fur.png','mob/zombie.png','mob/skeleton.png','mob/spider.png','mob/creeper.png'];
+    window.__mcpeTextures = {}; window.__mcpeAssets = {};
+    async function loadTex(p) { try { var b=location.pathname.includes('mcpe-wasm')?'../assets/':'./assets/'; var r=await fetch(b+p); if(!r.ok) return; var bl=await r.blob(); var u=URL.createObjectURL(bl); return new Promise(function(r){var i=new Image();i.onload=function(){var c=document.createElement('canvas');c.width=i.width;c.height=i.height;var x=c.getContext('2d');x.drawImage(i,0,0);window.__mcpeTextures[p]={width:i.width,height:i.height,pixels:x.getImageData(0,0,i.width,i.height).data};URL.revokeObjectURL(u);r();};i.onerror=function(){r();};i.src=u;});}catch(e){} }
+    async function loadAsset(p) { try { var b=location.pathname.includes('mcpe-wasm')?'../assets/':'./assets/'; var r=await fetch(b+p); if(!r.ok) return; var buf=await r.arrayBuffer(); window.__mcpeAssets[p]=new Uint8Array(buf);}catch(e){} }
+    window.__getTexture = function(p) { var t=window.__mcpeTextures[p]; if(!t) return null; if(!t.ptr&&typeof _malloc==='function'){t.ptr=_malloc(t.width*t.height*4);if(t.ptr)HEAPU8.set(t.pixels,t.ptr);} return t.ptr?{width:t.width,height:t.height,ptr:t.ptr}:null; };
+    window.__getAsset = function(p) { var a=window.__mcpeAssets[p]; if(!a) return null; if(!a.ptr&&typeof _malloc==='function'){a.ptr=_malloc(a.length);if(a.ptr)HEAPU8.set(a,a.ptr);} return a.ptr?{ptr:a.ptr,size:a.length}:null; };
+    
     async function preloadAll() {
-      logMsg('Pre-loading ' + TEXTURE_LIST.length + ' textures…');
-      var loaded = 0;
-      for (var i = 0; i < TEXTURE_LIST.length; i++) {
-        await loadTextureAsync(TEXTURE_LIST[i]);
-        loaded++;
-        progressBar.style.width = (loaded / TEXTURE_LIST.length * 100) + '%';
-        statusText.textContent = 'Pre-loading assets… (' + loaded + '/' + TEXTURE_LIST.length + ')';
-      }
-      await loadAssetAsync('lang/en_US.lang');
-      logMsg('Pre-load complete: ' + Object.keys(window.__mcpeTextures).length + ' textures');
+      for (var i=0;i<TEXTURE_LIST.length;i++) { await loadTex(TEXTURE_LIST[i]); statusText.textContent='Loading… ('+(i+1)+'/'+TEXTURE_LIST.length+')'; }
+      await loadAsset('lang/en_US.lang');
+      logMsg('Assets loaded: '+Object.keys(window.__mcpeTextures).length+' textures');
       startWasm();
     }
-
     function startWasm() {
-      logMsg('Starting WASM engine…');
       window.Module = {
         canvas: canvas,
-        print: function(text) { logMsg('[stdout] ' + text); },
-        printErr: function(text) { logMsg('[stderr] ' + text); },
-        locateFile: function(path) { return './' + path; },
-        preRun: function() { logMsg('preRun'); },
-        onRuntimeInitialized: function() { logMsg('WASM runtime ready ✓'); },
+        print: function(t) { logMsg('[stdout] '+t); },
+        printErr: function(t) { logMsg('[stderr] '+t); },
+        locateFile: function(p) { return './'+p; },
+        onAbort: function(e) { logMsg('!!! ABORT: '+e); },
         noInitialRun: false,
       };
-      var script = document.createElement('script');
-      script.src = './mcpe_emscripten_full.js';
-      document.body.appendChild(script);
-      setTimeout(function() {
-        statusEl.classList.add('hidden');
-        hudEl.style.display = 'block';
-        hudInfo.textContent = 'MCPE 2013 engine (WASM native)';
-      }, 8000);
+      var s=document.createElement('script'); s.src='./mcpe_emscripten_full.js'; document.body.appendChild(s);
+      setTimeout(function(){statusEl.classList.add('hidden');hudEl.style.display='block';},10000);
     }
-
     preloadAll();
   </script>
 </body>
