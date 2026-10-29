@@ -16,8 +16,7 @@ static void emscripten_main_loop() {
 }
 
 int main() {
-    // §Create WebGL context — Emscripten's LEGACY_GL_EMULATION will hook into this
-    // and initialize GLImmediate (s_texUnits etc.) automatically
+    // §Create WebGL context
     EmscriptenWebGLContextAttributes attrs;
     emscripten_webgl_init_context_attributes(&attrs);
     attrs.alpha = 0; attrs.depth = 1; attrs.stencil = 0; attrs.antialias = 0;
@@ -30,6 +29,20 @@ int main() {
         emscripten_webgl_make_context_current(ctx);
         printf("[MCPE_WASM] GL context current ✓\n"); fflush(stdout);
     }
+
+    // §CRITICAL: manually init GLImmediate AFTER context is current
+    // This populates s_texUnits so glEnable etc. don't crash
+    EM_ASM({
+        if (typeof Browser !== 'undefined') Browser.useWebGL = true;
+        if (typeof GLImmediate !== 'undefined' && GLImmediate.init) {
+            try {
+                GLImmediate.init();
+                console.log('[MCPE_WASM] GLImmediate.init() OK');
+            } catch(e) {
+                console.error('[MCPE_WASM] GLImmediate.init() error: ' + e.message);
+            }
+        }
+    });
 
     printf("[MCPE_WASM] Step 1: platform\n"); fflush(stdout);
     g_platform = new AppPlatform_emscripten();
