@@ -116,7 +116,7 @@ function startWasm() {
       // GL1 no-op stubs (functions not yet properly implemented)
       var noop = function() {};
       var noopRet = function(v) { return v; };
-      ['glAlphaFunc','glBegin','glEnd','glColor3f','glColor4ub','glTexCoord2f',
+      var gl1Names = ['glAlphaFunc','glBegin','glEnd','glColor3f','glColor4ub','glTexCoord2f',
        'glNormal3f','glPushMatrix','glPopMatrix','glRotatef','glScalef','glMultMatrixf',
        'glLoadMatrixf','glFrustum','glFrustumf','glColorMaterial','glPolygonMode',
        'glPointSize','glFogf','glFogfv','glFogi','glFogx','glFogxv','glLightfv',
@@ -142,19 +142,23 @@ function startWasm() {
        'glDeleteRenderbuffers','glBindRenderbuffer','glRenderbufferStorage',
        'glFramebufferRenderbuffer','glCheckFramebufferStatus',
        'glActiveTexture','glClientActiveTexture','glBlendFunc',
-       // MCPE custom wrappers
        'glEnable2','glDisable2','glDepthFunc2','glDepthRangef2','glAlphaFunc2',
        'glTranslatef2','glRotatef2','glScalef2','glPushMatrix2','glPopMatrix2',
        'glColor4f2','glBindTexture2','glTexParameteri2','glTexImage2D2',
        'glDrawElements2','glGenTextures2','glActiveTexture2','glClientActiveTexture2',
        'glBlendFunc2','glFogfv2','glFogf2','glShadeModel2','glFogi2','glCullFace2',
        'drawArrayVT','drawArrayVT_NoState','drawArrayVTC','drawArrayVTC_NoState',
-       'glGenLists','glOrtho','glOrthof'
-      ].forEach(function(name) {
-        if (typeof window['_'+name] === 'undefined') {
-          window['_'+name] = noop;
-        }
+       'glGenLists','glOrtho','glOrthof','glColor3f','glColor4f','glGetString'];
+      gl1Names.forEach(function(name) {
+        // Set on Module so WASM import resolver finds it
+        Module[name] = noop;
+        // Also set on global scope with underscore prefix
+        window['_'+name] = noop;
       });
+      // Special returns
+      Module.glGenLists = function(n) { return 1; };
+      Module.glGetString = function(name) { return 0; };
+      Module.glCheckFramebufferStatus = function(target) { return 0x8CD5; };
       // Special returns
       _glGenLists = function(n) { return 1; };
       _glGetString = function(name) { return 0; };
