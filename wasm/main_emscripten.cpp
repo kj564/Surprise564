@@ -29,6 +29,13 @@ extern "C" EMSCRIPTEN_KEEPALIVE int get_block(int x, int y, int z) {
     return ((Minecraft*)g_app)->level->getTile(x, y, z);
 }
 
+// §Debug: check if Tile::tiles[id] is NULL
+extern "C" EMSCRIPTEN_KEEPALIVE int get_tile_ptr(int id) {
+    if (id < 0 || id >= 256) return -2;
+    Tile* tile = Tile::tiles[id];
+    return tile ? (int)tile : 0;
+}
+
 int main() {
     printf("[MCPE_WASM] Creating GL context…\n"); fflush(stdout);
     EM_ASM({

@@ -6063,6 +6063,7 @@ function gl1_init_shader() { if (window.__gl1Shader) return; var gl = (GL.curren
 var _mouse_feed,
   _keyboard_feed,
   _get_block,
+  _get_tile_ptr,
   _main,
   _malloc,
   _free,
@@ -6088,6 +6089,7 @@ function assignWasmExports(wasmExports) {
   _mouse_feed = Module['_mouse_feed'] = wasmExports['mouse_feed'];
   _keyboard_feed = Module['_keyboard_feed'] = wasmExports['keyboard_feed'];
   _get_block = Module['_get_block'] = wasmExports['get_block'];
+  _get_tile_ptr = Module['_get_tile_ptr'] = wasmExports['get_tile_ptr'];
   _main = Module['_main'] = wasmExports['main'];
   _malloc = Module['_malloc'] = wasmExports['malloc'];
   _free = Module['_free'] = wasmExports['free'];
