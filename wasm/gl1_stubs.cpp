@@ -59,26 +59,31 @@ extern "C" {
 // glVertexPointer — track pointer offset (into bound VBO)
 void glVertexPointer(int size, unsigned int type, int stride, const void* pointer) {
     g_vaPointer = (int)pointer;
+    EM_ASM({ if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); }, size, type, stride, (int)pointer);
 }
 
 void glColorPointer(int size, unsigned int type, int stride, const void* pointer) {
     g_caPointer = (int)pointer;
+    EM_ASM({ if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); }, size, type, stride, (int)pointer);
 }
 
 void glTexCoordPointer(int size, unsigned int type, int stride, const void* pointer) {
     g_taPointer = (int)pointer;
+    EM_ASM({ if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); }, size, type, stride, (int)pointer);
 }
 
 void glEnableClientState(unsigned int cap) {
     if (cap == GL_VERTEX_ARRAY) g_vaEnabled = 1;
     else if (cap == GL_COLOR_ARRAY) g_caEnabled = 1;
     else if (cap == GL_TEXTURE_COORD_ARRAY) g_taEnabled = 1;
+    EM_ASM({ if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); }, cap);
 }
 
 void glDisableClientState(unsigned int cap) {
     if (cap == GL_VERTEX_ARRAY) g_vaEnabled = 0;
     else if (cap == GL_COLOR_ARRAY) g_caEnabled = 0;
     else if (cap == GL_TEXTURE_COORD_ARRAY) g_taEnabled = 0;
+    EM_ASM({ if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); }, cap);
 }
 
 // glDrawArrays — THE KEY function: set up shader + attribs + draw
