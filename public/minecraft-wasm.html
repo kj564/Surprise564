@@ -56,18 +56,24 @@
         printErr: function(t) { logMsg('[stderr] '+t); },
         locateFile: function(p) { return './'+p; },
         onAbort: function(e) { logMsg('!!! ABORT: '+e); },
-        onRuntimeInitialized: function() {
-          logMsg('WASM runtime ready — init GLImmediate…');
-          // §Init GLImmediate after runtime ready — Emscripten will auto-create
-          // GL context from Module.canvas when first GL function is called.
-          // GLImmediate.init() populates s_texUnits so glEnable doesn't crash.
-          if (typeof GLImmediate !== 'undefined' && GLImmediate.init) {
+        preRun: function() {
+          logMsg('preRun — creating GL context from canvas…');
+          // §Force GL context creation from Module.canvas
+          // This ensures GL.currentContext.canvas is set properly
+          if (typeof GL !== 'undefined' && GL.createContext) {
             try {
-              // §Set Browser.useWebGL=true so GLImmediate.init() doesn't skip
-              if (typeof Browser !== 'undefined') Browser.useWebGL = true;
-              GLImmediate.init();
-              logMsg('GLImmediate.init() OK');
-            } catch(e) { logMsg('GLImmediate error: ' + e.message); }
+              var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false});
+              if (ctx) {
+                GL.makeContextCurrent(ctx);
+                logMsg('GL context created from canvas ✓');
+              }
+            } catch(e) { logMsg('GL.createContext error: ' + e.message); }
+          }
+          // §Init GLImmediate after GL context is bound to canvas
+          if (typeof Browser !== 'undefined') Browser.useWebGL = true;
+          if (typeof GLImmediate !== 'undefined' && GLImmediate.init) {
+            try { GLImmediate.init(); logMsg('GLImmediate.init() OK'); }
+            catch(e) { logMsg('GLImmediate error: ' + e.message); }
           }
         },
         noInitialRun: false,
