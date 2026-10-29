@@ -1,15 +1,10 @@
 // §AppPlatform_emscripten.cpp — Emscripten platform implementation
-// Uses source code MCPE 2013 asli pattern (AppPlatform_android.h line 372):
-//   loadTexture(filename) → get from JS cache → return TextureData
-// Textures are pre-loaded async in HTML before WASM main() runs.
 #include "AppPlatform_emscripten.h"
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
 #include <emscripten.h>
 
-// §EM_JS — get texture from JS pre-loaded cache
-// JS side: window.__getTexture(path) → {width, height, ptr} or null
 EM_JS(int, js_getTexture, (const char* pathC, int* outW, int* outH), {
     var path = UTF8ToString(pathC);
     var tex = window.__getTexture ? window.__getTexture(path) : null;
@@ -19,7 +14,6 @@ EM_JS(int, js_getTexture, (const char* pathC, int* outW, int* outH), {
     return tex.ptr;
 });
 
-// §EM_JS — get raw asset from JS pre-loaded cache
 EM_JS(int, js_getAsset, (const char* pathC, int* outSize), {
     var path = UTF8ToString(pathC);
     var asset = window.__getAsset ? window.__getAsset(path) : null;
@@ -29,7 +23,7 @@ EM_JS(int, js_getAsset, (const char* pathC, int* outSize), {
 });
 
 AppPlatform_emscripten::AppPlatform_emscripten()
-    : _width(854), _height(480) {}
+    : _width(854), _height(480), _userInputStatus(0) {}
 
 AppPlatform_emscripten::~AppPlatform_emscripten() {
     for (auto* tex : _loadedTextures) { if (tex) delete tex; }
@@ -41,25 +35,16 @@ int AppPlatform_emscripten::getScreenHeight() const { return _height; }
 TextureData AppPlatform_emscripten::loadTexture(const std::string& name, bool blur) {
     TextureData result;
     std::string path = name;
-
     int w = 0, h = 0;
     int ptr = js_getTexture(path.c_str(), &w, &h);
-
-    if (ptr == 0 || w == 0 || h == 0) {
-        printf("[TEX] Not in cache: %s\n", path.c_str()); fflush(stdout);
-        return result;
-    }
-
-    result.w = w;
-    result.h = h;
+    if (ptr == 0 || w == 0 || h == 0) return result;
+    result.w = w; result.h = h;
     result.data = (unsigned char*)ptr;
     result.numBytes = w * h * 4;
     result.format = TEXF_UNCOMPRESSED_8888;
     result.memoryHandledExternally = false;
     result.identifier = -1;
     result.transparent = true;
-
-    printf("[TEX] %s: %dx%d OK\n", path.c_str(), w, h); fflush(stdout);
     return result;
 }
 
@@ -69,10 +54,7 @@ void AppPlatform_emscripten::releaseTexture(TextureData* texture) {}
 BinaryBlob AppPlatform_emscripten::readAssetFile(const std::string& filename) {
     int size = 0;
     int ptr = js_getAsset(filename.c_str(), &size);
-
     if (ptr == 0 || size <= 0) return BinaryBlob();
-
-    printf("[ASSET] %s: %d bytes\n", filename.c_str(), size); fflush(stdout);
     return BinaryBlob((unsigned char*)ptr, size);
 }
 
@@ -98,9 +80,83 @@ void AppPlatform_emscripten::vibrate(int milliseconds) {}
 std::string AppPlatform_emscripten::getExternalStoragePath() const { return "/data"; }
 std::string AppPlatform_emscripten::getCacheStoragePath() const { return "/cache"; }
 bool AppPlatform_emscripten::hasMouse() const { return true; }
-bool AppPlatform_emscripten::hasMultitouch() const { return false; }
+bool AppPlatform_emscripten::hasMultitouch() const { return true; }
 void AppPlatform_emscripten::showKeyboard() {}
 void AppPlatform_emscripten::hideKeyboard() {}
 void AppPlatform_emscripten::buyGame() {}
 void AppPlatform_emscripten::setupCanvas(int width, int height) { _width = width; _height = height; }
 void AppPlatform_emscripten::swapBuffers() {}
+
+// §createUserInput — show JS prompt for world name + seed
+// Called when user clicks "Create new" in SelectWorldScreen
+EM_JS(int, js_createUserInput, (void), {
+    var name = prompt('Enter world name:', 'New World');
+    if (name === null || name.length === 0) return 0;
+    var seed = prompt('Enter seed (leave empty for random):', '');
+    window.__mcpeUserName = name;
+    window.__mcpeUserSeed = seed || '';
+    return 1;
+});
+
+EM_JS(int, js_getUserNameLen, (void), {
+    return window.__mcpeUserName ? window.__mcpeUserName.length : 0;
+});
+
+EM_JS(void, js_copyUserName, (int ptr), {
+    var s = window.__mcpeUserName || '';
+    for (var i = 0; i < s.length; i++) { HEAP8[ptr + i] = s.charCodeAt(i); }
+    HEAP8[ptr + s.length] = 0;
+});
+
+EM_JS(int, js_getUserSeedLen, (void), {
+    return window.__mcpeUserSeed ? window.__mcpeUserSeed.length : 0;
+});
+
+EM_JS(void, js_copyUserSeed, (int ptr), {
+    var s = window.__mcpeUserSeed || '';
+    for (var i = 0; i < s.length; i++) { HEAP8[ptr + i] = s.charCodeAt(i); }
+    HEAP8[ptr + s.length] = 0;
+});
+
+void AppPlatform_emscripten::createUserInput() {
+    _userInputStatus = 0;
+    _userInputData.clear();
+    
+    int result = js_createUserInput();
+    
+    if (result == 1) {
+        int nameLen = js_getUserNameLen();
+        if (nameLen > 0) {
+            char* nameBuf = (char*)malloc(nameLen + 1);
+            js_copyUserName((int)nameBuf);
+            std::string nameStr(nameBuf);
+            free(nameBuf);
+            
+            int seedLen = js_getUserSeedLen();
+            std::string seedStr;
+            if (seedLen > 0) {
+                char* seedBuf = (char*)malloc(seedLen + 1);
+                js_copyUserSeed((int)seedBuf);
+                seedStr = std::string(seedBuf);
+                free(seedBuf);
+            }
+            
+            _userInputData.push_back(nameStr);
+            _userInputData.push_back(seedStr);
+            _userInputData.push_back("creative");
+            _userInputStatus = 1;
+        } else {
+            _userInputStatus = -1;
+        }
+    } else {
+        _userInputStatus = -1;
+    }
+}
+
+int AppPlatform_emscripten::getUserInputStatus() {
+    return _userInputStatus;
+}
+
+StringVector AppPlatform_emscripten::getUserInput() {
+    return _userInputData;
+}

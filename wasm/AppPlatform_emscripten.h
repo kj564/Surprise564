@@ -1,6 +1,4 @@
 // §AppPlatform_emscripten.h — Emscripten/WebGL platform layer for MCPE 2013
-// Replaces AppPlatform_android.h / AppPlatform_win32.h
-// Provides browser-compatible implementations of platform-specific functions.
 #ifndef APP_PLATFORM_EMSCRIPTEN_H__
 #define APP_PLATFORM_EMSCRIPTEN_H__
 
@@ -13,7 +11,6 @@ public:
     AppPlatform_emscripten();
     virtual ~AppPlatform_emscripten();
 
-    // §AppPlatform.h — platform abstraction methods
     int getScreenWidth() const;
     int getScreenHeight() const;
     
@@ -21,10 +18,11 @@ public:
     TextureData loadTexture(const std::string& name, bool blur = false);
     void releaseTexture(TextureData* texture);
     
-    BinaryBlob readAssetFile(const std::string& filename);
     void* loadAsset(const std::string& name, int* size);
     void* loadFile(const std::string& path, int* size);
     bool saveFile(const std::string& path, const void* data, int size);
+    
+    BinaryBlob readAssetFile(const std::string& filename);
     
     std::string getDateString(int year, int month, int day, int hour, int minute);
     
@@ -50,10 +48,19 @@ public:
     void setupCanvas(int width, int height);
     void swapBuffers();
     
+    // §User input (create new world dialog) — uses JS prompt()
+    void createUserInput();
+    int getUserInputStatus();
+    StringVector getUserInput();
+    
 private:
     int _width;
     int _height;
     std::vector<TextureData*> _loadedTextures;
+    
+    // §User input state: 0=not started, -1=cancelled, 1=done
+    int _userInputStatus;
+    StringVector _userInputData;
 };
 
 #endif // APP_PLATFORM_EMSCRIPTEN_H__
