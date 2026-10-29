@@ -6637,6 +6637,8 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
 
 
 
+
+
   var getCFunc = (ident) => {
       var func = Module['_' + ident]; // closure exported function
       assert(func, `Cannot call unknown function ${ident}, make sure it is exported`);
@@ -7232,32 +7234,37 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('wasmBinary');
 }
 var ASM_CONSTS = {
-  6477860: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
- 6477960: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
- 6478058: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
- 6478162: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
- 6478258: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
- 6478356: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
- 6478434: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
- 6478516: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
- 6478600: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
- 6478690: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6478784: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }
+  6478646: ($0, $1, $2, $3) => { if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3); },  
+ 6478746: ($0, $1, $2, $3) => { if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3); },  
+ 6478844: ($0, $1, $2, $3) => { if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3); },  
+ 6478948: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
+ 6479044: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
+ 6479142: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
+ 6479220: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
+ 6479302: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
+ 6479386: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
+ 6479476: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6479570: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }
 };
 function gl1_init_shader() { if (window.__gl1Shader) return; var gl = (GL.currentContext && GL.currentContext.GLctx); if (!gl) return; var vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, 'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProj; uniform mat4 uMV; varying vec4 vColor; varying vec2 vTexCoord; void main() { vColor = aColor; vTexCoord = aTexCoord; gl_Position = uProj * uMV * vec4(aPos, 1.0); }'); gl.compileShader(vs); var fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, 'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTex; uniform bool uHasTex; void main() { if (uHasTex) { vec4 t = texture2D(uTex, vTexCoord); gl_FragColor = vec4(t.rgb * vColor.rgb, t.a * vColor.a); } else { gl_FragColor = vColor; } }'); gl.compileShader(fs); var prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); window.__gl1Shader = prog; window.__gl1Attribs = { pos: gl.getAttribLocation(prog, 'aPos'), color: gl.getAttribLocation(prog, 'aColor'), texCoord: gl.getAttribLocation(prog, 'aTexCoord') }; window.__gl1Uniforms = { proj: gl.getUniformLocation(prog, 'uProj'), mv: gl.getUniformLocation(prog, 'uMV'), tex: gl.getUniformLocation(prog, 'uTex'), hasTex: gl.getUniformLocation(prog, 'uHasTex') }; console.log('[GL1] Shader OK: pos=' + window.__gl1Attribs.pos + ' color=' + window.__gl1Attribs.color + ' tex=' + window.__gl1Attribs.texCoord); }
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
 function js_getAsset(pathC,outSize) { var path = UTF8ToString(pathC); var asset = window.__getAsset ? window.__getAsset(path) : null; if (!asset) return 0; HEAP32[outSize >> 2] = asset.size; return asset.ptr; }
+function js_createUserInput() { var name = prompt('Enter world name:', 'New World'); if (name === null || name.length === 0) return 0; var seed = prompt('Enter seed (leave empty for random):', ''); window.__mcpeUserName = name; window.__mcpeUserSeed = seed || ''; return 1; }
+function js_getUserNameLen() { return window.__mcpeUserName ? window.__mcpeUserName.length : 0; }
+function js_copyUserName(ptr) { var s = window.__mcpeUserName || ''; for (var i = 0; i < s.length; i++) { HEAP8[ptr + i] = s.charCodeAt(i); } HEAP8[ptr + s.length] = 0; }
+function js_getUserSeedLen() { return window.__mcpeUserSeed ? window.__mcpeUserSeed.length : 0; }
+function js_copyUserSeed(ptr) { var s = window.__mcpeUserSeed || ''; for (var i = 0; i < s.length; i++) { HEAP8[ptr + i] = s.charCodeAt(i); } HEAP8[ptr + s.length] = 0; }
 
 // Imports from the Wasm binary.
 var _mouse_feed = Module['_mouse_feed'] = makeInvalidEarlyAccess('_mouse_feed');
 var _keyboard_feed = Module['_keyboard_feed'] = makeInvalidEarlyAccess('_keyboard_feed');
 var _fflush = makeInvalidEarlyAccess('_fflush');
 var _main = Module['_main'] = makeInvalidEarlyAccess('_main');
+var _malloc = Module['_malloc'] = makeInvalidEarlyAccess('_malloc');
+var _free = Module['_free'] = makeInvalidEarlyAccess('_free');
 var _htonl = makeInvalidEarlyAccess('_htonl');
 var _htons = makeInvalidEarlyAccess('_htons');
 var _ntohs = makeInvalidEarlyAccess('_ntohs');
-var _malloc = Module['_malloc'] = makeInvalidEarlyAccess('_malloc');
-var _free = Module['_free'] = makeInvalidEarlyAccess('_free');
 var _emscripten_stack_get_end = makeInvalidEarlyAccess('_emscripten_stack_get_end');
 var _emscripten_stack_get_base = makeInvalidEarlyAccess('_emscripten_stack_get_base');
 var _strerror = makeInvalidEarlyAccess('_strerror');
@@ -7283,11 +7290,11 @@ function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['keyboard_feed'] !== 'undefined', 'missing Wasm export: keyboard_feed');
   assert(typeof wasmExports['fflush'] !== 'undefined', 'missing Wasm export: fflush');
   assert(typeof wasmExports['main'] !== 'undefined', 'missing Wasm export: main');
+  assert(typeof wasmExports['malloc'] !== 'undefined', 'missing Wasm export: malloc');
+  assert(typeof wasmExports['free'] !== 'undefined', 'missing Wasm export: free');
   assert(typeof wasmExports['htonl'] !== 'undefined', 'missing Wasm export: htonl');
   assert(typeof wasmExports['htons'] !== 'undefined', 'missing Wasm export: htons');
   assert(typeof wasmExports['ntohs'] !== 'undefined', 'missing Wasm export: ntohs');
-  assert(typeof wasmExports['malloc'] !== 'undefined', 'missing Wasm export: malloc');
-  assert(typeof wasmExports['free'] !== 'undefined', 'missing Wasm export: free');
   assert(typeof wasmExports['emscripten_stack_get_end'] !== 'undefined', 'missing Wasm export: emscripten_stack_get_end');
   assert(typeof wasmExports['emscripten_stack_get_base'] !== 'undefined', 'missing Wasm export: emscripten_stack_get_base');
   assert(typeof wasmExports['strerror'] !== 'undefined', 'missing Wasm export: strerror');
@@ -7309,11 +7316,11 @@ function assignWasmExports(wasmExports) {
   _keyboard_feed = Module['_keyboard_feed'] = createExportWrapper('keyboard_feed', wasmExports['keyboard_feed'], 2);
   _fflush = createExportWrapper('fflush', wasmExports['fflush'], 1);
   _main = Module['_main'] = createExportWrapper('main', wasmExports['main'], 2);
+  _malloc = Module['_malloc'] = createExportWrapper('malloc', wasmExports['malloc'], 1);
+  _free = Module['_free'] = createExportWrapper('free', wasmExports['free'], 1);
   _htonl = createExportWrapper('htonl', wasmExports['htonl'], 1);
   _htons = createExportWrapper('htons', wasmExports['htons'], 1);
   _ntohs = createExportWrapper('ntohs', wasmExports['ntohs'], 1);
-  _malloc = Module['_malloc'] = createExportWrapper('malloc', wasmExports['malloc'], 1);
-  _free = Module['_free'] = createExportWrapper('free', wasmExports['free'], 1);
   _emscripten_stack_get_end = wasmExports['emscripten_stack_get_end'];
   _emscripten_stack_get_base = wasmExports['emscripten_stack_get_base'];
   _strerror = createExportWrapper('strerror', wasmExports['strerror'], 1);
@@ -7491,9 +7498,19 @@ var wasmImports = {
   /** @export */
   invoke_viiiiiiiiiiiiiii,
   /** @export */
+  js_copyUserName,
+  /** @export */
+  js_copyUserSeed,
+  /** @export */
+  js_createUserInput,
+  /** @export */
   js_getAsset,
   /** @export */
   js_getTexture,
+  /** @export */
+  js_getUserNameLen,
+  /** @export */
+  js_getUserSeedLen,
   /** @export */
   llvm_eh_typeid_for: _llvm_eh_typeid_for
 };
