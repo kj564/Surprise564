@@ -154,6 +154,7 @@ function startWasm() {
     locateFile: function(p) { return './' + p; },
     onAbort: function(e) { console.error('ABORT:', e); },
     onRuntimeInitialized: function() {
+      Module.print = function(t) { console.log("[stdout] " + t); };
       // Create GL context
       if (typeof GL !== 'undefined' && GL.createContext) {
         var ctx = GL.createContext(canvas, { alpha: false, depth: true, stencil: false, antialias: false });
