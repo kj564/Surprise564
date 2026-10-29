@@ -142,17 +142,17 @@ void glColor4f(float, float, float, float) {}
 void glColor4ub(unsigned char, unsigned char, unsigned char, unsigned char) {}
 void glTexCoord2f(float, float) {}
 void glNormal3f(float, float, float) {}
-void glMatrixMode(unsigned int mode) { g_matrixMode = mode; }
-void glLoadIdentity() {}
+void glMatrixMode(unsigned int mode) { g_matrixMode = mode; EM_ASM({ if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); }, mode); }
+void glLoadIdentity() { EM_ASM({ if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); }); }
 void glPushMatrix() {}
 void glPopMatrix() {}
-void glTranslatef(float, float, float) {}
+void glTranslatef(float x, float y, float z) { EM_ASM({ if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); }, x, y, z); }
 void glRotatef(float, float, float, float) {}
 void glScalef(float, float, float) {}
 void glMultMatrixf(const float*) {}
 void glLoadMatrixf(const float*) {}
 void glOrtho(double, double, double, double, double, double) {}
-void glOrthof(float, float, float, float, float, float) {}
+void glOrthof(float l, float r, float b, float t, float n, float f) { EM_ASM({ if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }, l, r, b, t, n, f); }
 void glFrustum(double, double, double, double, double, double) {}
 void glFrustumf(float, float, float, float, float, float) {}
 void glAlphaFunc(unsigned int, float) {}
