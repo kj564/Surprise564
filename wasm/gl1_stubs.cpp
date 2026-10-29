@@ -243,7 +243,6 @@ void glClientActiveTexture2(unsigned int) {}
 void glBlendFunc2(unsigned int, unsigned int) {}
 void glFogfv2(unsigned int, const float*) {}
 void glFogf2(unsigned int, float) {}
-void glShadeModel2(unsigned int) {}
 void glFogi2(unsigned int, int) {}
 void glCullFace2(unsigned int) {}
 void glVertexPointer2(int a, unsigned int b, int c, const void* d) { glVertexPointer(a,b,c,d); }
@@ -253,7 +252,6 @@ void glTexParameteri2(unsigned int, unsigned int, int) {}
 void glActiveTexture(unsigned int) {}
 void glClientActiveTexture(unsigned int) {}
 void glBlendFunc(unsigned int, unsigned int) {}
-void glShadeModel2(unsigned int) {}
 
 // Shaders (stub)
 unsigned int glCreateShader(unsigned int) { return 0; }
