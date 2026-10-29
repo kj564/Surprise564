@@ -90,47 +90,6 @@ void glDisableClientState(unsigned int cap) {
 // glDrawArrays — THE KEY function: set up shader + attribs + draw
 void glDrawArrays(unsigned int mode, int first, int count) {
     EM_ASM({ if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); }, mode, first, count);
-    gl1_init_shader();
-    
-    EM_ASM({
-        var gl = (GL.currentContext && GL.currentContext.GLctx);
-        if (!gl) return;
-        var prog = window.__gl1Shader;
-        if (!prog) return;
-        
-        gl.useProgram(prog);
-        
-        // Set identity matrices (will be replaced when matrix hooks work)
-        var id = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
-        gl.uniformMatrix4fv(window.__gl1Uniforms.proj, false, id);
-        gl.uniformMatrix4fv(window.__gl1Uniforms.mv, false, id);
-        
-        // Tesselator vertex format: pos(3f) + tex(2f) + color(4ub) = 24 bytes
-        // pos@0, texCoord@12, color@20
-        var stride = 24;
-        
-        if ($0) { // vertex array enabled
-            gl.enableVertexAttribArray(window.__gl1Attribs.pos);
-            gl.vertexAttribPointer(window.__gl1Attribs.pos, 3, gl.FLOAT, false, stride, $1);
-        }
-        if ($2) { // texCoord array enabled
-            gl.enableVertexAttribArray(window.__gl1Attribs.texCoord);
-            gl.vertexAttribPointer(window.__gl1Attribs.texCoord, 2, gl.FLOAT, false, stride, $3);
-            gl.uniform1i(window.__gl1Uniforms.tex, 0);
-            gl.uniform1i(window.__gl1Uniforms.hasTex, 1);
-        } else {
-            gl.uniform1i(window.__gl1Uniforms.hasTex, 0);
-        }
-        if ($4) { // color array enabled
-            gl.enableVertexAttribArray(window.__gl1Attribs.color);
-            gl.vertexAttribPointer(window.__gl1Attribs.color, 4, gl.UNSIGNED_BYTE, true, stride, $5);
-        } else {
-            gl.disableVertexAttribArray(window.__gl1Attribs.color);
-            gl.vertexAttrib4f(window.__gl1Attribs.color, 1, 1, 1, 1);
-        }
-        
-        gl.drawArrays($6, 0, $7);
-    }, g_vaEnabled, g_vaPointer, g_taEnabled, g_taPointer, g_caEnabled, g_caPointer, mode, count);
 }
 
 // GL1 state functions (no-op for now, proper impl later)

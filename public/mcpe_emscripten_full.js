@@ -7239,12 +7239,11 @@ var ASM_CONSTS = {
  6476506: ($0) => { if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0); },  
  6476602: ($0) => { if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0); },  
  6476700: ($0, $1, $2) => { if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2); },  
- 6476778: ($0, $1, $2, $3, $4, $5, $6, $7) => { var gl = (GL.currentContext && GL.currentContext.GLctx); if (!gl) return; var prog = window.__gl1Shader; if (!prog) return; gl.useProgram(prog); var id = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]); gl.uniformMatrix4fv(window.__gl1Uniforms.proj, false, id); gl.uniformMatrix4fv(window.__gl1Uniforms.mv, false, id); var stride = 24; if ($0) { gl.enableVertexAttribArray(window.__gl1Attribs.pos); gl.vertexAttribPointer(window.__gl1Attribs.pos, 3, gl.FLOAT, false, stride, $1); } if ($2) { gl.enableVertexAttribArray(window.__gl1Attribs.texCoord); gl.vertexAttribPointer(window.__gl1Attribs.texCoord, 2, gl.FLOAT, false, stride, $3); gl.uniform1i(window.__gl1Uniforms.tex, 0); gl.uniform1i(window.__gl1Uniforms.hasTex, 1); } else { gl.uniform1i(window.__gl1Uniforms.hasTex, 0); } if ($4) { gl.enableVertexAttribArray(window.__gl1Attribs.color); gl.vertexAttribPointer(window.__gl1Attribs.color, 4, gl.UNSIGNED_BYTE, true, stride, $5); } else { gl.disableVertexAttribArray(window.__gl1Attribs.color); gl.vertexAttrib4f(window.__gl1Attribs.color, 1, 1, 1, 1); } gl.drawArrays($6, 0, $7); },  
- 6477877: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
- 6477959: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
- 6478043: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
- 6478133: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6478227: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }
+ 6476778: ($0) => { if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0); },  
+ 6476860: () => { if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity(); },  
+ 6476944: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
+ 6477034: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6477128: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }
 };
 function gl1_init_shader() { if (window.__gl1Shader) return; var gl = (GL.currentContext && GL.currentContext.GLctx); if (!gl) return; var vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, 'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProj; uniform mat4 uMV; varying vec4 vColor; varying vec2 vTexCoord; void main() { vColor = aColor; vTexCoord = aTexCoord; gl_Position = uProj * uMV * vec4(aPos, 1.0); }'); gl.compileShader(vs); var fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, 'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTex; uniform bool uHasTex; void main() { if (uHasTex) { vec4 t = texture2D(uTex, vTexCoord); gl_FragColor = vec4(t.rgb * vColor.rgb, t.a * vColor.a); } else { gl_FragColor = vColor; } }'); gl.compileShader(fs); var prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); window.__gl1Shader = prog; window.__gl1Attribs = { pos: gl.getAttribLocation(prog, 'aPos'), color: gl.getAttribLocation(prog, 'aColor'), texCoord: gl.getAttribLocation(prog, 'aTexCoord') }; window.__gl1Uniforms = { proj: gl.getUniformLocation(prog, 'uProj'), mv: gl.getUniformLocation(prog, 'uMV'), tex: gl.getUniformLocation(prog, 'uTex'), hasTex: gl.getUniformLocation(prog, 'uHasTex') }; console.log('[GL1] Shader OK: pos=' + window.__gl1Attribs.pos + ' color=' + window.__gl1Attribs.color + ' tex=' + window.__gl1Attribs.texCoord); }
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
@@ -7404,8 +7403,6 @@ var wasmImports = {
   fd_write: _fd_write,
   /** @export */
   getaddrinfo: _getaddrinfo,
-  /** @export */
-  gl1_init_shader,
   /** @export */
   glBindBuffer: _glBindBuffer,
   /** @export */
