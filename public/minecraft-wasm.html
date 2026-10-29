@@ -112,8 +112,16 @@ var GL1 = {
   },
   draw: function(gl, mode, first, count) {
     this.ensureShader(gl);
+    // If proj is identity and drawing many vertices (3D chunk), use default perspective
+    var proj = this.proj;
+    if (proj[0] === 1.0 && proj[5] === 1.0 && proj[10] === 1.0 && count > 50) {
+      // Default perspective: 70° FOV, 16:9 aspect, near=0.05, far=1000
+      var f = 1.0 / Math.tan(70 * Math.PI / 360);
+      var nf = 1 / (0.05 - 1000);
+      proj = new Float32Array([f/(854/480),0,0,0, 0,f,0,0, 0,0,(1000+0.05)*nf,-1, 0,0,2*1000*0.05*nf,0]);
+    }
     gl.useProgram(this.prog);
-    gl.uniformMatrix4fv(this.uni.proj, false, this.proj);
+    gl.uniformMatrix4fv(this.uni.proj, false, proj);
     gl.uniformMatrix4fv(this.uni.mv, false, this.mv);
     var s = 24;
     // §Always set vertex attribs — stride=24 (pos3f+tex2f+color4ub)
