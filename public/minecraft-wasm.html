@@ -49,89 +49,74 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // §Pre-load all MCPE 2013 texture assets ASYNC before WASM main() runs
-    // This avoids the synchronous XHR responseType restriction.
-    // Textures are decoded to RGBA and stored in window.__mcpeTextures cache.
-    // WASM's AppPlatform_emscripten::loadTexture reads from this cache.
+    // Pre-load textures
     var TEXTURE_LIST = [
-      'terrain.png',
-      'gui/gui.png',
-      'gui/icons.png',
-      'gui/title.png',
-      'gui/background.png',
-      'gui/items.png',
-      'gui/itemframe.png',
-      'gui/touchgui.png',
-      'gui/bg32.png',
-      'gui/default_world.png',
-      'gui/spritesheet.png',
-      'gui/gui_blocks.png',
-      'font/default8.png',
-      'font/default.png',
-      'particles.png',
-      'environment/clouds.png',
-      'mob/char.png',
-      'mob/chicken.png',
-      'mob/cow.png',
-      'mob/pig.png',
-      'mob/sheep.png',
-      'mob/sheep_fur.png',
-      'mob/zombie.png',
-      'mob/skeleton.png',
-      'mob/spider.png',
-      'mob/creeper.png',
-      'mob/pigzombie.png',
-      'item/arrows.png',
-      'item/sign.png',
-      'item/camera.png',
-      'art/kz.png',
+      'terrain.png', 'gui/gui.png', 'gui/icons.png', 'gui/title.png',
+      'gui/background.png', 'gui/items.png', 'gui/itemframe.png',
+      'gui/touchgui.png', 'font/default8.png', 'particles.png',
+      'environment/clouds.png', 'mob/char.png', 'mob/chicken.png',
+      'mob/cow.png', 'mob/pig.png', 'mob/sheep.png', 'mob/sheep_fur.png',
+      'mob/zombie.png', 'mob/skeleton.png', 'mob/spider.png', 'mob/creeper.png',
     ];
 
-    // §Cache for decoded textures: path → {w, h, ptr} (ptr set after WASM ready)
     window.__mcpeTextures = {};
-    window.__mcpeAssets = {};  // raw bytes cache
+    window.__mcpeAssets = {};
 
     async function loadTextureAsync(path) {
       try {
-        var response = await fetch((location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/') + path);
-        if (!response.ok) { logMsg('[TEX] skip ' + path + ' (HTTP ' + response.status + ')'); return; }
+        var base = location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/';
+        var response = await fetch(base + path);
+        if (!response.ok) return;
         var blob = await response.blob();
         var url = URL.createObjectURL(blob);
-
         return new Promise(function(resolve) {
           var img = new Image();
           img.onload = function() {
             var c = document.createElement('canvas');
-            c.width = img.width;
-            c.height = img.height;
+            c.width = img.width; c.height = img.height;
             var ctx = c.getContext('2d');
             ctx.drawImage(img, 0, 0);
             var imageData = ctx.getImageData(0, 0, img.width, img.height);
-            // Store RGBA pixels as Uint8Array (ptr assigned later when WASM malloc is available)
-            window.__mcpeTextures[path] = {
-              width: img.width,
-              height: img.height,
-              pixels: imageData.data  // Uint8ClampedArray
-            };
+            window.__mcpeTextures[path] = { width: img.width, height: img.height, pixels: imageData.data };
             URL.revokeObjectURL(url);
             resolve();
           };
-          img.onerror = function() { logMsg('[TEX] decode error: ' + path); resolve(); };
+          img.onerror = function() { resolve(); };
           img.src = url;
         });
-      } catch(e) {
-        logMsg('[TEX] fetch error: ' + path + ' — ' + e.message);
-      }
+      } catch(e) {}
     }
 
     async function loadAssetAsync(path) {
       try {
-        var response = await fetch((location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/') + path);
+        var base = location.pathname.includes('mcpe-wasm') ? '../assets/' : './assets/';
+        var response = await fetch(base + path);
         if (!response.ok) return;
         var buf = await response.arrayBuffer();
         window.__mcpeAssets[path] = new Uint8Array(buf);
       } catch(e) {}
     }
+
+    window.__getTexture = function(path) {
+      var tex = window.__mcpeTextures[path];
+      if (!tex) return null;
+      if (!tex.ptr && typeof _malloc === 'function') {
+        var numBytes = tex.width * tex.height * 4;
+        tex.ptr = _malloc(numBytes);
+        if (tex.ptr) HEAPU8.set(tex.pixels, tex.ptr);
+      }
+      return tex.ptr ? { width: tex.width, height: tex.height, ptr: tex.ptr } : null;
+    };
+
+    window.__getAsset = function(path) {
+      var asset = window.__mcpeAssets[path];
+      if (!asset) return null;
+      if (!asset.ptr && typeof _malloc === 'function') {
+        asset.ptr = _malloc(asset.length);
+        if (asset.ptr) HEAPU8.set(asset, asset.ptr);
+      }
+      return asset.ptr ? { ptr: asset.ptr, size: asset.length } : null;
+    };
 
     async function preloadAll() {
       logMsg('Pre-loading ' + TEXTURE_LIST.length + ' textures…');
@@ -142,71 +127,32 @@
         progressBar.style.width = (loaded / TEXTURE_LIST.length * 100) + '%';
         statusText.textContent = 'Pre-loading assets… (' + loaded + '/' + TEXTURE_LIST.length + ')';
       }
-
-      // Also load lang file
       await loadAssetAsync('lang/en_US.lang');
-
-      logMsg('Pre-load complete: ' + Object.keys(window.__mcpeTextures).length + ' textures cached');
+      logMsg('Pre-load complete: ' + Object.keys(window.__mcpeTextures).length + ' textures');
       startWasm();
     }
 
-    // §Expose texture cache for WASM
-    // WASM calls window.__getTexture(path) → returns [w, h, ptr] or null
-    // ptr is allocated via _malloc on first access
-    window.__getTexture = function(path) {
-      var tex = window.__mcpeTextures[path];
-      if (!tex) return null;
-      if (!tex.ptr) {
-        // Allocate WASM memory and copy pixels
-        if (typeof _malloc === 'function') {
-          var numBytes = tex.width * tex.height * 4;
-          tex.ptr = _malloc(numBytes);
-          if (tex.ptr) {
-            HEAPU8.set(tex.pixels, tex.ptr);
-          }
-        }
-      }
-      return tex.ptr ? {width: tex.width, height: tex.height, ptr: tex.ptr} : null;
-    };
-
-    window.__getAsset = function(path) {
-      var asset = window.__mcpeAssets[path];
-      if (!asset) return null;
-      if (!asset.ptr && typeof _malloc === 'function') {
-        asset.ptr = _malloc(asset.length);
-        if (asset.ptr) HEAPU8.set(asset, asset.ptr);
-      }
-      return asset.ptr ? {ptr: asset.ptr, size: asset.length} : null;
-    };
-
     function startWasm() {
       logMsg('Starting WASM engine…');
-      var Module = {
+      window.Module = {
         canvas: canvas,
         print: function(text) { logMsg('[stdout] ' + text); },
         printErr: function(text) { logMsg('[stderr] ' + text); },
         locateFile: function(path) { return './' + path; },
-        preRun: function() { logMsg('preRun — engine about to start'); },
-        onRuntimeInitialized: function() { logMsg('WASM runtime initialized ✓'); },
+        preRun: function() { logMsg('preRun'); },
+        onRuntimeInitialized: function() { logMsg('WASM runtime ready ✓'); },
         noInitialRun: false,
       };
-      window.Module = Module;
-
-      // Load the WASM glue script
       var script = document.createElement('script');
       script.src = './mcpe_emscripten_full.js';
-      script.onload = function() { logMsg('WASM script loaded'); };
-      script.onerror = function() { logMsg('ERROR: failed to load WASM script'); };
       document.body.appendChild(script);
-
       setTimeout(function() {
         statusEl.classList.add('hidden');
         hudEl.style.display = 'block';
-        hudInfo.textContent = 'MCPE 2013 engine running (WASM native)';
+        hudInfo.textContent = 'MCPE 2013 engine (WASM native)';
       }, 8000);
     }
 
-    // Start pre-loading
     preloadAll();
   </script>
 </body>
