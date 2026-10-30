@@ -221,12 +221,20 @@ int glGetUniformLocation(unsigned int, const char*) { return 0; }
 void glEnable(unsigned int cap) {
     if (cap == 0x0DE0) { EM_ASM({ if (typeof GL1 !== 'undefined') GL1.tex2dEn = 1; }); return; }
     if (cap == 0x0BC0) { EM_ASM({ if (typeof GL1 !== 'undefined') GL1.alphaTestEn = 1; }); return; }
+    if (cap == 0x0B60) { EM_ASM({ if (typeof GL1 !== 'undefined') GL1.fogEn = 1; }); return; } // GL_FOG
+    if (cap == 0x0B57) { return; } // GL_COLOR_MATERIAL — not in WebGL2
+    if (cap == 0x0B50) { return; } // GL_LIGHTING — not in WebGL2
+    if (cap >= 0x4000 && cap < 0x4008) { return; } // GL_LIGHT0-7 — not in WebGL2
     EM_ASM({ var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.enable($0); }, cap);
 }
 #undef glDisable
 void glDisable(unsigned int cap) {
     if (cap == 0x0DE0) { EM_ASM({ if (typeof GL1 !== 'undefined') GL1.tex2dEn = 0; }); return; }
     if (cap == 0x0BC0) { EM_ASM({ if (typeof GL1 !== 'undefined') GL1.alphaTestEn = 0; }); return; }
+    if (cap == 0x0B60) { EM_ASM({ if (typeof GL1 !== 'undefined') GL1.fogEn = 0; }); return; } // GL_FOG
+    if (cap == 0x0B57) { return; } // GL_COLOR_MATERIAL — not in WebGL2
+    if (cap == 0x0B50) { return; } // GL_LIGHTING — not in WebGL2
+    if (cap >= 0x4000 && cap < 0x4008) { return; } // GL_LIGHT0-7 — not in WebGL2
     EM_ASM({ var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.disable($0); }, cap);
 }
 extern void glDepthFunc(unsigned int);

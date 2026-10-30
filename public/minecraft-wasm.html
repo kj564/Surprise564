@@ -199,6 +199,8 @@ function startWasm() {
     _glColor4f: function(r,g,b,a) { GL1.curColor[0]=r; GL1.curColor[1]=g; GL1.curColor[2]=b; GL1.curColor[3]=a; },
     _glColor4ub: function(r,g,b,a) { GL1.curColor[0]=r/255; GL1.curColor[1]=g/255; GL1.curColor[2]=b/255; GL1.curColor[3]=a/255; },
     _glAlphaFunc: function(func, ref) { GL1.alphaRef = ref; },
+    _glHint: function(target, mode) { /* no-op — GL_PERSPECTIVE_CORRECTION_HINT not in WebGL2 */ },
+    _glShadeModel: function(mode) { /* no-op — GL_SMOOTH/GL_FLAT not in WebGL2 */ },
     _glEnable: function(cap) {
       if (cap == 0x0DE0) { GL1.tex2dEn = 1; return; }
       if (cap == 0x0BC0) { GL1.alphaTestEn = 1; return; }
@@ -310,6 +312,8 @@ function startWasm() {
       _glAlphaFunc = gl1Ovr._glAlphaFunc;
       _glEnable = gl1Ovr._glEnable;
       _glDisable = gl1Ovr._glDisable;
+      _glHint = gl1Ovr._glHint;
+      _glShadeModel = gl1Ovr._glShadeModel;
       _glMatrixMode = gl1Ovr._glMatrixMode;
       _glLoadIdentity = gl1Ovr._glLoadIdentity;
       _glOrthof = gl1Ovr._glOrthof;

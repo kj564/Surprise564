@@ -6056,10 +6056,12 @@ var ASM_CONSTS = {
  6394894: ($0, $1) => { if (!window.__gl1GetMatrix) return; var m = window.__gl1GetMatrix($0 == 0xBA7 ? 1 : 0); if (m) { for (var i = 0; i < 16; i++) HEAPF32[($1>>2)+i] = m[i]; } },  
  6395053: () => { if (typeof GL1 !== 'undefined') GL1.tex2dEn = 1; },  
  6395106: () => { if (typeof GL1 !== 'undefined') GL1.alphaTestEn = 1; },  
- 6395163: ($0) => { var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.enable($0); },  
- 6395247: () => { if (typeof GL1 !== 'undefined') GL1.tex2dEn = 0; },  
- 6395300: () => { if (typeof GL1 !== 'undefined') GL1.alphaTestEn = 0; },  
- 6395357: ($0) => { var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.disable($0); }
+ 6395163: () => { if (typeof GL1 !== 'undefined') GL1.fogEn = 1; },  
+ 6395214: ($0) => { var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.enable($0); },  
+ 6395298: () => { if (typeof GL1 !== 'undefined') GL1.tex2dEn = 0; },  
+ 6395351: () => { if (typeof GL1 !== 'undefined') GL1.alphaTestEn = 0; },  
+ 6395408: () => { if (typeof GL1 !== 'undefined') GL1.fogEn = 0; },  
+ 6395459: ($0) => { var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.disable($0); }
 };
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
 function js_getAsset(pathC,outSize) { var path = UTF8ToString(pathC); var asset = window.__getAsset ? window.__getAsset(path) : null; if (!asset) return 0; HEAP32[outSize >> 2] = asset.size; return asset.ptr; }
