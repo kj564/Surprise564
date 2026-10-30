@@ -18,12 +18,11 @@ static void emscripten_main_loop() {
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void mouse_feed(char action, char data, short x, short y, short dx, short dy) {
-    // §Feed both Mouse and Multitouch with full dx/dy
-    // Mouse: used for GUI clicks, hotbar selection
-    // Multitouch: used for D-pad movement + UnifiedTurnBuild look-around
-    // Both get the 6-arg version so dx/dy are tracked correctly
+    // §Feed both Mouse (6-arg with dx/dy) and Multitouch (5-arg, original API)
+    // Mouse: GUI clicks, hotbar, MouseTurnInput delta
+    // Multitouch: D-pad buttons + UnifiedTurnBuild look-around (uses position, not delta)
     Mouse::feed(action, data, x, y, dx, dy);
-    Multitouch::feed(action, data, x, y, dx, dy, 0);
+    Multitouch::feed(action, data, x, y, 0);
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void keyboard_feed(unsigned char key, int state) {
     Keyboard::feed(key, state);
