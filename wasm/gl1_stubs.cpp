@@ -111,7 +111,17 @@ void glPopMatrix() { EM_ASM({ if (typeof window.__gl1PopMatrix === "function") w
 void glTranslatef(float x, float y, float z) { EM_ASM({ if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); }, x, y, z); }
 void glRotatef(float a, float x, float y, float z) { EM_ASM({ if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3); }, a, x, y, z); }
 void glScalef(float x, float y, float z) { EM_ASM({ if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2); }, x, y, z); }
-void glMultMatrixf(const float*) {}
+// §glMultMatrixf — multiply current matrix by m (column-major)
+// Called by gles.cpp's gluPerspective. Bridges to JS to update GL1.mv or GL1.proj.
+void glMultMatrixf(const float* m) {
+    EM_ASM({
+        if (typeof window.__gl1MultMatrixf !== 'function') return;
+        // Read 16 floats from WASM heap
+        var mf = new Float32Array(16);
+        for (var i = 0; i < 16; i++) mf[i] = HEAPF32[($0>>2)+i];
+        window.__gl1MultMatrixf(mf);
+    }, (int)m);
+}
 void glLoadMatrixf(const float*) {}
 void glOrtho(double l, double r, double b, double t, double n, double f) { EM_ASM({ if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }, (float)l, (float)r, (float)b, (float)t, (float)n, (float)f); }
 void glOrthof(float l, float r, float b, float t, float n, float f) { EM_ASM({ if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); }, l, r, b, t, n, f); }
@@ -179,7 +189,7 @@ void glDeleteLists(unsigned int, int) {}
 void glListBase(unsigned int) {}
 unsigned int glGenLists(int) { return 1; }
 void glNormalPointer(unsigned int, int, const void*) {}
-void gluPerspective(float fovy, float aspect, float near, float far) { EM_ASM({ if (typeof window.__gl1Perspective === "function") window.__gl1Perspective($0, $1, $2, $3); }, fovy, aspect, near, far); }
+// §gluPerspective is defined in gles.cpp — it calls glMultMatrixf
 void gluLookAt(float, float, float, float, float, float, float, float, float) {}
 int glewInit() { return 0; }
 int glGetAttribLocation(unsigned int, const char*) { return 0; }
