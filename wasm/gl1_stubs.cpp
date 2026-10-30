@@ -175,7 +175,15 @@ void glGetTexParameteriv(unsigned int, unsigned int, int*) {}
 void glGetTexLevelParameteriv(unsigned int, int, unsigned int, int*) {}
 void glTexSubImage2D(unsigned int, int, int, int, int, int, unsigned int, unsigned int, const void*) {}
 void glGetIntegerv(unsigned int, int*) {}
-void glGetFloatv(unsigned int, float*) {}
+// §glGetFloatv — return tracked GLES1 matrix state
+// GL_MODELVIEW_MATRIX = 0xBA6, GL_PROJECTION_MATRIX = 0xBA7
+void glGetFloatv(unsigned int pname, float* params) {
+    EM_ASM({
+        if (!window.__gl1GetMatrix) return;
+        var m = window.__gl1GetMatrix($0 == 0xBA7 ? 1 : 0); // 1=proj, 0=mv
+        if (m) { for (var i = 0; i < 16; i++) HEAPF32[($1>>2)+i] = m[i]; }
+    }, pname, (int)params);
+}
 const unsigned char* glGetString(unsigned int) { return (const unsigned char*)""; }
 void glFinish() {}
 void glFlush() {}

@@ -269,6 +269,8 @@ function startWasm() {
       _glScalef = gl1Ovr._glScalef;
       _glPushMatrix = gl1Ovr._glPushMatrix;
       _glPopMatrix = gl1Ovr._glPopMatrix;
+      // §Provide matrix getter for C++ glGetFloatv (frustum culling needs matrices)
+      window.__gl1GetMatrix = function(which) { return which == 1 ? GL1.proj : GL1.mv; };
 
       // Mouse + touch input
       function canvasCoords(cx, cy) {

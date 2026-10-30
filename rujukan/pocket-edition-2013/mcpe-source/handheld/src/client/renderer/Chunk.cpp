@@ -244,13 +244,7 @@ int Chunk::getAllLists( int displayLists[], int p, int layer )
 
 void Chunk::cull( Culler* culler )
 {
-#ifdef __EMSCRIPTEN__
-	// §WASM: frustum culling uses glGetFloatv which our GL1 layer doesn't fully implement.
-	// Mark all chunks visible — the GPU will clip non-visible geometry anyway.
-	visible = true;
-#else
 	visible = culler->isVisible(bb);
-#endif
 }
 
 void Chunk::renderBB()

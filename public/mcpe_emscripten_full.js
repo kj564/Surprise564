@@ -5877,6 +5877,8 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
 
 
 
+
+
   var getCFunc = (ident) => {
       var func = Module['_' + ident]; // closure exported function
       return func;
@@ -6047,11 +6049,12 @@ var ASM_CONSTS = {
  6393648: ($0, $1, $2) => { if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2); },  
  6393738: ($0, $1, $2, $3) => { if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3); },  
  6393826: ($0, $1, $2) => { if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2); },  
- 6393908: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6394002: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
- 6394096: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5); },  
- 6394192: ($0, $1) => { if (typeof _glAlphaFunc === "function") _glAlphaFunc($0, $1); },  
- 6394258: ($0, $1, $2, $3) => { if (typeof window.__gl1Perspective === "function") window.__gl1Perspective($0, $1, $2, $3); }
+ 6393908: ($0) => { if (typeof window.__gl1MultMatrixf !== 'function') return; var mf = new Float32Array(16); for (var i = 0; i < 16; i++) mf[i] = HEAPF32[($0>>2)+i]; window.__gl1MultMatrixf(mf); },  
+ 6394088: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6394182: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5); },  
+ 6394276: ($0, $1, $2, $3, $4, $5) => { if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5); },  
+ 6394372: ($0, $1) => { if (typeof _glAlphaFunc === "function") _glAlphaFunc($0, $1); },  
+ 6394438: ($0, $1) => { if (!window.__gl1GetMatrix) return; var m = window.__gl1GetMatrix($0 == 0xBA7 ? 1 : 0); if (m) { for (var i = 0; i < 16; i++) HEAPF32[($1>>2)+i] = m[i]; } }
 };
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
 function js_getAsset(pathC,outSize) { var path = UTF8ToString(pathC); var asset = window.__getAsset ? window.__getAsset(path) : null; if (!asset) return 0; HEAP32[outSize >> 2] = asset.size; return asset.ptr; }
