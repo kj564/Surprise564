@@ -69,6 +69,8 @@ void Chunk::translateToPos()
 void Chunk::rebuild()
 {
 	if (!dirty) return;
+	static int _rbg = 0;
+	if (++_rbg <= 5) { printf("[rebuild] x=%d y=%d z=%d dirty=%d\n", x, y, z, dirty); fflush(stdout); }
 	//if (!visible) return;
 	updates++;
 

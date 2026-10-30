@@ -92,16 +92,17 @@ var GL1 = {
   vaStride: 24, taStride: 24, caStride: 24,
   curColor: new Float32Array([1,1,1,1]),
   tex2dEn: 1, alphaTestEn: 0, alphaRef: 0.0,
+  fogEn: 0, fogColor: new Float32Array([0.4,0.6,0.9,1]), fogStart: 0, fogEnd: 1000,
   mm: 0x1700, proj: new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
   mv: new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
   stack: [], prog: null, att: {}, uni: {}, init: false,
   ensureShader: function(gl) {
     if (this.init) return; this.init = true;
     var vs = gl.createShader(gl.VERTEX_SHADER);
-    gl.shaderSource(vs, 'attribute vec3 aPos;attribute vec4 aColor;attribute vec2 aTexCoord;uniform mat4 uProj;uniform mat4 uMV;uniform vec4 uColor;uniform bool uUseColor;varying vec4 vColor;varying vec2 vTexCoord;void main(){vColor=uUseColor?uColor:aColor;vTexCoord=aTexCoord;gl_Position=uProj*uMV*vec4(aPos,1.0);}');
+    gl.shaderSource(vs, 'attribute vec3 aPos;attribute vec4 aColor;attribute vec2 aTexCoord;uniform mat4 uProj;uniform mat4 uMV;uniform vec4 uColor;uniform bool uUseColor;varying vec4 vColor;varying vec2 vTexCoord;varying float vFogDepth;void main(){vColor=uUseColor?uColor:aColor;vTexCoord=aTexCoord;vec4 mvPos=uMV*vec4(aPos,1.0);vFogDepth=-mvPos.z;gl_Position=uProj*mvPos;}');
     gl.compileShader(vs);
     var fs = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(fs, 'precision mediump float;varying vec4 vColor;varying vec2 vTexCoord;uniform sampler2D uTex;uniform bool uHasTex;uniform bool uAlphaTest;uniform float uAlphaRef;void main(){vec4 c;if(uHasTex){vec4 t=texture2D(uTex,vTexCoord);c=vec4(t.rgb*vColor.rgb,t.a*vColor.a);}else{c=vColor;}if(uAlphaTest&&c.a<=uAlphaRef)discard;gl_FragColor=c;}');
+    gl.shaderSource(fs, 'precision mediump float;varying vec4 vColor;varying vec2 vTexCoord;varying float vFogDepth;uniform sampler2D uTex;uniform bool uHasTex;uniform bool uAlphaTest;uniform float uAlphaRef;uniform bool uFogEnabled;uniform vec4 uFogColor;uniform float uFogStart;uniform float uFogEnd;void main(){vec4 c;if(uHasTex){vec4 t=texture2D(uTex,vTexCoord);c=vec4(t.rgb*vColor.rgb,t.a*vColor.a);}else{c=vColor;}if(uAlphaTest&&c.a<=uAlphaRef)discard;if(uFogEnabled){float f=clamp((uFogEnd-vFogDepth)/(uFogEnd-uFogStart),0.0,1.0);c.rgb=mix(uFogColor.rgb,c.rgb,f);}gl_FragColor=c;}');
     gl.compileShader(fs);
     this.prog = gl.createProgram();
     gl.attachShader(this.prog, vs); gl.attachShader(this.prog, fs); gl.linkProgram(this.prog);
@@ -116,6 +117,10 @@ var GL1 = {
     this.uni.useColor = gl.getUniformLocation(this.prog, 'uUseColor');
     this.uni.alphaTest = gl.getUniformLocation(this.prog, 'uAlphaTest');
     this.uni.alphaRef = gl.getUniformLocation(this.prog, 'uAlphaRef');
+    this.uni.fogEnabled = gl.getUniformLocation(this.prog, 'uFogEnabled');
+    this.uni.fogColor = gl.getUniformLocation(this.prog, 'uFogColor');
+    this.uni.fogStart = gl.getUniformLocation(this.prog, 'uFogStart');
+    this.uni.fogEnd = gl.getUniformLocation(this.prog, 'uFogEnd');
   },
   draw: function(gl, mode, first, count) {
     this.ensureShader(gl);
@@ -155,6 +160,10 @@ var GL1 = {
     }
     gl.uniform1i(this.uni.alphaTest, alphaTestEn);
     gl.uniform1f(this.uni.alphaRef, alphaRef);
+    gl.uniform1i(this.uni.fogEnabled, this.fogEn ? 1 : 0);
+    gl.uniform4fv(this.uni.fogColor, this.fogColor);
+    gl.uniform1f(this.uni.fogStart, this.fogStart);
+    gl.uniform1f(this.uni.fogEnd, this.fogEnd);
     // §Use original drawArrays to avoid infinite recursion
     if (this.origDrawArrays) this.origDrawArrays(mode, first, count);
     else gl.drawArrays(mode, first, count);
@@ -193,14 +202,29 @@ function startWasm() {
     _glEnable: function(cap) {
       if (cap == 0x0DE0) { GL1.tex2dEn = 1; return; }
       if (cap == 0x0BC0) { GL1.alphaTestEn = 1; return; }
+      if (cap == 0x0B60) { GL1.fogEn = 1; return; } // GL_FOG
       var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx);
       if (gl) gl.enable(cap);
     },
     _glDisable: function(cap) {
       if (cap == 0x0DE0) { GL1.tex2dEn = 0; return; }
       if (cap == 0x0BC0) { GL1.alphaTestEn = 0; return; }
+      if (cap == 0x0B60) { GL1.fogEn = 0; return; } // GL_FOG
       var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx);
       if (gl) gl.disable(cap);
+    },
+    _glFogf: function(pname, param) {
+      if (pname == 0x0B63) GL1.fogStart = param; // GL_FOG_START
+      else if (pname == 0x0B64) GL1.fogEnd = param; // GL_FOG_END
+      else if (pname == 0x0B62) GL1.fogDensity = param; // GL_FOG_DENSITY
+    },
+    _glFogfv: function(pname, params) {
+      if (pname == 0x866) { // GL_FOG_COLOR
+        GL1.fogColor[0] = HEAPF32[params >> 2];
+        GL1.fogColor[1] = HEAPF32[(params >> 2) + 1];
+        GL1.fogColor[2] = HEAPF32[(params >> 2) + 2];
+        GL1.fogColor[3] = HEAPF32[(params >> 2) + 3];
+      }
     },
     _glMatrixMode: function(m) { GL1.mm = m; },
     _glLoadIdentity: function() { var id = new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]); if (GL1.mm==0x1701) GL1.proj=id; else GL1.mv=id; },

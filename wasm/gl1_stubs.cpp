@@ -132,8 +132,8 @@ void glColorMaterial(unsigned int, unsigned int) {}
 void glShadeModel(unsigned int) {}
 void glPolygonMode(unsigned int, unsigned int) {}
 void glPointSize(float) {}
-void glFogf(unsigned int, float) {}
-void glFogfv(unsigned int, const float*) {}
+void glFogf(unsigned int pname, float param) { EM_ASM({ if (typeof window.__gl1Fogf === "function") window.__gl1Fogf($0, $1); }, pname, param); }
+void glFogfv(unsigned int pname, const float* params) { EM_ASM({ if (typeof window.__gl1Fogfv === "function") window.__gl1Fogfv($0, $1); }, pname, (int)params); }
 void glFogi(unsigned int, int) {}
 void glFogx(unsigned int, int) {}
 void glFogxv(unsigned int, const int*) {}
