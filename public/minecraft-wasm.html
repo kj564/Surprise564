@@ -203,8 +203,18 @@ function startWasm() {
     _glTranslatef: function(x,y,z) { var m=GL1.mv; m[12]+=m[0]*x+m[4]*y+m[8]*z; m[13]+=m[1]*x+m[5]*y+m[9]*z; m[14]+=m[2]*x+m[6]*y+m[10]*z; },
     _glRotatef: function(a,x,y,z) { var r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r),len=Math.sqrt(x*x+y*y+z*z); x/=len;y/=len;z/=len; var m=GL1.mv,m0=m[0],m1=m[1],m2=m[2],m4=m[4],m5=m[5],m6=m[6],m8=m[8],m9=m[9],m10=m[10],omc=1-c; var r0=x*x*omc+c,r1=x*y*omc-z*s,r2=x*z*omc+y*s,r4=y*x*omc+z*s,r5=y*y*omc+c,r6=y*z*omc-x*s,r8=z*x*omc-y*s,r9=z*y*omc+x*s,r10=z*z*omc+c; m[0]=m0*r0+m4*r1+m8*r2; m[1]=m1*r0+m5*r1+m9*r2; m[2]=m2*r0+m6*r1+m10*r2; m[4]=m0*r4+m4*r5+m8*r6; m[5]=m1*r4+m5*r5+m9*r6; m[6]=m2*r4+m6*r5+m10*r6; m[8]=m0*r8+m4*r9+m8*r10; m[9]=m1*r8+m5*r9+m9*r10; m[10]=m2*r8+m6*r9+m10*r10; },
     _glScalef: function(x,y,z) { var m=GL1.mv; m[0]*=x;m[1]*=x;m[2]*=x;m[4]*=y;m[5]*=y;m[6]*=y;m[8]*=z;m[9]*=z;m[10]*=z; },
-    _glPushMatrix: function() { GL1.stack.push(new Float32Array(GL1.mv)); },
-    _glPopMatrix: function() { if (GL1.stack.length>0) GL1.mv = GL1.stack.pop(); },
+    _glPushMatrix: function() {
+      // §Save the CURRENT matrix (proj or mv) based on matrix mode
+      var m = (GL1.mm == 0x1701) ? GL1.proj : GL1.mv;
+      GL1.stack.push({ mode: GL1.mm, mat: new Float32Array(m) });
+    },
+    _glPopMatrix: function() {
+      if (GL1.stack.length > 0) {
+        var entry = GL1.stack.pop();
+        if (entry.mode == 0x1701) GL1.proj = entry.mat;
+        else GL1.mv = entry.mat;
+      }
+    },
   };
   // Merge gl1Overrides into gl1Stubs (both underscore and non-underscore for compatibility)
   Object.keys(gl1Overrides).forEach(function(k) {
