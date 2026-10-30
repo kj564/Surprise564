@@ -52,6 +52,20 @@ extern "C" EMSCRIPTEN_KEEPALIVE int get_tile_ptr(int id) {
 #include "world/level/LevelSettings.h"
 #include "client/gui/screens/ProgressScreen.h"
 #include "client/gui/screens/StartMenuScreen.h"
+// §Debug: check if screen is NULL (game is active, not paused)
+extern "C" EMSCRIPTEN_KEEPALIVE int is_screen_null() {
+    if (!g_app) return -1;
+    Minecraft* mc = (Minecraft*)g_app;
+    return mc->screen ? 0 : 1;
+}
+
+// §Debug: check keyboard event count
+extern "C" EMSCRIPTEN_KEEPALIVE int get_keyboard_event_count() {
+    // Can't access Keyboard::_inputs directly, but we can check
+    // if the last key state was set
+    return 0; // placeholder
+}
+
 extern "C" EMSCRIPTEN_KEEPALIVE int auto_create_world() {
     if (!g_app) return -1;
     Minecraft* mc = (Minecraft*)g_app;

@@ -51,7 +51,7 @@ em++ $WASM/main_emscripten.cpp $OBJS -I$SRC -I$WASM -I$WASM/EGL -I$WASM/gl \
     -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=128MB \
     -s USE_WEBGL2=1 -s FULL_ES2=1 \
     -s DISABLE_EXCEPTION_CATCHING=0 -Wl,--allow-multiple-definition \
-    -s EXPORTED_FUNCTIONS="['_main','_malloc','_free','_mouse_feed','_keyboard_feed']" \
+    -s EXPORTED_FUNCTIONS="['_main','_malloc','_free','_mouse_feed','_keyboard_feed','_auto_create_world','_get_block','_get_brightness','_get_tile_ptr','_is_screen_null']" \
     -s EXPORTED_RUNTIME_METHODS="['ccall','cwrap','HEAPU8','HEAP8','HEAPU32','UTF8ToString','callMain']" \
     -s ENVIRONMENT=web -o $OUT/mcpe_emscripten_full.js
 

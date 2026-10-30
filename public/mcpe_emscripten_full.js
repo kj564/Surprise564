@@ -6074,6 +6074,8 @@ var _mouse_feed,
   _get_block,
   _get_brightness,
   _get_tile_ptr,
+  _is_screen_null,
+  _get_keyboard_event_count,
   _auto_create_world,
   _main,
   _malloc,
@@ -6102,6 +6104,8 @@ function assignWasmExports(wasmExports) {
   _get_block = Module['_get_block'] = wasmExports['get_block'];
   _get_brightness = Module['_get_brightness'] = wasmExports['get_brightness'];
   _get_tile_ptr = Module['_get_tile_ptr'] = wasmExports['get_tile_ptr'];
+  _is_screen_null = Module['_is_screen_null'] = wasmExports['is_screen_null'];
+  _get_keyboard_event_count = Module['_get_keyboard_event_count'] = wasmExports['get_keyboard_event_count'];
   _auto_create_world = Module['_auto_create_world'] = wasmExports['auto_create_world'];
   _main = Module['_main'] = wasmExports['main'];
   _malloc = Module['_malloc'] = wasmExports['malloc'];
