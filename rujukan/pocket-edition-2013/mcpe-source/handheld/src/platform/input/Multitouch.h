@@ -62,6 +62,25 @@ public:
 		}
 	}
 
+	// §6-arg feed overload with dx/dy — used by WASM mouse_feed for look-around
+	static void feed(char actionButtonId, char buttonData, short x, short y, short dx, short dy, char pointerId) {
+		pointerId = _clampPointerId(pointerId);
+
+		_inputs.push_back(MouseAction(actionButtonId, buttonData, x, y, dx, dy, pointerId));
+		g(pointerId).feed(actionButtonId, buttonData, x, y, dx, dy);
+
+		if (actionButtonId > 0) {
+			if (buttonData == MouseAction::DATA_DOWN) {
+				_wasPressed[pointerId] = true;
+				_wasPressedThisUpdate[pointerId] = true;
+			}
+			else if (buttonData == MouseAction::DATA_UP) {
+				_wasReleased[pointerId] = true;
+				_wasReleasedThisUpdate[pointerId] = true;
+			}
+		}
+	}
+
 	static short getX(int pointerId) { return g(pointerId).getX(); }
 	static short getY(int pointerId) { return g(pointerId).getY(); }
 
@@ -119,44 +138,6 @@ public:
 	}
 
 	static void feed(char actionButtonId, char buttonData, short x, short y, char pointerId) {
-		pointerId = _clampPointerId(pointerId);
-
-		_inputs.push_back(MouseAction(actionButtonId, buttonData, x, y, pointerId));
-		g(pointerId).feed(actionButtonId, buttonData, x, y);
-
-		if (actionButtonId > 0) {
-			if (buttonData == MouseAction::DATA_DOWN) {
-				_wasPressed[pointerId] = true;
-				_wasPressedThisUpdate[pointerId] = true;
-			}
-			else if (buttonData == MouseAction::DATA_UP) {
-				_wasReleased[pointerId] = true;
-				_wasReleasedThisUpdate[pointerId] = true;
-			}
-		}
-	}
-
-	// §6-arg feed with dx/dy for look-around support (WASM)
-	static void feed(char actionButtonId, char buttonData, short x, short y, short dx, short dy, char pointerId) {
-		pointerId = _clampPointerId(pointerId);
-
-		_inputs.push_back(MouseAction(actionButtonId, buttonData, x, y, dx, dy, pointerId));
-		g(pointerId).feed(actionButtonId, buttonData, x, y, dx, dy);
-
-		if (actionButtonId > 0) {
-			if (buttonData == MouseAction::DATA_DOWN) {
-				_wasPressed[pointerId] = true;
-				_wasPressedThisUpdate[pointerId] = true;
-			}
-			else if (buttonData == MouseAction::DATA_UP) {
-				_wasReleased[pointerId] = true;
-				_wasReleasedThisUpdate[pointerId] = true;
-			}
-		}
-	}
-
-	// §Original 5-arg feed body (renamed to avoid duplicate)
-	static void _feed5(char actionButtonId, char buttonData, short x, short y, char pointerId) {
 		pointerId = _clampPointerId(pointerId);
 
 		_inputs.push_back(MouseAction(actionButtonId, buttonData, x, y, pointerId));
