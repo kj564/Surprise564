@@ -330,7 +330,7 @@ void SelectWorldScreen::init()
 	tabButtons.push_back(&bBack);
 
 #ifdef __EMSCRIPTEN__
-	// §WASM: auto-trigger Create World — guard against double-trigger (init called on resize)
+	// §WASM: auto-trigger Create World — GUI click flow doesn't work in headless browser
 	static bool s_wasmTriggered = false;
 	if (!s_wasmTriggered && _state == _STATE_DEFAULT && !_hasStartedLevel) {
 		s_wasmTriggered = true;

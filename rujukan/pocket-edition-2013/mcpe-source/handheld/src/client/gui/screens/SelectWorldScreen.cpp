@@ -393,14 +393,6 @@ void SelectWorldScreen::init()
 
 	_mouseHasBeenUp = !Mouse::getButtonState(MouseAction::ACTION_LEFT);
 
-#ifdef __EMSCRIPTEN__
-	// §WASM: auto-trigger Create World (GUI click flow unreliable in headless browser)
-	if (_state == _STATE_DEFAULT && !_hasStartedLevel) {
-		minecraft->platform()->createUserInput(DialogDefinitions::DIALOG_CREATE_NEW_WORLD);
-		_state = _STATE_CREATEWORLD;
-	}
-#endif
-
 	tabButtons.push_back(&bWorldView);
 	tabButtons.push_back(&bDelete);
 	tabButtons.push_back(&bCreate);

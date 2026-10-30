@@ -791,18 +791,6 @@ void GameRenderer::tick(int nTick, int maxTick) {
 }
 
 /*private*/
-void GameRenderer::initFogBr() {
-    if (mc->level && mc->cameraTargetPlayer) {
-        float brr = mc->level->getBrightness(
-            Mth::floor(mc->cameraTargetPlayer->x),
-            Mth::floor(mc->cameraTargetPlayer->y),
-            Mth::floor(mc->cameraTargetPlayer->z));
-        float whiteness = (3 - mc->options.viewDistance) / 3.0f;
-        fogBr = brr * (1 - whiteness) + whiteness;
-        fogBrO = fogBr;
-    }
-}
-
 void GameRenderer::setupClearColor(float a) {
     Level* level = mc->level;
     Mob* player = mc->cameraTargetPlayer;

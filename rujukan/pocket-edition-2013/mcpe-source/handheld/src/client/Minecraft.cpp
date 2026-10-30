@@ -1364,12 +1364,6 @@ void Minecraft::_levelGenerated()
 
 	this->cameraTargetPlayer = player;
 
-#ifdef __EMSCRIPTEN__
-	// §WASM: initialize fogBr to player brightness — synchronous level gen skips the
-	// ProgressScreen display period where fogBr would normally converge on real devices
-	if (gameRenderer) gameRenderer->initFogBr();
-#endif
-
 	if (raknetInstance->isServer())
 		raknetInstance->announceServer(user->name);
 
