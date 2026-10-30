@@ -243,7 +243,6 @@ SelectWorldScreen::~SelectWorldScreen()
 
 void SelectWorldScreen::buttonClicked(Button* button)
 {
-
 	if (button->id == bCreate.id) {
 		//minecraft->setScreen( new CreateWorldScreen() );
 		//minecraft->locateMultiplayer();

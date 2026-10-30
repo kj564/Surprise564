@@ -69,10 +69,6 @@ void Chunk::translateToPos()
 void Chunk::rebuild()
 {
 	if (!dirty) return;
-	static int rebuild_cnt = 0;
-	if (++rebuild_cnt <= 3) {
-		printf("[Chunk] rebuild#%d x=%d y=%d z=%d\n", rebuild_cnt, x, y, z);
-	}
 	//if (!visible) return;
 	updates++;
 
@@ -138,29 +134,20 @@ void Chunk::rebuild()
 							//printf("Tesselator::offset : %f, %f, %f\n", this->x, this->y, this->z);
 						}
 
-						// §Mark non-empty BEFORE any virtual call — virtuals may throw in WASM
-						empty[l] = false;
-						_empty = false;
-						rendered = true;
-
 						Tile* tile = Tile::tiles[tileId];
-						if (!tile) {
-							static int warn_cnt = 0;
-							if (++warn_cnt < 5) printf("[Chunk] WARN Tile::tiles[%d]==NULL at (%d,%d,%d) l=%d\n", tileId, x, y, z, l);
-							continue;
-						}
 						int renderLayer = tile->getRenderLayer();
 
+//                        if (renderLayer == l)
+//                            rendered |= tileRenderer.tesselateInWorld(tile, x, y, z);
+//                        else {
+//                            _layerChunks[_layerChunkCount[renderLayer]++] = cindex;
+//                        }
+                        
 						if (renderLayer > l) {
 							renderNextLayer = true;
-            doRenderLayer[renderLayer] = true;
+                            doRenderLayer[renderLayer] = true;
 						} else if (renderLayer == l) {
-							try {
-								rendered |= tileRenderer.tesselateInWorld(tile, x, y, z);
-							} catch (...) {
-								static int exc_cnt = 0;
-								if (++exc_cnt < 5) printf("[Chunk] EXC in tesselateInWorld tile=%d at (%d,%d,%d) l=%d\n", tileId, x, y, z, l);
-							}
+							rendered |= tileRenderer.tesselateInWorld(tile, x, y, z);
 						}
 					}
 				}
