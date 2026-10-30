@@ -5743,12 +5743,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   var _emscripten_glDepthFunc = (x0) => GLctx.depthFunc(x0);
   var _glDepthFunc = _emscripten_glDepthFunc;
 
-  var _emscripten_glDisable = (x0) => GLctx.disable(x0);
-  var _glDisable = _emscripten_glDisable;
-
-  var _emscripten_glEnable = (x0) => GLctx.enable(x0);
-  var _glEnable = _emscripten_glEnable;
-
   var _emscripten_glGenTextures = (n, textures) => {
       GL.genObject(n, textures, 'createTexture', GL.textures
         );
@@ -6057,7 +6051,13 @@ var ASM_CONSTS = {
  6394358: ($0) => { var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.clearDepth($0); },  
  6394446: ($0) => { var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.depthMask($0); },  
  6394533: ($0, $1, $2, $3) => { var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.colorMask($0, $1, $2, $3); },  
- 6394632: ($0, $1) => { if (!window.__gl1GetMatrix) return; var m = window.__gl1GetMatrix($0 == 0xBA7 ? 1 : 0); if (m) { for (var i = 0; i < 16; i++) HEAPF32[($1>>2)+i] = m[i]; } }
+ 6394632: ($0, $1) => { if (!window.__gl1GetMatrix) return; var m = window.__gl1GetMatrix($0 == 0xBA7 ? 1 : 0); if (m) { for (var i = 0; i < 16; i++) HEAPF32[($1>>2)+i] = m[i]; } },  
+ 6394791: () => { if (typeof GL1 !== 'undefined') GL1.tex2dEn = 1; },  
+ 6394844: () => { if (typeof GL1 !== 'undefined') GL1.alphaTestEn = 1; },  
+ 6394901: ($0) => { var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.enable($0); },  
+ 6394985: () => { if (typeof GL1 !== 'undefined') GL1.tex2dEn = 0; },  
+ 6395038: () => { if (typeof GL1 !== 'undefined') GL1.alphaTestEn = 0; },  
+ 6395095: ($0) => { var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.disable($0); }
 };
 function js_getTexture(pathC,outW,outH) { var path = UTF8ToString(pathC); var tex = window.__getTexture ? window.__getTexture(path) : null; if (!tex) return 0; HEAP32[outW >> 2] = tex.width; HEAP32[outH >> 2] = tex.height; return tex.ptr; }
 function js_getAsset(pathC,outSize) { var path = UTF8ToString(pathC); var asset = window.__getAsset ? window.__getAsset(path) : null; if (!asset) return 0; HEAP32[outSize >> 2] = asset.size; return asset.ptr; }
@@ -6203,10 +6203,6 @@ var wasmImports = {
   glDeleteTextures: _glDeleteTextures,
   /** @export */
   glDepthFunc: _glDepthFunc,
-  /** @export */
-  glDisable: _glDisable,
-  /** @export */
-  glEnable: _glEnable,
   /** @export */
   glGenTextures: _glGenTextures,
   /** @export */
