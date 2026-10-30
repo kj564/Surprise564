@@ -18,9 +18,25 @@ static void emscripten_main_loop() {
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void mouse_feed(char action, char data, short x, short y, short dx, short dy) {
-    // §Feed both Mouse (for GUI clicks/hotbar) and Multitouch (for touch D-pad + look in touch mode)
+    // §Feed Mouse with dx/dy (for MouseTurnInput — GUI clicks, hotbar)
     Mouse::feed(action, data, x, y, dx, dy);
-    Multitouch::feed(action, data, x, y, 0);
+    // §Feed Multitouch for D-pad button detection (down/up events)
+    // For MOVE events, also feed to Multitouch so UnifiedTurnBuild can read
+    // position. The delta (dx/dy) is passed via Mouse::feed which sets
+    // Mouse::_dx correctly. For Multitouch, getDX() returns _dx which
+    // accumulates 0 from 5-arg feed — but UnifiedTurnBuild also checks
+    // _x - _xOld as fallback when _dx == DELTA_NOTSET.
+    // To ensure the fallback works, we skip feeding MOVE to Multitouch
+    // (so _dx stays DELTA_NOTSET and getDX uses _x - _xOld).
+    if (action == 0 && dx == 0 && dy == 0) {
+        // Pure move with no delta — update position for D-pad detection
+        Multitouch::feed(action, data, x, y, 0);
+    } else if (action != 0) {
+        // Button press/release — feed to Multitouch for D-pad
+        Multitouch::feed(action, data, x, y, 0);
+    }
+    // For MOVE with delta (look-around), don't feed to Multitouch.
+    // UnifiedTurnBuild will use Mouse::getDX/getDY which have correct delta.
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void keyboard_feed(unsigned char key, int state) {
     Keyboard::feed(key, state);
