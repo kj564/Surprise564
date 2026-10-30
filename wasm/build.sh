@@ -19,7 +19,7 @@ INCLUDES="-I$WASM -I$SRC -I$SRC/util -I$SRC/world/phys -I$SRC/world/level/materi
 CFLAGS="-std=c++14 -O1 -w -include $EMSDK/upstream/emscripten/cache/sysroot/include/time.h -DNO_EGL -DOPENGL_ES -DNO_STORAGE -DUSE_VBO -DNO_NETWORK -Wno-narrowing -Wno-reserved-user-defined-literal"
 
 # Files to skip (platform-specific, not needed for browser)
-SKIP="main_dedicated.cpp|main.cpp|main_android.cpp|main_android_java.cpp|main_rpi.cpp|main_win32.cpp|AppPlatform_win32.cpp|platform/audio/SoundSystemAL.cpp|platform/audio/SoundSystemSL.cpp|raknet/FileList.cpp|world/level/tile/SandTile.cpp"
+SKIP="main_dedicated.cpp|main.cpp|main_android.cpp|main_android_java.cpp|main_rpi.cpp|main_win32.cpp|AppPlatform_win32.cpp|platform/audio/SoundSystemAL.cpp|platform/audio/SoundSystemSL.cpp|raknet/FileList.cpp"
 
 echo "=== Compiling MCPE 2013 source files ==="
 total=0; ok=0; fail=0
