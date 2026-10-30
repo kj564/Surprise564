@@ -247,8 +247,28 @@ function startWasm() {
         var ctx = GL.createContext(canvas, { alpha: false, depth: true, stencil: false, antialias: false });
         GL.makeContextCurrent(ctx);
       }
-      // §GL1 functions are set at Module level (with underscore prefix) before WASM loads.
-      // EM_ASM bridge callbacks are also set at Module level.
+      // §Override global GL functions — FULL_ES2 library provides its own versions
+      // which override Module-level settings. We must replace the globals after init.
+      var gl1Ovr = gl1Overrides;
+      _glDrawArrays = gl1Ovr._glDrawArrays;
+      _glVertexPointer = gl1Ovr._glVertexPointer;
+      _glColorPointer = gl1Ovr._glColorPointer;
+      _glTexCoordPointer = gl1Ovr._glTexCoordPointer;
+      _glEnableClientState = gl1Ovr._glEnableClientState;
+      _glDisableClientState = gl1Ovr._glDisableClientState;
+      _glColor4f = gl1Ovr._glColor4f;
+      _glColor4ub = gl1Ovr._glColor4ub;
+      _glAlphaFunc = gl1Ovr._glAlphaFunc;
+      _glEnable = gl1Ovr._glEnable;
+      _glDisable = gl1Ovr._glDisable;
+      _glMatrixMode = gl1Ovr._glMatrixMode;
+      _glLoadIdentity = gl1Ovr._glLoadIdentity;
+      _glOrthof = gl1Ovr._glOrthof;
+      _glTranslatef = gl1Ovr._glTranslatef;
+      _glRotatef = gl1Ovr._glRotatef;
+      _glScalef = gl1Ovr._glScalef;
+      _glPushMatrix = gl1Ovr._glPushMatrix;
+      _glPopMatrix = gl1Ovr._glPopMatrix;
 
       // Mouse + touch input
       function canvasCoords(cx, cy) {
