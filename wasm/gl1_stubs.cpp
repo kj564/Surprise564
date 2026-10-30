@@ -142,7 +142,10 @@ void glMaterialfv(unsigned int, unsigned int, const float*) {}
 void glClipPlanex(unsigned int, const int*) {}
 void glDepthRangef(float, float) {}
 void glDepthRangex(int, int) {}
-void glClearDepthf(float) {}
+// §glClearDepthf — forward to WebGL2
+void glClearDepthf(float depth) {
+    EM_ASM({ var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.clearDepth($0); }, depth);
+}
 void glClearDepthx(int) {}
 void glAlphaFuncx(unsigned int, int) {}
 void glColor4x(int, int, int, int) {}
@@ -153,8 +156,14 @@ void glPointParameterx(unsigned int, int) {}
 void glPointParameterxv(unsigned int, const int*) {}
 void glLineWidthx(int) {}
 void glPolygonOffset(float, float) {}
-void glDepthMask(unsigned char) {}
-void glColorMask(unsigned char, unsigned char, unsigned char, unsigned char) {}
+// §glDepthMask — forward to WebGL2 (was no-op, causing sky/depth issues)
+void glDepthMask(unsigned char flag) {
+    EM_ASM({ var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.depthMask($0); }, flag);
+}
+// §glColorMask — forward to WebGL2 (was no-op)
+void glColorMask(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+    EM_ASM({ var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.colorMask($0, $1, $2, $3); }, r, g, b, a);
+}
 void glMultMatrixx(const int*) {}
 void glLoadMatrixx(const int*) {}
 void glOrthox(int, int, int, int, int, int) {}
