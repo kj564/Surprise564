@@ -140,7 +140,10 @@ var GL1 = {
       gl.vertexAttrib2f(this.att.texCoord, 0, 0);
     }
     gl.uniform1i(this.uni.tex, 0);
-    gl.uniform1i(this.uni.hasTex, this.tex2dEn ? 1 : 0);
+    var tex2dEn = (typeof _gl1_tex2d_enabled === 'function') ? _gl1_tex2d_enabled() : this.tex2dEn;
+    var alphaTestEn = (typeof _gl1_alpha_test_enabled === 'function') ? _gl1_alpha_test_enabled() : this.alphaTestEn;
+    var alphaRef = (typeof _gl1_alpha_ref === 'function') ? _gl1_alpha_ref() : this.alphaRef;
+    gl.uniform1i(this.uni.hasTex, tex2dEn ? 1 : 0);
     if (this.caEn) {
       gl.enableVertexAttribArray(this.att.color);
       gl.vertexAttribPointer(this.att.color, 4, gl.UNSIGNED_BYTE, true, this.caStride, this.caPtr);
@@ -150,9 +153,11 @@ var GL1 = {
       gl.uniform4fv(this.uni.color, this.curColor);
       gl.uniform1i(this.uni.useColor, 1);
     }
-    gl.uniform1i(this.uni.alphaTest, this.alphaTestEn);
-    gl.uniform1f(this.uni.alphaRef, this.alphaRef);
-    gl.drawArrays(mode, first, count);
+    gl.uniform1i(this.uni.alphaTest, alphaTestEn);
+    gl.uniform1f(this.uni.alphaRef, alphaRef);
+    // §Use original drawArrays to avoid infinite recursion
+    if (this.origDrawArrays) this.origDrawArrays(mode, first, count);
+    else gl.drawArrays(mode, first, count);
   }
 }
 
@@ -256,6 +261,16 @@ function startWasm() {
       if (typeof GL !== 'undefined' && GL.createContext) {
         var ctx = GL.createContext(canvas, { alpha: false, depth: true, stencil: false, antialias: false });
         GL.makeContextCurrent(ctx);
+      }
+      // §Override gl.drawArrays on the WebGL context instance — this is the ONLY
+      // way to intercept drawArrays calls from FULL_ES2's JS library.
+      // FULL_ES2 provides glDrawArrays as a JS import that calls gl.drawArrays
+      // directly, bypassing our GL1 layer. By overriding the instance method,
+      // ALL drawArrays calls route through GL1.draw (shader setup, matrices, etc.).
+      var _gl = GL.currentContext && GL.currentContext.GLctx;
+      if (_gl) {
+        GL1.origDrawArrays = _gl.drawArrays.bind(_gl);
+        _gl.drawArrays = function(mode, first, count) { GL1.draw(_gl, mode, first, count); };
       }
       // §Override global GL functions — FULL_ES2 library provides its own versions
       // which override Module-level settings. We must replace the globals after init.
