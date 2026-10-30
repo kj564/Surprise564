@@ -12,7 +12,7 @@ class FallingTile: public Entity
 {
 public:
     FallingTile(Level* level);
-    FallingTile(Level* level, float x, float y, float z, int tile, int data);
+    FallingTile(Level* level, float x, float y, float z, int tile, int data = 0);
 
     void init();
 

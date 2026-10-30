@@ -1353,9 +1353,7 @@ void Minecraft::_levelGenerated()
 	gui.onLevelGenerated();
 #endif
 
-#ifndef __EMSCRIPTEN__
 	level->validateSpawn();
-#endif
 	level->loadPlayer(player, true);
 	// if we are client side, we trust the server to have given us a correct position
 	if (player && !level->isClientSide) {
