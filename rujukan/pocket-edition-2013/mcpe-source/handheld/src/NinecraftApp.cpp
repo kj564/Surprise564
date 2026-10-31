@@ -229,9 +229,9 @@ void NinecraftApp::updateStats()
 void NinecraftApp::initGLStates()
 {
 #ifndef STANDALONE_SERVER
-	printf("[WASM init] before glEnable DEPTH\n"); fflush(stdout);
+	//glShadeModel2(GL_SMOOTH);
+	//glClearDepthf(1.0f);
 	glEnable2(GL_DEPTH_TEST);
-	printf("[WASM init] after glEnable DEPTH\n"); fflush(stdout);
 	glDepthFunc(GL_LEQUAL);
 	glDepthRangef(0, 1);
 	glEnable2(GL_ALPHA_TEST);
