@@ -8,7 +8,7 @@ import type { BlockDefinition } from './registry';
 describe('Block hardness values 1:1 with rujukan (Tile.cpp:161-243)', () => {
   // §Helper: lookup block by legacyId and check hardness
   function checkHardness(key: string, expected: number, citation: string) {
-    const def = defaultBlockRegistry.getByKey(key);
+    const def = defaultBlockRegistry.getById(key);
     expect(def, `Block ${key} should exist (${citation})`).toBeDefined();
     if (!def) return;
     expect(def.hardness, `${key} hardness should be ${expected} (${citation})`).toBe(expected);
@@ -126,7 +126,7 @@ describe('Block hardness values 1:1 with rujukan (Tile.cpp:161-243)', () => {
     // §SignTile (Tile.cpp:214, setDestroyTime(1.0f)) is NOT in defaultBlockRegistry.
     // minecraft.html's BLOCKS table does not include a sign block.
     // If sign is added later, this test should be updated to: checkHardness('minecraft:sign', 1.0, '§Tile.cpp:214');
-    const sign = defaultBlockRegistry.getByKey('minecraft:sign');
+    const sign = defaultBlockRegistry.getById('minecraft:sign');
     expect(sign).toBeUndefined();
   });
 
@@ -146,7 +146,7 @@ describe('Block hardness values 1:1 with rujukan (Tile.cpp:161-243)', () => {
     // §SnowTile (Tile.cpp:228, setDestroyTime(0.2f)) is NOT in defaultBlockRegistry.
     // Only TopSnowTile (snow_layer, Tile.cpp:226, hardness 0.1) is registered.
     // If snow (full block) is added later, this test should verify hardness=0.2.
-    const snow = defaultBlockRegistry.getByKey(80);
+    const snow = defaultBlockRegistry.getById(80);
     expect(snow).toBeUndefined();
     // Verify snow_layer IS registered with correct hardness
     checkHardness(78, 0.1, '§Tile.cpp:226');
@@ -166,11 +166,11 @@ describe('Block hardness values 1:1 with rujukan (Tile.cpp:161-243)', () => {
 
   test('§Hardness ordering matches rujukan mining difficulty', () => {
     // Easiest → hardest (excluding unbreakable bedrock)
-    const dirt = defaultBlockRegistry.getByKey(3)?.hardness ?? 0;
-    const sand = defaultBlockRegistry.getByKey(12)?.hardness ?? 0;
-    const stone = defaultBlockRegistry.getByKey(1)?.hardness ?? 0;
-    const iron = defaultBlockRegistry.getByKey(42)?.hardness ?? 0;
-    const obsidian = defaultBlockRegistry.getByKey(49)?.hardness ?? 0;
+    const dirt = defaultBlockRegistry.getById(3)?.hardness ?? 0;
+    const sand = defaultBlockRegistry.getById(12)?.hardness ?? 0;
+    const stone = defaultBlockRegistry.getById(1)?.hardness ?? 0;
+    const iron = defaultBlockRegistry.getById(42)?.hardness ?? 0;
+    const obsidian = defaultBlockRegistry.getById(49)?.hardness ?? 0;
     expect(dirt).toBeLessThan(stone);
     expect(sand).toBeLessThan(stone);
     expect(stone).toBeLessThan(iron);

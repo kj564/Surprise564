@@ -30,22 +30,33 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Stage original MCPE 2013 textures from rujukan source
+      - name: Stage ALL MCPE 2013 assets from rujukan source (1:1 structure)
         run: |
           RUJUKAN=rujukan/pocket-edition-2013/mcpe-source/handheld/project/android/assets
           mkdir -p public/assets/gui public/assets/environment \
-                   public/assets/mob public/assets/font
+                   public/assets/mob public/assets/font public/assets/item \
+                   public/assets/armor public/assets/art public/assets/lang \
+                   public/assets/gui/badge
+          # Stage ALL assets matching rujukan structure exactly
           cp "$RUJUKAN/terrain.png" public/assets/terrain.png
-          cp "$RUJUKAN/gui/gui.png" public/assets/gui/gui.png
-          cp "$RUJUKAN/gui/icons.png" public/assets/gui/icons.png
-          cp "$RUJUKAN/gui/items.png" public/assets/gui/items.png
-          cp "$RUJUKAN/gui/gui_blocks.png" public/assets/gui/gui_blocks.png
-          cp "$RUJUKAN/gui/title.png" public/assets/gui/title.png
-          cp "$RUJUKAN/gui/background.png" public/assets/gui/background.png
-          cp "$RUJUKAN/font/default8.png" public/assets/font/default8.png
-          cp "$RUJUKAN/environment/clouds.png" public/assets/environment/clouds.png
-          cp "$RUJUKAN/mob/chicken.png" public/assets/mob/chicken.png
           cp "$RUJUKAN/particles.png" public/assets/particles.png
+          cp "$RUJUKAN/gui/"*.png public/assets/gui/
+          cp "$RUJUKAN/gui/badge/"*.png public/assets/gui/badge/ 2>/dev/null || true
+          cp "$RUJUKAN/font/"*.png public/assets/font/
+          cp "$RUJUKAN/environment/"*.png public/assets/environment/
+          cp "$RUJUKAN/mob/"*.png public/assets/mob/
+          cp "$RUJUKAN/item/"*.png public/assets/item/
+          cp "$RUJUKAN/armor/"*.png public/assets/armor/
+          cp "$RUJUKAN/art/"*.png public/assets/art/
+          cp "$RUJUKAN/lang/en_US.lang" public/assets/lang/ 2>/dev/null || true
+          # Also copy to mcpe-wasm/ subdirectory for the WASM game
+          mkdir -p public/mcpe-wasm/assets
+          cp -r public/assets/* public/mcpe-wasm/assets/
+          # Copy WASM game HTML + binary to mcpe-wasm/
+          cp public/minecraft-wasm.html public/mcpe-wasm/minecraft-wasm.html
+          cp public/mcpe_emscripten_full.wasm public/mcpe-wasm/mcpe_emscripten_full.wasm
+          cp public/mcpe_emscripten_full.js public/mcpe-wasm/mcpe_emscripten_full.js
+          echo "Staged all rujukan assets + WASM files to public/assets/ and public/mcpe-wasm/"
 
       - name: Build voxel engine bundle
         run: |
@@ -67,7 +78,9 @@ jobs:
       - name: Verify output
         run: |
           test -f out/index.html || { echo "Missing index.html"; exit 1; }
-          test -f out/minecraft.html || { echo "Missing minecraft.html"; exit 1; }
+          test -f out/mcpe-wasm/minecraft-wasm.html || { echo "Missing minecraft-wasm.html"; exit 1; }
+          test -f out/mcpe-wasm/mcpe_emscripten_full.wasm || { echo "Missing WASM binary"; exit 1; }
+          test -f out/mcpe-wasm/mcpe_emscripten_full.js || { echo "Missing WASM JS glue"; exit 1; }
           test -f out/assets/terrain.png || { echo "Missing terrain.png"; exit 1; }
           test -f out/assets/gui/gui.png || { echo "Missing gui.png"; exit 1; }
           test -f out/assets/gui/icons.png || { echo "Missing icons.png"; exit 1; }
@@ -77,6 +90,8 @@ jobs:
           test -f out/assets/mob/chicken.png || { echo "Missing chicken.png"; exit 1; }
           test -f out/assets/particles.png || { echo "Missing particles.png"; exit 1; }
           test -f out/assets/font/default8.png || { echo "Missing default8.png"; exit 1; }
+          # Verify mcpe-wasm/assets mirror main assets
+          test -f out/mcpe-wasm/assets/terrain.png || { echo "Missing mcpe-wasm/assets/terrain.png"; exit 1; }
           touch out/.nojekyll
 
       - name: Upload Pages artifact

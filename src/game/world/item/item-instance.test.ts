@@ -9,8 +9,8 @@ import {
 } from './item-instance';
 import type { ItemStack } from '../../world/inventory/inventory';
 
-function makeStack(id: string, count = 1): ItemStack {
-  return Object.freeze({ itemKey, count, maxStackSize: 1 });
+function makeStack(id: number, count = 1): ItemStack {
+  return Object.freeze({ id, count, maxStackSize: 1 });
 }
 
 describe('ItemInstance durability (rujukan 1:1)', () => {
@@ -20,7 +20,7 @@ describe('ItemInstance durability (rujukan 1:1)', () => {
     expect(isDamageableItem(getTool(257))).toBe(true);
     expect(isDamageableItem(getTool(278))).toBe(true);
     expect(isDamageableItem(getTool(285))).toBe(true);
-    expect(isDamageableItem(getTool('minecraft:wood_sword'))).toBe(true);
+    expect(isDamageableItem(getTool(272))).toBe(true);
     expect(isDamageableItem(null)).toBe(false);  // bare hand
   });
 
@@ -36,9 +36,9 @@ describe('ItemInstance durability (rujukan 1:1)', () => {
 
   test('getMineBlockHurtAmount — DiggerItem hurt(1), WeaponItem hurt(2) (DiggerItem.h:22 + WeaponItem.h:35)', () => {
     expect(getMineBlockHurtAmount(getTool(270))).toBe(1);
-    expect(getMineBlockHurtAmount(getTool('minecraft:iron_axe'))).toBe(1);
-    expect(getMineBlockHurtAmount(getTool('minecraft:diamond_shovel'))).toBe(1);
-    expect(getMineBlockHurtAmount(getTool('minecraft:wood_sword'))).toBe(2);  // sword hurts 2 per block
+    expect(getMineBlockHurtAmount(getTool(258))).toBe(1);
+    expect(getMineBlockHurtAmount(getTool(277))).toBe(1);
+    expect(getMineBlockHurtAmount(getTool(272))).toBe(2);  // sword hurts 2 per block
     expect(getMineBlockHurtAmount(null)).toBe(0);  // bare hand — no durability to apply
   });
 
@@ -115,8 +115,8 @@ describe('ItemInstance durability (rujukan 1:1)', () => {
     // §ItemInstance.cpp:131 — strict >, not >=
     // 16 breaks × hurt(2) = 32 damage. auxValue=32 NOT > 32, still 1 count.
     // 17th break → auxValue=34 > 32 → count-- → null
-    const tool = getTool('minecraft:gold_sword');  // maxDamage = 32
-    let stack: ItemStack | null = makeStack('minecraft:gold_sword', 1);
+    const tool = getTool(288);  // maxDamage = 32
+    let stack: ItemStack | null = makeStack(288, 1);
     for (let i = 0; i < 16; i++) {
       stack = hurtStack(stack!, 2, tool);  // hurt(2) per block
       expect(stack).not.toBeNull();
@@ -155,7 +155,7 @@ describe('ItemInstance durability (rujukan 1:1)', () => {
     expect(r1?.auxValue).toBe(1);  // hurt(1)
 
     const swordStack = makeStack('minecraft:wood_sword', 1);
-    const swordTool = getTool('minecraft:wood_sword');
+    const swordTool = getTool(272);
     const r2 = applyMineBlockDurability(swordStack, swordTool);
     expect(r2?.auxValue).toBe(2);  // hurt(2)
   });

@@ -26,7 +26,7 @@ describe('MCPE 2013 tool system (rujukan 1:1)', () => {
     expect(getTool(269)).toEqual({
       kind: 'shovel', tier: 'wood', tierDef: TIERS.wood, iconCol: 0, iconRow: 5,
     });
-    expect(getTool('minecraft:diamond_axe')).toEqual({
+    expect(getTool(279)).toEqual({
       kind: 'axe', tier: 'diamond', tierDef: TIERS.diamond, iconCol: 3, iconRow: 7,
     });
     expect(getTool(285)).toEqual({
@@ -68,9 +68,9 @@ describe('MCPE 2013 tool system (rujukan 1:1)', () => {
     expect(canDestroyBlock('stone', 1, getTool(270))).toBe(true);
     expect(canDestroyBlock('stone', 1, getTool(257))).toBe(true);
     // Wrong tool type doesn't help
-    expect(canDestroyBlock('stone', 1, getTool('minecraft:wood_axe'))).toBe(false);
+    expect(canDestroyBlock('stone', 1, getTool(275))).toBe(false);
     expect(canDestroyBlock('stone', 1, getTool(269))).toBe(false);
-    expect(canDestroyBlock('stone', 1, getTool('minecraft:wood_sword'))).toBe(false);
+    expect(canDestroyBlock('stone', 1, getTool(272))).toBe(false);
   });
 
   test('canDestroyBlock: per-block tier gates (rujukan PickaxeItem.cpp:38-52)', () => {
@@ -93,8 +93,8 @@ describe('MCPE 2013 tool system (rujukan 1:1)', () => {
     expect(canDestroyBlock('stone', 73, getTool(270))).toBe(false);
     expect(canDestroyBlock('stone', 73, getTool(274))).toBe(false);
     expect(canDestroyBlock('stone', 73, getTool(257))).toBe(true);
-    expect(canDestroyBlock('stone', 'minecraft:redstone_ore_lit', getTool(274))).toBe(false);
-    expect(canDestroyBlock('stone', 'minecraft:redstone_ore_lit', getTool(257))).toBe(true);
+    expect(canDestroyBlock('stone', 74, getTool(274))).toBe(false);
+    expect(canDestroyBlock('stone', 74, getTool(257))).toBe(true);
   });
 
   test('canDestroyBlock: snow/topSnow require shovel (rujukan ShovelItem.cpp:25-30)', () => {
@@ -107,57 +107,57 @@ describe('MCPE 2013 tool system (rujukan 1:1)', () => {
   });
 
   test('getPlayerDestroySpeed: bare hand returns 1 (rujukan Inventory.cpp:322)', () => {
-    expect(getPlayerDestroySpeed('stone', 1, null)).toBe(1);
-    expect(getPlayerDestroySpeed('wood', 5, null)).toBe(1);
-    expect(getPlayerDestroySpeed('dirt', 3, null)).toBe(1);
+    expect(getPlayerDestroySpeed(1, 1, null)).toBe(1);
+    expect(getPlayerDestroySpeed(5, 5, null)).toBe(1);
+    expect(getPlayerDestroySpeed(3, 3, null)).toBe(1);
   });
 
   test('getPlayerDestroySpeed: pickaxe on stone/metal → tier speed (rujukan PickaxeItem.cpp:54-58)', () => {
     // Wood pickaxe (speed=2) on stone → 2
-    expect(getPlayerDestroySpeed('stone', 1, getTool(270))).toBe(2);
+    expect(getPlayerDestroySpeed(1, 1, getTool(270))).toBe(2);
     // Iron pickaxe (speed=6) on iron_ore (stone material) → 6
-    expect(getPlayerDestroySpeed('stone', 15, getTool(257))).toBe(6);
+    expect(getPlayerDestroySpeed(1, 15, getTool(257))).toBe(6);
     // Diamond pickaxe (speed=8) on gold_block (metal material) → 8
-    expect(getPlayerDestroySpeed('metal', 41, getTool(278))).toBe(8);
+    expect(getPlayerDestroySpeed(41, 41, getTool(278))).toBe(8);
     // Gold pickaxe (speed=12) on stone → 12 (gold is fast but low durability)
-    expect(getPlayerDestroySpeed('stone', 1, getTool(285))).toBe(12);
+    expect(getPlayerDestroySpeed(1, 1, getTool(285))).toBe(12);
   });
 
   test('getPlayerDestroySpeed: pickaxe on non-stone material → 1 (no bonus)', () => {
     // Pickaxe on dirt → 1 (no bonus since dirt isn't stone/metal)
-    expect(getPlayerDestroySpeed('dirt', 3, getTool(270))).toBe(1);
+    expect(getPlayerDestroySpeed(3, 3, getTool(270))).toBe(1);
     // Pickaxe on wood → 1 (need axe for wood bonus)
-    expect(getPlayerDestroySpeed('wood', 5, getTool(270))).toBe(1);
+    expect(getPlayerDestroySpeed(5, 5, getTool(270))).toBe(1);
   });
 
   test('getPlayerDestroySpeed: axe on wood → tier speed (rujukan HatchetItem.cpp:21-25)', () => {
-    expect(getPlayerDestroySpeed('wood', 5, getTool('minecraft:wood_axe'))).toBe(2);
-    expect(getPlayerDestroySpeed('wood', 17, getTool('minecraft:iron_axe'))).toBe(6);
-    expect(getPlayerDestroySpeed('wood', 5, getTool('minecraft:diamond_axe'))).toBe(8);
+    expect(getPlayerDestroySpeed(5, 5, getTool(275))).toBe(2);
+    expect(getPlayerDestroySpeed(5, 17, getTool(258))).toBe(6);
+    expect(getPlayerDestroySpeed(5, 5, getTool(279))).toBe(8);
   });
 
   test('getPlayerDestroySpeed: axe on non-wood material → 1 (no bonus)', () => {
-    expect(getPlayerDestroySpeed('stone', 1, getTool('minecraft:wood_axe'))).toBe(1);
-    expect(getPlayerDestroySpeed('dirt', 3, getTool('minecraft:iron_axe'))).toBe(1);
+    expect(getPlayerDestroySpeed(1, 1, getTool(275))).toBe(1);
+    expect(getPlayerDestroySpeed(3, 3, getTool(258))).toBe(1);
   });
 
   test('getPlayerDestroySpeed: shovel on its tile list → tier speed (rujukan DiggerItem.h:14-19)', () => {
-    expect(getPlayerDestroySpeed('dirt', 3, getTool(269))).toBe(2);
-    expect(getPlayerDestroySpeed('dirt', 2, getTool('minecraft:iron_shovel'))).toBe(6);
-    expect(getPlayerDestroySpeed('sand', 12, getTool('minecraft:stone_shovel'))).toBe(4);
+    expect(getPlayerDestroySpeed(3, 3, getTool(269))).toBe(2);
+    expect(getPlayerDestroySpeed(3, 2, getTool(270))).toBe(6);
+    expect(getPlayerDestroySpeed(12, 12, getTool(281))).toBe(4);
   });
 
   test('getPlayerDestroySpeed: sword returns 1.5 (rujukan WeaponItem.h:30-37)', () => {
     // §WeaponItem::getDestroySpeed returns 1.5 by default (NOT 1 — I initially guessed wrong)
-    expect(getPlayerDestroySpeed('stone', 1, getTool('minecraft:wood_sword'))).toBe(1.5);
-    expect(getPlayerDestroySpeed('wood', 5, getTool('minecraft:iron_sword'))).toBe(1.5);
-    expect(getPlayerDestroySpeed('dirt', 3, getTool('minecraft:diamond_sword'))).toBe(1.5);
+    expect(getPlayerDestroySpeed(1, 1, getTool(272))).toBe(1.5);
+    expect(getPlayerDestroySpeed(5, 5, getTool(269))).toBe(1.5);
+    expect(getPlayerDestroySpeed(3, 3, getTool(276))).toBe(1.5);
   });
 
   test('getPlayerDestroySpeed: sword on web returns 15 (rujukan WeaponItem.h:32)', () => {
     // §WeaponItem::getDestroySpeed: if (tile->id == Tile::web->id) return 15;
-    expect(getPlayerDestroySpeed('web', 30, getTool('minecraft:wood_sword'))).toBe(15);
-    expect(getPlayerDestroySpeed('web', 30, getTool('minecraft:iron_sword'))).toBe(15);
+    expect(getPlayerDestroySpeed('web', 30, getTool(272))).toBe(15);
+    expect(getPlayerDestroySpeed('web', 30, getTool(269))).toBe(15);
   });
 });
 
@@ -176,10 +176,10 @@ describe('MCPE 2013 tool system (rujukan 1:1)', () => {
     // §HatchetItem::getDestroySpeed: if (tile.material == Material::wood) return speed;
     // Torch/ladder material is decoration → falls through to DiggerItem base (hasTile ? speed : 1).
     // Torch/ladder are NOT in AXE_TILES, so hasTile=false → returns 1.
-    expect(getPlayerDestroySpeed('decoration', 50, getTool('minecraft:wood_axe'))).toBe(1);
-    expect(getPlayerDestroySpeed('decoration', 65, getTool('minecraft:iron_axe'))).toBe(1);
+    expect(getPlayerDestroySpeed('decoration', 50, getTool(275))).toBe(1);
+    expect(getPlayerDestroySpeed('decoration', 65, getTool(258))).toBe(1);
     // Sanity check: wood_axe on oak_log (material=wood) DOES get speed bonus
-    expect(getPlayerDestroySpeed('wood', 17, getTool('minecraft:wood_axe'))).toBe(2);
+    expect(getPlayerDestroySpeed(5, 17, getTool(275))).toBe(2);
   });
 
   test('§All 41 block materials verified 1:1 with rujukan source', () => {

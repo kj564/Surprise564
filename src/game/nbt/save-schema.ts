@@ -137,7 +137,7 @@ export function validateWorldSave(input: unknown): SaveValidationResult {
           normalizedInventory.push(null);
           return;
         }
-        if (!isRecord(stack) || typeof stack.id !== 'string' || !/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(stack.id) ||
+        if (!isRecord(stack) || typeof stack.id !== 'number' || !Number.isSafeInteger(stack.id) || stack.id < 0 || stack.id > 65535 ||
             !isBoundedInteger(stack.count, 1, 999) || !isBoundedInteger(stack.maxStackSize, 1, 999) || stack.count > stack.maxStackSize) {
           errors.push('player.inventory[' + index + '] is not a valid item stack');
           return;
