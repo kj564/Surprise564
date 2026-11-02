@@ -51,15 +51,15 @@ class BlockRegistry {
   byLegacyId = new Map;
   constructor(entries = definitions) {
     for (const entry of entries) {
-      if (this.byKey.has(entry.legacyId ?? 0))
-        throw new Error("Duplicate block key: " + entry.legacyId);
+      if (this.byKey.has(entry.key))
+        throw new Error("Duplicate block key: " + entry.key);
       validateDefinition(entry);
       const stored = Object.freeze({
         ...entry,
         legacyAliases: entry.legacyAliases ? Object.freeze([...entry.legacyAliases]) : undefined,
         drops: Object.freeze([...entry.drops])
       });
-      this.byKey.set(entry.legacyId ?? 0, stored);
+      this.byKey.set(entry.key, stored);
       const legacyIds = [...entry.legacyId === undefined ? [] : [entry.legacyId], ...entry.legacyAliases ?? []];
       for (const legacyId of legacyIds) {
         if (!Number.isInteger(legacyId) || legacyId < 0 || legacyId > 255) {
@@ -79,19 +79,20 @@ class BlockRegistry {
     return this.byKey.get(key);
   }
   getIdByKey(key) {
-    if (id === 0)
-      return 0;
-    return this.byKey.get(key)?.legacyId;
-  }
-  getById(id2) {
-    if (!Number.isInteger(id2) || id2 < 0 || id2 > 65535)
+    const def = this.byKey.get(key);
+    if (!def || def.legacyId === undefined)
       return;
-    if (id2 === 0)
-      return this.byLegacyId.get(0);
-    return this.byLegacyId.get(id2);
+    return def.legacyId;
   }
-  getByLegacyId(id2) {
-    return Number.isInteger(id2) ? this.byLegacyId.get(id2) : undefined;
+  getById(id) {
+    if (!Number.isInteger(id) || id < 0 || id > 65535)
+      return;
+    if (id === 0)
+      return this.byLegacyId.get(0);
+    return this.byLegacyId.get(id);
+  }
+  getByLegacyId(id) {
+    return Number.isInteger(id) ? this.byLegacyId.get(id) : undefined;
   }
   values() {
     return [...this.byKey.values()];
@@ -106,7 +107,7 @@ function validateDefinition(entry) {
     throw new RangeError("lightOpacity must be between 0 and 15");
   if (!Number.isInteger(entry.lightEmission) || entry.lightEmission < 0 || entry.lightEmission > 15)
     throw new RangeError("lightEmission must be between 0 and 15");
-  if (entry.legacyAliases?.some((id2) => !Number.isInteger(id2) || id2 < 0 || id2 > 255))
+  if (entry.legacyAliases?.some((id) => !Number.isInteger(id) || id < 0 || id > 255))
     throw new RangeError("Legacy block aliases must be integers from 0 to 255");
   if (entry.drops.some((drop) => !Number.isInteger(drop) || drop < 0))
     throw new TypeError("Drop IDs must be non-negative integers");
@@ -206,25 +207,25 @@ class Inventory {
     this._revision += 1;
     return true;
   }
-  insert(id2, count, maxStackSize = 64) {
-    validateItemId(id2);
+  insert(id, count, maxStackSize = 64) {
+    validateItemId(id);
     positiveInteger2(count, "count");
     positiveInteger2(maxStackSize, "maxStackSize");
     if (maxStackSize > 999)
       throw new RangeError("maxStackSize cannot exceed 999");
     for (const stack of this.slots) {
-      if (stack?.id === id2 && stack.maxStackSize !== maxStackSize) {
-        throw new Error("maxStackSize does not match existing stack definition for " + id2);
+      if (stack?.id === id && stack.maxStackSize !== maxStackSize) {
+        throw new Error("maxStackSize does not match existing stack definition for " + id);
       }
     }
     let remaining = count;
     let changed = false;
     for (let index = 0;index < this.slots.length && remaining > 0; index += 1) {
       const stack = this.slots[index];
-      if (!stack || stack.id !== id2 || stack.count >= stack.maxStackSize)
+      if (!stack || stack.id !== id || stack.count >= stack.maxStackSize)
         continue;
       const amount = Math.min(remaining, stack.maxStackSize - stack.count);
-      this.slots[index] = createStack(id2, stack.count + amount, maxStackSize);
+      this.slots[index] = createStack(id, stack.count + amount, maxStackSize);
       remaining -= amount;
       changed = true;
     }
@@ -232,7 +233,7 @@ class Inventory {
       if (this.slots[index] !== null)
         continue;
       const amount = Math.min(remaining, maxStackSize);
-      this.slots[index] = createStack(id2, amount, maxStackSize);
+      this.slots[index] = createStack(id, amount, maxStackSize);
       remaining -= amount;
       changed = true;
     }
@@ -270,8 +271,8 @@ class Inventory {
     return index;
   }
 }
-function createStack(id2, count, maxStackSize, auxValue) {
-  validateItemId(id2);
+function createStack(id, count, maxStackSize, auxValue) {
+  validateItemId(id);
   positiveInteger2(count, "count");
   positiveInteger2(maxStackSize, "maxStackSize");
   if (maxStackSize > 999)
@@ -281,10 +282,12 @@ function createStack(id2, count, maxStackSize, auxValue) {
   if (auxValue !== undefined && (!Number.isInteger(auxValue) || auxValue < 0 || auxValue > 9999)) {
     throw new RangeError("auxValue must be a non-negative integer up to 9999");
   }
-  return Object.freeze({ id: id2, count, maxStackSize, auxValue: auxValue ?? 0 });
+  return Object.freeze({ id, count, maxStackSize, auxValue: auxValue ?? 0 });
 }
-function validateItemId(id2) {
-  if (!Number.isInteger(id2) || id2 < 0) {
+function validateItemId(id) {
+  if (typeof id !== "number" || !Number.isSafeInteger(id) || id < 0)
+    throw new TypeError("id must be a non-negative integer (C++ ItemInstance.id)");
+  if (!Number.isInteger(id) || id < 0) {
     throw new TypeError("id must be a non-negative integer (C++ ItemInstance.id)");
   }
 }
@@ -306,34 +309,34 @@ var TIERS = Object.freeze({
   none: Object.freeze({ level: 0, uses: 0, speed: 1, damage: 0 })
 });
 var TOOL_TABLE = Object.freeze({
-  "minecraft:iron_shovel": makeTool("shovel", "iron", 2, 5),
-  "minecraft:iron_pickaxe": makeTool("pickaxe", "iron", 2, 6),
-  "minecraft:iron_axe": makeTool("axe", "iron", 2, 7),
-  "minecraft:wood_shovel": makeTool("shovel", "wood", 0, 5),
-  "minecraft:wood_pickaxe": makeTool("pickaxe", "wood", 0, 6),
-  "minecraft:wood_axe": makeTool("axe", "wood", 0, 7),
-  "minecraft:stone_shovel": makeTool("shovel", "stone", 1, 5),
-  "minecraft:stone_pickaxe": makeTool("pickaxe", "stone", 1, 6),
-  "minecraft:stone_axe": makeTool("axe", "stone", 1, 7),
-  "minecraft:diamond_shovel": makeTool("shovel", "diamond", 3, 5),
-  "minecraft:diamond_pickaxe": makeTool("pickaxe", "diamond", 3, 6),
-  "minecraft:diamond_axe": makeTool("axe", "diamond", 3, 7),
-  "minecraft:gold_shovel": makeTool("shovel", "gold", 4, 5),
-  "minecraft:gold_pickaxe": makeTool("pickaxe", "gold", 4, 6),
-  "minecraft:gold_axe": makeTool("axe", "gold", 4, 7),
-  "minecraft:wood_sword": makeTool("sword", "wood", 0, 4),
-  "minecraft:stone_sword": makeTool("sword", "stone", 1, 4),
-  "minecraft:iron_sword": makeTool("sword", "iron", 2, 4),
-  "minecraft:diamond_sword": makeTool("sword", "diamond", 3, 4),
-  "minecraft:gold_sword": makeTool("sword", "gold", 4, 4)
+  256: makeTool("shovel", "iron", 2, 5),
+  257: makeTool("pickaxe", "iron", 2, 6),
+  258: makeTool("axe", "iron", 2, 7),
+  269: makeTool("shovel", "wood", 0, 5),
+  270: makeTool("pickaxe", "wood", 0, 6),
+  271: makeTool("axe", "wood", 0, 7),
+  273: makeTool("shovel", "stone", 1, 5),
+  274: makeTool("pickaxe", "stone", 1, 6),
+  275: makeTool("axe", "stone", 1, 7),
+  277: makeTool("shovel", "diamond", 3, 5),
+  278: makeTool("pickaxe", "diamond", 3, 6),
+  279: makeTool("axe", "diamond", 3, 7),
+  284: makeTool("shovel", "gold", 4, 5),
+  285: makeTool("pickaxe", "gold", 4, 6),
+  286: makeTool("axe", "gold", 4, 7),
+  268: makeTool("sword", "wood", 0, 4),
+  272: makeTool("sword", "stone", 1, 4),
+  267: makeTool("sword", "iron", 2, 4),
+  276: makeTool("sword", "diamond", 3, 4),
+  283: makeTool("sword", "gold", 4, 4)
 });
 function makeTool(kind, tier, iconCol, iconRow) {
   return Object.freeze({ kind, tier, tierDef: TIERS[tier], iconCol, iconRow });
 }
-function getTool(id2) {
-  if (!Number.isInteger(id2) || id2 <= 0)
+function getTool(id) {
+  if (!Number.isInteger(id) || id <= 0)
     return null;
-  return TOOL_TABLE[id2] ?? null;
+  return TOOL_TABLE[id] ?? null;
 }
 var NOT_ALWAYS_DESTROYABLE = new Set([
   "stone",
@@ -344,18 +347,18 @@ var NOT_ALWAYS_DESTROYABLE = new Set([
 function isAlwaysDestroyable(material) {
   return !NOT_ALWAYS_DESTROYABLE.has(material);
 }
-function pickaxeCanDestroy(material, blockKey, tierLevel) {
-  if (blockKey === "minecraft:obsidian")
+function pickaxeCanDestroy(material, blockId, tierLevel) {
+  if (blockId === 49)
     return tierLevel === 3;
-  if (blockKey === "minecraft:diamond_block" || blockKey === "minecraft:diamond_ore")
+  if (blockId === 57 || blockId === 56)
     return tierLevel >= 2;
-  if (blockKey === "minecraft:gold_block" || blockKey === "minecraft:gold_ore")
+  if (blockId === 41 || blockId === 14)
     return tierLevel >= 2;
-  if (blockKey === "minecraft:iron_block" || blockKey === "minecraft:iron_ore")
+  if (blockId === 42 || blockId === 15)
     return tierLevel >= 1;
-  if (blockKey === "minecraft:lapis_block" || blockKey === "minecraft:lapis_ore")
+  if (blockId === 22 || blockId === 21)
     return tierLevel >= 1;
-  if (blockKey === "minecraft:redstone_ore" || blockKey === "minecraft:redstone_ore_lit")
+  if (blockId === 73 || blockId === 74)
     return tierLevel >= 2;
   if (material === "stone" || material === "metal")
     return true;
@@ -378,51 +381,51 @@ function shovelDestroySpeed(hasTile, tierSpeed) {
   return hasTile ? tierSpeed : 1;
 }
 var PICKAXE_TILES = new Set([
-  "minecraft:cobblestone",
-  "minecraft:stone_bricks",
-  "minecraft:stone_slab",
-  "minecraft:stone",
-  "minecraft:sandstone",
-  "minecraft:moss_stone",
-  "minecraft:iron_ore",
-  "minecraft:iron_block",
-  "minecraft:coal_ore",
-  "minecraft:gold_block",
-  "minecraft:gold_ore",
-  "minecraft:diamond_block",
-  "minecraft:diamond_ore",
-  "minecraft:ice",
-  "minecraft:lapis_ore",
-  "minecraft:lapis_block"
+  4,
+  98,
+  44,
+  1,
+  24,
+  48,
+  15,
+  42,
+  16,
+  41,
+  14,
+  57,
+  56,
+  79,
+  21,
+  22
 ]);
 var AXE_TILES = new Set([
-  "minecraft:oak_planks",
-  "minecraft:bookshelf",
-  "minecraft:oak_log",
-  "minecraft:chest",
-  "minecraft:stone_slab",
-  "minecraft:oak_stairs",
-  "minecraft:crafting_table",
-  "minecraft:oak_fence"
+  5,
+  47,
+  17,
+  54,
+  44,
+  53,
+  58,
+  85
 ]);
 var SHOVEL_TILES = new Set([
-  "minecraft:grass_block",
-  "minecraft:dirt",
-  "minecraft:sand",
-  "minecraft:gravel",
-  "minecraft:snow_layer",
-  "minecraft:snow",
-  "minecraft:clay",
-  "minecraft:farmland"
+  2,
+  3,
+  12,
+  13,
+  78,
+  80,
+  82,
+  60
 ]);
-function canDestroyBlock(material, blockKey, tool) {
+function canDestroyBlock(material, blockId, tool) {
   if (isAlwaysDestroyable(material))
     return true;
   if (!tool)
     return false;
   switch (tool.kind) {
     case "pickaxe":
-      return pickaxeCanDestroy(material, blockKey, tool.tierDef.level);
+      return pickaxeCanDestroy(material, blockId, tool.tierDef.level);
     case "shovel":
       return shovelCanDestroy(material);
     case "axe":
@@ -432,17 +435,17 @@ function canDestroyBlock(material, blockKey, tool) {
   }
   return false;
 }
-function getPlayerDestroySpeed(material, blockKey, tool) {
+function getPlayerDestroySpeed(material, blockId, tool) {
   if (!tool)
     return 1;
   const hasTile = (() => {
     switch (tool.kind) {
       case "pickaxe":
-        return PICKAXE_TILES.has(blockKey);
+        return PICKAXE_TILES.has(blockId);
       case "axe":
-        return AXE_TILES.has(blockKey);
+        return AXE_TILES.has(blockId);
       case "shovel":
-        return SHOVEL_TILES.has(blockKey);
+        return SHOVEL_TILES.has(blockId);
       case "sword":
         return false;
       case "none":
@@ -458,13 +461,13 @@ function getPlayerDestroySpeed(material, blockKey, tool) {
     case "shovel":
       return shovelDestroySpeed(hasTile, tool.tierDef.speed);
     case "sword":
-      return blockKey === "minecraft:web" ? 15 : 1.5;
+      return blockId === 30 ? 15 : 1.5;
     case "none":
       return 1;
   }
   return 1;
 }
-var TOOL_KEYS = Object.freeze(Object.keys(TOOL_TABLE));
+var TOOL_IDS = Object.freeze(Object.keys(TOOL_TABLE).map(Number));
 
 // src/game/client/interaction/mining.ts
 var SURVIVAL_DESTROY_DELAY = 5;
@@ -594,10 +597,10 @@ function beginMining(world, target, registry, options = {}) {
   if (definition.hardness < 0)
     return { status: "unbreakable" };
   const tool = options.tool ?? null;
-  const playerDestroySpeed = options.playerDestroySpeed ?? getPlayerDestroySpeed(definition.material, definition.key, tool);
+  const playerDestroySpeed = options.playerDestroySpeed ?? getPlayerDestroySpeed(definition.material, definition.legacyId ?? 0, tool);
   if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0)
     throw new RangeError("playerDestroySpeed must be finite and positive");
-  const canDestroy = canDestroyBlock(definition.material, definition.key, tool);
+  const canDestroy = canDestroyBlock(definition.material, definition.legacyId ?? 0, tool);
   return {
     status: "started",
     session: new MiningSession(target, blockId, definition.hardness, mode, playerDestroySpeed, canDestroy)
@@ -795,7 +798,7 @@ function placeBlockFromInventory(world, hit, inventory, slotIndex, registry, pla
   const stack = inventory.getSlot(slotIndex);
   if (!stack)
     return { status: "inventory-empty" };
-  const blockId = registry.getIdByKey(stack.id);
+  const blockId = stack.id;
   if (blockId === undefined || blockId === 0)
     return { status: "not-a-block-item" };
   const validation = validatePlacementTarget(world, hit, blockId, registry);
@@ -1457,7 +1460,7 @@ function validateWorldSave(input) {
           normalizedInventory.push(null);
           return;
         }
-        if (!isRecord(stack) || typeof stack.id !== "string" || !/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(stack.id) || !isBoundedInteger(stack.count, 1, 999) || !isBoundedInteger(stack.maxStackSize, 1, 999) || stack.count > stack.maxStackSize) {
+        if (!isRecord(stack) || typeof stack.id !== "number" || !Number.isSafeInteger(stack.id) || stack.id < 0 || stack.id > 65535 || !isBoundedInteger(stack.count, 1, 999) || !isBoundedInteger(stack.maxStackSize, 1, 999) || stack.count > stack.maxStackSize) {
           errors.push("player.inventory[" + index + "] is not a valid item stack");
           return;
         }
@@ -1642,7 +1645,7 @@ class VoxelCraftEngine {
     return Object.freeze({ clock: clockResult, player: playerState });
   }
   target(origin, direction, reach = 6) {
-    return raycastVoxels(this.world, origin, direction, reach, (id2) => this.registry.getById(id2)?.selectable ?? false);
+    return raycastVoxels(this.world, origin, direction, reach, (id) => this.registry.getById(id)?.selectable ?? false);
   }
   startMining(target, tool = this.tool) {
     const result = beginMining(this.world, target, this.registry, {
@@ -1909,18 +1912,18 @@ function generateTerrainChunk(world, chunkX, chunkZ, options = {}) {
       maxHeight = Math.max(maxHeight, height);
       const surface = height <= seaLevel + 1 ? ids.sand : ids.grass;
       for (let y = 0;y <= height; y += 1) {
-        const id2 = y === 0 ? ids.bedrock : y === height ? surface : y >= height - 3 ? ids.dirt : ids.stone;
-        chunk.setBlock(localX, y, localZ, id2);
+        const id = y === 0 ? ids.bedrock : y === height ? surface : y >= height - 3 ? ids.dirt : ids.stone;
+        chunk.setBlock(localX, y, localZ, id);
       }
     }
   }
   return Object.freeze({ chunkX, chunkZ, minHeight, maxHeight });
 }
 function requireId(registry, key) {
-  const id2 = registry.getIdByKey(key);
-  if (id2 === undefined)
+  const id = registry.getIdByKey(key);
+  if (id === undefined)
     throw new Error("Terrain requires block definition " + key);
-  return id2;
+  return id;
 }
 function valueNoise(x, z, seed) {
   const x0 = Math.floor(x), z0 = Math.floor(z);
@@ -2592,51 +2595,51 @@ function typeOf(value) {
 class SynchedEntityData {
   itemsById = new Map;
   dirty = false;
-  define(id2, value) {
-    if (!Number.isSafeInteger(id2) || id2 < 0 || id2 > MAX_ID_VALUE)
+  define(id, value) {
+    if (!Number.isSafeInteger(id) || id < 0 || id > MAX_ID_VALUE)
       return;
-    if (this.itemsById.has(id2))
+    if (this.itemsById.has(id))
       return;
     const type = typeOf(value);
-    const item = { type, id: id2, dirty: true, data: value };
-    this.itemsById.set(id2, item);
+    const item = { type, id, dirty: true, data: value };
+    this.itemsById.set(id, item);
     this.dirty = true;
   }
-  getByte(id2) {
-    return this.getNumber(id2);
+  getByte(id) {
+    return this.getNumber(id);
   }
-  getShort(id2) {
-    return this.getNumber(id2);
+  getShort(id) {
+    return this.getNumber(id);
   }
-  getInt(id2) {
-    return this.getNumber(id2);
+  getInt(id) {
+    return this.getNumber(id);
   }
-  getFloat(id2) {
-    return this.getNumber(id2);
+  getFloat(id) {
+    return this.getNumber(id);
   }
-  getString(id2) {
-    const item = this.require(id2);
+  getString(id) {
+    const item = this.require(id);
     if (typeof item.data !== "string") {
-      throw new TypeError("DataItem " + id2 + " is not a string");
+      throw new TypeError("DataItem " + id + " is not a string");
     }
     return item.data;
   }
-  getNumber(id2) {
-    const item = this.require(id2);
+  getNumber(id) {
+    const item = this.require(id);
     if (typeof item.data !== "number") {
-      throw new TypeError("DataItem " + id2 + " is not numeric");
+      throw new TypeError("DataItem " + id + " is not numeric");
     }
     return item.data;
   }
-  require(id2) {
-    const item = this.itemsById.get(id2);
+  require(id) {
+    const item = this.itemsById.get(id);
     if (!item) {
-      throw new Error("DataItem not found: " + id2);
+      throw new Error("DataItem not found: " + id);
     }
     return item;
   }
-  set(id2, value) {
-    const item = this.itemsById.get(id2);
+  set(id, value) {
+    const item = this.itemsById.get(id);
     if (!item)
       return;
     if (item.type !== typeOf(value)) {
@@ -2648,34 +2651,34 @@ class SynchedEntityData {
       this.dirty = true;
     }
   }
-  setFlag(id2, flag) {
-    const item = this.itemsById.get(id2);
+  setFlag(id, flag) {
+    const item = this.itemsById.get(id);
     if (!item)
       return;
     const oldFlag = getFlagBit(item, flag);
     setFlagBit(item, flag);
     if (getFlagBit(item, flag) !== oldFlag) {
-      this.markDirty(id2);
+      this.markDirty(id);
     }
   }
-  clearFlag(id2, flag) {
-    const item = this.itemsById.get(id2);
+  clearFlag(id, flag) {
+    const item = this.itemsById.get(id);
     if (!item)
       return;
     const oldFlag = getFlagBit(item, flag);
     clearFlagBit(item, flag);
     if (getFlagBit(item, flag) !== oldFlag) {
-      this.markDirty(id2);
+      this.markDirty(id);
     }
   }
-  getFlag(id2, flag) {
-    const item = this.itemsById.get(id2);
+  getFlag(id, flag) {
+    const item = this.itemsById.get(id);
     if (!item)
       return false;
     return getFlagBit(item, flag);
   }
-  markDirty(id2) {
-    const item = this.itemsById.get(id2);
+  markDirty(id) {
+    const item = this.itemsById.get(id);
     if (!item)
       return;
     item.dirty = true;
@@ -2689,8 +2692,8 @@ class SynchedEntityData {
     for (const item of this.itemsById.values())
       item.dirty = false;
   }
-  getItem(id2) {
-    return this.itemsById.get(id2);
+  getItem(id) {
+    return this.itemsById.get(id);
   }
   items() {
     return [...this.itemsById.values()];
@@ -3288,8 +3291,8 @@ class Mob extends Entity {
       this.noActionTime = 0;
     }
   }
-  handleEntityEvent(id2) {
-    if (id2 === 2 /* Hurt */) {
+  handleEntityEvent(id) {
+    if (id === 2 /* Hurt */) {
       this.walkAnimSpeed = 1.5;
       this.invulnerableTime = this.invulnerableDuration;
       this.hurtTime = 10;
@@ -3300,7 +3303,7 @@ class Mob extends Entity {
         level.playSound(this, this.getHurtSound(), this.getSoundVolume(), this.getVoicePitch());
       }
       this.hurt(null, 0);
-    } else if (id2 === 3 /* Death */) {
+    } else if (id === 3 /* Death */) {
       const level = this.level;
       if (level) {
         level.playSound(this, this.getDeathSound(), this.getSoundVolume(), this.getVoicePitch());
@@ -3308,7 +3311,7 @@ class Mob extends Entity {
       this.health = 0;
       this.die(null);
     } else {
-      super.handleEntityEvent(id2);
+      super.handleEntityEvent(id);
     }
   }
   getEntityData() {
@@ -3880,11 +3883,11 @@ class Sheep extends Animal {
       this.eatAnimationTickValue--;
     }
   }
-  handleEntityEvent(id2) {
-    if (id2 === 18 /* EatGrass */) {
+  handleEntityEvent(id) {
+    if (id === 18 /* EatGrass */) {
       this.eatAnimationTickValue = EAT_ANIMATION_TICKS2;
     } else {
-      super.handleEntityEvent(id2);
+      super.handleEntityEvent(id);
     }
   }
   getHeadEatPositionScale(a) {
@@ -4982,16 +4985,16 @@ var ANY_AUX_VALUE = -1;
 
 class ItemPack {
   items = new Map;
-  add(id2, count = 1) {
-    this.items.set(id2, (this.items.get(id2) ?? 0) + count);
+  add(id, count = 1) {
+    this.items.set(id, (this.items.get(id) ?? 0) + count);
   }
-  getCount(id2) {
-    return this.items.get(id2) ?? 0;
+  getCount(id) {
+    return this.items.get(id) ?? 0;
   }
   getMaxMultipliesOf(other) {
     let max = Infinity;
-    for (const [id2, count] of other.items) {
-      const have = this.items.get(id2) ?? 0;
+    for (const [id, count] of other.items) {
+      const have = this.items.get(id) ?? 0;
       if (count === 0)
         continue;
       max = Math.min(max, Math.floor(have / count));
@@ -5002,8 +5005,8 @@ class ItemPack {
   }
   getItemInstances() {
     const result = [];
-    for (const [id2, count] of this.items) {
-      result.push({ id: id2, count, maxStackSize: 64 });
+    for (const [id, count] of this.items) {
+      result.push({ id, count, maxStackSize: 64 });
     }
     return result;
   }
@@ -5247,8 +5250,8 @@ function resolveItemId(key) {
   const parsed = parseInt(key, 10);
   return isNaN(parsed) ? 0 : parsed;
 }
-function def(c, id2, auxValue) {
-  return [{ c, id: resolveItemId(id2), auxValue }];
+function def(c, id, auxValue) {
+  return [{ c, id: resolveItemId(id), auxValue }];
 }
 function def2(c0, k0, c1, k1) {
   return [{ c: c0, id: resolveItemId(k0) }, { c: c1, id: resolveItemId(k1) }];
@@ -5256,8 +5259,8 @@ function def2(c0, k0, c1, k1) {
 function def3(c0, k0, c1, k1, c2, k2) {
   return [{ c: c0, id: resolveItemId(k0) }, { c: c1, id: resolveItemId(k1) }, { c: c2, id: resolveItemId(k2) }];
 }
-function itemStack(id2, count = 1, auxValue) {
-  return { id: resolveItemId(id2), count, maxStackSize: 64, auxValue };
+function itemStack(id, count = 1, auxValue) {
+  return { id: resolveItemId(id), count, maxStackSize: 64, auxValue };
 }
 
 class Recipes {

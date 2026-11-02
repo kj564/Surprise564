@@ -44,9 +44,11 @@ export function browserBlockIdToEngineId(
   registry: BlockRegistry = defaultBlockRegistry,
 ): number | undefined {
   if (!Number.isSafeInteger(browserId) || browserId < 0) return undefined;
-  const key = BROWSER_BLOCK_KEY[browserId];
-  if (!key) return undefined;
-  return registry.getByKey(key)?.legacyId ?? (key === 0 ? 0 : undefined);
+  const engineId = BROWSER_BLOCK_KEY[browserId];
+  if (engineId === undefined) return undefined;
+  if (engineId === 0) return 0;
+  const definition = registry.getById(engineId);
+  return definition?.legacyId ?? engineId;
 }
 
 /** Reverse translation is conservative: duplicate browser aliases are not silently selected. */

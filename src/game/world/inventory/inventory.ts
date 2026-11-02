@@ -53,7 +53,7 @@ export class Inventory {
   }
 
   /** Fills compatible stacks first, then empty slots; returns any items that did not fit. */
-  insert(id: string, count: number, maxStackSize = 64): InsertResult {
+  insert(id: number, count: number, maxStackSize = 64): InsertResult {
     validateItemId(id);
     positiveInteger(count, 'count');
     positiveInteger(maxStackSize, 'maxStackSize');
@@ -120,7 +120,7 @@ export class Inventory {
   }
 }
 
-function createStack(id: string, count: number, maxStackSize: number, auxValue?: number): ItemStack {
+function createStack(id: number, count: number, maxStackSize: number, auxValue?: number): ItemStack {
   validateItemId(id);
   positiveInteger(count, 'count');
   positiveInteger(maxStackSize, 'maxStackSize');
@@ -135,6 +135,7 @@ function createStack(id: string, count: number, maxStackSize: number, auxValue?:
 }
 
 function validateItemId(id: number): void {
+  if (typeof id !== 'number' || !Number.isSafeInteger(id) || id < 0) throw new TypeError('id must be a non-negative integer (C++ ItemInstance.id)');
   if (!Number.isInteger(id) || id < 0) {
     throw new TypeError('id must be a non-negative integer (C++ ItemInstance.id)');
   }

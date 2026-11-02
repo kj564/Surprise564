@@ -200,7 +200,7 @@ export function beginMining(
 
   // §Player::getDestroySpeed → tool-aware destroy speed multiplier (1 if bare hand).
   const tool = options.tool ?? null;
-  const playerDestroySpeed = options.playerDestroySpeed ?? getPlayerDestroySpeed(definition.material, definition.key, tool);
+  const playerDestroySpeed = options.playerDestroySpeed ?? getPlayerDestroySpeed(definition.material, definition.legacyId ?? 0, tool);
   if (!Number.isFinite(playerDestroySpeed) || playerDestroySpeed <= 0) throw new RangeError('playerDestroySpeed must be finite and positive');
 
   // §Player::canDestroy → §Inventory::canDestroy (Inventory.cpp:307-313):
@@ -213,7 +213,7 @@ export function beginMining(
   //   return (player->getDestroySpeed(this) / destroySpeed) / 30.0f;
   // canDestroy=false still lets the player break the block, just 100x slower
   // and with no drops. We model this with the `canDestroy` flag on the session.
-  const canDestroy = canDestroyBlock(definition.material, definition.key, tool);
+  const canDestroy = canDestroyBlock(definition.material, definition.legacyId ?? 0, tool);
 
   return {
     status: 'started',

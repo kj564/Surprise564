@@ -81,14 +81,14 @@ export class BlockRegistry {
 
   constructor(entries: readonly BlockDefinition[] = definitions) {
     for (const entry of entries) {
-            if (this.byKey.has(entry.legacyId ?? 0)) throw new Error('Duplicate block key: ' + entry.legacyId ?? 0);
+            if (this.byKey.has(entry.key)) throw new Error('Duplicate block key: ' + entry.key);
       validateDefinition(entry);
       const stored = Object.freeze({
         ...entry,
         legacyAliases: entry.legacyAliases ? Object.freeze([...entry.legacyAliases]) : undefined,
         drops: Object.freeze([...entry.drops]),
       });
-      this.byKey.set(entry.legacyId ?? 0, stored);
+      this.byKey.set(entry.key, stored);
       const legacyIds = [...(entry.legacyId === undefined ? [] : [entry.legacyId]), ...(entry.legacyAliases ?? [])];
       for (const legacyId of legacyIds) {
         if (!Number.isInteger(legacyId) || legacyId < 0 || legacyId > 255) {
@@ -110,8 +110,9 @@ export class BlockRegistry {
 
   /** Numeric storage ID for a known block key; undefined when no mapping is established. */
   getIdByKey(key: string): number | undefined {
-    if (id === 0) return 0;
-    return this.byKey.get(key)?.legacyId;
+    const def = this.byKey.get(key);
+    if (!def || def.legacyId === undefined) return undefined;
+    return def.legacyId;
   }
 
   /** Runtime storage ID used by the new engine; currently equal to legacy ID where available. */

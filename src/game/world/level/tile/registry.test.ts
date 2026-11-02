@@ -10,14 +10,14 @@ describe('BlockRegistry', () => {
     expect(defaultBlockRegistry.getByLegacyId(10)?.lightEmission).toBe(15);
     expect(defaultBlockRegistry.getByLegacyId(11)?.legacyId).toBe(10);
     expect(defaultBlockRegistry.getById(2)?.legacyId).toBe(2);
-    expect(defaultBlockRegistry.getByKey(53)?.shape).toBe('stairs');
-    expect(defaultBlockRegistry.getByKey(20)?.renderLayer).toBe('translucent');
+    expect(defaultBlockRegistry.getByKey('minecraft:oak_stairs')?.shape).toBe('stairs');
+    expect(defaultBlockRegistry.getByKey('minecraft:glass')?.renderLayer).toBe('translucent');
   });
 
   test('does not invent definitions for unknown IDs or keys', () => {
     expect(defaultBlockRegistry.getById(65535)).toBeUndefined();
     expect(defaultBlockRegistry.getById(-1)).toBeUndefined();
-    expect(defaultBlockRegistry.getByKey(9999)).toBeUndefined();
+    expect(defaultBlockRegistry.getByKey('minecraft:nonexistent')).toBeUndefined();
   });
 
   test('does not expose mutable registry collections', () => {
@@ -37,7 +37,7 @@ describe('BlockRegistry', () => {
 
   test('requires air and validates material properties', () => {
     const stone = defaultBlockRegistry.getByKey(1)!;
-    expect(() => new BlockRegistry([stone])).toThrow('must define block ID 0);
+    expect(() => new BlockRegistry([stone])).toThrow('must define block ID 0 (air)');
     expect(() => new BlockRegistry([
       defaultBlockRegistry.getByKey(0)!,
       { ...stone, key: 'minecraft:bad_stone', legacyId: 250, lightEmission: 16 },

@@ -46,40 +46,40 @@ export interface Tool {
 }
 
 // Verified from rujukan Item.cpp:168-198 — tool itemKey → Tool metadata.
-const TOOL_TABLE: Readonly<Record<string, Tool>> = Object.freeze({
+const TOOL_TABLE: Readonly<Record<number, Tool>> = Object.freeze({
   // Iron tools (Item.cpp:168-170): setIcon(2,5/6/7)
-  'minecraft:iron_shovel':   makeTool('shovel',  'iron',    2, 5),
-  'minecraft:iron_pickaxe':  makeTool('pickaxe', 'iron',    2, 6),
-  'minecraft:iron_axe':      makeTool('axe',     'iron',    2, 7),
+  256:   makeTool('shovel',  'iron',    2, 5),
+  257:  makeTool('pickaxe', 'iron',    2, 6),
+  258:      makeTool('axe',     'iron',    2, 7),
   // Wood tools (Item.cpp:181-183): setIcon(0,5/6/7)
-  'minecraft:wood_shovel':   makeTool('shovel',  'wood',    0, 5),
-  'minecraft:wood_pickaxe':  makeTool('pickaxe', 'wood',    0, 6),
-  'minecraft:wood_axe':      makeTool('axe',     'wood',    0, 7),
+  269:   makeTool('shovel',  'wood',    0, 5),
+  270:  makeTool('pickaxe', 'wood',    0, 6),
+  271:      makeTool('axe',     'wood',    0, 7),
   // Stone tools (Item.cpp:185-187): setIcon(1,5/6/7)
-  'minecraft:stone_shovel':  makeTool('shovel',  'stone',   1, 5),
-  'minecraft:stone_pickaxe': makeTool('pickaxe', 'stone',   1, 6),
-  'minecraft:stone_axe':     makeTool('axe',     'stone',   1, 7),
+  273:  makeTool('shovel',  'stone',   1, 5),
+  274: makeTool('pickaxe', 'stone',   1, 6),
+  275:     makeTool('axe',     'stone',   1, 7),
   // Diamond tools (Item.cpp:189-191): setIcon(3,5/6/7)
-  'minecraft:diamond_shovel':  makeTool('shovel',  'diamond', 3, 5),
-  'minecraft:diamond_pickaxe': makeTool('pickaxe', 'diamond', 3, 6),
-  'minecraft:diamond_axe':     makeTool('axe',     'diamond', 3, 7),
+  277:  makeTool('shovel',  'diamond', 3, 5),
+  278: makeTool('pickaxe', 'diamond', 3, 6),
+  279:     makeTool('axe',     'diamond', 3, 7),
   // Gold tools (Item.cpp:196-198): setIcon(4,5/6/7)
-  'minecraft:gold_shovel':   makeTool('shovel',  'gold',    4, 5),
-  'minecraft:gold_pickaxe':  makeTool('pickaxe', 'gold',    4, 6),
-  'minecraft:gold_axe':      makeTool('axe',     'gold',    4, 7),
+  284:   makeTool('shovel',  'gold',    4, 5),
+  285:  makeTool('pickaxe', 'gold',    4, 6),
+  286:      makeTool('axe',     'gold',    4, 7),
   // Swords (Item.cpp:179-180,184,188,195): setIcon(<tier>,4)
-  'minecraft:wood_sword':    makeTool('sword', 'wood',    0, 4),
-  'minecraft:stone_sword':   makeTool('sword', 'stone',   1, 4),
-  'minecraft:iron_sword':    makeTool('sword', 'iron',    2, 4),
-  'minecraft:diamond_sword': makeTool('sword', 'diamond', 3, 4),
-  'minecraft:gold_sword':    makeTool('sword', 'gold',    4, 4),
+  268:    makeTool('sword', 'wood',    0, 4),
+  272:   makeTool('sword', 'stone',   1, 4),
+  267:    makeTool('sword', 'iron',    2, 4),
+  276: makeTool('sword', 'diamond', 3, 4),
+  283:    makeTool('sword', 'gold',    4, 4),
 });
 
 function makeTool(kind: ToolKind, tier: ToolTier, iconCol: number, iconRow: number): Tool {
   return Object.freeze({ kind, tier, tierDef: TIERS[tier], iconCol, iconRow });
 }
 
-/** Lookup tool metadata by item key. Returns null for non-tool items. */
+/** §Lookup tool metadata by numeric item ID (256 + Item.cpp id). Returns null for non-tool items. */
 export function getTool(id: number | null | undefined): Tool | null {
   if (!Number.isInteger(id) || id <= 0) return null;
   return TOOL_TABLE[id] ?? null;
@@ -115,16 +115,16 @@ export function isAlwaysDestroyable(material: BlockMaterial): boolean {
 //   if redstone_ore → tier.level >= 2
 //   if material == stone OR metal → true
 //   else false
-function pickaxeCanDestroy(material: BlockMaterial, blockKey: string, tierLevel: number): boolean {
+function pickaxeCanDestroy(material: BlockMaterial, blockId: number, tierLevel: number): boolean {
   // Per-block tier gates (rujukan exact):
-  if (blockKey === 'minecraft:obsidian') return tierLevel === 3;
-  if (blockKey === 'minecraft:diamond_block' || blockKey === 'minecraft:diamond_ore') return tierLevel >= 2;
-  if (blockKey === 'minecraft:gold_block' || blockKey === 'minecraft:gold_ore') return tierLevel >= 2;
-  if (blockKey === 'minecraft:iron_block' || blockKey === 'minecraft:iron_ore') return tierLevel >= 1;
-  if (blockKey === 'minecraft:lapis_block' || blockKey === 'minecraft:lapis_ore') return tierLevel >= 1;
+  if (blockId === 49) return tierLevel === 3;
+  if (blockId === 57 || blockId === 56) return tierLevel >= 2;
+  if (blockId === 41 || blockId === 14) return tierLevel >= 2;
+  if (blockId === 42 || blockId === 15) return tierLevel >= 1;
+  if (blockId === 22 || blockId === 21) return tierLevel >= 1;
   // §PickaxeItem.cpp:41 — redstone ore requires iron pickaxe (tier >= 2)
   // (this was missing in the initial Task 15 port — Rule Zero fix)
-  if (blockKey === 'minecraft:redstone_ore' || blockKey === 'minecraft:redstone_ore_lit') return tierLevel >= 2;
+  if (blockId === 73 || blockId === 74) return tierLevel >= 2;
   // Material fallback — §PickaxeItem.cpp:50-51
   if (material === 'stone' || material === 'metal') return true;
   return false;
@@ -162,27 +162,20 @@ function shovelDestroySpeed(hasTile: boolean, tierSpeed: number): number {
 // stone_slab (both), stone, sandstone, moss_stone, iron_ore, iron_block,
 // coal_ore, gold_block, gold_ore, diamond_block, diamond_ore, ice, lapis_ore,
 // lapis_block. Map to our itemKey format.
-const PICKAXE_TILES: ReadonlySet<string> = new Set([
-  'minecraft:cobblestone', 'minecraft:stone_bricks', 'minecraft:stone_slab',
-  'minecraft:stone', 'minecraft:sandstone', 'minecraft:moss_stone',
-  'minecraft:iron_ore', 'minecraft:iron_block', 'minecraft:coal_ore',
-  'minecraft:gold_block', 'minecraft:gold_ore', 'minecraft:diamond_block',
-  'minecraft:diamond_ore', 'minecraft:ice', 'minecraft:lapis_ore', 'minecraft:lapis_block',
-]);
+const PICKAXE_TILES: ReadonlySet<number> = new Set([
+  4, 98, 44, 1, 24, 48, 15, 42, 16, 41, 14, 57, 56, 79, 21, 22,
+]);;
 
 // §HatchetItem tile list (HatchetItem.cpp:14-22): wood, bookshelf, tree_trunk (oak_log),
 // chest, stone_slab, stone_slab_half. Map to our itemKey format.
-const AXE_TILES: ReadonlySet<string> = new Set([
-  'minecraft:oak_planks', 'minecraft:bookshelf', 'minecraft:oak_log',
-  'minecraft:chest', 'minecraft:stone_slab', 'minecraft:oak_stairs',
-  'minecraft:crafting_table', 'minecraft:oak_fence',
-]);
+const AXE_TILES: ReadonlySet<number> = new Set([
+  5, 47, 17, 54, 44, 53, 58, 85,
+]);;
 
 // §ShovelItem tile list (ShovelItem.cpp:11-19): grass, dirt, sand, gravel,
 // topSnow, snow, clay, farmland. Map to our itemKey format.
-const SHOVEL_TILES: ReadonlySet<string> = new Set([
-  'minecraft:grass_block', 'minecraft:dirt', 'minecraft:sand', 'minecraft:gravel',
-  'minecraft:snow_layer', 'minecraft:snow', 'minecraft:clay', 'minecraft:farmland',
+const SHOVEL_TILES: ReadonlySet<number> = new Set([
+  2, 3, 12, 13, 78, 80, 82, 60,  // §ShovelItem.cpp:11-19 — grass=2, dirt=3, sand=12, gravel=13, topSnow=78, snow=80, clay=82, farmland=60
 ]);
 
 // §Inventory::canDestroy (Inventory.cpp:307-313):
@@ -191,13 +184,13 @@ const SHOVEL_TILES: ReadonlySet<string> = new Set([
 //   else false
 export function canDestroyBlock(
   material: BlockMaterial,
-  blockKey: string,
+  blockId: number,
   tool: Tool | null,
 ): boolean {
   if (isAlwaysDestroyable(material)) return true;
   if (!tool) return false;
   switch (tool.kind) {
-    case 'pickaxe': return pickaxeCanDestroy(material, blockKey, tool.tierDef.level);
+    case 'pickaxe': return pickaxeCanDestroy(material, blockId, tool.tierDef.level);
     case 'shovel': return shovelCanDestroy(material);
     case 'axe':
     case 'sword':
@@ -210,15 +203,15 @@ export function canDestroyBlock(
 // (Inventory.cpp:316-323): bare hand returns 1.0; tool returns tool.getDestroySpeed
 export function getPlayerDestroySpeed(
   material: BlockMaterial,
-  blockKey: string,
+  blockId: number,
   tool: Tool | null,
 ): number {
   if (!tool) return 1;  // §Inventory.cpp:322 bare-hand fallback
   const hasTile = (() => {
     switch (tool.kind) {
-      case 'pickaxe': return PICKAXE_TILES.has(blockKey);
-      case 'axe':     return AXE_TILES.has(blockKey);
-      case 'shovel':  return SHOVEL_TILES.has(blockKey);
+      case 'pickaxe': return PICKAXE_TILES.has(blockId);
+      case 'axe':     return AXE_TILES.has(blockId);
+      case 'shovel':  return SHOVEL_TILES.has(blockId);
       case 'sword':   return false;  // §WeaponItem doesn't have a tile list (extends Item, not DiggerItem)
       case 'none':    return false;
     }
@@ -232,11 +225,11 @@ export function getPlayerDestroySpeed(
       // §WeaponItem.h:30-37 — getDestroySpeed:
       //   if (tile->id == Tile::web->id) return 15;  // swords cut web fast
       //   return 1.5f;  // (NOT 1 — sword has mining bonus)
-      return blockKey === 'minecraft:web' ? 15 : 1.5;
+      return blockId === 30 ? 15 : 1.5;
     case 'none':    return 1;
   }
   return 1;
 }
 
 /** All tool item keys (used by engine + tests). */
-export const TOOL_KEYS: readonly string[] = Object.freeze(Object.keys(TOOL_TABLE));
+export const TOOL_IDS: readonly number[] = Object.freeze(Object.keys(TOOL_TABLE).map(Number));
