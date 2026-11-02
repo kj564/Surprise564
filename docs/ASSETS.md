@@ -14,7 +14,7 @@
 2. Keep original source assets unchanged. Do not modify canonical originals to work around browser limitations.
 3. If the browser needs a copy, stage it at the correct path under `public/VoxelCraft/`.
 4. Add the same staging operation to both `scripts/setup.sh` and `.github/workflows/static.yml`; otherwise local and CI builds may diverge.
-5. Update any runtime path list in `public/minecraft.html` and the corresponding checks in `scripts/validate-game.mjs`.
+5. Update any runtime path list in `public/minecraft-wasm.html` and the corresponding checks in `scripts/validate-game.mjs`.
 6. Validate file existence and, where appropriate, byte identity, image dimensions, model geometry, UV bounds, and runtime path wiring.
 7. If an asset is missing, report that explicitly. A fallback is acceptable only when documented and must not be presented as the original asset.
 8. Keep attribution and license notes accurate. Original Minecraft assets remain the property of their respective rights holders.
@@ -31,7 +31,7 @@ MCBVanillaResourcePack (upstream) → VoxelCraft/ (checked-in mirror)
         public/VoxelCraft/ (runtime subset)
                     │
                     ▼
-        public/minecraft.html (browser renderer)
+        public/minecraft-wasm.html (browser renderer)
 ```
 
 ## Audio

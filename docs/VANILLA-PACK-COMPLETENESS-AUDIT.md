@@ -21,7 +21,7 @@
 - Behavior Pack: [ZtechNetwork/MCBVanillaBehaviorPack](https://github.com/ZtechNetwork/MCBVanillaBehaviorPack)
 - In-repository RP mirror: `VoxelCraft/`
 - BP reference submodule: `VanillaBehaviorPack/`
-- Browser game implementation: `public/minecraft.html`
+- Browser game implementation: `public/minecraft-wasm.html`
 - Runtime copies staged for deployment: `public/VoxelCraft/`
 
 ## What “complete” means here

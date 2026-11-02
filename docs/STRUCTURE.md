@@ -7,7 +7,7 @@ Surprise564 is a **browser voxel game project**, not a Minecraft Bedrock addon t
 - **Code/architecture reference:** `rujukan/` is the first stop before implementing gameplay, input, inventory, screens, UI components, or rendering behavior. Its checked-in Pocket Edition source is historical; use it to learn original architecture and behavior.
 - **Resource Pack upstream:** [ZtechNetwork/MCBVanillaResourcePack](https://github.com/ZtechNetwork/MCBVanillaResourcePack) is the upstream source. `VoxelCraft/` is the checked-in mirror/snapshot used by setup and CI as the in-repository canonical asset source.
 - **Future game-logic reference:** `VanillaBehaviorPack/` is an intentional Git submodule and must be retained. It will inform the game's logic; it is not an unrelated toolkit to delete.
-- **Browser runtime:** `public/minecraft.html` is the game's main implementation. `public/VoxelCraft/` contains staged runtime copies, not canonical source assets.
+- **Browser runtime:** `public/minecraft-wasm.html` is the game's main implementation. `public/VoxelCraft/` contains staged runtime copies, not canonical source assets.
 - **Host and deployment:** `src/app/` hosts the game; `.github/workflows/static.yml` stages assets, validates, builds, and deploys the static site.
 
 ## Annotated tree
@@ -23,7 +23,7 @@ Surprise564/
 ├── VoxelCraft/                       # Checked-in mirror of MCBVanillaResourcePack
 ├── VanillaBehaviorPack/               # Retained source for future game logic (Git submodule)
 ├── public/
-│   ├── minecraft.html                # Browser game: Three.js world, input, UI, gameplay
+│   ├── minecraft-wasm.html                # Browser game: Three.js world, input, UI, gameplay
 │   └── VoxelCraft/                   # Staged assets served to the browser
 │       ├── textures/blocks/
 │       ├── textures/entity/chicken/
@@ -34,7 +34,7 @@ Surprise564/
 │       └── font/
 ├── src/app/
 │   ├── layout.tsx                    # Next.js root layout
-│   ├── page.tsx                      # Host page; embeds minecraft.html
+│   ├── page.tsx                      # Host page; embeds minecraft-wasm.html
 │   └── globals.css                   # Host/global styles, not game logic
 ├── scripts/
 │   ├── setup.sh                      # Stage required game assets and install dependencies
@@ -57,8 +57,8 @@ Surprise564/
 
 | Change | Edit / inspect first | Important constraint |
 | --- | --- | --- |
-| Gameplay, movement, world, block interactions | `rujukan/`, then `public/minecraft.html` | Port behavior intentionally; browser runtime is not Minecraft's engine. |
-| Inventory, pause/menu screens, focus and input | `rujukan/` GUI/screen code, then `public/minecraft.html` | Keep state transitions separate from styling; test keyboard/mouse interaction. |
+| Gameplay, movement, world, block interactions | `rujukan/`, then `public/minecraft-wasm.html` | Port behavior intentionally; browser runtime is not Minecraft's engine. |
+| Inventory, pause/menu screens, focus and input | `rujukan/` GUI/screen code, then `public/minecraft-wasm.html` | Keep state transitions separate from styling; test keyboard/mouse interaction. |
 | Original texture, model, font, or UI sprite | `VoxelCraft/` (mirror of `MCBVanillaResourcePack`) | Never silently substitute a lookalike. |
 | Future mob/block/game rules | `VanillaBehaviorPack/` plus `rujukan/`, then browser implementation | Treat the submodule as a retained game-logic reference. |
 | Asset used by the browser | Canonical source + `scripts/setup.sh` + `.github/workflows/static.yml` | Local setup and CI must stage the same asset. |
@@ -78,7 +78,7 @@ MCBVanillaResourcePack (upstream) ──> VoxelCraft/ (checked-in mirror)
                            public/VoxelCraft/ (staged copies)
                                       │
                                       ▼
-                           public/minecraft.html
+                           public/minecraft-wasm.html
                                       │
                                       ▼
                           Next.js static export (out/)

@@ -16,7 +16,7 @@ modes drive two distinct behaviors:
   breaks while the player keeps the mouse held.
 
 The port lives in `src/game/interaction/mining.ts` (TypeScript engine) and the browser
-runtime (`public/minecraft.html`) drives it through the engine's `tickMining` API.
+runtime (`public/minecraft-wasm.html`) drives it through the engine's `tickMining` API.
 
 ## Constants
 

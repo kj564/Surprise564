@@ -8,13 +8,13 @@
 MCPE 2013 physics runs on a fixed 20-tick-per-second loop. Each tick the player's
 input is read, `Mob::aiStep` updates input decays + handles jumping + fly thrust,
 and `Mob::travel` integrates the velocity through `moveRelative + move + gravity +
-drag`. The browser port replicates this in `public/minecraft.html::movePlayerTick`
+drag`. The browser port replicates this in `public/minecraft-wasm.html::movePlayerTick`
 (~line 3958).
 
 There are TWO physics implementations in this repo:
 - `src/game/physics/player-physics.ts` — the TS engine's abstract PlayerPhysics
   class (used by tests). Uses per-second units (gravity=24, jumpSpeed=8).
-- `public/minecraft.html` — the live browser game. Uses per-tick units matching
+- `public/minecraft-wasm.html` — the live browser game. Uses per-tick units matching
   rujukan (gravity=0.08, jumpSpeed=0.42, airDrag=0.98).
 
 This spec documents the **per-tick rujukan values** that the browser port replicates.
@@ -213,7 +213,7 @@ Agent Browser measurement).
 ## Acceptance test (machine-decidable)
 
 The TS engine's `PlayerPhysics` class uses per-second units, not per-tick. The
-rujukan per-tick constants live in `public/minecraft.html` and are NOT covered
+rujukan per-tick constants live in `public/minecraft-wasm.html` and are NOT covered
 by the test suite. The closest tests assert the TS engine's per-second values:
 
 ```ts
@@ -229,7 +229,7 @@ expect(result.player.onGround).toBe(true);
 
 For the rujukan per-tick constants (gravity 0.08, airDrag 0.98, jump 0.42,
 friction2 formula) — these are **untested** in the TS suite. They live only in
-`public/minecraft.html`. Suggested acceptance tests (would need a new
+`public/minecraft-wasm.html`. Suggested acceptance tests (would need a new
 `physics-rujukan.test.ts` or a benchmark snapshot of the html runtime):
 
 ```ts
@@ -268,12 +268,12 @@ expect(yd).toBeCloseTo(0.09, 6);
 
 The rujukan per-tick physics constants — `gravity=0.08`, `airDrag=0.98`,
 `jump=0.42`, `friction2` formula, `yd = ydo * 0.6` overwrite, `jumpTriggerTime=7`,
-`±0.15` fly thrust — are all encoded in `public/minecraft.html::movePlayerTick`
+`±0.15` fly thrust — are all encoded in `public/minecraft-wasm.html::movePlayerTick`
 but have **no test coverage**. The TS engine's `PlayerPhysics` uses different
 (per-second) units.
 
 To bring the physics under test, options:
-1. Extract `movePlayerTick` from `minecraft.html` into a `src/game/physics/
+1. Extract `movePlayerTick` from `minecraft-wasm.html` into a `src/game/physics/
    rujukan-travel.ts` module that operates on per-tick numbers, then test it
    directly with the worked examples above.
 2. Add an Agent Browser snapshot test that runs the live game for 60 ticks

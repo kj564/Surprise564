@@ -18,7 +18,7 @@ For each nontrivial feature or bug fix:
 
 1. Define the expected behavior and identify the affected game subsystem.
 2. Read the relevant source in `rujukan/`, consult `VanillaBehaviorPack/` when implementing future game logic, and review the [Foundation Reference Map](FOUNDATION-REFERENCE-MAP.md).
-3. Inspect current implementation in `public/minecraft.html`.
+3. Inspect current implementation in `public/minecraft-wasm.html`.
 4. Inspect exact original assets before adjusting visuals or model rendering.
 5. Make a focused change; avoid unrelated rewrites.
 6. If adding an asset, update both `scripts/setup.sh` and `.github/workflows/static.yml`, plus runtime path lists and validation as needed.

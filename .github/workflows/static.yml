@@ -58,14 +58,6 @@ jobs:
           cp public/mcpe_emscripten_full.js public/mcpe-wasm/mcpe_emscripten_full.js
           echo "Staged all rujukan assets + WASM files to public/assets/ and public/mcpe-wasm/"
 
-      - name: Build voxel engine bundle
-        run: |
-          if [ -f src/game/browser-entry.ts ]; then
-            bun build src/game/browser-entry.ts --target browser --outfile public/voxelcraft-engine.bundle.js
-          else
-            echo "No src/game/browser-entry.ts, using committed bundle"
-          fi
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

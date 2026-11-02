@@ -51,14 +51,6 @@ jobs:
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build voxel engine bundle
-        run: |
-          if [ -f src/game/browser-entry.ts ]; then
-            bun build src/game/browser-entry.ts --target browser --outfile public/voxelcraft-engine.bundle.js
-          else
-            echo "No src/game/browser-entry.ts, using committed bundle"
-          fi
-
       - name: Test game-core mechanics
         continue-on-error: true
         run: bun run test:game-core
@@ -70,7 +62,6 @@ jobs:
         run: |
           set -euo pipefail
           test -s out/index.html
-          test -s out/minecraft.html
           # The 6 assets minecraft.html actually references (kitab suci):
           for f in \
             out/assets/terrain.png \
@@ -81,8 +72,4 @@ jobs:
             out/assets/mob/chicken.png ; do
             test -s "$f" || { echo "FAIL: missing $f"; exit 1; }
           done
-          if [ -f public/voxelcraft-engine.bundle.js ]; then
-            test -s out/voxelcraft-engine.bundle.js
-            grep -q 'VoxelCraftEngine' out/voxelcraft-engine.bundle.js
-          fi
           echo "Rebuild checks: OK"

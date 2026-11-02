@@ -76,7 +76,7 @@ All sprites come from two atlases in `gui/`:
 | Texture | misc/vignette.png | §Gui.cpp:278 — `loadAndBindTexture("misc/vignette.png")` |
 | Darkness | 1 - brightness, clamped [0,1] | §Gui.cpp:269-271 |
 | Smooth | `tbr += (br - tbr) * 0.01f` | §Gui.cpp:272 |
-| Browser equivalent | CSS radial-gradient with opacity | minecraft.html uses `#vignette` div |
+| Browser equivalent | CSS radial-gradient with opacity | minecraft-wasm.html uses `#vignette` div |
 
 ### StartMenuScreen (StartMenuScreen.cpp)
 
@@ -116,7 +116,7 @@ All sprites come from two atlases in `gui/`:
 
 ## Browser port mapping
 
-| Rujukan | minecraft.html | Notes |
+| Rujukan | minecraft-wasm.html | Notes |
 |---------|----------------|-------|
 | Gui::renderToolBar | `#hotbar` CSS div | gui.png (0,0) 180×22 sprite ✓ |
 | Gui::renderHearts | `#hearts` CSS divs | icons.png sprites, hidden in creative mode ✓ |

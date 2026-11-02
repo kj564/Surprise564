@@ -1,11 +1,11 @@
 # VoxelCraft
 
-> A browser-playable voxel sandbox game faithful to Minecraft Pocket Edition 2013, built with Three.js.
+> A browser-playable voxel sandbox game faithful to Minecraft Pocket Edition 2013, compiled from original MCPE 2013 C++ source to WebAssembly via Emscripten.
 
-[![Play VoxelCraft](https://img.shields.io/badge/PLAY-VoxelCraft-4a9a3a?style=for-the-badge)](https://kj564.github.io/Surprise564/minecraft.html)
+[![Play VoxelCraft](https://img.shields.io/badge/PLAY-VoxelCraft-4a9a3a?style=for-the-badge)](https://kj564.github.io/Surprise564/minecraft-wasm.html)
 [![GitHub Pages](https://img.shields.io/badge/Pages-live-88c5ff?style=for-the-badge)](https://kj564.github.io/Surprise564/)
 
-**▶ Play now:** https://kj564.github.io/Surprise564/minecraft.html
+**▶ Play now:** https://kj564.github.io/Surprise564/minecraft-wasm.html
 
 VoxelCraft is **not affiliated with, endorsed by, or sponsored by Mojang Studios or Microsoft.** "Minecraft" is a trademark of Mojang Studios. Original Minecraft assets remain the property of their respective rights holders; see [`LICENSE-ATTRIBUTION.md`](LICENSE-ATTRIBUTION.md).
 
@@ -148,7 +148,7 @@ Surprise564/
 
 ## GitHub Pages
 
-Production: https://kj564.github.io/Surprise564/minecraft.html
+Production: https://kj564.github.io/Surprise564/minecraft-wasm.html
 
 CI workflow (`.github/workflows/static.yml`):
 1. Stage MCPE 2013 textures dari `rujukan/`

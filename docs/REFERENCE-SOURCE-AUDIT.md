@@ -58,7 +58,7 @@ This document records concrete findings from reading the checked-in historical s
 - The top-level object coordinates the level, player/input, GUI/screen, and rendering systems.
 - Screen changes are managed through the central game object rather than each screen independently owning the whole runtime.
 
-**Browser adaptation:** keep `public/minecraft.html` as the game runtime, with clear subsystem boundaries; do not move gameplay into the Next.js iframe host.
+**Browser adaptation:** keep `public/minecraft-wasm.html` as the game runtime, with clear subsystem boundaries; do not move gameplay into the Next.js iframe host.
 
 ## World/chunk behavior
 
@@ -78,7 +78,7 @@ This document records concrete findings from reading the checked-in historical s
 
 ## Current browser runtime cross-check
 
-The implementation lives in `public/minecraft.html`, not in the historical C++ runtime. The current per-chunk saved-edit index follows the locality principle seen in chunk caching: loading a chunk should process only its own saved edits. That optimization is statically validated, but the historical source does not prove browser correctness or performance.
+The implementation lives in `public/minecraft-wasm.html`, not in the historical C++ runtime. The current per-chunk saved-edit index follows the locality principle seen in chunk caching: loading a chunk should process only its own saved edits. That optimization is statically validated, but the historical source does not prove browser correctness or performance.
 
 ## Required workflow for future changes
 

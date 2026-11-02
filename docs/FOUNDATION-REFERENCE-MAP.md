@@ -7,7 +7,7 @@ This is the required starting point before implementing or changing a game syste
 1. **Read `rujukan/` first for code architecture and behavior.** The checked-in historical source is at `rujukan/pocket-edition-2013/mcpe-source/`. Use it to inspect screen lifecycle, input dispatch, inventory responsibilities, GUI components, rendering, and top-level orchestration before writing comparable browser code.
 2. **Use original Minecraft files for exact assets.** When a matching original asset exists, prefer it over memory, guesswork, a visual imitation, or a newly invented substitute. `VoxelCraft/` is the checked-in mirror/snapshot of the upstream [MCBVanillaResourcePack](https://github.com/ZtechNetwork/MCBVanillaResourcePack), used by setup and CI.
 3. **Consult `VanillaBehaviorPack/` for future game logic.** This retained submodule is part of the project's reference material for future game rules and behavior; do not remove it as unrelated tooling. Adapt relevant behavior to the browser runtime rather than assuming Bedrock-specific scripts execute directly in the browser.
-4. **Implement browser adaptations in `public/minecraft.html`.** It is a Three.js/HTML/CSS implementation, not the original Minecraft engine. Port relevant behavior and layout concepts where feasible, and record necessary differences.
+4. **Implement browser adaptations in `public/minecraft-wasm.html`.** It is a Three.js/HTML/CSS implementation, not the original Minecraft engine. Port relevant behavior and layout concepts where feasible, and record necessary differences.
 5. **Treat staged files as derived runtime copies.** `public/VoxelCraft/` contains only the subset deployed by GitHub Pages. The original source remains in `VoxelCraft/` or the applicable original file under `rujukan/`.
 
 If two sources disagree, do not silently pick whichever is easiest. Check their version and purpose, explain the conflict, and choose the source appropriate to the browser game.
@@ -37,7 +37,7 @@ These files belong to historical Pocket Edition 2013 source. They are architectu
 | Item sprites used by the browser UI | Upstream [`MCBVanillaResourcePack`](https://github.com/ZtechNetwork/MCBVanillaResourcePack); checked-in mirror: `VoxelCraft/textures/items/` |
 | Original chicken model and texture | Upstream [`MCBVanillaResourcePack`](https://github.com/ZtechNetwork/MCBVanillaResourcePack); checked-in mirror: `VoxelCraft/models/entity/chicken.geo.json`, `VoxelCraft/textures/entity/chicken/chicken.png` |
 | Future vanilla game rules and behavior patterns | `VanillaBehaviorPack/` |
-| Browser game's current implementation | `public/minecraft.html` |
+| Browser game's current implementation | `public/minecraft-wasm.html` |
 | Browser runtime copies | `public/VoxelCraft/` |
 
 When the source pack provides separate hover, pressed, selected, disabled, or focus assets, preserve those states. Do not replace authentic sprites with emoji, generic gradients, or hand-drawn approximations unless the required asset is genuinely unavailable or a documented technical limitation requires an adapter.
@@ -56,7 +56,7 @@ When the source pack provides separate hover, pressed, selected, disabled, or fo
 
 ## 5. Browser-game boundaries
 
-- `public/minecraft.html` owns the browser game world, input, gameplay, and HTML UI.
+- `public/minecraft-wasm.html` owns the browser game world, input, gameplay, and HTML UI.
 - `src/app/page.tsx` is the web host and iframe wrapper; do not move gameplay into it.
 - `MCBVanillaResourcePack` is the upstream Resource Pack source; `VoxelCraft/` is its checked-in mirror and is not served directly by Pages.
 - `VanillaBehaviorPack/` is retained as a source for future game logic; initialize it with the repository submodule setup.

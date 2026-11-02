@@ -9,7 +9,7 @@ The MCPE 2013 overworld runs a 16-minute day cycle: 19200 ticks at 20 tps = 960 
 `Level::TICKS_PER_DAY` is the canonical constant. `NormalDayCycleDimension::getTimeOfDay`
 maps the raw tick counter to a 0..1 phase with a blend of linear and smoothstep.
 
-The browser port drives this in `public/minecraft.html::animate` (around line 4494),
+The browser port drives this in `public/minecraft-wasm.html::animate` (around line 4494),
 advancing `worldTime` by `dt / 960` per render frame and recomputing sun position +
 sky color from it.
 
@@ -78,7 +78,7 @@ evaluates to 64. The two constants differ by 1:
 - `waterHeight = 64` — used by `RandomLevelSource::prepareHeights` to decide "fill blocks below this y with water".
 
 This 1-block discrepancy is in the rujukan source, not a port bug. The TS
-registry and `minecraft.html` use `WATER_LEVEL = 64` because the worldgen
+registry and `minecraft-wasm.html` use `WATER_LEVEL = 64` because the worldgen
 waterHeight formula is what they replicate.
 
 ## Worked examples (machine-decidable)
@@ -159,7 +159,7 @@ expect(getTimeOfDay(9600)).toBeCloseTo(0.5, 1);      // sunset transition
 
 - **Day length 19200 ticks**: no test asserts `TICKS_PER_DAY === 19200` or
   `day length === 960s`. The browser port advances `worldTime += dt / 960` per
-  frame (minecraft.html:4494), which encodes the 960 s value, but no test
+  frame (minecraft-wasm.html:4494), which encodes the 960 s value, but no test
   pins it.
 - **`NormalDayCycleDimension::getTimeOfDay` formula**: the browser port uses a
   simpler `sin(2π·t - π/2)` formula (line 4495), not the rujukan blend. This is
@@ -168,7 +168,7 @@ expect(getTimeOfDay(9600)).toBeCloseTo(0.5, 1);      // sunset transition
   then test the 3 worked examples above (noon=0.78452, midnight=0.35288,
   sunset=0.5).
 - **`SEA_LEVEL = 63` vs `waterHeight = 64`**: no test pins either. The TS
-  engine and `minecraft.html` use 64 because they replicate the worldgen
+  engine and `minecraft-wasm.html` use 64 because they replicate the worldgen
   formula, not the constant. Suggested test:
   `expect(LevelConstants.LEVEL_HEIGHT).toBe(128); expect(128/2-1).toBe(63);
    expect(128-64).toBe(64)` — confirms the 1-block discrepancy is intentional.

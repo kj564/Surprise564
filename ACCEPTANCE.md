@@ -56,7 +56,7 @@ expect(960 / 60).toBe(16);          // 16 minutes
 ```
 
 **Verified by**: UNTESTED — no test pins the day-length constant directly. The
-browser port advances `worldTime += dt / 960` per frame at `public/minecraft.html:4494`.
+browser port advances `worldTime += dt / 960` per frame at `public/minecraft-wasm.html:4494`.
 
 **Rujukan source**: §Level.h:74 — `static const int TICKS_PER_DAY = SharedConstants::TicksPerSecond * 60 * 16;`
 **Full spec**: [`docs/day-night.md`](docs/day-night.md)
@@ -82,7 +82,7 @@ expect(FACE_BRIGHTNESS[5]).toBe(0.8);    // NORTH = c2
 ```
 
 **Verified by**: UNTESTED — no test asserts per-face brightness. The
-constants live in `public/minecraft.html:1547` as a const array. The TS
+constants live in `public/minecraft-wasm.html:1547` as a const array. The TS
 engine's `chunk-mesher.ts` does not apply brightness.
 
 **Rujukan source**: §TileRenderer.cpp:54-57 — `float c10 = 0.5f; float c11 = 1; float c2 = 0.8f; float c3 = 0.6f;`
@@ -116,7 +116,7 @@ expect(ydo * 0.6).not.toBe(ydAfterSuper * 0.6);  // overwrite != multiply
 ```
 
 **Verified by**: UNTESTED in TS suite — these constants live only in
-`public/minecraft.html::movePlayerTick` (lines 4040-4047, 4062-4063). The
+`public/minecraft-wasm.html::movePlayerTick` (lines 4040-4047, 4062-4063). The
 TS engine's `PlayerPhysics` (per-second units) doesn't replicate rujukan
 per-tick values.
 
@@ -463,7 +463,7 @@ expect(128 - 64).toBe(64);                       // waterHeight (worldgen formul
 **Verified by**: UNTESTED — no test pins these. The TS engine's `VoxelWorld`
 constructor takes dimensions as parameters (`{ chunkSizeX: 4, height: 8,
 chunkSizeZ: 4 }` in tests, sized for fast tests; the production
-`minecraft.html` uses 16×128×16).
+`minecraft-wasm.html` uses 16×128×16).
 
 **Rujukan source**: §LevelConstants.h:5-12 (constants), §Level.h:70-71 (DEPTH, SEA_LEVEL), §RandomLevelSource.cpp:68 (waterHeight)
 **Full spec**: [`docs/world-gen.md`](docs/world-gen.md), [`docs/day-night.md`](docs/day-night.md)
@@ -499,15 +499,15 @@ const u1 = (xt + 16 - 0.01) / 256;
 expect(u0).toBeCloseTo(0.3125, 6);
 expect(u1).toBeCloseTo(0.37496, 6);
 
-// §minecraft.html:3635 — flipY=false (GLES1 convention)
+// §minecraft-wasm.html:3635 — flipY=false (GLES1 convention)
 expect(browserAtlasTexture.flipY).toBe(false);
 ```
 
 **Verified by**: UNTESTED — texture loading is browser-side; no DOM-level
-test exists. The `tileUV` function at `minecraft.html:1519-1536` encodes the
+test exists. The `tileUV` function at `minecraft-wasm.html:1519-1536` encodes the
 inset but no test asserts it.
 
-**Rujukan source**: §TileRenderer.cpp:1743-2030 (renderFace* functions with UV math), §minecraft.html:3635 (flipY=false), §minecraft.html:1510-1517 (FACES vertex order)
+**Rujukan source**: §TileRenderer.cpp:1743-2030 (renderFace* functions with UV math), §minecraft-wasm.html:3635 (flipY=false), §minecraft-wasm.html:1510-1517 (FACES vertex order)
 **Full spec**: [`docs/rendering.md`](docs/rendering.md)
 
 ---
@@ -519,7 +519,7 @@ inset but no test asserts it.
 | 1 | Tick rate | `TICKS_PER_SECOND === 20`, `MAX_TICKS_PER_UPDATE === 10` | ✅ tested |
 | 2 | Day length | 19200 ticks = 960 s = 16 min | ✅ tested |
 | 3 | Per-face brightness | UP=1.0, N/S=0.8, W/E=0.6, DOWN=0.5 | ✅ tested |
-| 4 | Player physics constants | gravity 0.08, airDrag 0.98, jump 0.42, friction2 formula | ✅ tested (constants verified; TS engine physics uses different model, minecraft.html uses these per-tick) |
+| 4 | Player physics constants | gravity 0.08, airDrag 0.98, jump 0.42, friction2 formula | ✅ tested (constants verified; TS engine physics uses different model, minecraft-wasm.html uses these per-tick) |
 | 5 | Mining formula (stone+wood_pickaxe) | 23 ticks to break | ✅ tested |
 | 6 | Mining formula (dirt+bare_hand) | 16 ticks (FP accumulation) | ✅ tested |
 | 7 | Mining formula (stone+bare_hand) | 4500 ticks (100× penalty) | ✅ tested |
@@ -534,10 +534,10 @@ inset but no test asserts it.
 | 15 | World dimensions | 16×16×128 chunks, water level=64, sea level=63 | ✅ tested |
 | 16 | Texture atlas | 256×256, 16×16 tiles, inset 0.01/256, flipY=false | ⚠ UNTESTED (browser-side) |
 
-**Status legend**: ✅ = pinned by passing test, ⚠ = untested or browser-only (minecraft.html).
+**Status legend**: ✅ = pinned by passing test, ⚠ = untested or browser-only (minecraft-wasm.html).
 
 **15 of 16 systems now ✅ tested** (Task 19 closed 7 previously-⚠ gaps).
-Only #16 (texture atlas) remains ⚠ — browser-only rendering in minecraft.html.
+Only #16 (texture atlas) remains ⚠ — browser-only rendering in minecraft-wasm.html.
 
 **Test suite**: `bun run test:game-core` → 213 pass / 0 fail / 2448 expect() calls.
 Task 19 added 50 new tests: 12 constants + 4 mining formulas + 34 block hardness.

@@ -212,7 +212,7 @@ expect(defaultBlockRegistry.getByKey('minecraft:ice')?.material).toBe('ice');
   `expect(16 * 16 * 128).toBe(32768)`.
 - **`Level::SEA_LEVEL === 63`**: no test pins this. The TS world defines
   `height: 128` (registry uses 8 in test setups to keep tests fast), but the
-  production `minecraft.html` uses `CHUNK_Y = 128`. Suggested test:
+  production `minecraft-wasm.html` uses `CHUNK_Y = 128`. Suggested test:
   `expect(Math.floor(128 / 2) - 1).toBe(63)`.
 - **Worldgen waterHeight vs SEA_LEVEL discrepancy**: no test. See
   `docs/day-night.md`.

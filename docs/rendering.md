@@ -12,7 +12,7 @@ combined with the block's brightness from `Tile::getBrightness`, this gives
 the classic Minecraft "lit top, darker sides, darkest bottom" look without
 dynamic scene lighting.
 
-The browser port replicates this in `public/minecraft.html::buildChunkGeometry`
+The browser port replicates this in `public/minecraft-wasm.html::buildChunkGeometry`
 (~line 1538). It uses `THREE.MeshBasicMaterial` (no dynamic lights) with
 `vertexColors: true` so the baked brightness becomes the actual rendered color.
 
@@ -55,7 +55,7 @@ The face → brightness application is in §TileRenderer.cpp:81-118:
 - WEST: `t.color(r3 * br, g3 * br, b3 * br)` where `r3 = c3 * r` (line 69) — `c3=0.6`
 - EAST: `t.color(r3 * br, g3 * br, b3 * br)` — same `c3=0.6`
 
-The browser port bakes this into a per-face array (§minecraft.html:1547):
+The browser port bakes this into a per-face array (§minecraft-wasm.html:1547):
 
 ```js
 // FACES order: 0=+X(EAST) 1=-X(WEST) 2=+Y(UP) 3=-Y(DOWN) 4=+Z(SOUTH) 5=-Z(NORTH)
@@ -82,7 +82,7 @@ PNG vertically, breaking this. The browser port sets `flipY=false` to match
 GLES1:
 
 ```js
-// minecraft.html:3635
+// minecraft-wasm.html:3635
 tex.flipY = false;  // VERIFIED: terrain.png uses GLES1 convention (V=0 at top).
 ```
 
@@ -176,7 +176,7 @@ const FACES = [
 ];
 ```
 
-### Browser port FACES (§minecraft.html:1510-1517)
+### Browser port FACES (§minecraft-wasm.html:1510-1517)
 
 The browser port's FACES table matches rujukan's `renderFace*` ordering
 exactly (Task 14 verified this 1:1):
@@ -224,7 +224,7 @@ A single cube with all 6 neighbors being air produces 6 quads (one per face),
 
 ```ts
 // §Per-face brightness (TileRenderer.cpp:54-57) — proposed test
-const FACE_BRIGHTNESS = [0.6, 0.6, 1.0, 0.5, 0.8, 0.8];  // matches minecraft.html:1547
+const FACE_BRIGHTNESS = [0.6, 0.6, 1.0, 0.5, 0.8, 0.8];  // matches minecraft-wasm.html:1547
 expect(FACE_BRIGHTNESS[2]).toBe(1.0);    // UP
 expect(FACE_BRIGHTNESS[3]).toBe(0.5);    // DOWN
 expect(FACE_BRIGHTNESS[4]).toBe(0.8);    // SOUTH
@@ -267,7 +267,7 @@ expect(buildChunkMesh(world, 0, 0, defaultBlockRegistry).layers.opaque?.faceCoun
 ## Untested claims (note for next agent)
 
 - **Per-face brightness values (`c10/c11/c2/c3`)**: NO test. These constants
-  live only in `public/minecraft.html:1547` (a const array). The TS engine's
+  live only in `public/minecraft-wasm.html:1547` (a const array). The TS engine's
   `chunk-mesher.ts` doesn't apply brightness — it leaves it to the renderer.
   Suggested test: extract `FACE_BRIGHTNESS` into a small module and assert
   its 6 values match the rujukan constants.
@@ -279,8 +279,8 @@ expect(buildChunkMesh(world, 0, 0, defaultBlockRegistry).layers.opaque?.faceCoun
   assert that the first quad's 4 vertices match rujukan renderFaceDown's
   exact (x,y,z) values.
 - **Texture atlas UV inset 0.01/256**: no test. The `tileUV` function in
-  `minecraft.html:1519` encodes this but no test asserts the exact inset
+  `minecraft-wasm.html:1519` encodes this but no test asserts the exact inset
   value.
 - **flipY=false**: this is a Three.js texture attribute, not testable
-  outside a DOM environment. The comment at `minecraft.html:3635-3637`
+  outside a DOM environment. The comment at `minecraft-wasm.html:3635-3637`
   documents the rationale (GLES1 V=0-at-top convention).

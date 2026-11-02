@@ -18,14 +18,15 @@
  */
 
 export default function Home() {
+  const base = process.env.NODE_ENV === 'production' ? '/Surprise564' : '';
   return (
     <main className="fixed inset-0 bg-black">
       <iframe
-        src={`/mcpe-wasm/minecraft-wasm.html?v=${process.env.NEXT_PUBLIC_BUILD_ID || Date.now()}`}
+        src={`${base}/mcpe-wasm/minecraft-wasm.html?v=${process.env.NEXT_PUBLIC_BUILD_ID || Date.now()}`}
         title="VoxelCraft — MCPE 2013 WASM"
         className="h-screen w-screen border-0"
         allow="fullscreen; autoplay; gamepad; pointer-lock"
       />
     </main>
-  )
+  );
 }
