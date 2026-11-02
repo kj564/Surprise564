@@ -6,7 +6,7 @@ import { defaultBlockRegistry, type BlockRegistry } from '../../world/level/tile
  * translates only identities that have been manually matched by block name.
  * Missing/ambiguous matches intentionally return undefined instead of guessing.
  */
-const BROWSER_BLOCK_KEY: Readonly<Record<number, string>> = Object.freeze({
+const BROWSER_BLOCK_KEY: Readonly<Record<number, number>> = Object.freeze({
   0: 0,
   1: 2,
   2: 3,
@@ -46,9 +46,7 @@ export function browserBlockIdToEngineId(
   if (!Number.isSafeInteger(browserId) || browserId < 0) return undefined;
   const engineId = BROWSER_BLOCK_KEY[browserId];
   if (engineId === undefined) return undefined;
-  if (engineId === 0) return 0;
-  const definition = registry.getById(engineId);
-  return definition?.legacyId ?? engineId;
+  return engineId;
 }
 
 /** Reverse translation is conservative: duplicate browser aliases are not silently selected. */
@@ -60,7 +58,7 @@ export function engineBlockIdToBrowserId(
   const definition = registry.getById(engineId);
   if (!definition) return undefined;
   const matches = Object.entries(BROWSER_BLOCK_KEY)
-    .filter(([, key]) => key === definition.key)
+    .filter(([, v]) => Number(v) === engineId)
     .map(([id]) => Number(id));
   return matches.length === 1 ? matches[0] : undefined;
 }
@@ -69,11 +67,12 @@ export function listSupportedBrowserBlockTranslations(
   registry: BlockRegistry = defaultBlockRegistry,
 ): readonly BlockIdTranslation[] {
   const entries: BlockIdTranslation[] = [];
-  for (const [rawId, key] of Object.entries(BROWSER_BLOCK_KEY)) {
+  for (const [rawId, engineIdStr] of Object.entries(BROWSER_BLOCK_KEY)) {
     const browserId = Number(rawId);
-    const engineId = key === 0 ? 0 : registry.getByKey(key)?.legacyId;
-    if (engineId === undefined) continue;
-    entries.push(Object.freeze({ browserId, engineId, key }));
+    const engineId = Number(engineIdStr);
+    const definition = registry.getById(engineId);
+    if (!definition) continue;
+    entries.push(Object.freeze({ browserId, engineId, key: definition.key }));
   }
   return Object.freeze(entries.sort((a, b) => a.browserId - b.browserId));
 }

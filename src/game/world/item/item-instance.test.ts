@@ -115,8 +115,8 @@ describe('ItemInstance durability (rujukan 1:1)', () => {
     // §ItemInstance.cpp:131 — strict >, not >=
     // 16 breaks × hurt(2) = 32 damage. auxValue=32 NOT > 32, still 1 count.
     // 17th break → auxValue=34 > 32 → count-- → null
-    const tool = getTool(288);  // maxDamage = 32
-    let stack: ItemStack | null = makeStack(288, 1);
+    const tool = getTool(283);  // maxDamage = 32
+    let stack: ItemStack | null = makeStack(283, 1);
     for (let i = 0; i < 16; i++) {
       stack = hurtStack(stack!, 2, tool);  // hurt(2) per block
       expect(stack).not.toBeNull();

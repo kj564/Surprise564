@@ -166,8 +166,8 @@ describe('MCPE 2013 tool system (rujukan 1:1)', () => {
     // §LadderTile.h:18 — super(id, tex, Material::decoration)
     // These were initially mis-assigned as 'wood' in the registry. The bug
     // would have given axe bonus speed on torch/ladder, which rujukan does NOT.
-    const torchDef = defaultBlockRegistry.getByKey(50);
-    const ladderDef = defaultBlockRegistry.getByKey(65);
+    const torchDef = defaultBlockRegistry.getByKey('minecraft:torch');
+    const ladderDef = defaultBlockRegistry.getByKey('minecraft:ladder');
     expect(torchDef?.material).toBe('decoration');
     expect(ladderDef?.material).toBe('decoration');
   });
@@ -179,30 +179,30 @@ describe('MCPE 2013 tool system (rujukan 1:1)', () => {
     expect(getPlayerDestroySpeed('decoration', 50, getTool(275))).toBe(1);
     expect(getPlayerDestroySpeed('decoration', 65, getTool(258))).toBe(1);
     // Sanity check: wood_axe on oak_log (material=wood) DOES get speed bonus
-    expect(getPlayerDestroySpeed('wood', 17, getTool(275))).toBe(2);
+    expect(getPlayerDestroySpeed('wood', 17, getTool(271))).toBe(2);
   });
 
   test('§All 41 block materials verified 1:1 with rujukan source', () => {
     // Spot-check a sample of blocks that I had to verify by reading each Tile subclass
-    expect(defaultBlockRegistry.getByKey(1)?.material).toBe('stone');
-    expect(defaultBlockRegistry.getByKey(2)?.material).toBe('dirt');  // GrassTile.cpp:6
-    expect(defaultBlockRegistry.getByKey(3)?.material).toBe('dirt');
-    expect(defaultBlockRegistry.getByKey(12)?.material).toBe('sand');          // HeavyTile.cpp:9
-    expect(defaultBlockRegistry.getByKey(13)?.material).toBe('sand');         // extends HeavyTile
-    expect(defaultBlockRegistry.getByKey(17)?.material).toBe('wood');        // TreeTile.h:21
-    expect(defaultBlockRegistry.getByKey(18)?.material).toBe('leaves');   // LeafTile.h:32
-    expect(defaultBlockRegistry.getByKey(20)?.material).toBe('glass');          // Tile.cpp:180
-    expect(defaultBlockRegistry.getByKey(49)?.material).toBe('stone');     // extends StoneTile
-    expect(defaultBlockRegistry.getByKey(57)?.material).toBe('metal'); // MetalTile.h:13
-    expect(defaultBlockRegistry.getByKey(79)?.material).toBe('ice');              // IceTile.h:16
-    expect(defaultBlockRegistry.getByKey(81)?.material).toBe('cactus');        // CactusTile.h:21
-    expect(defaultBlockRegistry.getByKey(30)?.material).toBe('web');              // WebTile.h:17
-    expect(defaultBlockRegistry.getByKey(85)?.material).toBe('wood');       // FenceTile.h:16
-    expect(defaultBlockRegistry.getByKey(60)?.material).toBe('dirt');        // FarmTile.h:15
-    expect(defaultBlockRegistry.getByKey(61)?.material).toBe('stone');        // FurnaceTile.cpp:16
+    expect(defaultBlockRegistry.getByKey('minecraft:stone')?.material).toBe('stone');
+    expect(defaultBlockRegistry.getByKey('minecraft:grass_block')?.material).toBe('dirt');  // GrassTile.cpp:6
+    expect(defaultBlockRegistry.getByKey('minecraft:dirt')?.material).toBe('dirt');
+    expect(defaultBlockRegistry.getByKey('minecraft:sand')?.material).toBe('sand');          // HeavyTile.cpp:9
+    expect(defaultBlockRegistry.getByKey('minecraft:gravel')?.material).toBe('sand');         // extends HeavyTile
+    expect(defaultBlockRegistry.getByKey('minecraft:oak_log')?.material).toBe('wood');        // TreeTile.h:21
+    expect(defaultBlockRegistry.getByKey('minecraft:oak_leaves')?.material).toBe('leaves');   // LeafTile.h:32
+    expect(defaultBlockRegistry.getByKey('minecraft:glass')?.material).toBe('glass');          // Tile.cpp:180
+    expect(defaultBlockRegistry.getByKey('minecraft:obsidian')?.material).toBe('stone');     // extends StoneTile
+    expect(defaultBlockRegistry.getByKey('minecraft:diamond_block')?.material).toBe('metal'); // MetalTile.h:13
+    expect(defaultBlockRegistry.getByKey('minecraft:ice')?.material).toBe('ice');              // IceTile.h:16
+    expect(defaultBlockRegistry.getByKey('minecraft:cactus')?.material).toBe('cactus');        // CactusTile.h:21
+    expect(defaultBlockRegistry.getByKey('minecraft:web')?.material).toBe('web');              // WebTile.h:17
+    expect(defaultBlockRegistry.getByKey('minecraft:oak_fence')?.material).toBe('wood');       // FenceTile.h:16
+    expect(defaultBlockRegistry.getByKey('minecraft:farmland')?.material).toBe('dirt');        // FarmTile.h:15
+    expect(defaultBlockRegistry.getByKey('minecraft:furnace')?.material).toBe('stone');        // FurnaceTile.cpp:16
     expect(defaultBlockRegistry.getByKey('minecraft:iron_door')?.material).toBe('metal');     // DoorTile.cpp:11
-    expect(defaultBlockRegistry.getByKey(78)?.material).toBe('topSnow');  // TopSnowTile.h:17
-    expect(defaultBlockRegistry.getByKey(83)?.material).toBe('plant');          // ReedTile.h:16
-    expect(defaultBlockRegistry.getByKey(58)?.material).toBe('wood'); // WorkbenchTile.h:16
-    expect(defaultBlockRegistry.getByKey(54)?.material).toBe('wood');           // ChestTile.cpp:9
+    expect(defaultBlockRegistry.getByKey('minecraft:snow_layer')?.material).toBe('topSnow');  // TopSnowTile.h:17
+    expect(defaultBlockRegistry.getByKey('minecraft:reeds')?.material).toBe('plant');          // ReedTile.h:16
+    expect(defaultBlockRegistry.getByKey('minecraft:crafting_table')?.material).toBe('wood'); // WorkbenchTile.h:16
+    expect(defaultBlockRegistry.getByKey('minecraft:chest')?.material).toBe('wood');           // ChestTile.cpp:9
   });

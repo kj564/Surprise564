@@ -29,17 +29,17 @@ describe('BlockRegistry', () => {
   });
 
   test('rejects duplicate keys and legacy IDs', () => {
-    const stone = defaultBlockRegistry.getByKey(1)!;
-    expect(() => new BlockRegistry([stone, stone])).toThrow('Duplicate block ID');
+    const stone = defaultBlockRegistry.getByKey('minecraft:stone')!;
+    expect(() => new BlockRegistry([stone, stone])).toThrow('Duplicate block key');
     const conflicting = { ...stone, key: 'minecraft:other_stone' };
     expect(() => new BlockRegistry([stone, conflicting])).toThrow('Duplicate legacy block ID');
   });
 
   test('requires air and validates material properties', () => {
-    const stone = defaultBlockRegistry.getByKey(1)!;
+    const stone = defaultBlockRegistry.getByKey('minecraft:stone')!;
     expect(() => new BlockRegistry([stone])).toThrow('must define block ID 0 (air)');
     expect(() => new BlockRegistry([
-      defaultBlockRegistry.getByKey(0)!,
+      defaultBlockRegistry.getByKey('minecraft:air')!,
       { ...stone, key: 'minecraft:bad_stone', legacyId: 250, lightEmission: 16 },
     ])).toThrow('lightEmission');
   });

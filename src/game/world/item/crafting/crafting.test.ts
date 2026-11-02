@@ -15,7 +15,10 @@ function makeGrid(items: (string | null)[][]): CraftingGrid {
       const row = items[y];
       if (!row || x >= row.length) return null;
       const k = row[x];
-      return k ? { id: k, count: 1, maxStackSize: 64 } : null;
+      if (!k) return null;
+      // §Convert recipe item name to numeric ID (same as itemStack())
+      const stack = itemStack(k, 1);
+      return { id: stack.id, count: 1, maxStackSize: 64 };
     },
   };
 }
@@ -35,7 +38,7 @@ describe('Recipes singleton (§Recipes.h)', () => {
   it('getRecipeFor finds TNT recipe (§Recipes.cpp:94-98)', () => {
     const r = Recipes.getInstance().getRecipeFor(itemStack('tnt'));
     expect(r).not.toBeNull();
-    expect(r!.getResultItem().id).toBe('tnt');
+    expect(r!.getResultItem().id).toBe(46);  // §Tile.cpp:198 — TNT id = 46
   });
 });
 

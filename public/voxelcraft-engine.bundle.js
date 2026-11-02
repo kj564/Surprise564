@@ -801,6 +801,8 @@ function placeBlockFromInventory(world, hit, inventory, slotIndex, registry, pla
   const blockId = stack.id;
   if (blockId === undefined || blockId === 0)
     return { status: "not-a-block-item" };
+  if (blockId > 255)
+    return { status: "not-a-block-item" };
   const validation = validatePlacementTarget(world, hit, blockId, registry);
   if (validation.status !== "ready")
     return validation;

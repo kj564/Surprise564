@@ -75,6 +75,8 @@ export function placeBlockFromInventory(
   if (!stack) return { status: 'inventory-empty' };
   const blockId = stack.id;  // §ItemInstance.id is already the numeric block ID
   if (blockId === undefined || blockId === 0) return { status: 'not-a-block-item' };
+  // §If id > 255, it's an Item (not a Tile) — can't be placed
+  if (blockId > 255) return { status: 'not-a-block-item' };
 
   const validation = validatePlacementTarget(world, hit, blockId, registry);
   if (validation.status !== 'ready') return validation;
