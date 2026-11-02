@@ -52,10 +52,7 @@ jobs:
           # Also copy to mcpe-wasm/ subdirectory for the WASM game
           mkdir -p public/mcpe-wasm/assets
           cp -r public/assets/* public/mcpe-wasm/assets/
-          # Copy WASM game HTML + binary to mcpe-wasm/
-          cp public/minecraft-wasm.html public/mcpe-wasm/minecraft-wasm.html
-          cp public/mcpe_emscripten_full.wasm public/mcpe-wasm/mcpe_emscripten_full.wasm
-          cp public/mcpe_emscripten_full.js public/mcpe-wasm/mcpe_emscripten_full.js
+          # WASM files already in public/mcpe-wasm/ (committed, not staged)
           echo "Staged all rujukan assets + WASM files to public/assets/ and public/mcpe-wasm/"
 
       - name: Setup Pages
