@@ -50,6 +50,7 @@ em++ $WASM/gl1_stubs.cpp $INCLUDES $CFLAGS -c -o $BUILD/gl1_stubs.o
 em++ $WASM/AppPlatform_emscripten.cpp -I$WASM -I$SRC -I$SRC/util -I$SRC/world/phys -I$SRC/client/renderer $CFLAGS -c -o $BUILD/AppPlatform_emscripten.o
 em++ $WASM/creative_items.cpp $INCLUDES $CFLAGS -c -o $BUILD/creative_items.o
 em++ $WASM/select_item.cpp $INCLUDES $CFLAGS -c -o $BUILD/select_item.o
+em++ $WASM/keyboard_shortcuts.cpp $INCLUDES $CFLAGS -c -o $BUILD/keyboard_shortcuts.o
 
 # Link
 echo "=== Linking WASM ==="
@@ -59,7 +60,7 @@ em++ $WASM/main_emscripten.cpp $OBJS -I$SRC -I$WASM -I$WASM/EGL -I$WASM/gl \
     -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=128MB \
     -s USE_WEBGL2=1 -s FULL_ES2=1 \
     -s DISABLE_EXCEPTION_CATCHING=0 \
-    -s EXPORTED_FUNCTIONS="['_main','_malloc','_free','_mouse_feed','_multitouch_feed','_keyboard_feed','_auto_create_world','_get_block','_get_brightness','_get_tile_ptr','_is_screen_null','_inject_creative_items','_select_item_by_id']" \
+    -s EXPORTED_FUNCTIONS="['_main','_malloc','_free','_mouse_feed','_multitouch_feed','_keyboard_feed','_auto_create_world','_get_block','_get_brightness','_get_tile_ptr','_is_screen_null','_inject_creative_items','_select_item_by_id','_toggle_fly','_toggle_third_person','_cycle_view_distance','_toggle_gamemode','_step_time','_open_inventory','_toggle_ao']" \
     -s EXPORTED_RUNTIME_METHODS="['ccall','cwrap','HEAPU8','HEAP8','HEAPU32','UTF8ToString','callMain']" \
     -s ENVIRONMENT=web -o $OUT/mcpe_emscripten_full.js
 

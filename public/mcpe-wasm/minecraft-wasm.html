@@ -96,6 +96,13 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; i
     <tr><td class="col-keys"><kbd>Space</kbd></td><td>Lompat / terbang naik (creative)</td></tr>
     <tr><td class="col-keys"><kbd>1</kbd>–<kbd>9</kbd></td><td>Pilih slot hotbar</td></tr>
     <tr><td class="col-keys"><kbd>Esc</kbd></td><td>Pause / kembali</td></tr>
+    <tr><td class="col-keys"><kbd>E</kbd></td><td>Buka inventory</td></tr>
+    <tr><td class="col-keys"><kbd>F</kbd></td><td>Toggle fly (creative)</td></tr>
+    <tr><td class="col-keys"><kbd>V</kbd></td><td>Toggle third person</td></tr>
+    <tr><td class="col-keys"><kbd>L</kbd></td><td>Cycle view distance</td></tr>
+    <tr><td class="col-keys"><kbd>B</kbd></td><td>Toggle gamemode</td></tr>
+    <tr><td class="col-keys"><kbd>N</kbd></td><td>Step time forward</td></tr>
+    <tr><td class="col-keys"><kbd>M</kbd></td><td>Toggle ambient occlusion</td></tr>
     <tr><td class="col-keys"><kbd>P</kbd></td><td>Toggle pointer-lock (FPS free-look)</td></tr>
   </table>
 
@@ -695,6 +702,16 @@ function startWasm() {
         // §Keyboard → synthetic D-pad touch (desktop fallback, since multitouch is broken)
         driveDpadForMovement(k, true);
         if (k >= 49 && k <= 57) { try { selectHotbar(k - 49); } catch(_) {} }
+        // §Browser adaptation: keyboard shortcuts via C++ exports (matching
+        // Minecraft.cpp WIN32/RPI blocks that are not active in emscripten).
+        // See wasm/keyboard_shortcuts.cpp (Rule Zero: rujukan/ immutable).
+        if (k === 69 && typeof _open_inventory === 'function') _open_inventory();        // E → inventory
+        if (k === 70 && typeof _toggle_fly === 'function') showToast('Fly: ' + _toggle_fly(), 'info', 1500);  // F → fly
+        if (k === 86 && typeof _toggle_third_person === 'function') showToast('Third person: ' + _toggle_third_person(), 'info', 1500);  // V → third person
+        if (k === 76 && typeof _cycle_view_distance === 'function') showToast('View distance: ' + _cycle_view_distance(), 'info', 1500);  // L → view dist
+        if (k === 66 && typeof _toggle_gamemode === 'function') showToast('Gamemode: ' + _toggle_gamemode(), 'info', 1500);  // B → gamemode
+        if (k === 78 && typeof _step_time === 'function') showToast('Time: ' + _step_time(), 'info', 1500);  // N → step time
+        if (k === 77 && typeof _toggle_ao === 'function') showToast('AO: ' + _toggle_ao(), 'info', 1500);    // M → ambient occlusion
         if ([32, 37, 38, 39, 40].indexOf(e.keyCode) >= 0) e.preventDefault();
       });
       window.addEventListener('keyup', function(e) {

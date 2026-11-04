@@ -7290,6 +7290,41 @@ var _inject_creative_items = Module["_inject_creative_items"] = function() {
 };
 
 /** @type {function(...*):?} */
+var _toggle_fly = Module["_toggle_fly"] = function() {
+  return (_toggle_fly = Module["_toggle_fly"] = Module["asm"]["toggle_fly"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _toggle_third_person = Module["_toggle_third_person"] = function() {
+  return (_toggle_third_person = Module["_toggle_third_person"] = Module["asm"]["toggle_third_person"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _cycle_view_distance = Module["_cycle_view_distance"] = function() {
+  return (_cycle_view_distance = Module["_cycle_view_distance"] = Module["asm"]["cycle_view_distance"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _toggle_gamemode = Module["_toggle_gamemode"] = function() {
+  return (_toggle_gamemode = Module["_toggle_gamemode"] = Module["asm"]["toggle_gamemode"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _step_time = Module["_step_time"] = function() {
+  return (_step_time = Module["_step_time"] = Module["asm"]["step_time"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _open_inventory = Module["_open_inventory"] = function() {
+  return (_open_inventory = Module["_open_inventory"] = Module["asm"]["open_inventory"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _toggle_ao = Module["_toggle_ao"] = function() {
+  return (_toggle_ao = Module["_toggle_ao"] = Module["asm"]["toggle_ao"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
 var _htons = Module["_htons"] = function() {
   return (_htons = Module["_htons"] = Module["asm"]["htons"]).apply(null, arguments);
 };
