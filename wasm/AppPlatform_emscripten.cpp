@@ -132,10 +132,65 @@ std::string AppPlatform_emscripten::getDateString(int y, int m, int d, int hh, i
     return std::string(buf);
 }
 
-int AppPlatform_emscripten::getPixelsPerMillimeter() const { return 6; } // §Typical phone DPI (~150 DPI = 6 px/mm). Source code uses this for D-pad/button sizing.
-void AppPlatform_emscripten::playSound(const std::string& name, float volume, float pitch) {}
+int AppPlatform_emscripten::getPixelsPerMillimeter() const { return 6; }
+// §Browser adaptation: play sound via Web Audio API.
+// SoundEngine calls platform->playSound(name, volume, pitch) where name is
+// e.g. "step.grass", "random.bow", "random.click". The actual PCM data is
+// embedded in the WASM (Sound.cpp includes data/*.pcm as C arrays).
+// We can't easily access the PCM by name from JS, so we generate a simple
+// synthesized sound based on the sound name. This is a browser adaptation
+// (Rule Zero: rujukan/ immutable, only wasm/ modified).
+void AppPlatform_emscripten::playSound(const std::string& name, float volume, float pitch) {
+    if (volume <= 0) return;
+    EM_ASM_({
+        var name = UTF8ToString($0);
+        var volume = $1;
+        var pitch = $2;
+        // §Lazy-init Web Audio context (browsers require user gesture)
+        if (!window.__mcpeAudioCtx) {
+            try { window.__mcpeAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+            catch(e) { return; }
+        }
+        var ctx = window.__mcpeAudioCtx;
+        if (ctx.state === 'suspended') ctx.resume();
+
+        // §Synthesize a short sound based on sound name category
+        var now = ctx.currentTime;
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        var freq = 440 * pitch;
+        var type = 'sine';
+        var dur = 0.1;
+        var vol = Math.min(volume, 1) * 0.15;  // §Cap at 15% to avoid being too loud
+
+        if (name.indexOf('step.') === 0) { type = 'triangle'; freq = 80 + Math.random()*40; dur = 0.05; }
+        else if (name.indexOf('dig.') === 0) { type = 'square'; freq = 100 + Math.random()*50; dur = 0.1; }
+        else if (name.indexOf('random.bow') === 0) { type = 'sine'; freq = 200; dur = 0.15; }
+        else if (name.indexOf('random.click') === 0) { type = 'square'; freq = 800; dur = 0.03; vol *= 0.5; }
+        else if (name.indexOf('damage') >= 0) { type = 'sawtooth'; freq = 150; dur = 0.2; }
+        else if (name.indexOf('splash') >= 0) { type = 'sine'; freq = 300; dur = 0.3; }
+        else { type = 'sine'; freq = 440; dur = 0.1; }
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.5, now + dur);
+
+        gain.gain.setValueAtTime(vol, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+        osc.start(now);
+        osc.stop(now + dur);
+    }, name.c_str(), volume, pitch);
+}
 void AppPlatform_emscripten::stopSound(const std::string& name) {}
-void AppPlatform_emscripten::vibrate(int milliseconds) {}
+void AppPlatform_emscripten::vibrate(int milliseconds) {
+    EM_ASM_({
+        if (navigator.vibrate) navigator.vibrate($0);
+    }, milliseconds);
+}
 std::string AppPlatform_emscripten::getExternalStoragePath() const { return "/data"; }
 std::string AppPlatform_emscripten::getCacheStoragePath() const { return "/cache"; }
 bool AppPlatform_emscripten::hasMouse() const { return true; }
