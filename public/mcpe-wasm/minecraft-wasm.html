@@ -585,19 +585,29 @@ function startWasm() {
       // `e.touch.identifier % 12` as the pointerId, so D-pad + look work
       // simultaneously.
       var touchPositions = {}; // touch.identifier → {x, y} last canvas coords
+      // §D-pad bounding rect (from TouchscreenInput::onConfigChanged, 1:1 source):
+      //   BaseX=8, BaseY=220, Bw=Bh=84 → [8,220,260,472]
+      var DPAD_RECT = { x0: 8, y0: 220, x1: 260, y1: 472 };
+      function isInDpad(x, y) { return x >= DPAD_RECT.x0 && x < DPAD_RECT.x1 && y >= DPAD_RECT.y0 && y < DPAD_RECT.y1; }
+
       function feedTouch(action, data, c, identifier) {
-        // Mouse feed: GUI click handling + MouseTurnInput (for desktop fallback)
-        if (typeof _mouse_feed === 'function') {
+        // §Multitouch feed: per-finger pointer slot. This is the primary
+        // input path for touch — each finger gets its own Multitouch slot.
+        if (typeof _multitouch_feed === 'function') {
+          _multitouch_feed(action, data, c.x, c.y, identifier % 12);
+        }
+        // §Mouse feed: ONLY for D-pad touches (identifier 0 in D-pad area).
+        // _mouse_feed hardcodes pointerId=0 for Multitouch, so calling it
+        // for look-area touches would overwrite the D-pad pointer 0 slot.
+        // We only call _mouse_feed for GUI click handling (hotbar, menus),
+        // and only for the first touch (identifier 0).
+        if (identifier === 0 && typeof _mouse_feed === 'function') {
           var dx = 0, dy = 0;
           if (action === 0) {
             var prev = touchPositions[identifier];
             if (prev) { dx = c.x - prev.x; dy = c.y - prev.y; }
           }
           _mouse_feed(action, data, c.x, c.y, dx, dy);
-        }
-        // §Multitouch feed: per-finger pointer slot (the actual fix)
-        if (typeof _multitouch_feed === 'function') {
-          _multitouch_feed(action, data, c.x, c.y, identifier % 12);
         }
       }
       canvas.addEventListener('touchstart', function(e) {
