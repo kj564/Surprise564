@@ -117,6 +117,11 @@ int main() {
 
     printf("[MCPE_WASM] Step 2: NinecraftApp\n"); fflush(stdout);
     g_app = new NinecraftApp();
+    // §Set storage paths (matching main_win32.h:273 pattern). ExternalFileLevelStorageSource
+    // uses these to build the save path: externalStoragePath + "/games/com.mojang/minecraftWorlds/".
+    // We use /data (MEMFS) which AppPlatform_emscripten::getExternalStoragePath also returns.
+    ((Minecraft*)g_app)->externalStoragePath = "/data";
+    ((Minecraft*)g_app)->externalCacheStoragePath = "/data";
 
     printf("[MCPE_WASM] Step 3: App::init\n"); fflush(stdout);
     try {
