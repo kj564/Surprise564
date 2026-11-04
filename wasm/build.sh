@@ -34,6 +34,12 @@ for cpp in $(find $SRC -name "*.cpp" | sort); do
     if [ "$relpath" = "client/renderer/gles.cpp" ]; then
         EXTRA_FLAGS="-DanGenBuffers=anGenBuffers_gles_impl"
     fi
+    # §SoundEngine.cpp: substitute SoundSystem base class with SoundSystemWebAudio
+    # so soundSystem member uses our Web Audio implementation (playAt plays PCM).
+    # Rule Zero: rujukan/ source unchanged, only compile flag differs.
+    if [ "$relpath" = "client/sound/SoundEngine.cpp" ]; then
+        EXTRA_FLAGS="-include $WASM/SoundSystemWebAudio.h -DSoundSystem=SoundSystemWebAudio"
+    fi
     if em++ "$cpp" $INCLUDES $CFLAGS $EXTRA_FLAGS -c -o "$BUILD/$objname" 2>/dev/null; then
         ok=$((ok + 1))
     else
