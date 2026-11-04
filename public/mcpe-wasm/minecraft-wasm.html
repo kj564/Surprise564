@@ -320,6 +320,19 @@ function startWasm() {
     _glAlphaFunc: function(func, ref) { GL1.alphaRef = ref; },
     _glHint: function(target, mode) { },
     _glShadeModel: function(mode) { },
+    // §GLES1 1:1: forward blend, cull, depth, color mask to WebGL directly.
+    // These are needed for clouds (glBlendFunc), block faces (glCullFace),
+    // and transparency (glDepthMask). Original shim had them as no-ops.
+    _glBlendFunc: function(s, d) { var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx); if (gl) gl.blendFunc(s, d); },
+    _glCullFace: function(mode) { var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx); if (gl) gl.cullFace(mode); },
+    _glDepthMask: function(flag) { var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx); if (gl) gl.depthMask(!!flag); },
+    _glColorMask: function(r,g,b,a) { var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx); if (gl) gl.colorMask(!!r,!!g,!!b,!!a); },
+    _glDepthFunc: function(f) { var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx); if (gl) gl.depthFunc(f); },
+    _glViewport: function(x,y,w,h) { var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx); if (gl) gl.viewport(x,y,w,h); },
+    _glScissor: function(x,y,w,h) { var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx); if (gl) gl.scissor(x,y,w,h); },
+    _glClear: function(mask) { var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx); if (gl) gl.clear(mask); },
+    _glClearColor: function(r,g,b,a) { var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx); if (gl) gl.clearColor(r,g,b,a); },
+    _glLineWidth: function(w) { var gl = (typeof GL !== 'undefined' && GL.currentContext && GL.currentContext.GLctx); if (gl) gl.lineWidth(w); },
     _glEnable: function(cap) {
       if (cap == 0x0DE0) { GL1.tex2dEn = 1; return; }
       if (cap == 0x0BC0) { GL1.alphaTestEn = 1; return; }
@@ -433,6 +446,16 @@ function startWasm() {
       _glDisable = gl1Ovr._glDisable;
       _glHint = gl1Ovr._glHint;
       _glShadeModel = gl1Ovr._glShadeModel;
+      _glBlendFunc = gl1Ovr._glBlendFunc;
+      _glCullFace = gl1Ovr._glCullFace;
+      _glDepthMask = gl1Ovr._glDepthMask;
+      _glColorMask = gl1Ovr._glColorMask;
+      _glDepthFunc = gl1Ovr._glDepthFunc;
+      _glViewport = gl1Ovr._glViewport;
+      _glScissor = gl1Ovr._glScissor;
+      _glClear = gl1Ovr._glClear;
+      _glClearColor = gl1Ovr._glClearColor;
+      _glLineWidth = gl1Ovr._glLineWidth;
       _glMatrixMode = gl1Ovr._glMatrixMode;
       _glLoadIdentity = gl1Ovr._glLoadIdentity;
       _glOrthof = gl1Ovr._glOrthof;
