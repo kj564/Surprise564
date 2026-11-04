@@ -65,8 +65,67 @@ void* AppPlatform_emscripten::loadAsset(const std::string& name, int* size) {
     return nullptr;
 }
 
-void* AppPlatform_emscripten::loadFile(const std::string& path, int* size) { *size = 0; return nullptr; }
-bool AppPlatform_emscripten::saveFile(const std::string& path, const void* data, int size) { return false; }
+// §Browser adaptation: saveFile/loadFile using Emscripten MEMFS.
+// Rule Zero: rujukan/ is immutable; this is the browser adaptation layer.
+// The game's ExternalFileLevelStorageSource (NinecraftApp.cpp:104, used when
+// NO_STORAGE is not defined) calls platform->saveFile/loadFile to persist
+// world data. We route these to Emscripten's in-memory filesystem (MEMFS)
+// at /data (matching getExternalStoragePath). For persistence across page
+// reloads, minecraft-wasm.html syncs /data to localStorage on beforeunload
+// and restores on startup (see __mcpeSaveSync JS bridge).
+void* AppPlatform_emscripten::loadFile(const std::string& path, int* size) {
+    *size = 0;
+    // §Read file from MEMFS via EM_ASM. Returns pointer to data in WASM heap
+    // (caller must free via _free), or 0 if file doesn't exist.
+    EM_ASM({
+        var path = UTF8ToString($0);
+        try {
+            var data = FS.readFile(path);
+            if (data && data.length > 0) {
+                var ptr = _malloc(data.length);
+                if (ptr) {
+                    HEAPU8.set(data, ptr);
+                    HEAP32[$1 >> 2] = data.length;
+                    // Store ptr in a global for the return value
+                    window.__mcpeLoadFilePtr = ptr;
+                }
+            }
+        } catch(e) { window.__mcpeLoadFilePtr = 0; }
+    }, path.c_str(), (int)size);
+    // §Get the pointer set by EM_ASM (can't return directly from EM_ASM)
+    int ptr = EM_ASM_INT({
+        var p = window.__mcpeLoadFilePtr || 0;
+        window.__mcpeLoadFilePtr = 0;
+        return p;
+    });
+    return (void*)ptr;
+}
+bool AppPlatform_emscripten::saveFile(const std::string& path, const void* data, int size) {
+    // §Write data to MEMFS via EM_ASM. Returns true on success.
+    int result = EM_ASM_INT({
+        var path = UTF8ToString($0);
+        var dataPtr = $1;
+        var size = $2;
+        try {
+            // Ensure parent directories exist (recursive)
+            var lastSlash = path.lastIndexOf('/');
+            if (lastSlash > 0) {
+                var dir = path.substring(0, lastSlash);
+                FS.mkdirTree(dir);
+            }
+            // Write file
+            var data = HEAPU8.subarray(dataPtr, dataPtr + size);
+            FS.writeFile(path, data);
+            // §Notify JS to sync to localStorage (persistence)
+            if (window.__mcpeSaveSync) window.__mcpeSaveSync(path);
+            return 1;
+        } catch(e) {
+            console.error('[saveFile] failed: ' + e.message);
+            return 0;
+        }
+    }, path.c_str(), (int)data, size);
+    return result != 0;
+}
 
 std::string AppPlatform_emscripten::getDateString(int y, int m, int d, int hh, int min) {
     char buf[64]; snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d", y, m, d, hh, min);

@@ -1,32 +1,22 @@
 // §Platform stubs — anGenBuffers override + glDrawArrays override
-// anGenBuffers: call real glGenBuffers (not fake counter from gles.cpp)
-// glDrawArrays: call real WebGL drawArrays via EM_ASM
-//   (LEGACY_GL_EMULATION's glDrawArrays hook doesn't forward to WebGL)
+// Rule Zero: rujukan/ immutable. We override anGenBuffers (from gles.cpp:49-53
+// fake counter) to call real glGenBuffers. emsdk 2.0.34 wasm-ld doesn't
+// support --allow-multiple-definition, so we rename the gles.cpp version
+// via compile flag -DanGenBuffers=anGenBuffers_gles_impl when recompiling
+// gles.cpp. See build.sh for the gles.cpp recompile step.
 #include <string>
 #include <cstdio>
 #include <GLES/gl.h>
 #include <emscripten.h>
 
-// §anGenBuffers override
 void anGenBuffers(GLsizei n, GLuint* buffers) {
     glGenBuffers(n, buffers);
 }
 
-// §glDrawArrays override — call real WebGL drawArrays
-// LEGACY_GL_EMULATION hooks glDrawArrays but doesn't properly forward
-// to WebGL's gl.drawArrays. We override it here.
-// Tesselator::draw calls glDrawArrays2 → glDrawArrays
-// gles.h defines glDrawArrays2 = glDrawArrays (non-debug) or macro (debug)
-// With -O0, macros should resolve to real glDrawArrays function.
-// We override glDrawArrays to call EM_ASM that calls GLctx.drawArrays.
 extern "C" void glDrawArrays_real(unsigned int mode, int first, int count) {
     EM_ASM({
-        var mode = $0;
-        var first = $1;
-        var count = $2;
+        var mode = $0; var first = $1; var count = $2;
         var gl = (GL.currentContext && GL.currentContext.GLctx);
-        if (gl) {
-            gl.drawArrays(mode, first, count);
-        }
+        if (gl) gl.drawArrays(mode, first, count);
     }, mode, first, count);
 }

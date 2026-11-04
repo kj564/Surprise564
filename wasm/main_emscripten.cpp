@@ -13,6 +13,11 @@ static NinecraftApp* g_app = nullptr;
 static AppPlatform_emscripten* g_platform = nullptr;
 static AppContext g_context;
 
+// §Expose g_app for browser-adaptation files (creative_items.cpp) that need
+// to access the Minecraft instance. These are non-static so other wasm/
+// translation units can extern-declare them.
+NinecraftApp* get_mcpe_app() { return g_app; }
+
 static void emscripten_main_loop() {
     if (g_app && g_app->isInited()) g_app->update();
 }
@@ -23,6 +28,13 @@ extern "C" EMSCRIPTEN_KEEPALIVE void mouse_feed(char action, char data, short x,
     // Multitouch: D-pad buttons + UnifiedTurnBuild look-around (uses position, not delta)
     Mouse::feed(action, data, x, y, dx, dy);
     Multitouch::feed(action, data, x, y, 0);
+}
+// §Browser adaptation: per-finger multitouch export (Rule Zero compliant —
+// only wasm/ modified, rujukan/ immutable). Calls Multitouch::feed with a
+// per-finger pointerId (0..11, Multitouch.h:12 MAX_POINTERS) so D-pad + look
+// work simultaneously via TouchscreenInput::tick / TouchTurnInput.
+extern "C" EMSCRIPTEN_KEEPALIVE void multitouch_feed(char action, char data, short x, short y, char pointerId) {
+    Multitouch::feed(action, data, x, y, pointerId);
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void keyboard_feed(unsigned char key, int state) {
     Keyboard::feed(key, state);
