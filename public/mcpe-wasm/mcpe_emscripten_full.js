@@ -7292,6 +7292,16 @@ var _free = Module["_free"] = function() {
 };
 
 /** @type {function(...*):?} */
+var _is_level_client_side = Module["_is_level_client_side"] = function() {
+  return (_is_level_client_side = Module["_is_level_client_side"] = Module["asm"]["is_level_client_side"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _force_release_bow = Module["_force_release_bow"] = function() {
+  return (_force_release_bow = Module["_force_release_bow"] = Module["asm"]["force_release_bow"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
 var _inject_creative_items = Module["_inject_creative_items"] = function() {
   return (_inject_creative_items = Module["_inject_creative_items"] = Module["asm"]["inject_creative_items"]).apply(null, arguments);
 };
