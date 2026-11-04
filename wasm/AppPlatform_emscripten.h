@@ -38,6 +38,7 @@ public:
     
     bool hasMouse() const;
     bool hasMultitouch() const;
+    bool supportsTouchscreen() override;
     
     void showKeyboard();
     void hideKeyboard();

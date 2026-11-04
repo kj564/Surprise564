@@ -195,6 +195,17 @@ std::string AppPlatform_emscripten::getExternalStoragePath() const { return "/da
 std::string AppPlatform_emscripten::getCacheStoragePath() const { return "/cache"; }
 bool AppPlatform_emscripten::hasMouse() const { return true; }
 bool AppPlatform_emscripten::hasMultitouch() const { return true; }
+// §Browser adaptation: detect touch capability at runtime.
+// On desktop (no touch): returns false → game uses KeyboardInput + MouseTurnInput
+//   (WASD + mouse look, no D-pad). This is 1:1 with the original APK which used
+//   KeyboardInput on Win32 and TouchscreenInput on Android.
+// On mobile (touch): returns true → game uses TouchscreenInput (D-pad + look)
+bool AppPlatform_emscripten::supportsTouchscreen() {
+    int hasTouch = EM_ASM_INT({
+        return ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 1 : 0;
+    });
+    return hasTouch != 0;
+}
 void AppPlatform_emscripten::showKeyboard() {}
 void AppPlatform_emscripten::hideKeyboard() {}
 void AppPlatform_emscripten::buyGame() {}
