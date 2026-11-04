@@ -732,13 +732,15 @@ function startWasm() {
         if (heldKeys[k]) { e.preventDefault(); return; }
         heldKeys[k] = true;
         if (typeof _keyboard_feed === 'function') _keyboard_feed(k, 1);
-        // §Keyboard → synthetic D-pad touch ONLY on touch devices (mobile).
-        // On desktop, KeyboardInput reads _keyboard_feed directly (1:1 with
-        // Win32 mode in APK). D-pad simulation writes to Multitouch which
-        // can interfere with look/build in non-touch mode.
-        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-          driveDpadForMovement(k, true);
-        }
+        // §Keyboard → D-pad simulation via _multitouch_feed (pointer 2).
+        // The game is always in touch mode (init order bug in original source:
+        // options.initDefaultValues runs before _supportsNonTouchscreen is set,
+        // so useTouchScreen stays true). TouchscreenInput::setKey is #ifdef WIN32
+        // — keyboard WASD does nothing in touch mode. We simulate D-pad touches
+        // via _multitouch_feed with pointerId=2 so TouchscreenInput processes them.
+        // This is needed on ALL devices (desktop + mobile) since the game is
+        // always in touch mode (1:1 with APK behavior).
+        driveDpadForMovement(k, true);
         if (k >= 49 && k <= 57) { try { selectHotbar(k - 49); } catch(_) {} }
         // §Browser adaptation: keyboard shortcuts via C++ exports (matching
         // Minecraft.cpp WIN32/RPI blocks that are not active in emscripten).
@@ -757,9 +759,7 @@ function startWasm() {
         if (k === 0) return;
         heldKeys[k] = false;
         if (typeof _keyboard_feed === 'function') _keyboard_feed(k, 0);
-        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-          driveDpadForMovement(k, false);
-        }
+        driveDpadForMovement(k, false);
       });
       window.addEventListener('blur', function() {
         for (var k in heldKeys) {
