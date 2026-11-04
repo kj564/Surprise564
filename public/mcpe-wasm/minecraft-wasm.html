@@ -749,7 +749,11 @@ function startWasm() {
           if (heldKeys[k] && typeof _keyboard_feed === 'function') _keyboard_feed(parseInt(k), 0);
           heldKeys[k] = false;
         }
-        Object.keys(dpadActive).forEach(function(k) { dpadActive[k] = false; });
+        Object.keys(dpadActive).forEach(function(k) { 
+          dpadActive[k] = false;
+          // §Release keyboard D-pad pointer (pointerId=2) on blur
+          if (typeof _multitouch_feed === 'function') _multitouch_feed(1, 0, 134, 346, 2);
+        });
       });
 
       // §----- Synthetic D-pad touch for keyboard (desktop fallback) -----
@@ -781,8 +785,14 @@ function startWasm() {
         if (!down && !dpadActive[btn]) return;
         dpadActive[btn] = down;
         var p = dpadBtns[btn];
-        if (typeof _mouse_feed === 'function') {
-          _mouse_feed(1, down ? 1 : 0, p.x, p.y, 0, 0);
+        // §Use _multitouch_feed with pointerId=2 (keyboard D-pad) so it
+        // doesn't conflict with mouse/look touch on pointer 0. The old code
+        // called _mouse_feed which hardcodes pointerId=0 for Multitouch —
+        // when mouse moved for looking, it overwrote the D-pad position on
+        // pointer 0, causing movement to stop. Now keyboard D-pad uses
+        // pointer 2 (separate slot), and mouse/touch look uses pointer 0/1.
+        if (typeof _multitouch_feed === 'function') {
+          _multitouch_feed(1, down ? 1 : 0, p.x, p.y, 2);
         }
       }
 
