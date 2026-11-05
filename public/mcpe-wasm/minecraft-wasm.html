@@ -59,20 +59,6 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; i
 
 <div id="touch-debug"></div>
 
-<div id="patch-hud">
-  <div><b>VoxelCraft · MCPE 0.7.0 WASM</b> <span style="color:#34d399;">(recompiled v5)</span></div>
-  <div class="ok">✓ Multitouch FIXED — recompiled emsdk 2.0.34 + export _multitouch_feed</div>
-  <div class="ok">✓ Rendering 1:1 (terrain, grass, trees, water) via anGenBuffers override</div>
-  <div class="ok">✓ Per-finger pointerId (0..11) — D-pad + look bareng</div>
-  <div class="ok">✓ Touch dx/dy &amp; semua jari diteruskan</div>
-  <div class="ok">✓ Right-click (mouse) place/use + keyboard fallback</div>
-  <div class="ok">✓ Inventory: tap slot "..." di hotbar</div>
-  <div class="ok">✓ Save: MEMFS + localStorage persistence (recompiled, -DNO_STORAGE removed)</div>
-  <div class="ok">✓ Creative items: tools, weapons, arrows, food, materials injected</div>
-  <div class="warn">⚠ Options text (butuh recompile C++ tambahan)</div>
-  <div style="margin-top:4px;"><b>H</b> = bantuan · <b>F1</b> = toggle HUD · <b>T</b> = toggle touch-debug</div>
-</div>
-
 <div id="help-panel">
   <h2>Kontrol — VoxelCraft (Mobile)</h2>
   <p style="color:#8b949e;font-size:11px;margin-bottom:10px;">Game ini port Minecraft Pocket Edition 2013 — desain aslinya pakai <b>touch screen</b>.</p>
@@ -131,7 +117,6 @@ var loadingEl = document.getElementById('loading');
 var loadingText = document.getElementById('loading-text');
 var canvas = document.getElementById('canvas');
 var helpPanel = document.getElementById('help-panel');
-var patchHud = document.getElementById('patch-hud');
 var toastEl = document.getElementById('toast');
 var touchDebug = document.getElementById('touch-debug');
 
@@ -202,10 +187,8 @@ function showToast(msg, kind, ms) {
   toastTimer = setTimeout(function() { toastEl.classList.remove('show'); }, ms || 3500);
 }
 setTimeout(function() {
-  showToast('✓ Multitouch FIXED! D-pad + look bareng sekarang jalan. Tekan H untuk bantuan.', 'info', 5000);
 }, 6000);
 setTimeout(function() {
-  showToast('⚠ Save masih experimental — worlds mungkin hilang saat reload. Main dalam satu sesi.', 'warn', 6000);
 }, 12000);
 
 // §=========== GLES1 → WebGL2 translation layer (unchanged) ===========
@@ -712,8 +695,6 @@ function startWasm() {
           e.preventDefault();
           return;
         }
-        if (e.keyCode === 112) { // F1 — toggle HUD
-          patchHud.style.display = (patchHud.style.display === 'none') ? 'block' : 'none';
           e.preventDefault();
           return;
         }
