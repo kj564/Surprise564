@@ -132,8 +132,20 @@ void OptionsScreen::generateOptionScreens() {
 	optionPanes.push_back(new OptionsPane());
 	// Mojang Pane
 	optionPanes[0]->createOptionsGroup("options.group.mojang")
-		//.addOptionItem(&Options::Option::THIRD_PERSON, minecraft);
 		.addOptionItem(&Options::Option::SENSITIVITY, minecraft);
+	// Game Pane
+	optionPanes[1]->createOptionsGroup("options.group.game")
+		.addOptionItem(&Options::Option::THIRD_PERSON, minecraft)
+		.addOptionItem(&Options::Option::SERVER_VISIBLE, minecraft)
+		.addOptionItem(&Options::Option::HIDE_GUI, minecraft);
+	// Controls Pane
+	optionPanes[2]->createOptionsGroup("options.group.input")
+		.addOptionItem(&Options::Option::INVERT_MOUSE, minecraft)
+		.addOptionItem(&Options::Option::LEFT_HANDED, minecraft)
+		.addOptionItem(&Options::Option::USE_TOUCHSCREEN, minecraft)
+		.addOptionItem(&Options::Option::USE_TOUCH_JOYPAD, minecraft);
+	optionPanes[2]->createOptionsGroup("options.group.feedback")
+		.addOptionItem(&Options::Option::DESTROY_VIBRATION, minecraft);
 // 	int mojangGroup = optionPanes[0]->createOptionsGroup("Mojang");
 // 	static const int arr[] = {5,4,3,15};
 // 	std::vector<int> vec (arr, arr + sizeof(arr) / sizeof(arr[0]) );

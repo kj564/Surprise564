@@ -1,4 +1,5 @@
 #include "Options.h"
+#include "locale/I18n.h"
 #include "OptionStrings.h"
 #include "Minecraft.h"
 #include "../platform/log.h"
@@ -30,7 +31,7 @@ void Options::initDefaultValues() {
 	sound = 1;
 	sensitivity = 0.5f;
 	invertYMouse = false;
-	viewDistance = 2;
+
 	bobView = true;
 	anaglyph3d = false;
 	limitFramerate = false;
@@ -185,7 +186,7 @@ const char* Options::GUI_SCALE[] = {
 
 void Options::update()
 {
-	viewDistance = 2;
+
 	StringVector optionStrings = optionsFile.getOptionStrings();
 	for (unsigned int i = 0; i < optionStrings.size(); i += 2) {
 		const std::string& key = optionStrings[i];
@@ -304,7 +305,9 @@ void Options::save()
 	addOptionToSaveOutput(stringVec, OptionStrings::Controls_UseTouchScreen, useTouchScreen);
 	addOptionToSaveOutput(stringVec, OptionStrings::Controls_UseTouchJoypad, isJoyTouchArea);
 	addOptionToSaveOutput(stringVec, OptionStrings::Controls_FeedbackVibration, destroyVibration);
-// 
+
+	optionsFile.save(stringVec);
+//
 // 	static const Option MUSIC;
 // 	static const Option SOUND;
 // 	static const Option INVERT_MOUSE;
@@ -366,49 +369,37 @@ void Options::addOptionToSaveOutput(StringVector& stringVector, std::string name
 
 std::string Options::getMessage( const Option* item )
 {
-	return "Options::getMessage - Not implemented";
+	std::string caption = I18n::get(item->getCaptionId()) + ": ";
 
-	//Language language = Language.getInstance();
-	//std::string caption = language.getElement(item.getCaptionId()) + ": ";
+	if (item->isProgress()) {
+		float progressValue = getProgressValue(item);
 
-	//if (item.isProgress()) {
-	//    float progressValue = getProgressValue(item);
+		if (item == &Option::SENSITIVITY) {
+			if (progressValue == 0) return caption + I18n::get("options.sensitivity.min");
+			if (progressValue == 1) return caption + I18n::get("options.sensitivity.max");
+			char buf[32]; snprintf(buf, sizeof(buf), "%d%%", (int)(progressValue * 200));
+			return caption + buf;
+		} else {
+			if (progressValue == 0) return caption + I18n::get("options.off");
+			char buf[32]; snprintf(buf, sizeof(buf), "%d%%", (int)(progressValue * 100));
+			return caption + buf;
+		}
+	} else if (item->isBoolean()) {
+		bool booleanValue = getBooleanValue(item);
+		if (booleanValue) return caption + I18n::get("options.on");
+		return caption + I18n::get("options.off");
+	} else if (item == &Option::RENDER_DISTANCE) {
+		return caption + I18n::get(RENDER_DISTANCE_NAMES[viewDistance]);
+	} else if (item == &Option::DIFFICULTY) {
+		return caption + I18n::get(DIFFICULTY_NAMES[difficulty]);
+	} else if (item == &Option::GUI_SCALE) {
+		return caption + I18n::get(GUI_SCALE[guiScale]);
+	} else if (item == &Option::GRAPHICS) {
+		if (fancyGraphics) return caption + I18n::get("options.graphics.fancy");
+		return caption + I18n::get("options.graphics.fast");
+	}
 
-	//    if (item == Option.SENSITIVITY) {
-	//        if (progressValue == 0) {
-	//            return caption + language.getElement("options.sensitivity.min");
-	//        }
-	//        if (progressValue == 1) {
-	//            return caption + language.getElement("options.sensitivity.max");
-	//        }
-	//        return caption + (int) (progressValue * 200) + "%";
-	//    } else {
-	//        if (progressValue == 0) {
-	//            return caption + language.getElement("options.off");
-	//        }
-	//        return caption + (int) (progressValue * 100) + "%";
-	//    }
-	//} else if (item.isBoolean()) {
-
-	//    bool booleanValue = getBooleanValue(item);
-	//    if (booleanValue) {
-	//        return caption + language.getElement("options.on");
-	//    }
-	//    return caption + language.getElement("options.off");
-	//} else if (item == Option.RENDER_DISTANCE) {
-	//    return caption + language.getElement(RENDER_DISTANCE_NAMES[viewDistance]);
-	//} else if (item == Option.DIFFICULTY) {
-	//    return caption + language.getElement(DIFFICULTY_NAMES[difficulty]);
-	//} else if (item == Option.GUI_SCALE) {
-	//    return caption + language.getElement(GUI_SCALE[guiScale]);
-	//} else if (item == Option.GRAPHICS) {
-	//    if (fancyGraphics) {
-	//        return caption + language.getElement("options.graphics.fancy");
-	//    }
-	//    return caption + language.getElement("options.graphics.fast");
-	//}
-
-	//return caption;
+	return caption;
 }
 
 /*static*/
