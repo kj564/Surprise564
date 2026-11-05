@@ -32,6 +32,9 @@ for cpp in $(find $SRC -name "*.cpp" | sort); do
     # platform_stubs.cpp. Rename it via macro so there's no duplicate symbol.
 EXTRA_FLAGS=""
     if [ "$relpath" = "client/renderer/gles.cpp" ]; then
+    if [ "$relpath" = "world/level/tile/Tile.cpp" ]; then
+        EXTRA_FLAGS="-include $WASM/HellSandTile.h"
+    fi
         EXTRA_FLAGS="-DanGenBuffers=anGenBuffers_gles_impl"
     fi
     if [ "$relpath" = "world/item/Item.cpp" ]; then
