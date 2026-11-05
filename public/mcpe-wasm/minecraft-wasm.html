@@ -695,9 +695,6 @@ function startWasm() {
           e.preventDefault();
           return;
         }
-          e.preventDefault();
-          return;
-        }
         if (e.keyCode === 84) { // T — toggle touch-debug
           touchDebugOn = !touchDebugOn;
           if (!touchDebugOn) Object.keys(touchDots).forEach(function(k){ touchDots[k].remove(); delete touchDots[k]; });
