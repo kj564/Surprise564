@@ -1332,49 +1332,49 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  6393680: function() {if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context OK'); }},  
- 6393956: function($0, $1) {var path = UTF8ToString($0); try { var data = FS.readFile(path); if (data && data.length > 0) { var ptr = _malloc(data.length); if (ptr) { HEAPU8.set(data, ptr); HEAP32[$1 >> 2] = data.length; window.__mcpeLoadFilePtr = ptr; } } } catch(e) { window.__mcpeLoadFilePtr = 0; }},  
- 6394234: function() {var p = window.__mcpeLoadFilePtr || 0; window.__mcpeLoadFilePtr = 0; return p;},  
- 6394317: function($0, $1, $2) {var path = UTF8ToString($0); var dataPtr = $1; var size = $2; try { var lastSlash = path.lastIndexOf('/'); if (lastSlash > 0) { var dir = path.substring(0, lastSlash); FS.mkdirTree(dir); } var data = HEAPU8.subarray(dataPtr, dataPtr + size); FS.writeFile(path, data); if (window.__mcpeSaveSync) window.__mcpeSaveSync(path); return 1; } catch(e) { console.error('[saveFile] failed: ' + e.message); return 0; }},  
- 6394730: function($0, $1, $2) {var name = UTF8ToString($0); var volume = $1; var pitch = $2; if (!window.__mcpeAudioCtx) { try { window.__mcpeAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; } } var ctx = window.__mcpeAudioCtx; if (ctx.state === 'suspended') ctx.resume(); var now = ctx.currentTime; var osc = ctx.createOscillator(); var gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); var freq = 440 * pitch; var type = 'sine'; var dur = 0.1; var vol = Math.min(volume, 1) * 0.15; if (name.indexOf('step.') === 0) { type = 'triangle'; freq = 80 + Math.random()*40; dur = 0.05; } else if (name.indexOf('dig.') === 0) { type = 'square'; freq = 100 + Math.random()*50; dur = 0.1; } else if (name.indexOf('random.bow') === 0) { type = 'sine'; freq = 200; dur = 0.15; } else if (name.indexOf('random.click') === 0) { type = 'square'; freq = 800; dur = 0.03; vol *= 0.5; } else if (name.indexOf('damage') >= 0) { type = 'sawtooth'; freq = 150; dur = 0.2; } else if (name.indexOf('splash') >= 0) { type = 'sine'; freq = 300; dur = 0.3; } else { type = 'sine'; freq = 440; dur = 0.1; } osc.type = type; osc.frequency.setValueAtTime(freq, now); osc.frequency.exponentialRampToValueAtTime(freq * 0.5, now + dur); gain.gain.setValueAtTime(vol, now); gain.gain.exponentialRampToValueAtTime(0.001, now + dur); osc.start(now); osc.stop(now + dur);},  
- 6396106: function($0) {if (navigator.vibrate) navigator.vibrate($0);},  
- 6396156: function() {return ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 1 : 0;},  
- 6396235: function($0, $1, $2, $3, $4, $5) {var bufferPtr = $0; var numFrames = $1; var channels = $2; var frameRate = $3; var volume = $4; var pitch = $5; if (!window.__mcpeAudioCtx) { try { window.__mcpeAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; } } var ctx = window.__mcpeAudioCtx; if (ctx.state === 'suspended') { ctx.resume(); return; } var audioBuffer = ctx.createBuffer(channels, numFrames, frameRate); var pcmData = HEAP16.subarray(bufferPtr >> 1, (bufferPtr >> 1) + numFrames * channels); for (var ch = 0; ch < channels; ch++) { var channelData = audioBuffer.getChannelData(ch); for (var i = 0; i < numFrames; i++) { channelData[i] = pcmData[i * channels + ch] / 32768; } } var source = ctx.createBufferSource(); source.buffer = audioBuffer; source.playbackRate.value = pitch; var gain = ctx.createGain(); gain.gain.value = Math.min(volume, 1) * 0.3; source.connect(gain); gain.connect(ctx.destination); source.start();},  
- 6397171: function($0, $1, $2, $3) {if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3);},  
- 6397271: function($0, $1, $2, $3) {if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3);},  
- 6397369: function($0, $1, $2, $3) {if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3);},  
- 6397473: function($0) {if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0);},  
- 6397569: function($0) {if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0);},  
- 6397667: function($0, $1, $2) {if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2);},  
- 6397745: function($0, $1, $2, $3) {if (typeof _glColor4f === "function") _glColor4f($0, $1, $2, $3);},  
- 6397815: function($0, $1, $2, $3) {if (typeof _glColor4ub === "function") _glColor4ub($0, $1, $2, $3);},  
- 6397887: function($0) {if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0);},  
- 6397969: function() {if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity();},  
- 6398053: function() {if (typeof window.__gl1PushMatrix === "function") window.__gl1PushMatrix();},  
- 6398133: function() {if (typeof window.__gl1PopMatrix === "function") window.__gl1PopMatrix();},  
- 6398211: function($0, $1, $2) {if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2);},  
- 6398301: function($0, $1, $2, $3) {if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3);},  
- 6398389: function($0, $1, $2) {if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2);},  
- 6398471: function($0) {if (typeof window.__gl1MultMatrixf !== 'function') return; var mf = new Float32Array(16); for (var i = 0; i < 16; i++) mf[i] = HEAPF32[($0>>2)+i]; window.__gl1MultMatrixf(mf);},  
- 6398651: function($0, $1, $2, $3, $4, $5) {if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5);},  
- 6398745: function($0, $1, $2, $3, $4, $5) {if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5);},  
- 6398839: function($0, $1, $2, $3, $4, $5) {if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5);},  
- 6398935: function($0, $1) {if (typeof _glAlphaFunc === "function") _glAlphaFunc($0, $1);},  
- 6399001: function($0, $1) {if (typeof window.__gl1Fogf === "function") window.__gl1Fogf($0, $1);},  
- 6399075: function($0, $1) {if (typeof window.__gl1Fogfv === "function") window.__gl1Fogfv($0, $1);},  
- 6399151: function($0) {var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.clearDepth($0);},  
- 6399239: function($0) {var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.depthMask($0);},  
- 6399326: function($0, $1, $2, $3) {var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.colorMask($0, $1, $2, $3);},  
- 6399425: function($0, $1) {if (!window.__gl1GetMatrix) return; var m = window.__gl1GetMatrix($0 == 0xBA7 ? 1 : 0); if (m) { for (var i = 0; i < 16; i++) HEAPF32[($1>>2)+i] = m[i]; }},  
- 6399584: function() {if (typeof GL1 !== 'undefined') GL1.tex2dEn = 1;},  
- 6399637: function() {if (typeof GL1 !== 'undefined') GL1.alphaTestEn = 1;},  
- 6399694: function() {if (typeof GL1 !== 'undefined') GL1.fogEn = 1;},  
- 6399745: function($0) {var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.enable($0);},  
- 6399829: function() {if (typeof GL1 !== 'undefined') GL1.tex2dEn = 0;},  
- 6399882: function() {if (typeof GL1 !== 'undefined') GL1.alphaTestEn = 0;},  
- 6399939: function() {if (typeof GL1 !== 'undefined') GL1.fogEn = 0;},  
- 6399990: function($0) {var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.disable($0);},  
- 6400075: function($0, $1, $2, $3, $4, $5, $6) {var bufferPtr = $0; var numFrames = $1; var channels = $2; var byteWidth = $3; var frameRate = $4; var volume = $5; var pitch = $6; if (!window.__mcpeAudioCtx) { try { window.__mcpeAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; } } var ctx = window.__mcpeAudioCtx; if (ctx.state === 'suspended') { ctx.resume(); return; } var audioBuffer = ctx.createBuffer(channels, numFrames, frameRate); var pcmData = HEAP16.subarray(bufferPtr >> 1, (bufferPtr >> 1) + numFrames * channels); for (var ch = 0; ch < channels; ch++) { var channelData = audioBuffer.getChannelData(ch); for (var i = 0; i < numFrames; i++) { channelData[i] = pcmData[i * channels + ch] / 32768; } } var source = ctx.createBufferSource(); source.buffer = audioBuffer; source.playbackRate.value = pitch; var gain = ctx.createGain(); gain.gain.value = Math.min(volume, 1) * 0.3; source.connect(gain); gain.connect(ctx.destination); source.start();}
+  6394960: function() {if (typeof GL !== 'undefined' && GL.createContext) { var canvas = document.getElementById('canvas'); var ctx = GL.createContext(canvas, {alpha: false, depth: true, stencil: false, antialias: false}); GL.makeContextCurrent(ctx); console.log('[MCPE_WASM] GL context OK'); }},  
+ 6395236: function($0, $1) {var path = UTF8ToString($0); try { var data = FS.readFile(path); if (data && data.length > 0) { var ptr = _malloc(data.length); if (ptr) { HEAPU8.set(data, ptr); HEAP32[$1 >> 2] = data.length; window.__mcpeLoadFilePtr = ptr; } } } catch(e) { window.__mcpeLoadFilePtr = 0; }},  
+ 6395514: function() {var p = window.__mcpeLoadFilePtr || 0; window.__mcpeLoadFilePtr = 0; return p;},  
+ 6395597: function($0, $1, $2) {var path = UTF8ToString($0); var dataPtr = $1; var size = $2; try { var lastSlash = path.lastIndexOf('/'); if (lastSlash > 0) { var dir = path.substring(0, lastSlash); FS.mkdirTree(dir); } var data = HEAPU8.subarray(dataPtr, dataPtr + size); FS.writeFile(path, data); if (window.__mcpeSaveSync) window.__mcpeSaveSync(path); return 1; } catch(e) { console.error('[saveFile] failed: ' + e.message); return 0; }},  
+ 6396010: function($0, $1, $2) {var name = UTF8ToString($0); var volume = $1; var pitch = $2; if (!window.__mcpeAudioCtx) { try { window.__mcpeAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; } } var ctx = window.__mcpeAudioCtx; if (ctx.state === 'suspended') ctx.resume(); var now = ctx.currentTime; var osc = ctx.createOscillator(); var gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); var freq = 440 * pitch; var type = 'sine'; var dur = 0.1; var vol = Math.min(volume, 1) * 0.15; if (name.indexOf('step.') === 0) { type = 'triangle'; freq = 80 + Math.random()*40; dur = 0.05; } else if (name.indexOf('dig.') === 0) { type = 'square'; freq = 100 + Math.random()*50; dur = 0.1; } else if (name.indexOf('random.bow') === 0) { type = 'sine'; freq = 200; dur = 0.15; } else if (name.indexOf('random.click') === 0) { type = 'square'; freq = 800; dur = 0.03; vol *= 0.5; } else if (name.indexOf('damage') >= 0) { type = 'sawtooth'; freq = 150; dur = 0.2; } else if (name.indexOf('splash') >= 0) { type = 'sine'; freq = 300; dur = 0.3; } else { type = 'sine'; freq = 440; dur = 0.1; } osc.type = type; osc.frequency.setValueAtTime(freq, now); osc.frequency.exponentialRampToValueAtTime(freq * 0.5, now + dur); gain.gain.setValueAtTime(vol, now); gain.gain.exponentialRampToValueAtTime(0.001, now + dur); osc.start(now); osc.stop(now + dur);},  
+ 6397386: function($0) {if (navigator.vibrate) navigator.vibrate($0);},  
+ 6397436: function() {return ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 1 : 0;},  
+ 6397515: function($0, $1, $2, $3, $4, $5) {var bufferPtr = $0; var numFrames = $1; var channels = $2; var frameRate = $3; var volume = $4; var pitch = $5; if (!window.__mcpeAudioCtx) { try { window.__mcpeAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; } } var ctx = window.__mcpeAudioCtx; if (ctx.state === 'suspended') { ctx.resume(); return; } var audioBuffer = ctx.createBuffer(channels, numFrames, frameRate); var pcmData = HEAP16.subarray(bufferPtr >> 1, (bufferPtr >> 1) + numFrames * channels); for (var ch = 0; ch < channels; ch++) { var channelData = audioBuffer.getChannelData(ch); for (var i = 0; i < numFrames; i++) { channelData[i] = pcmData[i * channels + ch] / 32768; } } var source = ctx.createBufferSource(); source.buffer = audioBuffer; source.playbackRate.value = pitch; var gain = ctx.createGain(); gain.gain.value = Math.min(volume, 1) * 0.3; source.connect(gain); gain.connect(ctx.destination); source.start();},  
+ 6398451: function($0, $1, $2, $3) {if (typeof window.__gl1VertexPointer === "function") window.__gl1VertexPointer($0, $1, $2, $3);},  
+ 6398551: function($0, $1, $2, $3) {if (typeof window.__gl1ColorPointer === "function") window.__gl1ColorPointer($0, $1, $2, $3);},  
+ 6398649: function($0, $1, $2, $3) {if (typeof window.__gl1TexCoordPointer === "function") window.__gl1TexCoordPointer($0, $1, $2, $3);},  
+ 6398753: function($0) {if (typeof window.__gl1EnableClientState === "function") window.__gl1EnableClientState($0);},  
+ 6398849: function($0) {if (typeof window.__gl1DisableClientState === "function") window.__gl1DisableClientState($0);},  
+ 6398947: function($0, $1, $2) {if (typeof window.__gl1Draw === "function") window.__gl1Draw($0, $1, $2);},  
+ 6399025: function($0, $1, $2, $3) {if (typeof _glColor4f === "function") _glColor4f($0, $1, $2, $3);},  
+ 6399095: function($0, $1, $2, $3) {if (typeof _glColor4ub === "function") _glColor4ub($0, $1, $2, $3);},  
+ 6399167: function($0) {if (typeof window.__gl1MatrixMode === "function") window.__gl1MatrixMode($0);},  
+ 6399249: function() {if (typeof window.__gl1LoadIdentity === "function") window.__gl1LoadIdentity();},  
+ 6399333: function() {if (typeof window.__gl1PushMatrix === "function") window.__gl1PushMatrix();},  
+ 6399413: function() {if (typeof window.__gl1PopMatrix === "function") window.__gl1PopMatrix();},  
+ 6399491: function($0, $1, $2) {if (typeof window.__gl1Translatef === "function") window.__gl1Translatef($0, $1, $2);},  
+ 6399581: function($0, $1, $2, $3) {if (typeof window.__gl1Rotatef === "function") window.__gl1Rotatef($0, $1, $2, $3);},  
+ 6399669: function($0, $1, $2) {if (typeof window.__gl1Scalef === "function") window.__gl1Scalef($0, $1, $2);},  
+ 6399751: function($0) {if (typeof window.__gl1MultMatrixf !== 'function') return; var mf = new Float32Array(16); for (var i = 0; i < 16; i++) mf[i] = HEAPF32[($0>>2)+i]; window.__gl1MultMatrixf(mf);},  
+ 6399931: function($0, $1, $2, $3, $4, $5) {if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5);},  
+ 6400025: function($0, $1, $2, $3, $4, $5) {if (typeof window.__gl1Orthof === "function") window.__gl1Orthof($0, $1, $2, $3, $4, $5);},  
+ 6400119: function($0, $1, $2, $3, $4, $5) {if (typeof window.__gl1Frustum === "function") window.__gl1Frustum($0, $1, $2, $3, $4, $5);},  
+ 6400215: function($0, $1) {if (typeof _glAlphaFunc === "function") _glAlphaFunc($0, $1);},  
+ 6400281: function($0, $1) {if (typeof window.__gl1Fogf === "function") window.__gl1Fogf($0, $1);},  
+ 6400355: function($0, $1) {if (typeof window.__gl1Fogfv === "function") window.__gl1Fogfv($0, $1);},  
+ 6400431: function($0) {var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.clearDepth($0);},  
+ 6400519: function($0) {var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.depthMask($0);},  
+ 6400606: function($0, $1, $2, $3) {var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.colorMask($0, $1, $2, $3);},  
+ 6400705: function($0, $1) {if (!window.__gl1GetMatrix) return; var m = window.__gl1GetMatrix($0 == 0xBA7 ? 1 : 0); if (m) { for (var i = 0; i < 16; i++) HEAPF32[($1>>2)+i] = m[i]; }},  
+ 6400864: function() {if (typeof GL1 !== 'undefined') GL1.tex2dEn = 1;},  
+ 6400917: function() {if (typeof GL1 !== 'undefined') GL1.alphaTestEn = 1;},  
+ 6400974: function() {if (typeof GL1 !== 'undefined') GL1.fogEn = 1;},  
+ 6401025: function($0) {var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.enable($0);},  
+ 6401109: function() {if (typeof GL1 !== 'undefined') GL1.tex2dEn = 0;},  
+ 6401162: function() {if (typeof GL1 !== 'undefined') GL1.alphaTestEn = 0;},  
+ 6401219: function() {if (typeof GL1 !== 'undefined') GL1.fogEn = 0;},  
+ 6401270: function($0) {var gl = (GL.currentContext && GL.currentContext.GLctx); if (gl) gl.disable($0);},  
+ 6401355: function($0, $1, $2, $3, $4, $5, $6) {var bufferPtr = $0; var numFrames = $1; var channels = $2; var byteWidth = $3; var frameRate = $4; var volume = $5; var pitch = $6; if (!window.__mcpeAudioCtx) { try { window.__mcpeAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; } } var ctx = window.__mcpeAudioCtx; if (ctx.state === 'suspended') { ctx.resume(); return; } var audioBuffer = ctx.createBuffer(channels, numFrames, frameRate); var pcmData = HEAP16.subarray(bufferPtr >> 1, (bufferPtr >> 1) + numFrames * channels); for (var ch = 0; ch < channels; ch++) { var channelData = audioBuffer.getChannelData(ch); for (var i = 0; i < numFrames; i++) { channelData[i] = pcmData[i * channels + ch] / 32768; } } var source = ctx.createBufferSource(); source.buffer = audioBuffer; source.playbackRate.value = pitch; var gain = ctx.createGain(); gain.gain.value = Math.min(volume, 1) * 0.3; source.connect(gain); gain.connect(ctx.destination); source.start();}
 };
 function gl1_init_shader(){ if (window.__gl1Shader) return; var gl = (GL.currentContext && GL.currentContext.GLctx); if (!gl) return; var vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, 'attribute vec3 aPos; attribute vec4 aColor; attribute vec2 aTexCoord; uniform mat4 uProj; uniform mat4 uMV; varying vec4 vColor; varying vec2 vTexCoord; void main() { vColor = aColor; vTexCoord = aTexCoord; gl_Position = uProj * uMV * vec4(aPos, 1.0); }'); gl.compileShader(vs); var fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, 'precision mediump float; varying vec4 vColor; varying vec2 vTexCoord; uniform sampler2D uTex; uniform bool uHasTex; void main() { if (uHasTex) { vec4 t = texture2D(uTex, vTexCoord); gl_FragColor = vec4(t.rgb * vColor.rgb, t.a * vColor.a); } else { gl_FragColor = vColor; } }'); gl.compileShader(fs); var prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); window.__gl1Shader = prog; window.__gl1Attribs = { pos: gl.getAttribLocation(prog, 'aPos'), color: gl.getAttribLocation(prog, 'aColor'), texCoord: gl.getAttribLocation(prog, 'aTexCoord') }; window.__gl1Uniforms = { proj: gl.getUniformLocation(prog, 'uProj'), mv: gl.getUniformLocation(prog, 'uMV'), tex: gl.getUniformLocation(prog, 'uTex'), hasTex: gl.getUniformLocation(prog, 'uHasTex') }; console.log('[GL1] Shader OK: pos=' + window.__gl1Attribs.pos + ' color=' + window.__gl1Attribs.color + ' tex=' + window.__gl1Attribs.texCoord); }
 function js_copyUserName(ptr){ var s = window.__mcpeUserName || ''; for (var i = 0; i < s.length; i++) { HEAP8[ptr + i] = s.charCodeAt(i); } HEAP8[ptr + s.length] = 0; }
@@ -7308,11 +7308,6 @@ var _free = Module["_free"] = function() {
 };
 
 /** @type {function(...*):?} */
-var _inject_creative_items = Module["_inject_creative_items"] = function() {
-  return (_inject_creative_items = Module["_inject_creative_items"] = Module["asm"]["inject_creative_items"]).apply(null, arguments);
-};
-
-/** @type {function(...*):?} */
 var _is_level_client_side = Module["_is_level_client_side"] = function() {
   return (_is_level_client_side = Module["_is_level_client_side"] = Module["asm"]["is_level_client_side"]).apply(null, arguments);
 };
@@ -7320,6 +7315,46 @@ var _is_level_client_side = Module["_is_level_client_side"] = function() {
 /** @type {function(...*):?} */
 var _force_release_bow = Module["_force_release_bow"] = function() {
   return (_force_release_bow = Module["_force_release_bow"] = Module["asm"]["force_release_bow"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _inject_creative_items = Module["_inject_creative_items"] = function() {
+  return (_inject_creative_items = Module["_inject_creative_items"] = Module["asm"]["inject_creative_items"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _toggle_fly = Module["_toggle_fly"] = function() {
+  return (_toggle_fly = Module["_toggle_fly"] = Module["asm"]["toggle_fly"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _toggle_third_person = Module["_toggle_third_person"] = function() {
+  return (_toggle_third_person = Module["_toggle_third_person"] = Module["asm"]["toggle_third_person"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _cycle_view_distance = Module["_cycle_view_distance"] = function() {
+  return (_cycle_view_distance = Module["_cycle_view_distance"] = Module["asm"]["cycle_view_distance"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _toggle_gamemode = Module["_toggle_gamemode"] = function() {
+  return (_toggle_gamemode = Module["_toggle_gamemode"] = Module["asm"]["toggle_gamemode"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _step_time = Module["_step_time"] = function() {
+  return (_step_time = Module["_step_time"] = Module["asm"]["step_time"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _open_inventory = Module["_open_inventory"] = function() {
+  return (_open_inventory = Module["_open_inventory"] = Module["asm"]["open_inventory"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _toggle_ao = Module["_toggle_ao"] = function() {
+  return (_toggle_ao = Module["_toggle_ao"] = Module["asm"]["toggle_ao"]).apply(null, arguments);
 };
 
 /** @type {function(...*):?} */

@@ -151,6 +151,9 @@ Tile* Tile::glowingObsidian = NULL;
 Tile* Tile::stairs_stoneBrickSmooth   = NULL;
 Tile* Tile::netherBrick   = NULL;
 Tile* Tile::netherrack   = NULL;
+Tile* Tile::cake          = NULL;
+Tile* Tile::diode_off     = NULL;
+Tile* Tile::diode_on      = NULL;
 Tile* Tile::stairs_netherBricks   = NULL;
 Tile* Tile::stairs_sandStone   = NULL;
 Tile* Tile::quartzBlock   = NULL;
@@ -265,6 +268,10 @@ void Tile::initTiles() {
 	info_updateGame2= (new Tile(249, 253, Material::dirt))->init()->setDestroyTime(1.0f)->setSoundType(SOUND_GRAVEL)->setCategory(ItemCategory::Structures)->setDescriptionId("info_update");
 	grass_carried   = (new CarriedTile(253, 3, 12*16 + 12))->init()->setCategory(ItemCategory::Structures)->setDescriptionId("grass");
 	leaves_carried  = (LeafTile*) (new LeafTile(254, 11 + 14 * 16))->init()->setDestroyTime(0.2f)->setLightBlock(1)->setSoundType(SOUND_GRASS)->setCategory(ItemCategory::Structures)->setDescriptionId("leaves");
+	// §0.7.0: cake and diode tiles (not fully implemented but needed for item init)
+	cake        = (new Tile(92, 12*16+9, Material::dirt))->init()->setDestroyTime(0.5f)->setCategory(ItemCategory::Structures)->setDescriptionId("cake");
+	diode_off   = (new Tile(93, 5*16+2, Material::stone))->init()->setDestroyTime(0.0f)->setCategory(ItemCategory::Mechanisms)->setDescriptionId("diode");
+	diode_on    = (new Tile(94, 5*16+2, Material::stone))->init()->setDestroyTime(0.0f)->setCategory(ItemCategory::Mechanisms)->setDescriptionId("diode");
 	info_reserved6  = (new Tile(255, Material::dirt))->init()->setCategory(ItemCategory::Structures);
 
     //

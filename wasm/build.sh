@@ -35,7 +35,7 @@ EXTRA_FLAGS=""
         EXTRA_FLAGS="-DanGenBuffers=anGenBuffers_gles_impl"
     fi
     if [ "$relpath" = "world/item/Item.cpp" ]; then
-        EXTRA_FLAGS="-include $WASM/BucketItem.h"
+        EXTRA_FLAGS="-include $WASM/BucketItem.h -include $WASM/MissingItems.h"
     fi
     if [ "$relpath" = "client/sound/SoundEngine.cpp" ]; then
         EXTRA_FLAGS="-include $WASM/SoundSystemWebAudio.h -DSoundSystem=SoundSystemWebAudio"
