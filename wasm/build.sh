@@ -30,13 +30,13 @@ for cpp in $(find $SRC -name "*.cpp" | sort); do
     objname=$(echo "$relpath" | tr '/' '_' | sed 's/\.cpp$/.o/')
     # §gles.cpp has a fake-counter anGenBuffers that we override in
     # platform_stubs.cpp. Rename it via macro so there's no duplicate symbol.
-    EXTRA_FLAGS=""
+EXTRA_FLAGS=""
     if [ "$relpath" = "client/renderer/gles.cpp" ]; then
         EXTRA_FLAGS="-DanGenBuffers=anGenBuffers_gles_impl"
     fi
-    # §SoundEngine.cpp: substitute SoundSystem base class with SoundSystemWebAudio
-    # so soundSystem member uses our Web Audio implementation (playAt plays PCM).
-    # Rule Zero: rujukan/ source unchanged, only compile flag differs.
+    if [ "$relpath" = "world/item/Item.cpp" ]; then
+        EXTRA_FLAGS="-include $WASM/BucketItem.h"
+    fi
     if [ "$relpath" = "client/sound/SoundEngine.cpp" ]; then
         EXTRA_FLAGS="-include $WASM/SoundSystemWebAudio.h -DSoundSystem=SoundSystemWebAudio"
     fi
