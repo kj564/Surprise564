@@ -591,23 +591,27 @@ function startWasm() {
       function isInDpad(x, y) { return x >= DPAD_RECT.x0 && x < DPAD_RECT.x1 && y >= DPAD_RECT.y0 && y < DPAD_RECT.y1; }
 
       function feedTouch(action, data, c, identifier) {
-        // §Multitouch feed: per-finger pointer slot. This is the primary
-        // input path for touch — each finger gets its own Multitouch slot.
+        // §Multitouch feed: per-finger pointer slot. This is the PRIMARY
+        // input path — each finger gets its own Multitouch slot.
+        // UnifiedTurnBuild::getTurnDelta iterates Multitouch pointers and
+        // checks if they're in AREA_TURN (for look) or AREA_DPAD (for move).
         if (typeof _multitouch_feed === 'function') {
           _multitouch_feed(action, data, c.x, c.y, identifier % 12);
         }
-        // §Mouse feed: ONLY for D-pad touches (identifier 0 in D-pad area).
-        // _mouse_feed hardcodes pointerId=0 for Multitouch, so calling it
-        // for look-area touches would overwrite the D-pad pointer 0 slot.
-        // We only call _mouse_feed for GUI click handling (hotbar, menus),
-        // and only for the first touch (identifier 0).
-        if (identifier === 0 && typeof _mouse_feed === 'function') {
-          var dx = 0, dy = 0;
-          if (action === 0) {
-            var prev = touchPositions[identifier];
-            if (prev) { dx = c.x - prev.x; dy = c.y - prev.y; }
+        // §Mouse feed: ONLY for touchstart/touchend (NOT touchmove) on the
+        // FIRST touch (identifier 0), and ONLY if touch is in the hotbar area
+        // (bottom of screen). This enables GUI clicks (hotbar slot selection,
+        // menu buttons). We do NOT call _mouse_feed for look-area touches
+        // because _mouse_feed hardcodes pointerId=0 for Multitouch AND feeds
+        // Mouse::feed which triggers handleMouseDown (destroy/place block).
+        // Look-area touches should only go through _multitouch_feed.
+        if (identifier === 0 && action !== 0 && typeof _mouse_feed === 'function') {
+          // Hotbar area: y > canvas.height - 22*3 (bottom strip)
+          var inHotbar = c.y > canvas.height - 66;
+          // Also allow menu clicks (when screen is active, not in-game)
+          if (inHotbar || (typeof _is_screen_null === 'function' && _is_screen_null() === 0)) {
+            _mouse_feed(action, data, c.x, c.y, 0, 0);
           }
-          _mouse_feed(action, data, c.x, c.y, dx, dy);
         }
       }
       canvas.addEventListener('touchstart', function(e) {
