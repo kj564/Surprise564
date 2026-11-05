@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>VoxelCraft — MCPE 2013 WASM (Mobile Patched)</title>
+<title>VoxelCraft — MCPE 0.7.0 WASM (Mobile Patched)</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { width: 100%; height: 100%; overflow: hidden; background: #000; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -60,7 +60,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; i
 <div id="touch-debug"></div>
 
 <div id="patch-hud">
-  <div><b>VoxelCraft · MCPE 2013 WASM</b> <span style="color:#34d399;">(recompiled v5)</span></div>
+  <div><b>VoxelCraft · MCPE 0.7.0 WASM</b> <span style="color:#34d399;">(recompiled v5)</span></div>
   <div class="ok">✓ Multitouch FIXED — recompiled emsdk 2.0.34 + export _multitouch_feed</div>
   <div class="ok">✓ Rendering 1:1 (terrain, grass, trees, water) via anGenBuffers override</div>
   <div class="ok">✓ Per-finger pointerId (0..11) — D-pad + look bareng</div>
@@ -135,7 +135,7 @@ var patchHud = document.getElementById('patch-hud');
 var toastEl = document.getElementById('toast');
 var touchDebug = document.getElementById('touch-debug');
 
-// Pre-load MCPE 2013 textures
+// Pre-load MCPE 0.7.0 textures
 var TEX = ['terrain.png','gui/gui.png','gui/icons.png','gui/title.png','gui/background.png','gui/items.png','gui/gui_blocks.png','gui/itemframe.png','gui/touchgui.png','font/default8.png','particles.png','environment/clouds.png','mob/char.png','mob/chicken.png','mob/cow.png','mob/pig.png','mob/sheep.png','mob/sheep_fur.png','mob/zombie.png','mob/skeleton.png','mob/spider.png','mob/creeper.png'];
 window.__mcpeTextures = {}; window.__mcpeAssets = {};
 
