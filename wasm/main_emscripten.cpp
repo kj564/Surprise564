@@ -138,3 +138,18 @@ int main() {
     emscripten_set_main_loop(emscripten_main_loop, 0, 1);
     return 0;
 }
+
+// §Debug exports for movement direction verification
+#include "client/player/LocalPlayer.h"
+extern "C" EMSCRIPTEN_KEEPALIVE float get_player_yrot() {
+    if (!g_app || !((Minecraft*)g_app)->player) return -999.0f;
+    return ((Minecraft*)g_app)->player->yRot;
+}
+extern "C" EMSCRIPTEN_KEEPALIVE float get_player_x() {
+    if (!g_app || !((Minecraft*)g_app)->player) return -999.0f;
+    return ((Minecraft*)g_app)->player->x;
+}
+extern "C" EMSCRIPTEN_KEEPALIVE float get_player_z() {
+    if (!g_app || !((Minecraft*)g_app)->player) return -999.0f;
+    return ((Minecraft*)g_app)->player->z;
+}

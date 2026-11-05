@@ -7278,6 +7278,21 @@ var _auto_create_world = Module["_auto_create_world"] = function() {
 };
 
 /** @type {function(...*):?} */
+var _get_player_yrot = Module["_get_player_yrot"] = function() {
+  return (_get_player_yrot = Module["_get_player_yrot"] = Module["asm"]["get_player_yrot"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _get_player_x = Module["_get_player_x"] = function() {
+  return (_get_player_x = Module["_get_player_x"] = Module["asm"]["get_player_x"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
+var _get_player_z = Module["_get_player_z"] = function() {
+  return (_get_player_z = Module["_get_player_z"] = Module["asm"]["get_player_z"]).apply(null, arguments);
+};
+
+/** @type {function(...*):?} */
 var _main = Module["_main"] = function() {
   return (_main = Module["_main"] = Module["asm"]["main"]).apply(null, arguments);
 };
