@@ -94,7 +94,6 @@ void Options::initDefaultValues() {
 //	it would be slightly better performance with it inlined. Should
 //  probably create separate subclasses (or read from file). @fix @todo.
 #if defined(ANDROID) || defined(__APPLE__) || defined(RPI)
-    viewDistance = 2;
     thirdPersonView = false;
 	useMouseForDigging = false;
 	fancyGraphics = false;
